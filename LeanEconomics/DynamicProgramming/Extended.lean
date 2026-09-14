@@ -90,6 +90,14 @@ noncomputable def extendBot (u : ℝ → ℝ) : ℝ → EReal := fun c => if 0 <
 @[simp] theorem extendBot_of_nonpos {u : ℝ → ℝ} {c : ℝ} (hc : c ≤ 0) : extendBot u c = ⊥ := by
   simp [extendBot, not_lt.mpr hc]
 
+/-- The extension is monotone when `u` is monotone on the positives. -/
+theorem extendBot_mono {u : ℝ → ℝ} (hu : MonotoneOn u (Ioi 0)) : Monotone (extendBot u) := by
+  intro x y hxy
+  rcases le_or_gt x 0 with h | h
+  · rw [extendBot_of_nonpos h]; exact bot_le
+  · rw [extendBot_of_pos h, extendBot_of_pos (lt_of_lt_of_le h hxy), EReal.coe_le_coe_iff]
+    exact hu h (lt_of_lt_of_le h hxy) hxy
+
 /-- **The extension is continuous** exactly when `u` falls to `-∞` at zero consumption --
 which is what makes a floor necessary in the first place, so nothing extra is being
 assumed. -/
@@ -287,6 +295,25 @@ theorem exists_optimal_action (v : S →ᵇ ℝ) (s : S) :
     (D.feasible_nonempty s) (D.isCompact_feasible s)
   exact ⟨a, ha, by rw [D.coe_bellmanFn]; exact heq.symm⟩
 
+section Monotone
+
+variable [Preorder S]
+
+/-- The operator preserves monotonicity under the same conditions as in the real case. -/
+theorem monotone_bellman
+    (hfeas : ∀ s s', s ≤ s' → D.feasible s ⊆ D.feasible s')
+    (hreward : ∀ a, Monotone fun s => D.reward (s, a))
+    (htrans : ∀ a, Monotone fun s => D.transition (s, a))
+    (v : S →ᵇ ℝ) (hv : Monotone ⇑v) : Monotone ⇑(D.bellman v) := by
+  intro s s' hss
+  refine D.bellmanFn_le v fun a ha => ?_
+  refine le_trans ?_ (D.le_bellmanFn v (hfeas s s' hss ha))
+  refine add_le_add (hreward a hss) ?_
+  rw [EReal.coe_le_coe_iff]
+  exact mul_le_mul_of_nonneg_left (hv (htrans a hss)) D.discount.coe_nonneg
+
+end Monotone
+
 section ValueFunction
 
 /-- The **value function** of the program. -/
@@ -313,6 +340,15 @@ theorem exists_optimal_policy (s : S) :
     rfl
   rw [← hfix, ← heq]
   rfl
+
+/-- **The value function is monotone** under the same conditions as in the real case. -/
+theorem monotone_valueFunction [Preorder S]
+    (hfeas : ∀ s s', s ≤ s' → D.feasible s ⊆ D.feasible s')
+    (hreward : ∀ a, Monotone fun s => D.reward (s, a))
+    (htrans : ∀ a, Monotone fun s => D.transition (s, a)) :
+    Monotone ⇑D.valueFunction :=
+  D.blackwell.monotone_valueFunction D.discount_lt_one
+    fun v hv => D.monotone_bellman hfeas hreward htrans v hv
 
 end ValueFunction
 
