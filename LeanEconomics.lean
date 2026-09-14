@@ -11,3 +11,4 @@ import LeanEconomics.Models.ConsumptionSavingsUnbounded
 import LeanEconomics.Models.IncomeFluctuation
 import LeanEconomics.Models.ConsumptionSavingsUncapped
 import LeanEconomics.Models.IncomeFluctuationUncapped
+import LeanEconomics.Models.ConsumptionSavingsUncappedCRRA
