@@ -9,3 +9,4 @@ import LeanEconomics.DynamicProgramming.Examples
 import LeanEconomics.Models.ConsumptionSavings
 import LeanEconomics.Models.ConsumptionSavingsUnbounded
 import LeanEconomics.Models.IncomeFluctuation
+import LeanEconomics.Models.ConsumptionSavingsUncapped
