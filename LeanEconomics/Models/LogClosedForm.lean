@@ -181,6 +181,72 @@ theorem value_eq {W : ℝ} (hW : 0 < W) :
     P.value W = Real.log (P.consumption W) + P.discount * P.value (P.policy W) := by
   rw [← P.objective_policy hW, objective, P.gross_sub_policy]
 
+/-! ### Uniqueness
+
+The verification theorem above says the closed form solves the Bellman equation. This says
+nothing else does -- among solutions lying a bounded distance from it.
+
+The argument needs no function space, no contraction and no operator, which is what makes
+it available here at all: the machinery those would require is exactly what the `-∞` at
+zero consumption obstructs. Instead, a bound of `K` on the deviation improves itself to a
+bound of `β * K` in one step, straight from `isGreatest_bellman`, and iterating sends it to
+zero. -/
+
+/-- One step of the self-improving bound: if a solution lies within `K` of the closed form,
+it lies within `β * K`. -/
+theorem abs_sub_value_le_of_bound {v : ℝ → ℝ} {K : ℝ}
+    (hv : ∀ W, 0 < W → IsLUB ((fun W' => Real.log (P.gross * W - W') + P.discount * v W') ''
+      Ioo 0 (P.gross * W)) (v W))
+    (hbound : ∀ W, 0 < W → |v W - P.value W| ≤ K)
+    {W : ℝ} (hW : 0 < W) : |v W - P.value W| ≤ P.discount * K := by
+  have hβ := P.discount_pos
+  rw [abs_le]
+  constructor
+  · -- the closed form's own policy is available to `v`, and costs at most `β * K`
+    have hmem := P.policy_mem hW
+    have hle := (hv W hW).1 ⟨P.policy W, hmem, rfl⟩
+    have hb := abs_le.mp (hbound (P.policy W) hmem.1)
+    have hpol := P.objective_policy hW
+    simp only [objective] at hpol
+    have hmul := mul_le_mul_of_nonneg_left hb.1 hβ.le
+    linarith
+  · -- every choice available to `v` is worth at most the closed form's value plus `β * K`
+    have hub : v W ≤ P.value W + P.discount * K := by
+      refine (hv W hW).2 ?_
+      rintro _ ⟨W', hW', rfl⟩
+      have hb := abs_le.mp (hbound W' hW'.1)
+      have hup := P.objective_le hW hW'
+      simp only [objective] at hup
+      have hmul := mul_le_mul_of_nonneg_left hb.2 hβ.le
+      linarith
+    linarith
+
+/-- **Uniqueness of the closed form.** Any solution of the Bellman equation lying a bounded
+distance from the closed form equals it. The deviation is squeezed by `βⁿ`. -/
+theorem eq_value_of_isLUB {v : ℝ → ℝ} {M : ℝ}
+    (hv : ∀ W, 0 < W → IsLUB ((fun W' => Real.log (P.gross * W - W') + P.discount * v W') ''
+      Ioo 0 (P.gross * W)) (v W))
+    (hM : ∀ W, 0 < W → |v W - P.value W| ≤ M)
+    {W : ℝ} (hW : 0 < W) : v W = P.value W := by
+  have hβ := P.discount_pos
+  have hM0 : 0 ≤ M := le_trans (abs_nonneg _) (hM 1 one_pos)
+  have hiter : ∀ n : ℕ, ∀ X, 0 < X → |v X - P.value X| ≤ P.discount ^ n * M := by
+    intro n
+    induction n with
+    | zero => simpa using hM
+    | succ k ih =>
+      intro X hX
+      have h := P.abs_sub_value_le_of_bound hv ih hX
+      calc |v X - P.value X| ≤ P.discount * (P.discount ^ k * M) := h
+        _ = P.discount ^ (k + 1) * M := by ring
+  have hlim : Filter.Tendsto (fun n : ℕ => P.discount ^ n * M) Filter.atTop (nhds 0) := by
+    simpa using
+      (tendsto_pow_atTop_nhds_zero_of_lt_one hβ.le P.discount_lt_one).mul_const M
+  have hle : |v W - P.value W| ≤ 0 :=
+    ge_of_tendsto hlim (Filter.Eventually.of_forall fun n => hiter n W hW)
+  have : v W - P.value W = 0 := abs_eq_zero.mp (le_antisymm hle (abs_nonneg _))
+  linarith
+
 end LogSavings
 
 end LeanEconomics
