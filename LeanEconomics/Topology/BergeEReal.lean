@@ -47,8 +47,10 @@ hypothesis is needed: `EReal` is a complete lattice. -/
 noncomputable def maxValueE (f : X → Y → EReal) (Γ : X → Set Y) (x : X) : EReal :=
   sSup (f x '' Γ x)
 
+omit [TopologicalSpace X] [TopologicalSpace Y] in
 theorem le_maxValueE {y : Y} (hy : y ∈ Γ x) : f x y ≤ maxValueE f Γ x := le_sSup ⟨y, hy, rfl⟩
 
+omit [TopologicalSpace X] [TopologicalSpace Y] in
 theorem maxValueE_le (h : ∀ y ∈ Γ x, f x y ≤ c) : maxValueE f Γ x ≤ c :=
   sSup_le (by rintro _ ⟨y, hy, rfl⟩; exact h y hy)
 
