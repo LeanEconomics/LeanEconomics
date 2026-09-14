@@ -1,4 +1,5 @@
 import LeanEconomics.Basic
+import LeanEconomics.Topology.Berge
 import LeanEconomics.DynamicProgramming.Blackwell
 import LeanEconomics.DynamicProgramming.Bellman
 import LeanEconomics.DynamicProgramming.Examples
