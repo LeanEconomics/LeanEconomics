@@ -158,8 +158,10 @@ theorem monotone_valueFunction : Monotone ⇑P.toExtended.valueFunction := by
   · intro s s' hss
     exact Icc_subset_Icc (le_refl 0) (P.monotone_resources hss)
   · intro a' x y hxy
-    have h : P.rewardFn (x, a') ≤ P.rewardFn (y, a') :=
-      extendBot_mono P.monotoneOn_u (by simp only [consumption]; linarith [P.monotone_resources hxy])
+    have hcons : P.consumption x a' ≤ P.consumption y a' := by
+      simp only [consumption]
+      linarith [P.monotone_resources hxy]
+    have h : P.rewardFn (x, a') ≤ P.rewardFn (y, a') := extendBot_mono P.monotoneOn_u hcons
     exact h
   · intro a' x y _
     exact le_rfl

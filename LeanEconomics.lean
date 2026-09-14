@@ -7,6 +7,7 @@ import LeanEconomics.DynamicProgramming.Bellman
 import LeanEconomics.DynamicProgramming.Stochastic
 import LeanEconomics.DynamicProgramming.Weighted
 import LeanEconomics.DynamicProgramming.Extended
+import LeanEconomics.DynamicProgramming.ExtendedStochastic
 import LeanEconomics.DynamicProgramming.Examples
 import LeanEconomics.Models.ConsumptionSavings
 import LeanEconomics.Models.ConsumptionSavingsUnbounded
