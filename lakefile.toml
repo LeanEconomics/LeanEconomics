@@ -8,9 +8,6 @@ pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
-# This repository is AGPL-3.0 licensed, so file headers cannot carry Mathlib's
-# mandatory "Released under Apache 2.0" line that this linter insists on.
-weak.linter.style.header = false
 
 [[require]]
 name = "mathlib"

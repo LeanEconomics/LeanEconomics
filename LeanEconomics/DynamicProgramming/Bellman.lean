@@ -1,6 +1,6 @@
 /-
 Copyright (c) 2026 Robert Kirkby. All rights reserved.
-Released under the GNU Affero General Public License v3.0 as described in the file LICENSE.
+Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.DynamicProgramming.Blackwell
