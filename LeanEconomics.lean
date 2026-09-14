@@ -1,2 +1,4 @@
 import LeanEconomics.Basic
 import LeanEconomics.DynamicProgramming.Blackwell
+import LeanEconomics.DynamicProgramming.Bellman
+import LeanEconomics.DynamicProgramming.Examples
