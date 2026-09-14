@@ -202,4 +202,54 @@ theorem Blackwell.monotone_valueFunction {β : ℝ≥0} {T : (S →ᵇ ℝ) → 
 
 end Monotone
 
+/-! ### Concavity of the value function
+
+The same closed-set argument as for monotonicity, and the reason it is wanted is the agent
+distribution. Defining a distribution over states needs the optimal policy to be a
+*function*, and `exists_optimal_action` only gives existence of a maximiser. Uniqueness
+comes from strict concavity of the objective in the action, which needs the continuation
+value to be concave -- that is, the value function. So this is the first link in the chain
+from the value function to the stationary distribution. -/
+
+section Concave
+
+variable {S : Type*} [TopologicalSpace S] [AddCommMonoid S] [Module ℝ S]
+
+/-- The concave bounded continuous functions form a closed set. -/
+theorem isClosed_concaveOn : IsClosed {v : S →ᵇ ℝ | ConcaveOn ℝ Set.univ ⇑v} := by
+  have heq : {v : S →ᵇ ℝ | ConcaveOn ℝ Set.univ ⇑v}
+      = ⋂ (p : S × S × ℝ × ℝ) (_ : 0 ≤ p.2.2.1 ∧ 0 ≤ p.2.2.2 ∧ p.2.2.1 + p.2.2.2 = 1),
+          {v : S →ᵇ ℝ | p.2.2.1 • v p.1 + p.2.2.2 • v p.2.1
+            ≤ v (p.2.2.1 • p.1 + p.2.2.2 • p.2.1)} := by
+    ext v
+    simp only [Set.mem_ofPred_eq, Set.mem_iInter]
+    constructor
+    · rintro ⟨-, hv⟩ p ⟨ha, hb, hab⟩
+      exact hv (Set.mem_univ _) (Set.mem_univ _) ha hb hab
+    · intro hv
+      refine ⟨convex_univ, fun x _ y _ a b ha hb hab => ?_⟩
+      exact hv (x, y, a, b) ⟨ha, hb, hab⟩
+  rw [heq]
+  refine isClosed_iInter fun p => isClosed_iInter fun _ => ?_
+  exact isClosed_le
+    ((((BoundedContinuousFunction.lipschitz_eval_const p.1).continuous).const_smul p.2.2.1).add
+      (((BoundedContinuousFunction.lipschitz_eval_const p.2.1).continuous).const_smul p.2.2.2))
+    (BoundedContinuousFunction.lipschitz_eval_const
+      (p.2.2.1 • p.1 + p.2.2.2 • p.2.1)).continuous
+
+/-- **The value function is concave** whenever the operator preserves concavity. -/
+theorem Blackwell.concaveOn_valueFunction {β : ℝ≥0} {T : (S →ᵇ ℝ) → (S →ᵇ ℝ)}
+    (h : Blackwell β T) (hβ : β < 1)
+    (hT : ∀ v : S →ᵇ ℝ, ConcaveOn ℝ Set.univ ⇑v → ConcaveOn ℝ Set.univ ⇑(T v)) :
+    ConcaveOn ℝ Set.univ ⇑(h.valueFunction hβ) := by
+  have hiter : ∀ n : ℕ, ConcaveOn ℝ Set.univ ⇑(T^[n] (0 : S →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => exact ⟨convex_univ, fun x _ y _ a b _ _ _ => by simp⟩
+    | succ k ih => rw [Function.iterate_succ_apply']; exact hT _ ih
+  exact isClosed_concaveOn.mem_of_tendsto (h.tendsto_iterate_valueFunction hβ 0)
+    (Filter.Eventually.of_forall hiter)
+
+end Concave
+
 end LeanEconomics
