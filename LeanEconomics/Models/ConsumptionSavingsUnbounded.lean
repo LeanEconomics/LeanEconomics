@@ -402,6 +402,43 @@ noncomputable def calibrated : ConsumptionSavingsUnbounded where
   u_cFloor_le_floor := by norm_num
   floor_lt := by push_cast; norm_num
 
+/-! ### Log period utility (`σ = 1`) -/
+
+/-- `crra` cannot express `σ = 1`: the expression `c ^ (1 - σ) / (1 - σ)` divides by zero
+there. The `σ → 1` limit of CES is `Real.log`, which is handled by the same theory, being
+continuous and increasing on `(0, ∞)` and unbounded below at `0`. -/
+theorem continuousOn_log : ContinuousOn Real.log (Ioi 0) :=
+  Real.continuousOn_log.mono fun _ hx => ne_of_gt hx
+
+theorem monotoneOn_log : MonotoneOn Real.log (Ioi 0) := Real.strictMonoOn_log.monotoneOn
+
+/-- A log calibration (`σ = 1`): income 1, interest 5%, assets capped at 10, `β = 0.96`.
+Taking `cFloor = exp floor` makes `u cFloor = floor` exactly, which is the natural choice
+whenever `u` is `log`. -/
+noncomputable def calibratedLog : ConsumptionSavingsUnbounded where
+  income := 1
+  interest := 1 / 20
+  assetCap := 10
+  discount := 24 / 25
+  u := Real.log
+  floor := -1000
+  cFloor := Real.exp (-1000)
+  income_pos := by norm_num
+  interest_gt_neg_one := by norm_num
+  assetCap_nonneg := by norm_num
+  discount_lt_one := by norm_num
+  continuousOn_u := continuousOn_log
+  monotoneOn_u := monotoneOn_log
+  cFloor_pos := Real.exp_pos _
+  cFloor_le_income := Real.exp_le_one_iff.mpr (by norm_num)
+  u_cFloor_le_floor := le_of_eq (Real.log_exp _)
+  floor_lt := by
+    have hpos : (0 : ℝ) < 1 + (1 + 1 / 20) * 10 := by norm_num
+    have h := Real.log_le_sub_one_of_pos hpos
+    push_cast
+    rw [Real.log_one]
+    nlinarith [h]
+
 end ConsumptionSavingsUnbounded
 
 end LeanEconomics
