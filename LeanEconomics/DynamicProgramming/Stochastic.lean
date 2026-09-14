@@ -164,13 +164,13 @@ theorem blackwell : Blackwell D.discount D.bellman where
     have key : ∀ a ∈ D.feasible s, D.objective (v + const S c) s a
         ≤ D.bellmanFn v s + D.discount * c := by
       intro a ha
+      have hterm : ∀ z : Z, D.prob z (s, a) * (v + const S c) (D.transition z (s, a))
+          = D.prob z (s, a) * v (D.transition z (s, a)) + D.prob z (s, a) * c := fun z => by
+        simp only [coe_add, const_apply, Pi.add_apply]; ring
       have hsum : D.expectation (v + const S c) (s, a) = D.expectation v (s, a) + c := by
         simp only [expectation]
-        rw [Finset.sum_congr rfl fun z _ => by
-          show D.prob z (s, a) * (v + const S c) (D.transition z (s, a))
-            = D.prob z (s, a) * v (D.transition z (s, a)) + D.prob z (s, a) * c
-          simp only [coe_add, const_apply, Pi.add_apply]; ring]
-        rw [Finset.sum_add_distrib, ← Finset.sum_mul, D.prob_sum, one_mul]
+        rw [Finset.sum_congr rfl fun z _ => hterm z, Finset.sum_add_distrib,
+          ← Finset.sum_mul, D.prob_sum, one_mul]
       have h : D.objective (v + const S c) s a = D.objective v s a + D.discount * c := by
         simp only [objective, hsum]; ring
       rw [h]
