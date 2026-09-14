@@ -1,6 +1,6 @@
 /-
 Copyright (c) 2026 Robert Kirkby. All rights reserved.
-Released under the GNU Affero General Public License v3.0 as described in the file LICENSE.
+Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import Mathlib.Topology.ContinuousMap.Bounded.Normed
@@ -57,11 +57,8 @@ variable {S : Type*} [TopologicalSpace S]
 /-- Any bounded continuous function is dominated by any other one shifted up by the
 distance between them. -/
 theorem le_add_const_norm_sub (v w : S →ᵇ ℝ) : v ≤ w + const S ‖v - w‖ := by
-  intro x
-  have h : |v x - w x| ≤ ‖v - w‖ := by
-    simpa [Real.norm_eq_abs] using (v - w).norm_coe_le_norm x
-  have := (abs_le.mp h).2
-  simpa using by linarith
+  rw [← sub_le_iff_le_add']
+  exact sub_nonneg.mp (norm_sub_nonneg (v - w))
 
 end BoundedContinuousFunction
 
