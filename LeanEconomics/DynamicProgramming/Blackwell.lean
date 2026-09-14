@@ -165,4 +165,41 @@ theorem affine (f : S →ᵇ ℝ) (β : ℝ≥0) :
 
 end Blackwell
 
+/-! ### Monotonicity of the value function
+
+If the operator preserves monotone functions then so does its fixed point, because the
+monotone functions are a *closed* subset of `S →ᵇ ℝ` and value function iteration converges
+in norm. Nothing about the fixed point itself is needed, only that the property is closed
+and preserved. This is the standard route to comparative statics. -/
+
+section Monotone
+
+variable [Preorder S]
+
+/-- The monotone bounded continuous functions form a closed set: a supremum-norm limit of
+monotone functions is monotone, since evaluation at a point is continuous. -/
+theorem isClosed_monotone : IsClosed {v : S →ᵇ ℝ | Monotone ⇑v} := by
+  have heq : {v : S →ᵇ ℝ | Monotone ⇑v}
+      = ⋂ (x : S) (y : S) (_ : x ≤ y), {v : S →ᵇ ℝ | v x ≤ v y} := by
+    ext v; simp [Monotone]
+  rw [heq]
+  refine isClosed_iInter fun x => isClosed_iInter fun y => isClosed_iInter fun _ => ?_
+  exact isClosed_le (BoundedContinuousFunction.lipschitz_eval_const x).continuous
+    (BoundedContinuousFunction.lipschitz_eval_const y).continuous
+
+/-- **The value function is monotone** whenever the operator preserves monotonicity. -/
+theorem Blackwell.monotone_valueFunction {β : ℝ≥0} {T : (S →ᵇ ℝ) → (S →ᵇ ℝ)}
+    (h : Blackwell β T) (hβ : β < 1)
+    (hT : ∀ v : S →ᵇ ℝ, Monotone ⇑v → Monotone ⇑(T v)) :
+    Monotone ⇑(h.valueFunction hβ) := by
+  have hiter : ∀ n : ℕ, Monotone ⇑(T^[n] (0 : S →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => intro x y _; simp
+    | succ k ih => rw [Function.iterate_succ_apply']; exact hT _ ih
+  exact isClosed_monotone.mem_of_tendsto (h.tendsto_iterate_valueFunction hβ 0)
+    (Filter.Eventually.of_forall hiter)
+
+end Monotone
+
 end LeanEconomics

@@ -194,6 +194,28 @@ theorem upperHemicontinuous_argmax (v : S →ᵇ ℝ) :
   upperHemicontinuousAt_argmax (D.continuous_uncurry_objective v) D.feasible_nonempty
     D.isCompact_feasible (D.upperHemicontinuous_feasible s) (D.lowerHemicontinuous_feasible s)
 
+section Monotone
+
+variable [Preorder S]
+
+/-- The Bellman operator preserves monotonicity when the feasible set grows with the state,
+the reward rises with it, and the law of motion is monotone in it. -/
+theorem monotone_bellman
+    (hfeas : ∀ s s', s ≤ s' → D.feasible s ⊆ D.feasible s')
+    (hreward : ∀ a, Monotone fun s => D.reward (s, a))
+    (htrans : ∀ a, Monotone fun s => D.transition (s, a))
+    (v : S →ᵇ ℝ) (hv : Monotone ⇑v) : Monotone ⇑(D.bellman v) := by
+  intro s s' hss
+  refine D.bellmanFn_le v fun a ha => ?_
+  refine le_trans ?_ (D.le_bellmanFn v (hfeas s s' hss ha))
+  have h₁ : D.reward (s, a) ≤ D.reward (s', a) := hreward a hss
+  have h₂ : v (D.transition (s, a)) ≤ v (D.transition (s', a)) := hv (htrans a hss)
+  have hβ : (0 : ℝ) ≤ D.discount := D.discount.coe_nonneg
+  simp only [objective]
+  nlinarith
+
+end Monotone
+
 section ValueFunction
 
 /-- The **value function** of the program: the unique fixed point of its Bellman
@@ -230,6 +252,16 @@ theorem exists_optimal_policy (s : S) :
   obtain ⟨a, ha, heq, -⟩ := D.exists_optimal_action D.valueFunction s
   rw [D.bellman_valueFunction] at heq
   exact ⟨a, ha, heq⟩
+
+/-- **The value function is increasing in the state** when the feasible set grows with the
+state, the reward rises with it, and the law of motion is monotone in it. -/
+theorem monotone_valueFunction [Preorder S]
+    (hfeas : ∀ s s', s ≤ s' → D.feasible s ⊆ D.feasible s')
+    (hreward : ∀ a, Monotone fun s => D.reward (s, a))
+    (htrans : ∀ a, Monotone fun s => D.transition (s, a)) :
+    Monotone ⇑D.valueFunction :=
+  D.blackwell.monotone_valueFunction D.discount_lt_one
+    fun v hv => D.monotone_bellman hfeas hreward htrans v hv
 
 end ValueFunction
 

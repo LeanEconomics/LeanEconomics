@@ -288,6 +288,33 @@ theorem exists_optimal_saving {a : ℝ} (ha : 0 ≤ a) :
   simp only [rewardFn]
   rw [max_eq_right hlt.le, hclamp]
 
+/-! ### Monotonicity -/
+
+theorem monotone_resources : Monotone P.resources := by
+  intro x y hxy
+  simp only [resources]
+  nlinarith [P.interest_gt_neg_one]
+
+theorem monotone_maxSaving : Monotone P.maxSaving := fun _ _ hxy =>
+  max_le_max (le_refl 0) (P.monotone_resources hxy)
+
+/-- **The value function is increasing in assets.** Richer is better: the feasible set
+grows with assets, the reward rises with them, and the state reached does not depend on
+them. -/
+theorem monotone_valueFunction : Monotone ⇑P.toDynamicProgram.valueFunction := by
+  refine P.toDynamicProgram.monotone_valueFunction ?_ ?_ ?_
+  · intro s s' hss
+    exact Icc_subset_Icc (le_refl 0) (P.monotone_maxSaving hss)
+  · intro a' x y hxy
+    have h : P.rewardFn (x, a') ≤ P.rewardFn (y, a') := by
+      simp only [rewardFn]
+      refine max_le_max (le_refl _) (P.monotoneOn_u (P.clampC_mem _) (P.clampC_mem _) ?_)
+      simp only [clampC, consumption]
+      exact max_le_max (le_refl _) (by linarith [P.monotone_resources hxy])
+    exact h
+  · intro a' x y _
+    exact le_rfl
+
 /-- A calibration with `σ = 2`: income 1, interest 5%, `β = 0.96`, assets unbounded. CES at
 `σ = 2` is `-1 / c`, which is negative everywhere, so `uBound = 0`. Note `β (1 + r) = 1.008
 > 1`: no impatience condition is needed here, and this calibration would not satisfy one. -/
