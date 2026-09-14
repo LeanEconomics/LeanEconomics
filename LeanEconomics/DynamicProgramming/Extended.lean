@@ -74,6 +74,56 @@ structure ExtendedProgram (S A : Type*) [TopologicalSpace S] [TopologicalSpace A
   discount : ℝ≥0
   discount_lt_one : discount < 1
 
+/-! ### Extending a utility by `-∞`
+
+Retrofitting a model that uses a floor means turning its real-valued `u`, which is only
+sensible on positive consumption, into a continuous `EReal`-valued reward. That is this
+lemma, and it is the only shared cost of the retrofit: supply `u` falling to `-∞` at zero
+and the extension is continuous. -/
+
+/-- A function on the positives, extended by `-∞` to the whole line. -/
+noncomputable def extendBot (u : ℝ → ℝ) : ℝ → EReal := fun c => if 0 < c then (u c : EReal) else ⊥
+
+@[simp] theorem extendBot_of_pos {u : ℝ → ℝ} {c : ℝ} (hc : 0 < c) :
+    extendBot u c = (u c : EReal) := by simp [extendBot, hc]
+
+@[simp] theorem extendBot_of_nonpos {u : ℝ → ℝ} {c : ℝ} (hc : c ≤ 0) : extendBot u c = ⊥ := by
+  simp [extendBot, not_lt.mpr hc]
+
+/-- **The extension is continuous** exactly when `u` falls to `-∞` at zero consumption --
+which is what makes a floor necessary in the first place, so nothing extra is being
+assumed. -/
+theorem continuous_extendBot {u : ℝ → ℝ} (hcont : ContinuousOn u (Ioi 0))
+    (hbot : Tendsto u (𝓝[>] 0) atBot) : Continuous (extendBot u) := by
+  rw [continuous_iff_continuousAt]
+  intro c
+  rcases lt_trichotomy 0 c with h | h | h
+  · -- positive consumption: the extension agrees with `u` nearby
+    have hev : extendBot u =ᶠ[𝓝 c] fun x => (u x : EReal) := by
+      filter_upwards [lt_mem_nhds h] with x hx
+      exact extendBot_of_pos hx
+    have hcu : ContinuousAt (fun x => (u x : EReal)) c :=
+      continuous_coe_real_ereal.continuousAt.comp (hcont.continuousAt (Ioi_mem_nhds h))
+    exact hcu.congr hev.symm
+  · -- zero consumption: both sides fall to `⊥`
+    subst h
+    rw [ContinuousAt, extendBot_of_nonpos le_rfl, EReal.tendsto_nhds_bot_iff_real]
+    intro x
+    rw [← nhdsLE_sup_nhdsGT (0 : ℝ), Filter.eventually_sup]
+    constructor
+    · filter_upwards [self_mem_nhdsWithin] with a ha
+      rw [extendBot_of_nonpos ha]
+      exact EReal.bot_lt_coe x
+    · filter_upwards [hbot.eventually (Filter.eventually_lt_atBot x), self_mem_nhdsWithin]
+        with a ha ha'
+      rw [extendBot_of_pos ha']
+      exact_mod_cast ha
+  · -- negative consumption: constantly `⊥` nearby
+    have hev : extendBot u =ᶠ[𝓝 c] fun _ => (⊥ : EReal) := by
+      filter_upwards [gt_mem_nhds h] with x hx
+      exact extendBot_of_nonpos hx.le
+    exact continuousAt_const.congr hev.symm
+
 namespace ExtendedProgram
 
 variable (D : ExtendedProgram S A)
