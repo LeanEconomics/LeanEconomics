@@ -3,6 +3,7 @@ import LeanEconomics.Topology.Berge
 import LeanEconomics.Topology.IccCorrespondence
 import LeanEconomics.DynamicProgramming.Blackwell
 import LeanEconomics.DynamicProgramming.Bellman
+import LeanEconomics.DynamicProgramming.Stochastic
 import LeanEconomics.DynamicProgramming.Examples
 import LeanEconomics.Models.ConsumptionSavings
 import LeanEconomics.Models.ConsumptionSavingsUnbounded
