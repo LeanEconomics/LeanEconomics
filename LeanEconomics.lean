@@ -29,3 +29,4 @@ import LeanEconomics.Models.IncomeFluctuationCrossRate
 import LeanEconomics.Models.IncomeFluctuationRegion
 import LeanEconomics.Models.IncomeFluctuationRate
 import LeanEconomics.Models.IncomeFluctuationAugmented
+import LeanEconomics.Equilibrium.AiyagariContinuity
