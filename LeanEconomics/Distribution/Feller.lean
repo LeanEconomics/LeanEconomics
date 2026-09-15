@@ -4,6 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuation
+import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
+import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
 
 /-!
 # The agent distribution: state space and Markov operator
@@ -36,14 +39,19 @@ lands in the *bounded continuous* functions again:
 Feller is what will make the induced map on probability measures continuous, and continuity
 of that map is what a fixed point argument needs.
 
-## What is not here
+## The operator on measures
 
-The operator on measures itself. Mathlib has `Measure.bind` and `lintegral_bind` but no
-Bochner `integral_bind`, so the measure side is better built from `Measure.map` and
-`Measure.withDensity`, whose Bochner lemmas do exist. That is the other half of this step.
+`push μ` is where the distribution `μ` is a period later. It is assembled from
+`Measure.withDensity` and `Measure.map` rather than from `Measure.bind`: Mathlib has
+`lintegral_bind` but no Bochner `integral_bind`, whereas both of the former have their
+Bochner lemmas, and it is the Bochner integral that the weak topology is stated with.
+
+`integral_push` is the duality `∫ h d(push μ) = ∫ (markovOp h) dμ`, and it is what makes
+the whole thing work: weak convergence is tested against bounded continuous functions, so
+weak continuity of `push` reduces immediately to `markovOp h` being one.
 -/
 
-open scoped NNReal
+open scoped NNReal ENNReal
 open Set Filter Topology BoundedContinuousFunction
 
 namespace LeanEconomics
@@ -55,9 +63,7 @@ variable (P : IncomeFluctuation Z)
 
 /-- The compact region the agent distribution lives on: assets in `[0, assetCap]` paired
 with an income state. -/
-def State : Type _ := ↥(Icc (0 : ℝ) P.assetCap) × Z
-
-noncomputable instance : TopologicalSpace P.State := inferInstanceAs (TopologicalSpace (_ × _))
+abbrev State : Type _ := ↥(Icc (0 : ℝ) P.assetCap) × Z
 
 instance : CompactSpace P.State :=
   haveI : CompactSpace ↥(Icc (0 : ℝ) P.assetCap) := isCompact_iff_compactSpace.mp isCompact_Icc
@@ -142,6 +148,125 @@ measures. -/
 theorem markovOp_const (c : ℝ) : P.markovOp (const P.State c) = const P.State c := by
   ext s
   simp only [markovOp_apply, const_apply, ← Finset.sum_mul, P.prob_sum, one_mul]
+
+/-! ### The operator on measures -/
+
+open MeasureTheory
+
+variable [MeasurableSpace Z] [BorelSpace Z]
+
+/-- The reweighting density for shock `z'`, as an `ℝ≥0`-valued function. -/
+noncomputable def dens (z' : Z) (s : P.State) : ℝ≥0 := (P.prob s z').toNNReal
+
+theorem measurable_dens (z' : Z) : Measurable (P.dens z') :=
+  (continuous_real_toNNReal.comp (P.continuous_prob z')).measurable
+
+omit [MeasurableSpace Z] [BorelSpace Z] in
+@[simp]
+theorem coe_dens (z' : Z) (s : P.State) : ((P.dens z' s : ℝ≥0) : ℝ) = P.prob s z' :=
+  Real.coe_toNNReal _ (P.prob_nonneg s z')
+
+omit [MeasurableSpace Z] [BorelSpace Z] in
+theorem sum_dens (s : P.State) : ∑ z', ((P.dens z' s : ℝ≥0) : ℝ≥0∞) = 1 := by
+  have hz : ∀ z' : Z, ((P.dens z' s : ℝ≥0) : ℝ≥0∞) = ENNReal.ofReal (P.prob s z') :=
+    fun _ => rfl
+  rw [Finset.sum_congr rfl fun z' _ => hz z',
+    ← ENNReal.ofReal_sum_of_nonneg fun z' _ => P.prob_nonneg s z', P.prob_sum s,
+    ENNReal.ofReal_one]
+
+/-- **One period of the agent distribution's motion.** Each income state `z'` reweights the
+distribution by the probability of moving there and pushes it along the policy. -/
+noncomputable def push (μ : Measure P.State) : Measure P.State :=
+  Measure.sum fun z' =>
+    (μ.withDensity fun s => (P.dens z' s : ℝ≥0∞)).map fun s => P.nextState s z'
+
+theorem measurable_nextState (z' : Z) : Measurable fun s => P.nextState s z' :=
+  (P.continuous_nextState z').measurable
+
+/-- `push` preserves total mass, because the transition probabilities sum to one. -/
+instance isProbabilityMeasure_push (μ : Measure P.State) [IsProbabilityMeasure μ] :
+    IsProbabilityMeasure (P.push μ) := by
+  constructor
+  rw [push, Measure.sum_apply _ MeasurableSet.univ]
+  have hterm : ∀ z' : Z,
+      ((μ.withDensity fun s => (P.dens z' s : ℝ≥0∞)).map fun s => P.nextState s z') univ
+        = ∫⁻ s, (P.dens z' s : ℝ≥0∞) ∂μ := by
+    intro z'
+    rw [Measure.map_apply (P.measurable_nextState z') MeasurableSet.univ,
+      Set.preimage_univ, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ]
+  rw [tsum_fintype]
+  simp only [hterm]
+  rw [← lintegral_finsetSum _ fun z' _ => ((P.measurable_dens z').coe_nnreal_ennreal)]
+  simp only [P.sum_dens]
+  simp
+
+omit [MeasurableSpace Z] [BorelSpace Z] in
+/-- Each transition probability is at most one. -/
+theorem prob_le_one (s : P.State) (z' : Z) : P.prob s z' ≤ 1 := by
+  rw [← P.prob_sum s]
+  exact Finset.single_le_sum (fun i _ => P.prob_nonneg s i) (Finset.mem_univ z')
+
+theorem integrable_term (μ : Measure P.State) [IsProbabilityMeasure μ] (h : P.State →ᵇ ℝ)
+    (z' : Z) : Integrable (fun s => P.prob s z' * h (P.nextState s z')) μ := by
+  refine (integrable_const ‖h‖).mono' ?_ ?_
+  · exact ((P.continuous_prob z').mul
+      (h.continuous.comp (P.continuous_nextState z'))).measurable.aestronglyMeasurable
+  · filter_upwards with s
+    have h1 := P.prob_le_one s z'
+    have h2 : |h (P.nextState s z')| ≤ ‖h‖ := by
+      simpa [Real.norm_eq_abs] using h.norm_coe_le_norm (P.nextState s z')
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (P.prob_nonneg s z')]
+    nlinarith [P.prob_nonneg s z', abs_nonneg (h (P.nextState s z'))]
+
+/-- **Duality.** The integral of `h` against tomorrow's distribution is the integral of the
+expected value of `h` against today's. This is the bridge between the two operators, and it
+is what turns the Feller property into weak continuity. -/
+theorem integral_push (μ : Measure P.State) [IsProbabilityMeasure μ] (h : P.State →ᵇ ℝ) :
+    ∫ s, h s ∂(P.push μ) = ∫ s, P.markovOp h s ∂μ := by
+  have hterm : ∀ z' : Z,
+      ∫ s, h s ∂((μ.withDensity fun s => (P.dens z' s : ℝ≥0∞)).map fun s => P.nextState s z')
+        = ∫ s, P.prob s z' * h (P.nextState s z') ∂μ := by
+    intro z'
+    rw [integral_map (P.measurable_nextState z').aemeasurable
+      h.continuous.measurable.aestronglyMeasurable,
+      integral_withDensity_eq_integral_smul (P.measurable_dens z')]
+    refine integral_congr_ae (Filter.Eventually.of_forall fun s => ?_)
+    calc (P.dens z' s : ℝ≥0) • h (P.nextState s z')
+        = ((P.dens z' s : ℝ≥0) : ℝ) • h (P.nextState s z') := NNReal.smul_def _ _
+      _ = P.prob s z' * h (P.nextState s z') := by rw [smul_eq_mul, P.coe_dens z' s]
+  have hint : Integrable (fun s => h s) (P.push μ) := h.integrable _
+  rw [push]
+  rw [integral_sum_measure hint, tsum_fintype]
+  simp only [hterm]
+  rw [← integral_finsetSum _ fun z' _ => P.integrable_term μ h z']
+  rfl
+
+/-- **The agent distribution operator**, on probability measures. -/
+noncomputable def pushProb (μ : ProbabilityMeasure P.State) : ProbabilityMeasure P.State :=
+  ⟨P.push (μ : Measure P.State), P.isProbabilityMeasure_push _⟩
+
+@[simp]
+theorem coe_pushProb (μ : ProbabilityMeasure P.State) :
+    ((P.pushProb μ : ProbabilityMeasure P.State) : Measure P.State)
+      = P.push (μ : Measure P.State) := rfl
+
+/-- **The distribution operator is weakly continuous.** This is the Feller property in the
+form a fixed point argument needs, and it falls straight out of the duality: weak
+convergence is tested against bounded continuous functions, and `markovOp h` is one. -/
+theorem continuous_pushProb : Continuous P.pushProb := by
+  rw [continuous_iff_continuousAt]
+  intro μ
+  rw [ContinuousAt, ProbabilityMeasure.tendsto_iff_forall_integral_tendsto]
+  intro h
+  have hdual : ∀ ν : ProbabilityMeasure P.State,
+      ∫ s, h s ∂((P.pushProb ν : ProbabilityMeasure P.State) : Measure P.State)
+        = ∫ s, P.markovOp h s ∂(ν : Measure P.State) := fun ν => P.integral_push _ h
+  simp only [hdual]
+  exact ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.mp
+    (tendsto_id : Filter.Tendsto id (𝓝 μ) (𝓝 μ)) (P.markovOp h)
+
+/-- A **stationary agent distribution** is a fixed point of the operator. -/
+def IsStationary (μ : ProbabilityMeasure P.State) : Prop := P.pushProb μ = μ
 
 end IncomeFluctuation
 
