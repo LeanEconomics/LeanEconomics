@@ -488,6 +488,79 @@ theorem exists_almost_stationary_modulus (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi
   rw [← hsub]
   exact le_trans (A.abs_integral_le _ _) hnorm
 
+/-! ### The stationary distribution moves continuously with the rate
+
+The cluster point step. Compactness of the space of probability measures supplies cluster
+points; the estimate above makes any cluster point exactly stationary at the reference rate;
+uniqueness there collapses it to a single point, and a filter with a unique cluster point in
+a compact space converges.
+
+Uniqueness is needed only AT the reference rate. Existence at nearby rates is all that is
+asked of them, and it is supplied by the selection `ν` rather than assumed of the model, so
+the Doeblin hypotheses need not be carried across the whole interval. -/
+
+theorem tendsto_stationary (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) {r₀ : ℝ}
+    (hr₀ : r₀ ∈ Icc rlo rhi) (hrr₀ : 0 < 1 + r₀) (ν : ℝ → ProbabilityMeasure P.State)
+    (hν : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r, (P.withRate r hrr).IsStationary (ν r))
+    (huniq : ∀ μ : ProbabilityMeasure P.State,
+      (P.withRate r₀ hrr₀).IsStationary μ → μ = ν r₀) :
+    Tendsto ν (𝓝[Icc rlo rhi] r₀) (𝓝 (ν r₀)) := by
+  refine tendsto_nhds_of_unique_mapClusterPt fun μ hcl => ?_
+  refine huniq μ ?_
+  -- every cluster point is stationary at the reference rate
+  have key : ∀ h : P.State →ᵇ ℝ,
+      ∫ s, h s ∂(((P.withRate r₀ hrr₀).pushProb μ : ProbabilityMeasure P.State) :
+          Measure P.State)
+        = ∫ s, h s ∂(μ : Measure P.State) := by
+    intro h
+    set G : ProbabilityMeasure P.State → ℝ := fun ρ =>
+      ∫ s, (P.withRate r₀ hrr₀).markovOp h s ∂(ρ : Measure P.State)
+        - ∫ s, h s ∂(ρ : Measure P.State) with hG
+    have hGc : Continuous G :=
+      ((P.withRate r₀ hrr₀).continuous_integral_bcf _).sub
+        ((P.withRate r₀ hrr₀).continuous_integral_bcf h)
+    -- the estimate holds eventually along the filter
+    have hzero : G μ = 0 := by
+      have hbound : ∀ ε : ℝ, 0 < ε → |G μ| ≤ ε := by
+        intro ε hε
+        obtain ⟨η, hη, hest⟩ :=
+          P.exists_almost_stationary_modulus hrlo hle hr₀ hrr₀ h hε
+        have hev : ∀ᶠ r in 𝓝[Icc rlo rhi] r₀, |G (ν r)| ≤ ε := by
+          have h1 : ∀ᶠ r in 𝓝[Icc rlo rhi] r₀, r ∈ Icc rlo rhi := self_mem_nhdsWithin
+          have h2 : ∀ᶠ r in 𝓝[Icc rlo rhi] r₀, |r - r₀| < η := by
+            refine nhdsWithin_le_nhds ?_
+            filter_upwards [Metric.ball_mem_nhds r₀ hη] with x hx
+            rwa [Metric.mem_ball, Real.dist_eq] at hx
+          filter_upwards [h1, h2] with r hr1 hr2
+          have hrr : 0 < 1 + r := by have := hr1.1; linarith
+          exact hest r hr1 hrr hr2 (ν r) (hν r hr1 hrr)
+        -- a cluster point inherits a closed condition
+        have hmap : ClusterPt (G μ) (Filter.map (fun r => G (ν r)) (𝓝[Icc rlo rhi] r₀)) := by
+          have hm := hcl.map hGc.continuousAt
+            (le_refl (Filter.map G (Filter.map ν (𝓝[Icc rlo rhi] r₀))))
+          rwa [Filter.map_map] at hm
+        have hle' : Filter.map (fun r => G (ν r)) (𝓝[Icc rlo rhi] r₀)
+            ≤ Filter.principal {x : ℝ | |x| ≤ ε} := by
+          rw [Filter.le_principal_iff]
+          exact hev
+        have : G μ ∈ closure {x : ℝ | |x| ≤ ε} :=
+          mem_closure_iff_clusterPt.mpr (hmap.mono hle')
+        rwa [IsClosed.closure_eq (isClosed_le (continuous_abs) continuous_const)] at this
+      have habs : |G μ| ≤ 0 := by
+        by_contra hcon
+        rw [not_le] at hcon
+        have := hbound (|G μ| / 2) (by linarith)
+        linarith
+      exact abs_eq_zero.mp (le_antisymm habs (abs_nonneg _))
+    have hdual := (P.withRate r₀ hrr₀).integral_push (μ : Measure P.State) h
+    rw [(P.withRate r₀ hrr₀).coe_pushProb, hdual]
+    rw [hG] at hzero
+    linarith [hzero]
+  have hfin : ((P.withRate r₀ hrr₀).pushProb μ).toFiniteMeasure = μ.toFiniteMeasure :=
+    FiniteMeasure.ext_of_forall_integral_eq key
+  exact ProbabilityMeasure.toMeasure_injective
+    (congrArg (fun x : FiniteMeasure P.State => (x : Measure P.State)) hfin)
+
 end IncomeFluctuation
 
 end LeanEconomics
