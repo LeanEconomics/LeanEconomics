@@ -111,3 +111,45 @@ theorem ConcaveOn.abs_sub_le_slopeBound_mul {u : ℝ → ℝ} (hu : ConcaveOn �
       abs_of_nonneg (sub_nonneg.mpr (hmono (mem_Ioi.mpr (by linarith))
         (mem_Ioi.mpr (by linarith)) h)), abs_of_nonneg (by linarith)]
     exact hu.sub_le_slopeBound_mul hδ hx h
+
+/-! ### Scaling a concave function
+
+For a concave, strictly positive `z`, the ratio `α / z (α x)` rises with `α`. This is Lemma 3
+of Light (2018), one of the three ingredients of his Theorem 1 (savings rise with the interest
+rate when relative risk aversion is at most one).
+
+Like the increments lemma above, it needs no derivative: `α₁ x` is a convex combination of `0`
+and `α₂ x` with weight `α₁ / α₂`, so concavity gives the inequality directly, and strict
+positivity at the origin is what turns it from weak into the stated form.
+-/
+
+/-- **Light (2018), Lemma 3.** -/
+theorem ConcaveOn.div_le_div_of_scale {z : ℝ → ℝ} (hz : ConcaveOn ℝ (Ici 0) z)
+    (hz0 : 0 < z 0) (hzpos : ∀ t ∈ Ici (0 : ℝ), 0 < z t) {α₁ α₂ x : ℝ}
+    (h1 : 0 < α₁) (h12 : α₁ ≤ α₂) (hx : 0 < x) :
+    α₁ / z (α₁ * x) ≤ α₂ / z (α₂ * x) := by
+  have h2 : 0 < α₂ := lt_of_lt_of_le h1 h12
+  have hm1 : α₁ * x ∈ Ici (0 : ℝ) := mem_Ici.mpr (by positivity)
+  have hm2 : α₂ * x ∈ Ici (0 : ℝ) := mem_Ici.mpr (by positivity)
+  have hp1 : 0 < z (α₁ * x) := hzpos _ hm1
+  have hp2 : 0 < z (α₂ * x) := hzpos _ hm2
+  -- `α₁ x` is a convex combination of `0` and `α₂ x`
+  have hcomb : (1 - α₁ / α₂) • (0 : ℝ) + (α₁ / α₂) • (α₂ * x) = α₁ * x := by
+    simp only [smul_eq_mul, mul_zero, zero_add]
+    field_simp
+  have hw1 : (0 : ℝ) ≤ 1 - α₁ / α₂ := by
+    rw [sub_nonneg, div_le_one h2]; exact h12
+  have hw2 : (0 : ℝ) ≤ α₁ / α₂ := by positivity
+  have hcc := hz.2 (mem_Ici.mpr le_rfl) hm2 hw1 hw2 (by ring)
+  rw [hcomb] at hcc
+  -- rearrange
+  rw [div_le_div_iff₀ hp1 hp2]
+  simp only [smul_eq_mul] at hcc
+  have hkey : α₁ * z (α₂ * x) ≤ α₂ * z (α₁ * x) := by
+    have hmul := mul_le_mul_of_nonneg_left hcc h2.le
+    have hexp : α₂ * ((1 - α₁ / α₂) * z 0 + α₁ / α₂ * z (α₂ * x))
+        = (α₂ - α₁) * z 0 + α₁ * z (α₂ * x) := by field_simp
+    rw [hexp] at hmul
+    have hz0' : 0 ≤ (α₂ - α₁) * z 0 := mul_nonneg (by linarith) hz0.le
+    linarith
+  linarith
