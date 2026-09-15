@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuationRegion
+import LeanEconomics.Distribution.Feller
 
 /-!
 # Varying the interest rate
@@ -280,6 +281,38 @@ theorem exists_valueFunction_modulus {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo) {r₀ 
   rw [hdisc] at hbr
   refine le_trans hbr ?_
   rw [div_le_iff₀ (by linarith)]
+
+/-! ### What policy continuity is for
+
+The distribution side consumes the policy only through the Markov operator, and only through
+its SUP norm: the closed-graph argument for `r ↦ μ r` needs
+
+  ‖markovOp_r h - markovOp_r₀ h‖ → 0
+
+because `∫ markovOp_r h dμ_r` splits into `∫ (markovOp_r h - markovOp_r₀ h) dμ_r`, bounded by
+that norm, plus a term weak convergence handles. Pointwise convergence of the policy would
+not do.
+
+The lemma below is the interface: it reduces the operator gap to the gap in the SUCCESSOR
+STATES, which is where the policy enters. Combined with uniform continuity of `h` on the
+compact state space, uniform convergence of the policy is exactly what is needed, and
+nothing more. -/
+
+theorem abs_markovFn_sub_le {A B : IncomeFluctuation Z assetCap}
+    (hAB : A.transitionMatrix = B.transitionMatrix) (h : A.State →ᵇ ℝ) {ε : ℝ}
+    (hclose : ∀ s : A.State, ∀ z' : Z, |h (A.nextState s z') - h (B.nextState s z')| ≤ ε)
+    (s : A.State) : |A.markovFn h s - B.markovFn h s| ≤ ε := by
+  have hprob : ∀ z' : Z, B.prob s z' = A.prob s z' := fun z' => by
+    simp only [IncomeFluctuation.prob, hAB]
+  simp only [IncomeFluctuation.markovFn, hprob, ← Finset.sum_sub_distrib, ← mul_sub]
+  calc |∑ z' : Z, A.prob s z' * (h (A.nextState s z') - h (B.nextState s z'))|
+      ≤ ∑ z' : Z, |A.prob s z' * (h (A.nextState s z') - h (B.nextState s z'))| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ z' : Z, A.prob s z' * ε := by
+        refine Finset.sum_le_sum fun z' _ => ?_
+        rw [abs_mul, abs_of_nonneg (A.prob_nonneg s z')]
+        exact mul_le_mul_of_nonneg_left (hclose s z') (A.prob_nonneg s z')
+    _ = ε := by rw [← Finset.sum_mul, A.prob_sum, one_mul]
 
 end IncomeFluctuation
 
