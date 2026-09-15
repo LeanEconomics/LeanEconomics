@@ -367,4 +367,77 @@ theorem Blackwell.forall_lipschitzOn_valueFunction {β : ℝ≥0} {T : (S →ᵇ
 
 end Lipschitz
 
+section IncreasingDifferences
+
+/-!
+### Increasing differences
+
+The fourth closed class, after monotone, concave and Lipschitz.
+
+A function of two real coordinates has increasing differences when raising the second
+coordinate raises the increment in the first. For a value function whose coordinates are
+assets and the interest rate, that says the marginal value of wealth rises with the rate --
+and that is the derivative-free form of the condition driving Light (2018) Theorem 1, where
+it appears as `f'(·, R₂) ≥ f'(·, R₁)` and is obtained from the envelope theorem.
+
+Stating it as increments rather than derivatives is what makes it expressible here at all,
+since nothing in this development differentiates anything. Its natural home is the augmented
+programme of `Models/IncomeFluctuationAugmented.lean`, where the rate is a state coordinate,
+so the property is about a single function rather than a family.
+
+Whether the Bellman operator preserves it is a separate question and is NOT settled here;
+Light's argument for the derivative version compares different asset levels across rates via
+a rescaling, so it does not transcribe.
+-/
+
+variable {S : Type*} [TopologicalSpace S] {ι : Type*}
+
+theorem isClosed_forall_increasingDifferences (s t : Set ℝ) (g : ι → ℝ → ℝ → S) :
+    IsClosed {v : S →ᵇ ℝ | ∀ i, ∀ a₁ ∈ s, ∀ a₂ ∈ s, ∀ r₁ ∈ t, ∀ r₂ ∈ t, a₁ ≤ a₂ → r₁ ≤ r₂ →
+      v (g i a₂ r₁) - v (g i a₁ r₁) ≤ v (g i a₂ r₂) - v (g i a₁ r₂)} := by
+  have heq : {v : S →ᵇ ℝ | ∀ i, ∀ a₁ ∈ s, ∀ a₂ ∈ s, ∀ r₁ ∈ t, ∀ r₂ ∈ t, a₁ ≤ a₂ → r₁ ≤ r₂ →
+        v (g i a₂ r₁) - v (g i a₁ r₁) ≤ v (g i a₂ r₂) - v (g i a₁ r₂)}
+      = ⋂ (p : ι × ℝ × ℝ × ℝ × ℝ)
+          (_ : p.2.1 ∈ s ∧ p.2.2.1 ∈ s ∧ p.2.2.2.1 ∈ t ∧ p.2.2.2.2 ∈ t ∧
+            p.2.1 ≤ p.2.2.1 ∧ p.2.2.2.1 ≤ p.2.2.2.2),
+          {v : S →ᵇ ℝ |
+            v (g p.1 p.2.2.1 p.2.2.2.1) - v (g p.1 p.2.1 p.2.2.2.1)
+              ≤ v (g p.1 p.2.2.1 p.2.2.2.2) - v (g p.1 p.2.1 p.2.2.2.2)} := by
+    ext v
+    simp only [Set.mem_ofPred_eq, Set.mem_iInter]
+    exact ⟨fun hv p hp => hv p.1 p.2.1 hp.1 p.2.2.1 hp.2.1 p.2.2.2.1 hp.2.2.1 p.2.2.2.2 hp.2.2.2.1
+        hp.2.2.2.2.1 hp.2.2.2.2.2,
+      fun hv i a₁ h1 a₂ h2 r₁ h3 r₂ h4 h5 h6 => hv (i, a₁, a₂, r₁, r₂) ⟨h1, h2, h3, h4, h5, h6⟩⟩
+  rw [heq]
+  refine isClosed_iInter fun p => isClosed_iInter fun _ => ?_
+  exact isClosed_le
+    ((BoundedContinuousFunction.lipschitz_eval_const _).continuous.sub
+      (BoundedContinuousFunction.lipschitz_eval_const _).continuous)
+    ((BoundedContinuousFunction.lipschitz_eval_const _).continuous.sub
+      (BoundedContinuousFunction.lipschitz_eval_const _).continuous)
+
+/-- **The value function has increasing differences** whenever the operator preserves the
+property. The zero function has it trivially, which is what lets the iteration start. -/
+theorem Blackwell.forall_increasingDifferences_valueFunction {β : ℝ≥0}
+    {T : (S →ᵇ ℝ) → (S →ᵇ ℝ)} (h : Blackwell β T) (hβ : β < 1) {s t : Set ℝ} {g : ι → ℝ → ℝ → S}
+    (hT : ∀ v : S →ᵇ ℝ,
+      (∀ i, ∀ a₁ ∈ s, ∀ a₂ ∈ s, ∀ r₁ ∈ t, ∀ r₂ ∈ t, a₁ ≤ a₂ → r₁ ≤ r₂ →
+        v (g i a₂ r₁) - v (g i a₁ r₁) ≤ v (g i a₂ r₂) - v (g i a₁ r₂)) →
+      ∀ i, ∀ a₁ ∈ s, ∀ a₂ ∈ s, ∀ r₁ ∈ t, ∀ r₂ ∈ t, a₁ ≤ a₂ → r₁ ≤ r₂ →
+        T v (g i a₂ r₁) - T v (g i a₁ r₁) ≤ T v (g i a₂ r₂) - T v (g i a₁ r₂)) :
+    ∀ i, ∀ a₁ ∈ s, ∀ a₂ ∈ s, ∀ r₁ ∈ t, ∀ r₂ ∈ t, a₁ ≤ a₂ → r₁ ≤ r₂ →
+      h.valueFunction hβ (g i a₂ r₁) - h.valueFunction hβ (g i a₁ r₁)
+        ≤ h.valueFunction hβ (g i a₂ r₂) - h.valueFunction hβ (g i a₁ r₂) := by
+  have hiter : ∀ n : ℕ, ∀ i, ∀ a₁ ∈ s, ∀ a₂ ∈ s, ∀ r₁ ∈ t, ∀ r₂ ∈ t, a₁ ≤ a₂ → r₁ ≤ r₂ →
+      (T^[n] (0 : S →ᵇ ℝ)) (g i a₂ r₁) - (T^[n] (0 : S →ᵇ ℝ)) (g i a₁ r₁)
+        ≤ (T^[n] (0 : S →ᵇ ℝ)) (g i a₂ r₂) - (T^[n] (0 : S →ᵇ ℝ)) (g i a₁ r₂) := by
+    intro n
+    induction n with
+    | zero => intro i a₁ _ a₂ _ r₁ _ r₂ _ _ _; simp
+    | succ k ih => rw [Function.iterate_succ_apply']; exact hT _ ih
+  exact isClosed_forall_increasingDifferences s t g |>.mem_of_tendsto
+    (h.tendsto_iterate_valueFunction hβ 0) (Filter.Eventually.of_forall hiter)
+
+end IncreasingDifferences
+
 end LeanEconomics
