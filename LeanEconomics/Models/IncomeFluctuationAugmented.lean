@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuationRate
+import LeanEconomics.Distribution.Stationary
 
 /-!
 # The interest rate as a state variable
@@ -33,7 +34,7 @@ a constant clamp the two would differ off the region and the slice lemma would n
 region bridge instead of an equality.
 -/
 
-open Set Filter Topology BoundedContinuousFunction
+open Set Filter Topology BoundedContinuousFunction MeasureTheory
 
 namespace LeanEconomics
 
@@ -389,6 +390,103 @@ theorem exists_policy_modulus_withRate (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) 
   rw [← P.augPolicy_eq hrlo hle _hr hrr (t := (a, z)) ha,
     ← P.augPolicy_eq hrlo hle _hr' hrr' (t := (a, z)) ha]
   exact hspec z a ha r _hr r' _hr' hd
+
+/-! ### The Markov operator converges uniformly
+
+Feeding the policy modulus through `abs_markovFn_sub_le`. The two successor states differ
+only in their asset coordinate -- the income state is the same draw -- so a modulus for the
+test function in that coordinate is all that is needed. -/
+
+set_option linter.unusedFintypeInType false in
+/-- A modulus for a test function in the asset coordinate, uniform over income states. -/
+theorem exists_modulus_state (h : P.State →ᵇ ℝ) {ε : ℝ} (hε : 0 < ε) :
+    ∃ η > 0, ∀ (z' : Z) (x y : ↥(Icc (0 : ℝ) assetCap)), |(x : ℝ) - (y : ℝ)| < η →
+      |h (x, z') - h (y, z')| ≤ ε := by
+  classical
+  have : CompactSpace ↥(Icc (0 : ℝ) assetCap) := isCompact_iff_compactSpace.mp isCompact_Icc
+  have hslice : ∀ z' : Z, ∃ η > 0, ∀ x y : ↥(Icc (0 : ℝ) assetCap),
+      |(x : ℝ) - (y : ℝ)| < η → |h (x, z') - h (y, z')| ≤ ε := by
+    intro z'
+    have hcont : Continuous fun x : ↥(Icc (0 : ℝ) assetCap) => h (x, z') :=
+      h.continuous.comp (continuous_id.prodMk continuous_const)
+    have huc : UniformContinuous fun x : ↥(Icc (0 : ℝ) assetCap) => h (x, z') :=
+      CompactSpace.uniformContinuous_of_continuous hcont
+    obtain ⟨η, hη, hspec⟩ := Metric.uniformContinuous_iff.mp huc ε hε
+    refine ⟨η, hη, fun x y hxy => ?_⟩
+    have hd : dist x y < η := by rw [Subtype.dist_eq, Real.dist_eq]; exact hxy
+    have := hspec hd
+    rw [Real.dist_eq] at this
+    exact this.le
+  choose η hη hspec using hslice
+  have hne : (Finset.univ : Finset Z).Nonempty := ⟨Classical.ofNonempty, Finset.mem_univ _⟩
+  refine ⟨Finset.univ.inf' hne η, (Finset.lt_inf'_iff _).2 fun z' _ => hη z', ?_⟩
+  exact fun z' x y hxy =>
+    hspec z' x y (lt_of_lt_of_le hxy (Finset.inf'_le _ (Finset.mem_univ z')))
+
+/-- **The Markov operator converges uniformly as the interest rate moves.** This is the
+statement the distribution's closed-graph argument consumes. -/
+theorem exists_markovFn_modulus (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (h : P.State →ᵇ ℝ)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ η > 0, ∀ (r : ℝ) (_hr : r ∈ Icc rlo rhi) (hrr : 0 < 1 + r)
+      (r' : ℝ) (_hr' : r' ∈ Icc rlo rhi) (hrr' : 0 < 1 + r'),
+      |r - r'| < η → ∀ s : P.State,
+        |(P.withRate r hrr).markovFn h s - (P.withRate r' hrr').markovFn h s| ≤ ε := by
+  obtain ⟨ηh, hηh, hh⟩ := P.exists_modulus_state h hε
+  obtain ⟨η, hη, hpol⟩ := P.exists_policy_modulus_withRate hrlo hle hηh
+  refine ⟨η, hη, fun r hr hrr r' hr' hrr' hd s => ?_⟩
+  refine abs_markovFn_sub_le (A := P.withRate r hrr) (B := P.withRate r' hrr') rfl h
+    (fun s z' => ?_) s
+  -- the successor states differ only in the asset coordinate
+  have hmem : ((s.1 : ℝ)) ∈ Icc (0 : ℝ) assetCap := s.1.2
+  have hgap := hpol s.2 (s.1 : ℝ) hmem r hr hrr r' hr' hrr' hd
+  exact hh z' _ _ hgap
+
+/-! ### The closed-graph estimate
+
+A distribution stationary for a NEARBY rate is almost stationary for the reference rate, with
+an error controlled uniformly. This is the estimate the closed-graph argument runs on: the
+error term below involves only the two fixed bounded continuous functions `markovOp h` and
+`h`, so it survives passage to a weak limit, and uniqueness of the stationary distribution
+then pins the limit down. -/
+
+variable [MeasurableSpace Z] [BorelSpace Z]
+
+theorem exists_almost_stationary_modulus (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi)
+    {r₀ : ℝ} (hr₀ : r₀ ∈ Icc rlo rhi) (hrr₀ : 0 < 1 + r₀) (h : P.State →ᵇ ℝ)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ η > 0, ∀ (r : ℝ) (_hr : r ∈ Icc rlo rhi) (hrr : 0 < 1 + r), |r - r₀| < η →
+      ∀ ν : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary ν →
+        |∫ s, (P.withRate r₀ hrr₀).markovOp h s ∂(ν : Measure P.State)
+          - ∫ s, h s ∂(ν : Measure P.State)| ≤ ε := by
+  obtain ⟨η, hη, hmod⟩ := P.exists_markovFn_modulus hrlo hle h hε
+  refine ⟨η, hη, fun r hr hrr hd ν hstat => ?_⟩
+  set A := P.withRate r₀ hrr₀ with hA
+  set B := P.withRate r hrr with hB
+  -- stationarity at the nearby rate
+  have hpush : B.push (ν : Measure P.State) = (ν : Measure P.State) :=
+    congrArg (fun x : ProbabilityMeasure P.State => (x : Measure P.State)) hstat
+  have hstat' : ∫ s, h s ∂(ν : Measure P.State)
+      = ∫ s, B.markovOp h s ∂(ν : Measure P.State) := by
+    have hp := B.integral_push (ν : Measure P.State) h
+    rwa [hpush] at hp
+  rw [hstat']
+  -- the two operators are uniformly close
+  have hptwise : ∀ s : P.State, |A.markovOp h s - B.markovOp h s| ≤ ε := fun s => by
+    have hthis := hmod r₀ hr₀ hrr₀ r hr hrr (by rw [abs_sub_comm]; exact hd) s
+    rw [IncomeFluctuation.markovOp_apply, IncomeFluctuation.markovOp_apply]
+    exact hthis
+  have hnorm : ‖A.markovOp h - B.markovOp h‖ ≤ ε :=
+    (BoundedContinuousFunction.norm_le hε.le).mpr fun s => by
+      rw [Real.norm_eq_abs]
+      simpa only [BoundedContinuousFunction.coe_sub, Pi.sub_apply] using hptwise s
+  -- so the integrals are close
+  have hsub : ∫ s, (A.markovOp h - B.markovOp h) s ∂(ν : Measure P.State)
+      = ∫ s, A.markovOp h s ∂(ν : Measure P.State)
+        - ∫ s, B.markovOp h s ∂(ν : Measure P.State) := by
+    simpa only [BoundedContinuousFunction.coe_sub, Pi.sub_apply] using
+      integral_sub ((A.markovOp h).integrable _) ((B.markovOp h).integrable _)
+  rw [← hsub]
+  exact le_trans (A.abs_integral_le _ _) hnorm
 
 end IncomeFluctuation
 
