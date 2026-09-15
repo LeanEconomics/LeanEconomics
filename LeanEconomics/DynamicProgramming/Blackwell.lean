@@ -259,4 +259,59 @@ theorem Blackwell.concaveOn_valueFunction {β : ℝ≥0} {T : (S →ᵇ ℝ) →
 
 end Concave
 
+/-! ### Concavity along slices
+
+A stochastic household's state is a pair `(assets, income state)`, and that is not a module
+over `ℝ` -- there is no sensible convex combination of income states. So concavity cannot be
+stated on the state space itself. What is wanted, and what is true, is concavity in assets
+for each fixed income state, which is concavity along a family of slices. It is still a
+closed condition, so the same argument applies. -/
+
+section ConcaveSlice
+
+variable {ι : Type*} {E : Type*} [AddCommMonoid E] [Module ℝ E]
+
+/-- Concavity along every slice is a closed condition. -/
+theorem isClosed_forall_concaveOn {s : Set E} (hs : Convex ℝ s) (g : ι → E → S) :
+    IsClosed {v : S →ᵇ ℝ | ∀ i, ConcaveOn ℝ s fun e => v (g i e)} := by
+  have heq : {v : S →ᵇ ℝ | ∀ i, ConcaveOn ℝ s fun e => v (g i e)}
+      = ⋂ (p : ι × E × E × ℝ × ℝ)
+          (_ : p.2.1 ∈ s ∧ p.2.2.1 ∈ s ∧ 0 ≤ p.2.2.2.1 ∧ 0 ≤ p.2.2.2.2 ∧
+            p.2.2.2.1 + p.2.2.2.2 = 1),
+          {v : S →ᵇ ℝ | p.2.2.2.1 • v (g p.1 p.2.1) + p.2.2.2.2 • v (g p.1 p.2.2.1)
+            ≤ v (g p.1 (p.2.2.2.1 • p.2.1 + p.2.2.2.2 • p.2.2.1))} := by
+    ext v
+    simp only [Set.mem_ofPred_eq, Set.mem_iInter]
+    constructor
+    · intro hv p ⟨hx, hy, ha, hb, hab⟩
+      exact (hv p.1).2 hx hy ha hb hab
+    · intro hv i
+      exact ⟨hs, fun x hx y hy a b ha hb hab => hv (i, x, y, a, b) ⟨hx, hy, ha, hb, hab⟩⟩
+  rw [heq]
+  refine isClosed_iInter fun p => isClosed_iInter fun _ => ?_
+  exact isClosed_le
+    (((BoundedContinuousFunction.lipschitz_eval_const
+          (g p.1 p.2.1)).continuous.const_smul p.2.2.2.1).add
+      ((BoundedContinuousFunction.lipschitz_eval_const
+          (g p.1 p.2.2.1)).continuous.const_smul p.2.2.2.2))
+    (BoundedContinuousFunction.lipschitz_eval_const
+      (g p.1 (p.2.2.2.1 • p.2.1 + p.2.2.2.2 • p.2.2.1))).continuous
+
+/-- **The value function is concave along every slice** whenever the operator preserves
+that. -/
+theorem Blackwell.forall_concaveOn_valueFunction {β : ℝ≥0} {T : (S →ᵇ ℝ) → (S →ᵇ ℝ)}
+    {s : Set E} (hs : Convex ℝ s) (g : ι → E → S) (h : Blackwell β T) (hβ : β < 1)
+    (hT : ∀ v : S →ᵇ ℝ, (∀ i, ConcaveOn ℝ s fun e => v (g i e)) →
+      ∀ i, ConcaveOn ℝ s fun e => (T v) (g i e)) :
+    ∀ i, ConcaveOn ℝ s fun e => (h.valueFunction hβ) (g i e) := by
+  have hiter : ∀ n : ℕ, ∀ i, ConcaveOn ℝ s fun e => (T^[n] (0 : S →ᵇ ℝ)) (g i e) := by
+    intro n
+    induction n with
+    | zero => exact fun _ => ⟨hs, fun x _ y _ a b _ _ _ => by simp⟩
+    | succ k ih => rw [Function.iterate_succ_apply']; exact hT _ ih
+  exact (isClosed_forall_concaveOn hs g).mem_of_tendsto (h.tendsto_iterate_valueFunction hβ 0)
+    (Filter.Eventually.of_forall hiter)
+
+end ConcaveSlice
+
 end LeanEconomics
