@@ -28,7 +28,8 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable (P : IncomeFluctuation Z)
+variable {assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetCap)
 
 /-- The state space is nonempty: a household with no assets is in it. This has to be given
 by hand, since `0 ≤ assetCap` is data carried by `P` rather than an instance. -/

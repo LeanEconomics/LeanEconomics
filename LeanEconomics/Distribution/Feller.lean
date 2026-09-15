@@ -59,14 +59,15 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable (P : IncomeFluctuation Z)
+variable {assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetCap)
 
 /-- The compact region the agent distribution lives on: assets in `[0, assetCap]` paired
 with an income state. -/
-abbrev State : Type _ := ↥(Icc (0 : ℝ) P.assetCap) × Z
+abbrev State (_P : IncomeFluctuation Z assetCap) : Type _ := ↥(Icc (0 : ℝ) assetCap) × Z
 
 instance : CompactSpace P.State :=
-  haveI : CompactSpace ↥(Icc (0 : ℝ) P.assetCap) := isCompact_iff_compactSpace.mp isCompact_Icc
+  haveI : CompactSpace ↥(Icc (0 : ℝ) assetCap) := isCompact_iff_compactSpace.mp isCompact_Icc
   inferInstanceAs (CompactSpace (_ × _))
 
 /-- The region, read back as a state of the original model. -/
@@ -75,10 +76,10 @@ def incl (s : P.State) : ℝ × Z := ((s.1 : ℝ), s.2)
 theorem continuous_incl : Continuous P.incl :=
   (continuous_subtype_val.comp continuous_fst).prodMk continuous_snd
 
-theorem incl_mem (s : P.State) : (P.incl s).1 ∈ Icc 0 P.assetCap := s.1.2
+theorem incl_mem (s : P.State) : (P.incl s).1 ∈ Icc 0 assetCap := s.1.2
 
 /-- Next period's assets under the optimal policy, as a point of the region. -/
-noncomputable def nextAssets (s : P.State) : ↥(Icc (0 : ℝ) P.assetCap) :=
+noncomputable def nextAssets (s : P.State) : ↥(Icc (0 : ℝ) assetCap) :=
   ⟨P.policy (P.incl s), P.policy_mem_region _⟩
 
 /-- Next period's state if the income shock `z'` occurs. -/

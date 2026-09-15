@@ -32,7 +32,8 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable (P : IncomeFluctuation Z)
+variable {assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetCap)
 
 /-! ### The range of a bounded continuous function -/
 
@@ -322,7 +323,7 @@ household is exhausted in `N` periods, everyone is, because the asset map is inc
 bounded below by zero. -/
 
 /-- The asset map under the worst income shock. -/
-noncomputable def gBad (z₀ : Z) (x : ↥(Icc (0 : ℝ) P.assetCap)) : ↥(Icc (0 : ℝ) P.assetCap) :=
+noncomputable def gBad (z₀ : Z) (x : ↥(Icc (0 : ℝ) assetCap)) : ↥(Icc (0 : ℝ) assetCap) :=
   P.nextAssets (x, z₀)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
@@ -330,21 +331,21 @@ theorem gBad_mono (z₀ : Z) : Monotone (P.gBad z₀) := fun x y hxy =>
   P.policy_mono x.2 y.2 hxy
 
 /-- The richest state. -/
-def topState : ↥(Icc (0 : ℝ) P.assetCap) := ⟨P.assetCap, ⟨P.assetCap_nonneg, le_rfl⟩⟩
+def topState : ↥(Icc (0 : ℝ) assetCap) := ⟨assetCap, ⟨P.assetCap_nonneg, le_rfl⟩⟩
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
-theorem le_topState (x : ↥(Icc (0 : ℝ) P.assetCap)) : x ≤ P.topState := x.2.2
+theorem le_topState (x : ↥(Icc (0 : ℝ) assetCap)) : x ≤ P.topState := x.2.2
 
 /-- The bottom state: the borrowing constraint. -/
-def botState : ↥(Icc (0 : ℝ) P.assetCap) := ⟨0, ⟨le_rfl, P.assetCap_nonneg⟩⟩
+def botState : ↥(Icc (0 : ℝ) assetCap) := ⟨0, ⟨le_rfl, P.assetCap_nonneg⟩⟩
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
-theorem botState_le (x : ↥(Icc (0 : ℝ) P.assetCap)) : P.botState ≤ x := x.2.1
+theorem botState_le (x : ↥(Icc (0 : ℝ) assetCap)) : P.botState ≤ x := x.2.1
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **Monotonicity reduces exhaustion to the worst case.** -/
 theorem gBad_iterate_eq_bot {z₀ : Z} {N : ℕ} (hexh : (P.gBad z₀)^[N] P.topState = P.botState)
-    (x : ↥(Icc (0 : ℝ) P.assetCap)) : (P.gBad z₀)^[N] x = P.botState :=
+    (x : ↥(Icc (0 : ℝ) assetCap)) : (P.gBad z₀)^[N] x = P.botState :=
   le_antisymm (hexh ▸ (P.gBad_mono z₀).iterate N (P.le_topState x)) (P.botState_le _)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in

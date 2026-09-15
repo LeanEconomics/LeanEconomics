@@ -34,21 +34,22 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable (P : IncomeFluctuation Z)
+variable {assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetCap)
 
 /-! ### Aggregation -/
 
 theorem continuous_assetCoord : Continuous fun s : P.State => (s.1 : ℝ) :=
   continuous_subtype_val.comp continuous_fst
 
-theorem norm_assetCoord_le (s : P.State) : ‖(s.1 : ℝ)‖ ≤ P.assetCap :=
+theorem norm_assetCoord_le (s : P.State) : ‖(s.1 : ℝ)‖ ≤ assetCap :=
   abs_le.mpr ⟨by linarith [s.1.2.1, P.assetCap_nonneg], s.1.2.2⟩
 
 /-- The asset coordinate, as a bounded continuous function. Boundedness is exactly the asset
 cap, and continuity is immediate; together they are what make aggregate capital behave well
 under weak convergence. -/
 noncomputable def assetCoord : P.State →ᵇ ℝ :=
-  ofNormedAddCommGroup (fun s => (s.1 : ℝ)) P.continuous_assetCoord P.assetCap
+  ofNormedAddCommGroup (fun s => (s.1 : ℝ)) P.continuous_assetCoord assetCap
     P.norm_assetCoord_le
 
 @[simp]
@@ -72,12 +73,12 @@ end IncomeFluctuation
 section Equilibrium
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable [MeasurableSpace Z] [BorelSpace Z]
+variable [MeasurableSpace Z] [BorelSpace Z] {assetCap : ℝ}
 
 /-- **An Aiyagari stationary equilibrium** at interest rate `r`: the household problem
 `Pf r` has a stationary agent distribution whose aggregate capital equals the capital
 demanded at that rate. -/
-def IsAiyagariEquilibrium (Pf : ℝ → IncomeFluctuation Z) (D : ℝ → ℝ) (r : ℝ) : Prop :=
+def IsAiyagariEquilibrium (Pf : ℝ → IncomeFluctuation Z assetCap) (D : ℝ → ℝ) (r : ℝ) : Prop :=
   ∃ μ : ProbabilityMeasure (Pf r).State,
     (Pf r).IsStationary μ ∧ (Pf r).aggregateCapital μ = D r
 
@@ -91,7 +92,7 @@ Uniqueness of the stationary distribution is what makes `S` a FUNCTION of `r` ra
 correspondence, and that is what allows the intermediate value theorem to close the argument
 in place of a fixed point theorem for correspondences -- Mathlib has no Kakutani. -/
 theorem exists_aiyagari_equilibrium
-    {Pf : ℝ → IncomeFluctuation Z} {D S : ℝ → ℝ} {rlo rhi : ℝ} (hle : rlo ≤ rhi)
+    {Pf : ℝ → IncomeFluctuation Z assetCap} {D S : ℝ → ℝ} {rlo rhi : ℝ} (hle : rlo ≤ rhi)
     (hS : ∀ r, ∃ μ : ProbabilityMeasure (Pf r).State,
       (Pf r).IsStationary μ ∧ (Pf r).aggregateCapital μ = S r)
     (hScont : ContinuousOn S (Icc rlo rhi)) (hDcont : ContinuousOn D (Icc rlo rhi))

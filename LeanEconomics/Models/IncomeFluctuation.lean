@@ -48,15 +48,13 @@ namespace LeanEconomics
 
 /-- The income fluctuation problem, with period utility unbounded below. -/
 structure IncomeFluctuation (Z : Type*) [Fintype Z] [Nonempty Z] [TopologicalSpace Z]
-    [DiscreteTopology Z] where
+    [DiscreteTopology Z] (assetCap : ℝ) where
   /-- Income in each state. -/
   income : Z → ℝ
   /-- The Markov transition matrix on income states. -/
   transitionMatrix : Z → Z → ℝ
   /-- The interest rate on assets. -/
   interest : ℝ
-  /-- The upper bound imposed on asset holdings. -/
-  assetCap : ℝ
   /-- The discount factor. -/
   discount : ℝ≥0
   /-- Period utility, required to behave only on positive consumption. -/
@@ -83,16 +81,17 @@ structure IncomeFluctuation (Z : Type*) [Fintype Z] [Nonempty Z] [TopologicalSpa
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable (P : IncomeFluctuation Z)
+variable {assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetCap)
 
 /-- Cash on hand, with assets read as nonnegative. -/
 noncomputable def resources (s : ℝ × Z) : ℝ := P.income s.2 + (1 + P.interest) * max 0 s.1
 
 /-- The largest consumption the capped problem allows. -/
-noncomputable def maxConsumption : ℝ := P.maxIncome + (1 + P.interest) * P.assetCap
+noncomputable def maxConsumption : ℝ := P.maxIncome + (1 + P.interest) * assetCap
 
 /-- The largest asset holding that can be carried forward. -/
-noncomputable def maxSaving (s : ℝ × Z) : ℝ := max 0 (min P.assetCap (P.resources s))
+noncomputable def maxSaving (s : ℝ × Z) : ℝ := max 0 (min assetCap (P.resources s))
 
 /-- Consumption on the budget line. -/
 noncomputable def consumption (s : ℝ × Z) (a' : ℝ) : ℝ := P.resources s - a'
@@ -115,7 +114,7 @@ theorem minIncome_le_maxIncome : P.minIncome ≤ P.maxIncome :=
   (P.minIncome_le Classical.ofNonempty).trans (P.le_maxIncome _)
 
 theorem minIncome_le_maxConsumption : P.minIncome ≤ P.maxConsumption := by
-  have : 0 ≤ (1 + P.interest) * P.assetCap :=
+  have : 0 ≤ (1 + P.interest) * assetCap :=
     mul_nonneg P.interest_gt_neg_one.le P.assetCap_nonneg
   simp only [maxConsumption]; linarith [P.minIncome_le_maxIncome]
 
@@ -177,10 +176,10 @@ noncomputable def toExtended : ExtendedStochasticProgram (ℝ × Z) ℝ Z where
 @[simp]
 theorem feasible_eq (s : ℝ × Z) : P.toExtended.feasible s = Icc 0 (P.maxSaving s) := rfl
 
-theorem consumption_le_maxConsumption {s : ℝ × Z} {a' : ℝ} (hs : s.1 ∈ Icc 0 P.assetCap)
+theorem consumption_le_maxConsumption {s : ℝ × Z} {a' : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
     (ha' : 0 ≤ a') : P.consumption s a' ≤ P.maxConsumption := by
   have hmax : max 0 s.1 = s.1 := max_eq_right hs.1
-  have : (1 + P.interest) * s.1 ≤ (1 + P.interest) * P.assetCap :=
+  have : (1 + P.interest) * s.1 ≤ (1 + P.interest) * assetCap :=
     mul_le_mul_of_nonneg_left hs.2 P.interest_gt_neg_one.le
   simp only [consumption, resources, maxConsumption, hmax]
   linarith [P.le_maxIncome s.2]
@@ -188,7 +187,7 @@ theorem consumption_le_maxConsumption {s : ℝ × Z} {a' : ℝ} (hs : s.1 ∈ Ic
 /-- **The stochastic Bellman equation, with honest utility and positive consumption.** That
 consumption is positive at the optimum is a consequence of the value being real, not a
 separate development. -/
-theorem exists_optimal_saving {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) :
+theorem exists_optimal_saving {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
     ∃ a' ∈ Icc 0 (P.maxSaving s), 0 < P.consumption s a' ∧
       P.toExtended.valueFunction s
         = P.u (P.consumption s a')
@@ -236,18 +235,18 @@ theorem resources_affine_comb {x y θ φ : ℝ} {z : Z} (hx : 0 ≤ x) (hy : 0 �
   rw [P.resources_eq_affine hmix, P.resources_eq_affine hx, P.resources_eq_affine hy]
   linear_combination (-(P.income z)) * hθφ
 
-theorem maxSaving_le_assetCap (s : ℝ × Z) : P.maxSaving s ≤ P.assetCap :=
+theorem maxSaving_le_assetCap (s : ℝ × Z) : P.maxSaving s ≤ assetCap :=
   max_le P.assetCap_nonneg (min_le_left _ _)
 
 theorem feasible_subset_region {s : ℝ × Z} {a : ℝ} (ha : a ∈ P.toExtended.feasible s) :
-    a ∈ Icc 0 P.assetCap :=
+    a ∈ Icc 0 assetCap :=
   ⟨ha.1, ha.2.trans (P.maxSaving_le_assetCap s)⟩
 
-theorem maxSaving_eq (s : ℝ × Z) : P.maxSaving s = min P.assetCap (P.resources s) :=
+theorem maxSaving_eq (s : ℝ × Z) : P.maxSaving s = min assetCap (P.resources s) :=
   max_eq_right (le_min P.assetCap_nonneg (P.resources_pos s).le)
 
-theorem feasible_convex {x y : ℝ} {z : Z} (hx : x ∈ Icc 0 P.assetCap)
-    (hy : y ∈ Icc 0 P.assetCap) {ax ay θ φ : ℝ}
+theorem feasible_convex {x y : ℝ} {z : Z} (hx : x ∈ Icc 0 assetCap)
+    (hy : y ∈ Icc 0 assetCap) {ax ay θ φ : ℝ}
     (hax : ax ∈ P.toExtended.feasible (x, z)) (hay : ay ∈ P.toExtended.feasible (y, z))
     (hθ : 0 ≤ θ) (hφ : 0 ≤ φ) (hθφ : θ + φ = 1) :
     θ * ax + φ * ay ∈ P.toExtended.feasible (θ * x + φ * y, z) := by
@@ -258,8 +257,8 @@ theorem feasible_convex {x y : ℝ} {z : Z} (hx : x ∈ Icc 0 P.assetCap)
   refine ⟨add_nonneg (mul_nonneg hθ hax0) (mul_nonneg hφ hay0), ?_⟩
   rw [P.maxSaving_eq (θ * x + φ * y, z)]
   refine le_min ?_ ?_
-  · have h1 : ax ≤ P.assetCap := haxm.trans (min_le_left _ _)
-    have h2 : ay ≤ P.assetCap := haym.trans (min_le_left _ _)
+  · have h1 : ax ≤ assetCap := haxm.trans (min_le_left _ _)
+    have h2 : ay ≤ assetCap := haym.trans (min_le_left _ _)
     nlinarith
   · have h1 : ax ≤ P.resources (x, z) := haxm.trans (min_le_right _ _)
     have h2 : ay ≤ P.resources (y, z) := haym.trans (min_le_right _ _)
@@ -275,7 +274,7 @@ theorem consumption_pos_of_ne_bot {s : ℝ × Z} {a : ℝ} (h : P.toExtended.rew
       = extendBot P.u (min P.maxConsumption (P.consumption s a)) := rfl
     _ = ⊥ := extendBot_of_nonpos ((min_le_right _ _).trans hle)
 
-theorem reward_eq_coe {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 P.assetCap)
+theorem reward_eq_coe {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
     (ha : a ∈ P.toExtended.feasible s) (hc : 0 < P.consumption s a) :
     P.toExtended.reward (s, a) = ((P.u (P.consumption s a) : ℝ) : EReal) :=
   calc P.toExtended.reward (s, a)
@@ -285,7 +284,7 @@ theorem reward_eq_coe {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 P.assetCap)
     _ = _ := extendBot_of_pos hc
 
 theorem bellmanFn_eq_of_optimal {v : (ℝ × Z) →ᵇ ℝ} {s : ℝ × Z} {a : ℝ}
-    (hs : s.1 ∈ Icc 0 P.assetCap) (ha : a ∈ P.toExtended.feasible s)
+    (hs : s.1 ∈ Icc 0 assetCap) (ha : a ∈ P.toExtended.feasible s)
     (heq : P.toExtended.objectiveE v s a
       = ((P.toExtended.bellmanFn v s : ℝ) : EReal)) :
     0 < P.consumption s a ∧
@@ -303,15 +302,15 @@ theorem bellmanFn_eq_of_optimal {v : (ℝ × Z) →ᵇ ℝ} {s : ℝ × Z} {a : 
 
 /-- **The Bellman operator preserves concavity along each asset slice.** -/
 theorem concaveOn_bellman (v : (ℝ × Z) →ᵇ ℝ)
-    (hv : ∀ z : Z, ConcaveOn ℝ (Icc 0 P.assetCap) fun a => v (a, z)) (z : Z) :
-    ConcaveOn ℝ (Icc 0 P.assetCap) fun a => (P.toExtended.bellman v) (a, z) := by
+    (hv : ∀ z : Z, ConcaveOn ℝ (Icc 0 assetCap) fun a => v (a, z)) (z : Z) :
+    ConcaveOn ℝ (Icc 0 assetCap) fun a => (P.toExtended.bellman v) (a, z) := by
   refine ⟨convex_Icc _ _, fun x hx y hy θ φ hθ hφ hθφ => ?_⟩
   obtain ⟨ax, hax, heqx⟩ := P.toExtended.exists_optimal_action v (x, z)
   obtain ⟨ay, hay, heqy⟩ := P.toExtended.exists_optimal_action v (y, z)
   obtain ⟨hcx, hbx⟩ := P.bellmanFn_eq_of_optimal hx hax heqx
   obtain ⟨hcy, hby⟩ := P.bellmanFn_eq_of_optimal hy hay heqy
-  have hxy : θ * x + φ * y ∈ Icc 0 P.assetCap := by
-    simpa using convex_Icc (0 : ℝ) P.assetCap hx hy hθ hφ hθφ
+  have hxy : θ * x + φ * y ∈ Icc 0 assetCap := by
+    simpa using convex_Icc (0 : ℝ) assetCap hx hy hθ hφ hθφ
   have hmix := P.feasible_convex hx hy hax hay hθ hφ hθφ
   have hcmix : P.consumption (θ * x + φ * y, z) (θ * ax + φ * ay)
       = θ * P.consumption (x, z) ax + φ * P.consumption (y, z) ay := by
@@ -355,13 +354,13 @@ theorem concaveOn_bellman (v : (ℝ × Z) →ᵇ ℝ)
 
 /-- **The value function is concave in assets, for each income state.** -/
 theorem concaveOn_valueFunction (z : Z) :
-    ConcaveOn ℝ (Icc 0 P.assetCap) fun a => P.toExtended.valueFunction (a, z) :=
+    ConcaveOn ℝ (Icc 0 assetCap) fun a => P.toExtended.valueFunction (a, z) :=
   Blackwell.forall_concaveOn_valueFunction (convex_Icc _ _) (fun (z : Z) (a : ℝ) => (a, z))
     P.toExtended.blackwell P.toExtended.discount_lt_one
     (fun v hv => P.concaveOn_bellman v hv) z
 
 /-- **The optimal action is unique.** -/
-theorem optimal_action_unique {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) {a₀ a₁ : ℝ}
+theorem optimal_action_unique {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {a₀ a₁ : ℝ}
     (h₀ : a₀ ∈ P.toExtended.feasible s) (h₁ : a₁ ∈ P.toExtended.feasible s)
     (hm₀ : P.toExtended.objectiveE P.toExtended.valueFunction s a₀
       = ((P.toExtended.bellmanFn P.toExtended.valueFunction s : ℝ) : EReal))
@@ -429,21 +428,21 @@ theorem policy_optimal (s : ℝ × Z) :
   (Classical.choose_spec
     (P.toExtended.exists_optimal_action P.toExtended.valueFunction s)).2
 
-theorem policy_mem_region (s : ℝ × Z) : P.policy s ∈ Icc 0 P.assetCap :=
+theorem policy_mem_region (s : ℝ × Z) : P.policy s ∈ Icc 0 assetCap :=
   P.feasible_subset_region (P.policy_mem s)
 
-theorem consumption_policy_pos {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) :
+theorem consumption_policy_pos {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
     0 < P.consumption s (P.policy s) :=
   (P.bellmanFn_eq_of_optimal hs (P.policy_mem s) (P.policy_optimal s)).1
 
-theorem eq_policy_of_optimal {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) {a : ℝ}
+theorem eq_policy_of_optimal {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {a : ℝ}
     (ha : a ∈ P.toExtended.feasible s)
     (hopt : P.toExtended.objectiveE P.toExtended.valueFunction s a
       = ((P.toExtended.bellmanFn P.toExtended.valueFunction s : ℝ) : EReal)) :
     a = P.policy s :=
   P.optimal_action_unique hs ha (P.policy_mem s) hopt (P.policy_optimal s)
 
-theorem argmax_eq_singleton {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) :
+theorem argmax_eq_singleton {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
     argmax (P.toExtended.objectiveE P.toExtended.valueFunction) P.toExtended.feasible s
       = {P.policy s} := by
   ext a
@@ -461,13 +460,13 @@ theorem argmax_eq_singleton {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) :
 /-- **The optimal policy is continuous** on the region of states with assets in
 `[0, assetCap]`. -/
 theorem continuousOn_policy :
-    ContinuousOn P.policy {s : ℝ × Z | s.1 ∈ Icc 0 P.assetCap} :=
+    ContinuousOn P.policy {s : ℝ × Z | s.1 ∈ Icc 0 assetCap} :=
   continuousOn_of_upperHemicontinuous_singleton
     (P.toExtended.upperHemicontinuous_argmax P.toExtended.valueFunction)
     fun _ hs => P.argmax_eq_singleton hs
 
 /-- **The Bellman equation at the policy.** -/
-theorem valueFunction_eq_policy {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) :
+theorem valueFunction_eq_policy {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
     P.toExtended.valueFunction s
       = P.u (P.consumption s (P.policy s))
         + P.discount * ∑ z', P.transitionMatrix s.2 z'
@@ -480,11 +479,10 @@ theorem valueFunction_eq_policy {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) :
   rw [← hfix, h]
 
 /-- A two-state calibration with `σ = 2`, where CES utility is `-1 / c`. -/
-noncomputable def calibrated : IncomeFluctuation (Fin 2) where
+noncomputable def calibrated : IncomeFluctuation (Fin 2) 10 where
   income z := if z = 0 then 1 / 2 else 3 / 2
   transitionMatrix _ _ := 1 / 2
   interest := 1 / 20
-  assetCap := 10
   discount := 24 / 25
   u := fun c => -c⁻¹
   minIncome := 1 / 2

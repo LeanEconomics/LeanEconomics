@@ -35,7 +35,8 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable (P : IncomeFluctuation Z)
+variable {assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetCap)
 
 /-! ### The budget grows with assets -/
 
@@ -66,14 +67,14 @@ noncomputable def cont (z : Z) (x : ℝ) : ℝ :=
 noncomputable def objR (s : ℝ × Z) (x : ℝ) : ℝ :=
   P.u (P.consumption s x) + P.discount * P.cont s.2 x
 
-theorem objectiveE_eq_coe {s : ℝ × Z} {x : ℝ} (hs : s.1 ∈ Icc 0 P.assetCap)
+theorem objectiveE_eq_coe {s : ℝ × Z} {x : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
     (hx : x ∈ P.toExtended.feasible s) (hc : 0 < P.consumption s x) :
     P.toExtended.objectiveE P.toExtended.valueFunction s x = ((P.objR s x : ℝ) : EReal) := by
   rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe hs hx hc, ← EReal.coe_add]
   rfl
 
 /-- Any feasible action with positive consumption is worth at most the optimum. -/
-theorem objR_le_of_mem {s : ℝ × Z} {x : ℝ} (hs : s.1 ∈ Icc 0 P.assetCap)
+theorem objR_le_of_mem {s : ℝ × Z} {x : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
     (hx : x ∈ P.toExtended.feasible s) (hc : 0 < P.consumption s x) :
     P.objR s x ≤ P.objR s (P.policy s) := by
   have hpol : ((P.objR s (P.policy s) : ℝ) : EReal)
@@ -88,8 +89,8 @@ theorem objR_le_of_mem {s : ℝ × Z} {x : ℝ} (hs : s.1 ∈ Icc 0 P.assetCap)
 
 /-- **The optimal policy is increasing in assets.** Holding the income state fixed, a
 household with more assets saves at least as much. -/
-theorem policy_mono {a a' : ℝ} {z : Z} (ha : a ∈ Icc 0 P.assetCap)
-    (ha' : a' ∈ Icc 0 P.assetCap) (hle : a ≤ a') :
+theorem policy_mono {a a' : ℝ} {z : Z} (ha : a ∈ Icc 0 assetCap)
+    (ha' : a' ∈ Icc 0 assetCap) (hle : a ≤ a') :
     P.policy (a, z) ≤ P.policy (a', z) := by
   by_contra hcon
   rw [not_le] at hcon

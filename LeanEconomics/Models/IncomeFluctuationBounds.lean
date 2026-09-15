@@ -39,7 +39,8 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable (P : IncomeFluctuation Z)
+variable {assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetCap)
 
 /-- The expected continuation value is bounded by the sup norm of the value function. -/
 theorem abs_expectation_le (a : ℝ) (z : Z) :
@@ -57,7 +58,7 @@ theorem abs_expectation_le (a : ℝ) (z : Z) :
 
 /-- **The utility of optimal consumption is bounded below**, by a quantity depending only on
 the sup norm of the value function — not on the state. -/
-theorem le_utility_consumption_policy {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) :
+theorem le_utility_consumption_policy {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
     -(1 + P.discount) * ‖P.toExtended.valueFunction‖
       ≤ P.u (P.consumption s (P.policy s)) := by
   have hbell := P.valueFunction_eq_policy hs
@@ -73,7 +74,7 @@ theorem le_utility_consumption_policy {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.asset
 This is the form that survives into a parametric statement. A family of programs sharing a
 utility function and a common bound on `max |u minIncome| |u maxConsumption| / (1 - β)` has a
 common `L`, and then `exists_lower_bound_of_utility_ge` hands it a single `δ`. -/
-theorem le_utility_consumption_policy_of_bounds {s : ℝ × Z} (hs : s.1 ∈ Icc 0 P.assetCap) :
+theorem le_utility_consumption_policy_of_bounds {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
     -(1 + P.discount) * (max |P.u P.minIncome| |P.u P.maxConsumption| / (1 - P.discount))
       ≤ P.u (P.consumption s (P.policy s)) := by
   refine le_trans ?_ (P.le_utility_consumption_policy hs)
@@ -89,8 +90,8 @@ theorem le_utility_consumption_policy_of_bounds {s : ℝ × Z} (hs : s.1 ∈ Icc
 depends only on `u` and on `L` — NOT on the state, and not on anything that moves with the
 interest rate. That is the property the parametric argument needs. -/
 theorem exists_lower_bound_of_utility_ge (L : ℝ)
-    (hL : ∀ s : ℝ × Z, s.1 ∈ Icc 0 P.assetCap → L ≤ P.u (P.consumption s (P.policy s))) :
-    ∃ δ > 0, ∀ s : ℝ × Z, s.1 ∈ Icc 0 P.assetCap → δ ≤ P.consumption s (P.policy s) := by
+    (hL : ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → L ≤ P.u (P.consumption s (P.policy s))) :
+    ∃ δ > 0, ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → δ ≤ P.consumption s (P.policy s) := by
   have hev : ∀ᶠ c in 𝓝[>] (0 : ℝ), P.u c < L - 1 :=
     P.tendsto_atBot_u (eventually_lt_atBot (L - 1))
   obtain ⟨ε, hε, hsub⟩ := (nhdsGT_basis (0 : ℝ)).eventually_iff.mp hev
@@ -107,7 +108,7 @@ No compactness and no continuity of the policy are used, which is exactly what l
 argument run uniformly in the interest rate: a compactness proof would need joint continuity
 in `(r, s)`, which is what such a bound is wanted to prove in the first place. -/
 theorem exists_consumption_policy_lower_bound :
-    ∃ δ > 0, ∀ s : ℝ × Z, s.1 ∈ Icc 0 P.assetCap → δ ≤ P.consumption s (P.policy s) :=
+    ∃ δ > 0, ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → δ ≤ P.consumption s (P.policy s) :=
   P.exists_lower_bound_of_utility_ge _ fun _ hs => P.le_utility_consumption_policy_of_bounds hs
 
 /-! ### A choice set that does not move
