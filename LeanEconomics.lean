@@ -15,6 +15,7 @@ import LeanEconomics.Models.IncomeFluctuation
 import LeanEconomics.Models.ConsumptionSavingsUncapped
 import LeanEconomics.Models.IncomeFluctuationUncapped
 import LeanEconomics.Distribution.Feller
+import LeanEconomics.Distribution.Stationary
 import LeanEconomics.Models.ConsumptionSavingsUncappedCRRA
 import LeanEconomics.Models.LogClosedForm
 import LeanEconomics.Models.LogNoFloor
