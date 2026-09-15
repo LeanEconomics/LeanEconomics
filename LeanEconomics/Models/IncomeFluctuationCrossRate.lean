@@ -38,7 +38,7 @@ binds, trivial on one side, and bounded on the other precisely because the clamp
 bind confines the state.
 -/
 
-open Set
+open Set BoundedContinuousFunction
 
 namespace LeanEconomics
 
@@ -229,6 +229,47 @@ theorem abs_clamped_consumption_sub_le {P Q : IncomeFluctuation Z assetCap}
   · -- `P`'s clamp fails to bind, which confines the state
     refine le_trans (abs_min_sub_min_le_max _ _ _ _) (max_le hlevel ?_)
     exact hcons M (P.max_zero_le_of_consumption_lt hr hP hθ hPlt)
+
+/-! ### Assembling: from pointwise bounds to a bound on the supremum
+
+The sup-norm estimate compares two suprema, and the reparametrisation has already made them
+suprema over the SAME set `[0,1]`. What remains is to get from a bound on the objectives to a
+bound on their suprema.
+
+A naive pointwise bound would not do, and the reason is worth stating. Where consumption is
+tiny but positive, `u` of the two consumptions can differ by an arbitrary amount however close
+the rates are, because `u` falls to `-∞`; so
+
+  ∀ θ, objective_P θ ≤ objective_Q θ + ε
+
+is FALSE. Those actions are dominated -- consuming almost nothing is far worse than the
+always-available choice `θ = 0` -- so they cannot affect either supremum, but a pointwise
+statement cannot see that.
+
+The cutoff `L` is what encodes it. The hypothesis is only required at actions worth at least
+`L`, and `L` is separately known to sit below the other program's supremum. Actions below `L`
+are then bounded by `L` itself and need no comparison at all. In use, `L` will be the value of
+`θ = 0`, which both programs have available. -/
+
+theorem maxE_le_of_pointwise {P Q : IncomeFluctuation Z assetCap} (v : (ℝ × Z) →ᵇ ℝ)
+    (s : ℝ × Z) (L : EReal) (ε : EReal)
+    (hL : L ≤ Q.toExtended.maxE v s + ε)
+    (h : ∀ θ ∈ Icc (0 : ℝ) 1, L ≤ P.toExtended.objectiveE v s (θ * P.maxSaving s) →
+      P.toExtended.objectiveE v s (θ * P.maxSaving s)
+        ≤ Q.toExtended.objectiveE v s (θ * Q.maxSaving s) + ε) :
+    P.toExtended.maxE v s ≤ Q.toExtended.maxE v s + ε := by
+  rw [P.maxE_eq_sSup_unit]
+  refine sSup_le ?_
+  rintro x ⟨θ, hθ, rfl⟩
+  rcases le_or_gt L (P.toExtended.objectiveE v s (θ * P.maxSaving s)) with hge | hlt
+  · -- worth at least the cutoff: the pointwise hypothesis applies
+    refine le_trans (h θ hθ hge) ?_
+    have hmem : θ * Q.maxSaving s ∈ Q.toExtended.feasible s := by
+      rw [Q.feasible_eq_image]; exact ⟨θ, hθ, rfl⟩
+    gcongr
+    exact le_maxValueE hmem
+  · -- below the cutoff: dominated, and bounded by the cutoff itself
+    exact le_trans hlt.le hL
 
 end IncomeFluctuation
 
