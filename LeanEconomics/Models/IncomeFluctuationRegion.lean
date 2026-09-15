@@ -178,15 +178,17 @@ theorem abs_expect_le (v : (ℝ × Z) →ᵇ ℝ) (p : (ℝ × Z) × ℝ) :
         exact mul_le_mul_of_nonneg_left (v.norm_coe_le_norm _) (P.toExtended.prob_nonneg z' _)
     _ = ‖v‖ := by rw [← Finset.sum_mul, P.toExtended.prob_sum, one_mul]
 
-/-- **Actions worth keeping consume a bounded amount.** -/
-theorem exists_cutoff_consumption (v : (ℝ × Z) →ᵇ ℝ) :
-    ∃ δ > 0, ∀ s : ℝ × Z, s ∈ P.region → ∀ a ∈ P.toExtended.feasible s,
-      ((P.toExtended.loBound v : ℝ) : EReal) ≤ P.toExtended.objectiveE v s a →
-      δ ≤ P.consumption s a := by
+/-- **Actions worth keeping consume a bounded amount**, for a cutoff `δ` given in advance.
+
+Separating the choice of `δ` from its use is what makes the bound uniform across interest
+rates: the hypothesis on `δ` mentions only `u`, `loBound v` and the discount factor, none of
+which move with the rate, so a single `δ` serves every rate. -/
+theorem le_consumption_of_cutoff (v : (ℝ × Z) →ᵇ ℝ) {δ : ℝ}
+    (hspec : ∀ c : ℝ, 0 < c → c < δ → P.u c < P.toExtended.loBound v - P.discount * ‖v‖)
+    {s : ℝ × Z} (hs : s ∈ P.region) {a : ℝ} (ha : a ∈ P.toExtended.feasible s)
+    (hL : ((P.toExtended.loBound v : ℝ) : EReal) ≤ P.toExtended.objectiveE v s a) :
+    δ ≤ P.consumption s a := by
   set R : ℝ := P.toExtended.loBound v - P.discount * ‖v‖ with hR
-  have hev : ∀ᶠ c in 𝓝[>] (0 : ℝ), P.u c < R := P.tendsto_atBot_u (eventually_lt_atBot R)
-  obtain ⟨δ, hδ, hsub⟩ := (nhdsGT_basis (0 : ℝ)).eventually_iff.mp hev
-  refine ⟨δ, hδ, fun s hs a ha hL => ?_⟩
   by_contra hlt
   rw [not_le] at hlt
   -- a reward of `⊥` would make the whole objective `⊥`, which is below the cutoff
@@ -206,7 +208,25 @@ theorem exists_cutoff_consumption (v : (ℝ × Z) →ᵇ ℝ) :
   have hge : R ≤ P.u (P.consumption s a) := by
     rw [hR]
     nlinarith [hexp.2, hL]
-  exact absurd (hsub ⟨hc, hlt⟩) (not_lt.mpr hge)
+  exact absurd (hspec _ hc hlt) (not_lt.mpr hge)
+
+/-- A cutoff exists, and its defining property mentions only data that does not move with
+the interest rate. -/
+theorem exists_cutoff (v : (ℝ × Z) →ᵇ ℝ) :
+    ∃ δ > 0, ∀ c : ℝ, 0 < c → c < δ →
+      P.u c < P.toExtended.loBound v - P.discount * ‖v‖ := by
+  set R : ℝ := P.toExtended.loBound v - P.discount * ‖v‖ with hR
+  have hev : ∀ᶠ c in 𝓝[>] (0 : ℝ), P.u c < R := P.tendsto_atBot_u (eventually_lt_atBot R)
+  obtain ⟨δ, hδ, hsub⟩ := (nhdsGT_basis (0 : ℝ)).eventually_iff.mp hev
+  exact ⟨δ, hδ, fun c hc hcδ => hsub ⟨hc, hcδ⟩⟩
+
+/-- **Actions worth keeping consume a bounded amount.** -/
+theorem exists_cutoff_consumption (v : (ℝ × Z) →ᵇ ℝ) :
+    ∃ δ > 0, ∀ s : ℝ × Z, s ∈ P.region → ∀ a ∈ P.toExtended.feasible s,
+      ((P.toExtended.loBound v : ℝ) : EReal) ≤ P.toExtended.objectiveE v s a →
+      δ ≤ P.consumption s a := by
+  obtain ⟨δ, hδ, hspec⟩ := P.exists_cutoff v
+  exact ⟨δ, hδ, fun s hs a ha hL => P.le_consumption_of_cutoff v hspec hs ha hL⟩
 
 /-! ### Uniform continuity
 
