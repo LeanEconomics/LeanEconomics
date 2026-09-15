@@ -32,3 +32,4 @@ import LeanEconomics.Models.IncomeFluctuationAugmented
 import LeanEconomics.Equilibrium.AiyagariContinuity
 import LeanEconomics.Models.NonVacuity
 import LeanEconomics.Models.IncomeFluctuationLipschitz
+import LeanEconomics.Equilibrium.Firm
