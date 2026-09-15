@@ -314,4 +314,57 @@ theorem Blackwell.forall_concaveOn_valueFunction {β : ℝ≥0} {T : (S →ᵇ �
 
 end ConcaveSlice
 
+section Lipschitz
+
+/-!
+### Lipschitz value functions
+
+The third closed class, after monotone and concave. A value function that is Lipschitz in one
+coordinate is what lets a marginal argument run without derivatives: it bounds the marginal
+value of that coordinate uniformly, which is what a corner condition needs.
+
+As with concavity, the property is stated along a family of slices `g i`, since the state
+space need not be a metric space in the coordinate of interest.
+-/
+
+variable {S : Type*} [TopologicalSpace S] {ι : Type*}
+
+theorem isClosed_forall_lipschitzOn (t : Set ℝ) (L : ℝ) (g : ι → ℝ → S) :
+    IsClosed {v : S →ᵇ ℝ | ∀ i, ∀ x ∈ t, ∀ y ∈ t, |v (g i x) - v (g i y)| ≤ L * |x - y|} := by
+  have heq : {v : S →ᵇ ℝ | ∀ i, ∀ x ∈ t, ∀ y ∈ t, |v (g i x) - v (g i y)| ≤ L * |x - y|}
+      = ⋂ (p : ι × ℝ × ℝ) (_ : p.2.1 ∈ t ∧ p.2.2 ∈ t),
+          {v : S →ᵇ ℝ | |v (g p.1 p.2.1) - v (g p.1 p.2.2)| ≤ L * |p.2.1 - p.2.2|} := by
+    ext v
+    simp only [Set.mem_ofPred_eq, Set.mem_iInter]
+    exact ⟨fun hv p hp => hv p.1 p.2.1 hp.1 p.2.2 hp.2, fun hv i x hx y hy => hv (i, x, y) ⟨hx, hy⟩⟩
+  rw [heq]
+  refine isClosed_iInter fun p => isClosed_iInter fun _ => ?_
+  exact isClosed_le
+    (((BoundedContinuousFunction.lipschitz_eval_const (g p.1 p.2.1)).continuous.sub
+      (BoundedContinuousFunction.lipschitz_eval_const (g p.1 p.2.2)).continuous).abs)
+    continuous_const
+
+/-- **The value function is Lipschitz along the slices** whenever the operator preserves that
+property. The nonnegativity of `L` is what makes the zero function a valid starting point for
+the iteration. -/
+theorem Blackwell.forall_lipschitzOn_valueFunction {β : ℝ≥0} {T : (S →ᵇ ℝ) → (S →ᵇ ℝ)}
+    (h : Blackwell β T) (hβ : β < 1) {t : Set ℝ} {L : ℝ} (hL : 0 ≤ L) {g : ι → ℝ → S}
+    (hT : ∀ v : S →ᵇ ℝ,
+      (∀ i, ∀ x ∈ t, ∀ y ∈ t, |v (g i x) - v (g i y)| ≤ L * |x - y|) →
+      ∀ i, ∀ x ∈ t, ∀ y ∈ t, |T v (g i x) - T v (g i y)| ≤ L * |x - y|) :
+    ∀ i, ∀ x ∈ t, ∀ y ∈ t,
+      |h.valueFunction hβ (g i x) - h.valueFunction hβ (g i y)| ≤ L * |x - y| := by
+  have hiter : ∀ n : ℕ, ∀ i, ∀ x ∈ t, ∀ y ∈ t,
+      |(T^[n] (0 : S →ᵇ ℝ)) (g i x) - (T^[n] (0 : S →ᵇ ℝ)) (g i y)| ≤ L * |x - y| := by
+    intro n
+    induction n with
+    | zero =>
+        intro i x _ y _
+        simpa using mul_nonneg hL (abs_nonneg _)
+    | succ k ih => rw [Function.iterate_succ_apply']; exact hT _ ih
+  exact isClosed_forall_lipschitzOn t L g |>.mem_of_tendsto
+    (h.tendsto_iterate_valueFunction hβ 0) (Filter.Eventually.of_forall hiter)
+
+end Lipschitz
+
 end LeanEconomics
