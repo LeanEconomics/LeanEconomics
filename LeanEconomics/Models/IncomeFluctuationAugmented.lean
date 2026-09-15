@@ -329,6 +329,67 @@ theorem continuousOn_augPolicy (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) :
   have h := P.argmax_aug_eq_singleton hrlo hle hx.2 hrr (t := (x.1.1, x.2)) hx.1
   rw [h, P.augPolicy_eq hrlo hle hx.2 hrr (t := (x.1.1, x.2)) hx.1]
 
+/-! ### Uniform convergence of the policy
+
+Joint continuity plus compactness gives uniform continuity, and that is what resolves the
+pointwise-versus-uniform difficulty recorded with `abs_markovFn_sub_le`: a parametric
+argument would have produced continuity in `r` for each fixed state and then owed an
+equicontinuity argument to make it uniform. Here uniformity is free, because a continuous
+function on a compact set is uniformly continuous.
+
+As with the continuation value, `Z` carries no metric, so `(ℝ × ℝ) × Z` is not a metric space
+and the modulus is taken in `(assets, rate)` for each income state, then combined over the
+finitely many states. -/
+
+set_option linter.unusedFintypeInType false in
+/-- **The policy converges uniformly as the interest rate moves.** -/
+theorem exists_policy_modulus (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) {ε : ℝ} (hε : 0 < ε) :
+    ∃ η > 0, ∀ (z : Z), ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ r ∈ Icc rlo rhi, ∀ r' ∈ Icc rlo rhi,
+      |r - r'| < η →
+      |P.augPolicy hrlo hle ((a, r), z) - P.augPolicy hrlo hle ((a, r'), z)| < ε := by
+  classical
+  have hslice : ∀ z : Z, ∃ η > 0, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ r ∈ Icc rlo rhi,
+      ∀ r' ∈ Icc rlo rhi, |r - r'| < η →
+      |P.augPolicy hrlo hle ((a, r), z) - P.augPolicy hrlo hle ((a, r'), z)| < ε := by
+    intro z
+    set K : Set (ℝ × ℝ) := Icc 0 assetCap ×ˢ Icc rlo rhi with hK
+    have hKc : IsCompact K := isCompact_Icc.prod isCompact_Icc
+    have hmaps : MapsTo (fun p : ℝ × ℝ => ((p, z) : P.AugState)) K
+        {x : P.AugState | x.1.1 ∈ Icc 0 assetCap ∧ x.1.2 ∈ Icc rlo rhi} :=
+      fun p hp => ⟨hp.1, hp.2⟩
+    have hcont : ContinuousOn (fun p : ℝ × ℝ => P.augPolicy hrlo hle (p, z)) K :=
+      (P.continuousOn_augPolicy hrlo hle).comp
+        (continuous_id.prodMk continuous_const).continuousOn hmaps
+    have huc := hKc.uniformContinuousOn_of_continuous hcont
+    obtain ⟨η, hη, hspec⟩ := Metric.uniformContinuousOn_iff.mp huc ε hε
+    refine ⟨η, hη, fun a ha r hr r' hr' hd => ?_⟩
+    have hmem : ((a, r) : ℝ × ℝ) ∈ K := ⟨ha, hr⟩
+    have hmem' : ((a, r') : ℝ × ℝ) ∈ K := ⟨ha, hr'⟩
+    have hdist : dist ((a, r) : ℝ × ℝ) ((a, r') : ℝ × ℝ) < η := by
+      rw [Prod.dist_eq, dist_self, Real.dist_eq]
+      simpa using hd
+    have := hspec _ hmem _ hmem' hdist
+    rwa [Real.dist_eq] at this
+  choose η hη hspec using hslice
+  have hne : (Finset.univ : Finset Z).Nonempty := ⟨Classical.ofNonempty, Finset.mem_univ _⟩
+  refine ⟨Finset.univ.inf' hne η, (Finset.lt_inf'_iff _).2 fun z _ => hη z, ?_⟩
+  exact fun z a ha r hr r' hr' hd =>
+    hspec z a ha r hr r' hr' (lt_of_lt_of_le hd (Finset.inf'_le _ (Finset.mem_univ z)))
+
+/-- The same, stated for the policies of the sliced programmes. -/
+theorem exists_policy_modulus_withRate (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) {ε : ℝ}
+    (hε : 0 < ε) :
+    ∃ η > 0, ∀ (z : Z), ∀ a ∈ Icc (0 : ℝ) assetCap,
+      ∀ (r : ℝ) (_hr : r ∈ Icc rlo rhi) (hrr : 0 < 1 + r),
+      ∀ (r' : ℝ) (_hr' : r' ∈ Icc rlo rhi) (hrr' : 0 < 1 + r'),
+      |r - r'| < η →
+      |(P.withRate r hrr).policy (a, z) - (P.withRate r' hrr').policy (a, z)| < ε := by
+  obtain ⟨η, hη, hspec⟩ := P.exists_policy_modulus hrlo hle hε
+  refine ⟨η, hη, fun z a ha r _hr hrr r' _hr' hrr' hd => ?_⟩
+  rw [← P.augPolicy_eq hrlo hle _hr hrr (t := (a, z)) ha,
+    ← P.augPolicy_eq hrlo hle _hr' hrr' (t := (a, z)) ha]
+  exact hspec z a ha r _hr r' _hr' hd
+
 end IncomeFluctuation
 
 end LeanEconomics
