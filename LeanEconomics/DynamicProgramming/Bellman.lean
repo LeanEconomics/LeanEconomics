@@ -216,6 +216,49 @@ theorem monotone_bellman
 
 end Monotone
 
+section Concave
+
+variable [AddCommMonoid S] [Module ℝ S] [AddCommMonoid A] [Module ℝ A]
+
+/-- The Bellman operator preserves concavity on a convex set `s`, given that the feasible
+graph is convex over `s`, the reward is concave along it, the law of motion is affine, and
+`s` is forward invariant.
+
+The mixed action is feasible at the mixed state, so it is *available*; the value at the
+mixed state is at least what it delivers, which by concavity of the reward and of the
+continuation value is at least the mixture of the two optimal values. -/
+theorem concaveOn_bellman {s : Set S} (hs : Convex ℝ s)
+    (hgraph : ∀ x ∈ s, ∀ y ∈ s, ∀ ax ∈ D.feasible x, ∀ ay ∈ D.feasible y,
+      ∀ θ φ : ℝ, 0 ≤ θ → 0 ≤ φ → θ + φ = 1 →
+      θ • ax + φ • ay ∈ D.feasible (θ • x + φ • y))
+    (hreward : ∀ x ∈ s, ∀ y ∈ s, ∀ ax ∈ D.feasible x, ∀ ay ∈ D.feasible y,
+      ∀ θ φ : ℝ, 0 ≤ θ → 0 ≤ φ → θ + φ = 1 →
+      θ • D.reward (x, ax) + φ • D.reward (y, ay)
+        ≤ D.reward (θ • x + φ • y, θ • ax + φ • ay))
+    (htrans : ∀ (x y : S) (ax ay : A) (θ φ : ℝ),
+      D.transition (θ • x + φ • y, θ • ax + φ • ay)
+        = θ • D.transition (x, ax) + φ • D.transition (y, ay))
+    (hinv : ∀ x ∈ s, ∀ a ∈ D.feasible x, D.transition (x, a) ∈ s)
+    (v : S →ᵇ ℝ) (hv : ConcaveOn ℝ s ⇑v) : ConcaveOn ℝ s ⇑(D.bellman v) := by
+  refine ⟨hs, fun x hx y hy θ φ hθ hφ hθφ => ?_⟩
+  obtain ⟨ax, hax, heqx, -⟩ := D.exists_optimal_action v x
+  obtain ⟨ay, hay, heqy, -⟩ := D.exists_optimal_action v y
+  have hle := D.le_bellmanFn v (hgraph x hx y hy ax hax ay hay θ φ hθ hφ hθφ)
+  have hr := hreward x hx y hy ax hax ay hay θ φ hθ hφ hθφ
+  have hvg := hv.2 (hinv x hx ax hax) (hinv y hy ay hay) hθ hφ hθφ
+  have hβ : (0 : ℝ) ≤ D.discount := D.discount.coe_nonneg
+  have hkey : θ • D.objective v x ax + φ • D.objective v y ay
+      ≤ D.objective v (θ • x + φ • y) (θ • ax + φ • ay) := by
+    simp only [objective]
+    rw [htrans]
+    have hscaled := mul_le_mul_of_nonneg_left hvg hβ
+    simp only [smul_eq_mul] at hr hscaled ⊢
+    linarith
+  rw [heqx, heqy]
+  exact le_trans hkey hle
+
+end Concave
+
 section ValueFunction
 
 /-- The **value function** of the program: the unique fixed point of its Bellman
@@ -262,6 +305,24 @@ theorem monotone_valueFunction [Preorder S]
     Monotone ⇑D.valueFunction :=
   D.blackwell.monotone_valueFunction D.discount_lt_one
     fun v hv => D.monotone_bellman hfeas hreward htrans v hv
+
+/-- **The value function is concave on `s`** under those conditions. -/
+theorem concaveOn_valueFunction [AddCommMonoid S] [Module ℝ S] [AddCommMonoid A] [Module ℝ A]
+    {s : Set S} (hs : Convex ℝ s)
+    (hgraph : ∀ x ∈ s, ∀ y ∈ s, ∀ ax ∈ D.feasible x, ∀ ay ∈ D.feasible y,
+      ∀ θ φ : ℝ, 0 ≤ θ → 0 ≤ φ → θ + φ = 1 →
+      θ • ax + φ • ay ∈ D.feasible (θ • x + φ • y))
+    (hreward : ∀ x ∈ s, ∀ y ∈ s, ∀ ax ∈ D.feasible x, ∀ ay ∈ D.feasible y,
+      ∀ θ φ : ℝ, 0 ≤ θ → 0 ≤ φ → θ + φ = 1 →
+      θ • D.reward (x, ax) + φ • D.reward (y, ay)
+        ≤ D.reward (θ • x + φ • y, θ • ax + φ • ay))
+    (htrans : ∀ (x y : S) (ax ay : A) (θ φ : ℝ),
+      D.transition (θ • x + φ • y, θ • ax + φ • ay)
+        = θ • D.transition (x, ax) + φ • D.transition (y, ay))
+    (hinv : ∀ x ∈ s, ∀ a ∈ D.feasible x, D.transition (x, a) ∈ s) :
+    ConcaveOn ℝ s ⇑D.valueFunction :=
+  Blackwell.concaveOn_valueFunction hs D.blackwell D.discount_lt_one
+    fun v hv => D.concaveOn_bellman hs hgraph hreward htrans hinv v hv
 
 end ValueFunction
 

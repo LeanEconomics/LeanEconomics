@@ -215,20 +215,26 @@ section Concave
 
 variable {S : Type*} [TopologicalSpace S] [AddCommMonoid S] [Module ℝ S]
 
-/-- The concave bounded continuous functions form a closed set. -/
-theorem isClosed_concaveOn : IsClosed {v : S →ᵇ ℝ | ConcaveOn ℝ Set.univ ⇑v} := by
-  have heq : {v : S →ᵇ ℝ | ConcaveOn ℝ Set.univ ⇑v}
-      = ⋂ (p : S × S × ℝ × ℝ) (_ : 0 ≤ p.2.2.1 ∧ 0 ≤ p.2.2.2 ∧ p.2.2.1 + p.2.2.2 = 1),
+/-- The functions concave on a fixed convex set form a closed set.
+
+Stated on a set rather than the whole space deliberately. The household models clamp assets
+with `max 0 a`, which is convex and so breaks concavity globally -- but `max 0 a = a` on
+`[0, ā]`, so concavity does hold on the compact convex region the economics lives in, and
+that is the region the agent distribution will be supported on. -/
+theorem isClosed_concaveOn {s : Set S} (hs : Convex ℝ s) :
+    IsClosed {v : S →ᵇ ℝ | ConcaveOn ℝ s ⇑v} := by
+  have heq : {v : S →ᵇ ℝ | ConcaveOn ℝ s ⇑v}
+      = ⋂ (p : S × S × ℝ × ℝ) (_ : p.1 ∈ s ∧ p.2.1 ∈ s ∧ 0 ≤ p.2.2.1 ∧ 0 ≤ p.2.2.2 ∧
+            p.2.2.1 + p.2.2.2 = 1),
           {v : S →ᵇ ℝ | p.2.2.1 • v p.1 + p.2.2.2 • v p.2.1
             ≤ v (p.2.2.1 • p.1 + p.2.2.2 • p.2.1)} := by
     ext v
     simp only [Set.mem_ofPred_eq, Set.mem_iInter]
     constructor
-    · rintro ⟨-, hv⟩ p ⟨ha, hb, hab⟩
-      exact hv (Set.mem_univ _) (Set.mem_univ _) ha hb hab
+    · rintro ⟨-, hv⟩ p ⟨hx, hy, ha, hb, hab⟩
+      exact hv hx hy ha hb hab
     · intro hv
-      refine ⟨convex_univ, fun x _ y _ a b ha hb hab => ?_⟩
-      exact hv (x, y, a, b) ⟨ha, hb, hab⟩
+      exact ⟨hs, fun x hx y hy a b ha hb hab => hv (x, y, a, b) ⟨hx, hy, ha, hb, hab⟩⟩
   rw [heq]
   refine isClosed_iInter fun p => isClosed_iInter fun _ => ?_
   exact isClosed_le
@@ -237,17 +243,18 @@ theorem isClosed_concaveOn : IsClosed {v : S →ᵇ ℝ | ConcaveOn ℝ Set.univ
     (BoundedContinuousFunction.lipschitz_eval_const
       (p.2.2.1 • p.1 + p.2.2.2 • p.2.1)).continuous
 
-/-- **The value function is concave** whenever the operator preserves concavity. -/
-theorem Blackwell.concaveOn_valueFunction {β : ℝ≥0} {T : (S →ᵇ ℝ) → (S →ᵇ ℝ)}
-    (h : Blackwell β T) (hβ : β < 1)
-    (hT : ∀ v : S →ᵇ ℝ, ConcaveOn ℝ Set.univ ⇑v → ConcaveOn ℝ Set.univ ⇑(T v)) :
-    ConcaveOn ℝ Set.univ ⇑(h.valueFunction hβ) := by
-  have hiter : ∀ n : ℕ, ConcaveOn ℝ Set.univ ⇑(T^[n] (0 : S →ᵇ ℝ)) := by
+/-- **The value function is concave on `s`** whenever the operator preserves concavity
+on `s`. -/
+theorem Blackwell.concaveOn_valueFunction {β : ℝ≥0} {T : (S →ᵇ ℝ) → (S →ᵇ ℝ)} {s : Set S}
+    (hs : Convex ℝ s) (h : Blackwell β T) (hβ : β < 1)
+    (hT : ∀ v : S →ᵇ ℝ, ConcaveOn ℝ s ⇑v → ConcaveOn ℝ s ⇑(T v)) :
+    ConcaveOn ℝ s ⇑(h.valueFunction hβ) := by
+  have hiter : ∀ n : ℕ, ConcaveOn ℝ s ⇑(T^[n] (0 : S →ᵇ ℝ)) := by
     intro n
     induction n with
-    | zero => exact ⟨convex_univ, fun x _ y _ a b _ _ _ => by simp⟩
+    | zero => exact ⟨hs, fun x _ y _ a b _ _ _ => by simp⟩
     | succ k ih => rw [Function.iterate_succ_apply']; exact hT _ ih
-  exact isClosed_concaveOn.mem_of_tendsto (h.tendsto_iterate_valueFunction hβ 0)
+  exact (isClosed_concaveOn hs).mem_of_tendsto (h.tendsto_iterate_valueFunction hβ 0)
     (Filter.Eventually.of_forall hiter)
 
 end Concave
