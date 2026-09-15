@@ -26,3 +26,4 @@ import LeanEconomics.DynamicProgramming.Parametric
 import LeanEconomics.Equilibrium.Aiyagari
 import LeanEconomics.Models.IncomeFluctuationBounds
 import LeanEconomics.Models.IncomeFluctuationCrossRate
+import LeanEconomics.Models.IncomeFluctuationRegion
