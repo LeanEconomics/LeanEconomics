@@ -208,6 +208,60 @@ theorem exists_cutoff_consumption (v : (ℝ × Z) →ᵇ ℝ) :
     nlinarith [hexp.2, hL]
   exact absurd (hsub ⟨hc, hlt⟩) (not_lt.mpr hge)
 
+/-! ### Uniform continuity
+
+The two moduli the sup-norm estimate consumes. Both are uniform in the state, which is what
+matters; neither is uniform in the interest rate, and neither needs to be, since the rate
+enters only through the ARGUMENTS fed to `u` and to the continuation value, and those gaps
+are already controlled by the cross-rate lemmas.
+
+Note `Z` carries only a discrete topology, with no metric, so `ℝ × Z` is not a metric space
+and uniform continuity of the continuation value cannot be taken there directly. It is taken
+in the asset coordinate for each income state separately and the finitely many moduli
+combined, which is legitimate exactly because `Z` is a `Fintype`. -/
+
+/-- **Uniform continuity of utility**, away from zero consumption. The interval is compact and
+sits inside `Ioi 0`, where `u` is assumed continuous; the cutoff is what puts consumption
+there. -/
+theorem exists_modulus_u {lo hi ε : ℝ} (hlo : 0 < lo) (hε : 0 < ε) :
+    ∃ η > 0, ∀ c₁ ∈ Icc lo hi, ∀ c₂ ∈ Icc lo hi, |c₁ - c₂| < η → |P.u c₁ - P.u c₂| < ε := by
+  have hsub : Icc lo hi ⊆ Ioi 0 := fun c hc => lt_of_lt_of_le hlo hc.1
+  have hcont : ContinuousOn P.u (Icc lo hi) := P.continuousOn_u.mono hsub
+  have huc : UniformContinuousOn P.u (Icc lo hi) :=
+    isCompact_Icc.uniformContinuousOn_of_continuous hcont
+  obtain ⟨η, hη, hspec⟩ := Metric.uniformContinuousOn_iff.mp huc ε hε
+  refine ⟨η, hη, fun c₁ h₁ c₂ h₂ hd => ?_⟩
+  have := hspec c₁ h₁ c₂ h₂ (by rwa [Real.dist_eq])
+  rwa [Real.dist_eq] at this
+
+omit [DiscreteTopology Z] in
+set_option linter.unusedFintypeInType false in
+/-- **Uniform continuity of the continuation value** in the asset coordinate, uniformly over
+income states. The finiteness of `Z` is used in the PROOF, to combine the per-state moduli,
+though it does not appear in the statement. -/
+theorem exists_modulus_v (v : (ℝ × Z) →ᵇ ℝ) {ε : ℝ} (hε : 0 < ε) :
+    ∃ η > 0, ∀ z' : Z, ∀ a₁ ∈ Icc (0 : ℝ) assetCap, ∀ a₂ ∈ Icc (0 : ℝ) assetCap,
+      |a₁ - a₂| < η → |v (a₁, z') - v (a₂, z')| < ε := by
+  -- one modulus per income state
+  have hslice : ∀ z' : Z, ∃ η > 0, ∀ a₁ ∈ Icc (0 : ℝ) assetCap, ∀ a₂ ∈ Icc (0 : ℝ) assetCap,
+      |a₁ - a₂| < η → |v (a₁, z') - v (a₂, z')| < ε := by
+    intro z'
+    have hcont : ContinuousOn (fun a : ℝ => v (a, z')) (Icc 0 assetCap) :=
+      (v.continuous.comp (continuous_id.prodMk continuous_const)).continuousOn
+    have huc : UniformContinuousOn (fun a : ℝ => v (a, z')) (Icc 0 assetCap) :=
+      isCompact_Icc.uniformContinuousOn_of_continuous hcont
+    obtain ⟨η, hη, hspec⟩ := Metric.uniformContinuousOn_iff.mp huc ε hε
+    refine ⟨η, hη, fun a₁ h₁ a₂ h₂ hd => ?_⟩
+    have := hspec a₁ h₁ a₂ h₂ (by rwa [Real.dist_eq])
+    rwa [Real.dist_eq] at this
+  choose η hη hspec using hslice
+  -- `Z` is finite, so the moduli have a positive minimum
+  have hne : (Finset.univ : Finset Z).Nonempty := ⟨Classical.ofNonempty, Finset.mem_univ _⟩
+  refine ⟨Finset.univ.inf' hne η, ?_, fun z' a₁ h₁ a₂ h₂ hd => ?_⟩
+  · exact (Finset.lt_inf'_iff _).2 fun z' _ => hη z'
+  · exact hspec z' a₁ h₁ a₂ h₂
+      (lt_of_lt_of_le hd (Finset.inf'_le _ (Finset.mem_univ z')))
+
 end IncomeFluctuation
 
 end LeanEconomics
