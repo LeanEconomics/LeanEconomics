@@ -30,3 +30,4 @@ import LeanEconomics.Models.IncomeFluctuationRegion
 import LeanEconomics.Models.IncomeFluctuationRate
 import LeanEconomics.Models.IncomeFluctuationAugmented
 import LeanEconomics.Equilibrium.AiyagariContinuity
+import LeanEconomics.Models.NonVacuity

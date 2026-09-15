@@ -1,0 +1,111 @@
+/-
+Copyright (c) 2026 Robert Kirkby. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Robert Kirkby
+-/
+import LeanEconomics.Distribution.Uniqueness
+
+/-!
+# The uniqueness hypotheses are satisfiable
+
+`existsUnique_isStationary` assumes that the worst income state is always reachable and that
+the richest household is driven to the borrowing constraint by `N` consecutive bad draws. A
+theorem with unsatisfiable hypotheses proves nothing, so this file exhibits a model where both
+hold and the conclusion is therefore a real statement.
+
+## Why not the existing calibration
+
+`calibrated` does NOT satisfy the exhaustion hypothesis, and the reason is economic rather
+than technical: it has `β(1+r) = (24/25)(21/20) = 1.008 > 1`. Such a household is patient
+relative to the interest rate, accumulates towards the asset cap and stays there, so repeated
+bad draws never drive it to the constraint. Aiyagari economies satisfy `β(1+r) < 1` in
+equilibrium, which is exactly what makes the constraint bind.
+
+## What is verified here
+
+The household below is myopic, `β = 0`. It consumes its resources and saves nothing, so one
+bad draw exhausts any asset position and `N = 1` works. The asset space is NOT degenerate --
+the cap is 10 and the state space is the full `[0,10] × Fin 2` -- so the chain being exercised
+is the real one, and the resulting stationary distribution is a genuine object.
+
+An honest limitation: verifying the hypothesis for a household with `0 < β(1+r) < 1`, which is
+the economically interesting case, needs quantitative control of the policy function. There is
+no closed form for CRRA with a cap, so it would need bounds on the policy that this
+development does not have. What is established here is satisfiability, not that the natural
+calibrations satisfy it.
+-/
+
+open Set Filter Topology MeasureTheory BoundedContinuousFunction
+
+namespace LeanEconomics
+
+namespace IncomeFluctuation
+
+/-- A myopic household: the calibration, with the discount factor set to zero. -/
+noncomputable def myopic : IncomeFluctuation (Fin 2) 10 :=
+  { calibrated with discount := 0, discount_lt_one := by norm_num }
+
+@[simp] theorem myopic_discount : (myopic.discount : ℝ) = 0 := rfl
+
+/-- With no discounting the continuation value drops out and the objective is the reward. -/
+theorem myopic_objectiveE (v : (ℝ × Fin 2) →ᵇ ℝ) (s : ℝ × Fin 2) (a : ℝ) :
+    myopic.toExtended.objectiveE v s a = myopic.toExtended.reward (s, a) := by
+  have hd : (myopic.toExtended.discount : ℝ) = 0 := rfl
+  simp only [ExtendedStochasticProgram.objectiveE, hd, zero_mul, EReal.coe_zero, add_zero]
+
+/-- **A myopic household saves nothing.** -/
+theorem myopic_policy_eq_zero {s : ℝ × Fin 2} (hs : s.1 ∈ Icc (0 : ℝ) 10) :
+    myopic.policy s = 0 := by
+  set V := myopic.toExtended.valueFunction with hV
+  have hmem : (0 : ℝ) ∈ myopic.toExtended.feasible s := ⟨le_rfl, le_max_left _ _⟩
+  have hc0 : 0 < myopic.consumption s 0 := by
+    simpa only [consumption, sub_zero] using myopic.resources_pos s
+  -- the reward at zero saving is the utility of all resources
+  have hrew0 := myopic.reward_eq_coe hs hmem hc0
+  -- and nothing feasible beats it
+  have hdom : ∀ a ∈ myopic.toExtended.feasible s,
+      myopic.toExtended.objectiveE V s a
+        ≤ ((myopic.u (myopic.consumption s 0) : ℝ) : EReal) := by
+    intro a ha
+    rw [myopic_objectiveE]
+    change extendBot myopic.u (min myopic.maxConsumption (myopic.consumption s a)) ≤ _
+    rcases le_or_gt (min myopic.maxConsumption (myopic.consumption s a)) 0 with h | h
+    · rw [extendBot_of_nonpos h]; exact bot_le
+    · rw [extendBot_of_pos h, EReal.coe_le_coe_iff]
+      refine myopic.monotoneOn_u h hc0 ?_
+      refine le_trans (min_le_right _ _) ?_
+      simp only [consumption, sub_zero]
+      linarith [ha.1]
+  have hle : myopic.toExtended.bellmanFn V s ≤ myopic.u (myopic.consumption s 0) :=
+    myopic.toExtended.bellmanFn_le V hdom
+  have hge : ((myopic.u (myopic.consumption s 0) : ℝ) : EReal)
+      ≤ ((myopic.toExtended.bellmanFn V s : ℝ) : EReal) := by
+    have h := myopic.toExtended.le_bellmanFn V hmem
+    rwa [myopic_objectiveE, hrew0] at h
+  rw [EReal.coe_le_coe_iff] at hge
+  -- so zero saving is optimal, and the optimal action is unique
+  refine (myopic.eq_policy_of_optimal hs hmem ?_).symm
+  rw [myopic_objectiveE, hrew0, EReal.coe_eq_coe_iff]
+  linarith
+
+/-- One bad draw exhausts any asset position. -/
+theorem myopic_gBad (z₀ : Fin 2) (x : ↥(Icc (0 : ℝ) 10)) :
+    myopic.gBad z₀ x = myopic.botState :=
+  Subtype.ext (myopic_policy_eq_zero x.2)
+
+/-- **Both hypotheses of `existsUnique_isStationary` hold for the myopic household**, so the
+theorem is not vacuous. -/
+theorem myopic_hexh (z₀ : Fin 2) : (myopic.gBad z₀)^[1] myopic.topState = myopic.botState :=
+  myopic_gBad z₀ myopic.topState
+
+theorem myopic_hreach (z₀ : Fin 2) : ∀ z : Fin 2, 0 < myopic.transitionMatrix z z₀ := by
+  intro z; norm_num [myopic, calibrated]
+
+/-- **A unique stationary agent distribution exists for the myopic household.** -/
+theorem myopic_existsUnique_isStationary :
+    ∃! μ : ProbabilityMeasure myopic.State, myopic.IsStationary μ :=
+  myopic.existsUnique_isStationary (z₀ := 0) (N := 1) (myopic_hreach 0) (myopic_hexh 0)
+
+end IncomeFluctuation
+
+end LeanEconomics
