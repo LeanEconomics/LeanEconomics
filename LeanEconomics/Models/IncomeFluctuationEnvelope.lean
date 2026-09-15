@@ -88,6 +88,64 @@ theorem lazyValue_eq (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a �
     EReal.coe_eq_coe_iff] at hopt
   exact hopt
 
+/-! ### The envelope theorem
+
+Concavity supplies the upper half of the sandwich, the lazy agent the lower half. The only
+work is the neighbourhood: the frozen saving is feasible at the state it came from, but at
+poorer states it need not be, so the lower bound is only local. Continuity of the feasible
+boundary gives an interval on which it survives, provided the saving is interior there. -/
+
+theorem hasDerivAt_valueFunction {z : Z} {a du : ℝ} (ha : 0 < a) (hacap : a < assetCap)
+    (hconc : ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
+      fun x => P.toExtended.valueFunction (x, z))
+    (hint : P.policy (a, z) < P.maxSaving (a, z))
+    (hu : HasDerivAt P.u du (P.resources (a, z) - P.policy (a, z))) :
+    HasDerivAt (fun x => P.toExtended.valueFunction (x, z)) ((1 + P.interest) * du) a := by
+  set V := P.toExtended.valueFunction with hV
+  set a' := P.policy (a, z) with ha'
+  have hamem : ((a, z) : ℝ × Z).1 ∈ Icc (0 : ℝ) assetCap := ⟨ha.le, hacap.le⟩
+  have hc : 0 < P.consumption (a, z) a' := P.consumption_policy_pos hamem
+  have ha'0 : 0 ≤ a' := (P.policy_mem (a, z)).1
+  -- the frozen saving stays feasible, and consumption stays positive, near `a`
+  have hcms : ContinuousAt (fun x => P.maxSaving (x, z)) a :=
+    (P.continuous_maxSaving.comp (continuous_id.prodMk continuous_const)).continuousAt
+  have hccon : ContinuousAt (fun x => P.consumption (x, z) a') a :=
+    ((P.continuous_resources.comp (continuous_id.prodMk continuous_const)).sub
+      continuous_const).continuousAt
+  have hev : {x : ℝ | 0 < x ∧ x < assetCap ∧ a' < P.maxSaving (x, z)
+      ∧ 0 < P.consumption (x, z) a'} ∈ 𝓝 a := by
+    have h1 : ∀ᶠ x in 𝓝 a, 0 < x := lt_mem_nhds ha
+    have h2 : ∀ᶠ x in 𝓝 a, x < assetCap := gt_mem_nhds hacap
+    have h3 : ∀ᶠ x in 𝓝 a, a' < P.maxSaving (x, z) := hcms.eventually_const_lt hint
+    have h4 : ∀ᶠ x in 𝓝 a, 0 < P.consumption (x, z) a' := hccon.eventually_const_lt hc
+    filter_upwards [h1, h2, h3, h4] with x hx1 hx2 hx3 hx4 using ⟨hx1, hx2, hx3, hx4⟩
+  obtain ⟨l, r, hmem, hsub⟩ := mem_nhds_iff_exists_Ioo_subset.mp hev
+  -- on that interval the lazy value is a lower bound
+  have hIsub : Ioo l r ⊆ Icc (0 : ℝ) assetCap := fun x hx =>
+    ⟨(hsub hx).1.le, (hsub hx).2.1.le⟩
+  have hlow : ∀ x ∈ Ioo l r, P.lazyValue V z a' x ≤ V (x, z) := by
+    intro x hx
+    obtain ⟨hx1, hx2, hx3, hx4⟩ := hsub hx
+    have hfe : a' ∈ P.toExtended.feasible (x, z) := ⟨ha'0, hx3.le⟩
+    have := P.lazyValue_le V z ⟨hx1.le, hx2.le⟩ hfe hx4
+    rwa [hV, show P.toExtended.bellmanFn P.toExtended.valueFunction (x, z)
+      = P.toExtended.valueFunction (x, z) from by
+        rw [← P.toExtended.bellman_apply, P.toExtended.bellman_valueFunction]] at this
+  -- and it touches at `a`
+  have htouch : P.lazyValue V z a' a = V (a, z) := by
+    have hfe : a' ∈ P.toExtended.feasible (a, z) := P.policy_mem (a, z)
+    have := P.lazyValue_eq V z hamem hfe hc (P.policy_optimal (a, z))
+    rwa [hV, show P.toExtended.bellmanFn P.toExtended.valueFunction (a, z)
+      = P.toExtended.valueFunction (a, z) from by
+        rw [← P.toExtended.bellman_apply, P.toExtended.bellman_valueFunction]] at this
+  refine (hconc.subset hIsub (convex_Ioo l r)).hasDerivAt_of_lowerBound hmem
+    (Ioo_mem_nhds hmem.1 hmem.2)
+    ⟨(l + a) / 2, ⟨by linarith [hmem.1, hmem.2], by linarith [hmem.1, hmem.2]⟩,
+      by linarith [hmem.1, hmem.2]⟩
+    ⟨(a + r) / 2, ⟨by linarith [hmem.1, hmem.2], by linarith [hmem.1, hmem.2]⟩,
+      by linarith [hmem.1, hmem.2]⟩
+    hlow htouch (P.hasDerivAt_lazyValue V z a' ha hu)
+
 end IncomeFluctuation
 
 end LeanEconomics
