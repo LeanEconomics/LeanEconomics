@@ -295,6 +295,13 @@ theorem exists_optimal_action (v : S →ᵇ ℝ) (s : S) :
     (D.feasible_nonempty s) (D.isCompact_feasible s)
   exact ⟨a, ha, by rw [D.coe_bellmanFn]; exact heq.symm⟩
 
+/-- The maximiser correspondence is upper hemicontinuous, by the argmax half of Berge for
+extended-real objectives. -/
+theorem upperHemicontinuous_argmax (v : S →ᵇ ℝ) :
+    UpperHemicontinuous (argmax (D.objectiveE v) D.feasible) :=
+  upperHemicontinuous_argmaxE (D.continuous_uncurry_objectiveE v)
+    D.isCompact_feasible D.upperHemicontinuous_feasible D.lowerHemicontinuous_feasible
+
 section Monotone
 
 variable [Preorder S]

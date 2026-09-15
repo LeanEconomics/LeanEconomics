@@ -67,8 +67,11 @@ variable {f : X → Y → ℝ} {Γ : X → Set Y} {x : X} {c : ℝ}
 /-- The value of the problem `max f x y` subject to `y ∈ Γ x`. -/
 noncomputable def maxValue (f : X → Y → ℝ) (Γ : X → Set Y) (x : X) : ℝ := sSup (f x '' Γ x)
 
-/-- The set of maximisers of `f x` over `Γ x`. -/
-def argmax (f : X → Y → ℝ) (Γ : X → Set Y) (x : X) : Set Y := {y ∈ Γ x | IsMaxOn (f x) (Γ x) y}
+/-- The set of maximisers of `f x` over `Γ x`. The codomain is any preorder, so that the
+same definition serves the extended-real objectives of
+`LeanEconomics.Topology.BergeEReal`. -/
+def argmax {Z : Type*} [Preorder Z] (f : X → Y → Z) (Γ : X → Set Y) (x : X) : Set Y :=
+  {y ∈ Γ x | IsMaxOn (f x) (Γ x) y}
 
 /-- The objective as a function of the choice alone, with the parameter fixed. -/
 theorem continuous_fiber (hf : Continuous ↿f) (x : X) : Continuous (f x) :=

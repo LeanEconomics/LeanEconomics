@@ -454,6 +454,28 @@ theorem valueFunction_eq_policy {x : ℝ} (hx : x ∈ Icc 0 P.assetCap) :
     rfl
   rw [← hfix, h]
 
+/-- **The maximiser set is exactly the policy.** -/
+theorem argmax_eq_singleton {x : ℝ} (hx : x ∈ Icc 0 P.assetCap) :
+    argmax (P.toExtended.objectiveE P.toExtended.valueFunction) P.toExtended.feasible x
+      = {P.policy x} := by
+  ext a
+  simp only [argmax, Set.mem_ofPred_eq, Set.mem_singleton_iff]
+  constructor
+  · rintro ⟨ha, hmax⟩
+    refine P.eq_policy_of_optimal hx ha (le_antisymm (P.toExtended.le_bellmanFn _ ha) ?_)
+    rw [← P.policy_optimal x]
+    exact isMaxOn_iff.mp hmax _ (P.policy_mem x)
+  · rintro rfl
+    refine ⟨P.policy_mem x, isMaxOn_iff.mpr fun b hb => ?_⟩
+    rw [P.policy_optimal x]
+    exact P.toExtended.le_bellmanFn _ hb
+
+/-- **The optimal policy is continuous on the region**, for utility unbounded below. -/
+theorem continuousOn_policy : ContinuousOn P.policy (Icc 0 P.assetCap) :=
+  continuousOn_of_upperHemicontinuous_singleton
+    (P.toExtended.upperHemicontinuous_argmax P.toExtended.valueFunction)
+    fun _ hx => P.argmax_eq_singleton hx
+
 /-! ### Utilities that qualify -/
 
 /-- CES period utility. -/

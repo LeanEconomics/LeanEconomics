@@ -24,11 +24,11 @@ Less than one might expect, and two of the changes make the proof *simpler*: `ER
 complete lattice, so `le_sSup` and `sSup_le` carry no boundedness or nonemptiness side
 conditions, unlike their conditionally-complete counterparts.
 
-One change is forced. The real proof of upper semicontinuity picks a value strictly between
-`maxValue x` and `c`, which needs the order to be densely ordered. Mathlib has no
-`DenselyOrdered EReal` instance, so upper semicontinuity here goes through *attainment*
-instead: the supremum over a nonempty compact set is achieved, so a strict bound at every
-point of the set is a strict bound on the supremum.
+Upper semicontinuity here goes through *attainment* rather than interpolation: the supremum
+over a nonempty compact set is achieved, so a strict bound at every point of the set is a
+strict bound on the supremum. (`DenselyOrdered EReal` does exist in Mathlib, as
+`instDenselyOrderedEReal`, so the interpolating proof would work too; the argmax half below
+uses it.)
 
 ## Main results
 
@@ -75,8 +75,7 @@ theorem eventually_forall_ltE (hf : Continuous ↿f) (hΓc : IsCompact (Γ x))
   exact huv hmem
 
 /-- Upper hemicontinuity of the constraint set gives upper semicontinuity of the value.
-Unlike the real case this goes through attainment of the supremum, `EReal` having no
-`DenselyOrdered` instance to interpolate with. -/
+This goes through attainment of the supremum rather than interpolating a midpoint. -/
 theorem upperSemicontinuousAt_maxValueE (hf : Continuous ↿f) (hΓne : ∀ x, (Γ x).Nonempty)
     (hΓc : ∀ x, IsCompact (Γ x)) (huhc : UpperHemicontinuousAt Γ x) :
     UpperSemicontinuousAt (maxValueE f Γ) x := by
@@ -120,5 +119,56 @@ theorem maxValueE_eq (hf : Continuous ↿f) (hΓne : (Γ x).Nonempty) (hΓc : Is
     ∃ y ∈ Γ x, maxValueE f Γ x = f x y := by
   obtain ⟨y₀, hy₀, heq⟩ := hΓc.exists_sSup_image_eq hΓne (continuous_fiberE hf x).continuousOn
   exact ⟨y₀, hy₀, heq⟩
+
+omit [TopologicalSpace X] [TopologicalSpace Y] in
+/-- At a maximiser the objective equals the value. In `EReal` this needs no side
+conditions, the order being complete. -/
+theorem maxValueE_eq_of_mem_argmax {y : Y} (hy : y ∈ argmax f Γ x) :
+    maxValueE f Γ x = f x y :=
+  le_antisymm (maxValueE_le fun z hz => isMaxOn_iff.mp hy.2 z hz) (le_maxValueE hy.1)
+
+/-- A maximiser exists. -/
+theorem argmaxE_nonempty (hf : Continuous ↿f) (hΓne : (Γ x).Nonempty)
+    (hΓc : IsCompact (Γ x)) : (argmax f Γ x).Nonempty := by
+  obtain ⟨y, hy, hmax⟩ := hΓc.exists_isMaxOn hΓne (continuous_fiberE hf x).continuousOn
+  exact ⟨y, hy, hmax⟩
+
+/-- **Berge's maximum theorem, the maximiser half, for an extended-real objective.** The
+proof is the real one unchanged: away from an open set containing the maximisers the
+objective is strictly below the value, that gap survives into a neighbourhood by the
+engine, and lower semicontinuity of the value keeps the value above the gap. -/
+theorem upperHemicontinuousAt_argmaxE (hf : Continuous ↿f)
+    (hΓc : ∀ x, IsCompact (Γ x)) (huhc : UpperHemicontinuousAt Γ x)
+    (hlhc : LowerHemicontinuousAt Γ x) : UpperHemicontinuousAt (argmax f Γ) x := by
+  apply UpperHemicontinuousAt.of_forall_isOpen
+  intro V hV hsub
+  by_cases hsubV : Γ x ⊆ V
+  · filter_upwards [huhc.forall_isOpen V hV hsubV] with x' h
+    exact fun y hy => h hy.1
+  · obtain ⟨y', hy', hy'V⟩ := Set.not_subset.mp hsubV
+    have hKc : IsCompact (Γ x ∩ Vᶜ) := (hΓc x).inter_right hV.isClosed_compl
+    obtain ⟨y₁, hy₁, hmax₁⟩ :=
+      hKc.exists_isMaxOn ⟨y', hy', hy'V⟩ (continuous_fiberE hf x).continuousOn
+    have hlt : f x y₁ < maxValueE f Γ x := by
+      rcases (le_maxValueE hy₁.1).lt_or_eq with h | h
+      · exact h
+      · refine absurd (hsub ⟨hy₁.1, isMaxOn_iff.mpr fun z hz => ?_⟩) hy₁.2
+        rw [h]
+        exact le_maxValueE hz
+    obtain ⟨c, hc1, hc2⟩ := exists_between hlt
+    have hbound : ∀ y ∈ Γ x ∩ Vᶜ, f x y < c := fun y hy =>
+      lt_of_le_of_lt (isMaxOn_iff.mp hmax₁ y hy) hc1
+    filter_upwards [eventually_forall_ltE hf hKc (huhc.inter hV.isClosed_compl) hbound,
+      lowerSemicontinuousAt_maxValueE hf hlhc c hc2] with x' h1 h2
+    intro y hy
+    by_contra hyV
+    have hlt' : f x' y < c := h1 y ⟨hy.1, hyV⟩
+    rw [← maxValueE_eq_of_mem_argmax hy] at hlt'
+    exact absurd h2 (not_lt.mpr hlt'.le)
+
+theorem upperHemicontinuous_argmaxE (hf : Continuous ↿f)
+    (hΓc : ∀ x, IsCompact (Γ x)) (huhc : UpperHemicontinuous Γ) (hlhc : LowerHemicontinuous Γ) :
+    UpperHemicontinuous (argmax f Γ) := fun x =>
+  upperHemicontinuousAt_argmaxE hf hΓc (huhc x) (hlhc x)
 
 end LeanEconomics
