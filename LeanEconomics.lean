@@ -35,3 +35,4 @@ import LeanEconomics.Models.IncomeFluctuationLipschitz
 import LeanEconomics.Equilibrium.Firm
 import LeanEconomics.Equilibrium.Uniqueness
 import LeanEconomics.Analysis.DifferentiableSandwich
+import LeanEconomics.Models.IncomeFluctuationEnvelope
