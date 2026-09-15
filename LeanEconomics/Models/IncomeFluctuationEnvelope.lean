@@ -5,6 +5,7 @@ Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuation
 import LeanEconomics.Analysis.DifferentiableSandwich
+import Mathlib.Analysis.Calculus.FDeriv.Extend
 
 /-!
 # The lazy agent's value, and the envelope condition
@@ -145,6 +146,33 @@ theorem hasDerivAt_valueFunction {z : Z} {a du : ℝ} (ha : 0 < a) (hacap : a < 
     ⟨(a + r) / 2, ⟨by linarith [hmem.1, hmem.2], by linarith [hmem.1, hmem.2]⟩,
       by linarith [hmem.1, hmem.2]⟩
     hlow htouch (P.hasDerivAt_lazyValue V z a' ha hu)
+
+/-! ### At the borrowing constraint
+
+The sandwich does NOT extend to the left endpoint, and the failure is not technical. Its first
+step is that `U - L` has a local minimum where the bounds touch, forcing the two derivatives to
+agree; at an endpoint a minimum gives only `d' ≥ 0`, so the upper bound may be strictly
+steeper and the derivative is not pinned.
+
+The right-derivative at the constraint is instead obtained as a LIMIT of the interior
+derivatives, using that a derivative extends continuously to an endpoint
+(`hasDerivWithinAt_Ici_of_tendsto_deriv`). This matters because `a = 0` is precisely the atom
+the whole ergodic argument runs on, so a statement that stops short of it would stop short of
+the states that carry the stationary distribution. -/
+
+theorem hasDerivWithinAt_valueFunction_Ici {z : Z} {g : ℝ → ℝ} {e b : ℝ} (hb : 0 < b)
+    (hderiv : ∀ x ∈ Ioo (0 : ℝ) b,
+      HasDerivAt (fun y => P.toExtended.valueFunction (y, z)) (g x) x)
+    (hlim : Tendsto g (𝓝[>] (0 : ℝ)) (𝓝 e)) :
+    HasDerivWithinAt (fun y => P.toExtended.valueFunction (y, z)) e (Ici 0) 0 := by
+  have hmem : Ioo (0 : ℝ) b ∈ 𝓝[>] (0 : ℝ) := Ioo_mem_nhdsGT hb
+  refine hasDerivWithinAt_Ici_of_tendsto_deriv (s := Ioo 0 b) ?_ ?_ hmem ?_
+  · exact fun x hx => ((hderiv x hx).differentiableAt).differentiableWithinAt
+  · exact (P.toExtended.valueFunction.continuous.comp
+      (continuous_id.prodMk continuous_const)).continuousWithinAt
+  · refine hlim.congr' ?_
+    filter_upwards [hmem] with x hx
+    exact ((hderiv x hx).deriv).symm
 
 end IncomeFluctuation
 
