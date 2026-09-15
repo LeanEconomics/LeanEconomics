@@ -34,3 +34,4 @@ import LeanEconomics.Models.NonVacuity
 import LeanEconomics.Models.IncomeFluctuationLipschitz
 import LeanEconomics.Equilibrium.Firm
 import LeanEconomics.Equilibrium.Uniqueness
+import LeanEconomics.Analysis.DifferentiableSandwich
