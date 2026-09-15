@@ -469,6 +469,86 @@ theorem tendsto_pushProb_iterate {z₀ : Z} {s₀ : P.State} {p₀ : ℝ} {N : �
   rw [abs_le]
   constructor <;> linarith
 
+/-! ### Exhaustion from strict dissaving
+
+`badStep_iterate_eq` takes exhaustion as a hypothesis in the awkward form `gBad^[N] top = bot`
+-- an exact hit on the borrowing constraint after a specified number of periods. That is hard
+to check directly, and in the earlier calibrations it was obtained only by making the policy
+identically zero.
+
+Açıkgöz (2018) obtains it instead from two natural facts, in the proof of his Proposition 5:
+the constraint binds near zero, and assets strictly decline above that at the worst income
+state. A continuous strictly declining map on a compact interval has a UNIFORM minimum
+decline, so finitely many periods carry the richest household below the threshold, and one
+more step pins it to the constraint.
+
+His Proposition 4, which produces the asset bound itself, is a different matter: its proof
+runs the Euler equation at an interior optimum and takes limits of `u'(x+ε)/u'(x)`, so it
+needs differentiability of the utility and the first-order condition. This development
+deliberately has neither. The lemma below extracts only the part that does not. -/
+
+omit [MeasurableSpace Z] [BorelSpace Z] in
+theorem exists_exhaust_of_decline {z₀ : Z} {a₀ : ℝ} (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
+    (hzero : ∀ a ∈ Icc (0 : ℝ) a₀, P.policy (a, z₀) = 0)
+    (hdecl : ∀ a ∈ Icc a₀ assetCap, P.policy (a, z₀) < a) :
+    ∃ N : ℕ, (P.gBad z₀)^[N] P.topState = P.botState := by
+  classical
+  -- the minimal decline over the compact interval above the threshold
+  have hne : (Icc a₀ assetCap).Nonempty := ⟨a₀, ⟨le_rfl, hle⟩⟩
+  have hcont : ContinuousOn (fun a : ℝ => a - P.policy (a, z₀)) (Icc a₀ assetCap) := by
+    refine continuousOn_id.sub (P.continuousOn_policy.comp
+      (continuous_id.prodMk continuous_const).continuousOn fun a ha => ?_)
+    exact ⟨le_trans ha₀.le ha.1, ha.2⟩
+  obtain ⟨am, hamem, hamin⟩ := isCompact_Icc.exists_isMinOn hne hcont
+  set Δ : ℝ := am - P.policy (am, z₀) with hΔdef
+  have hΔpos : 0 < Δ := by rw [hΔdef]; linarith [hdecl am hamem]
+  have hstep : ∀ a ∈ Icc a₀ assetCap, P.policy (a, z₀) ≤ a - Δ := fun a ha => by
+    have h := hamin ha
+    rw [Set.mem_ofPred_eq] at h
+    rw [hΔdef]
+    linarith
+  -- after `k` steps either the threshold is reached or assets have fallen by `k·Δ`
+  have key : ∀ k : ℕ, (((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) ≤ a₀ ∨
+      (((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) ≤ assetCap - k * Δ := by
+    intro k
+    induction k with
+    | zero => right; simp [topState]
+    | succ k ih =>
+        rw [Function.iterate_succ_apply']
+        have hval : (((P.gBad z₀) ((P.gBad z₀)^[k] P.topState) :
+            ↥(Icc (0 : ℝ) assetCap)) : ℝ)
+            = P.policy ((((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ), z₀) := rfl
+        rcases ih with h | h
+        · -- already at or below the threshold: the next step is exactly zero
+          left
+          rw [hval, hzero _ ⟨((P.gBad z₀)^[k] P.topState).2.1, h⟩]
+          exact ha₀.le
+        · rcases le_total (((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) a₀
+            with hlow | hhigh
+          · left
+            rw [hval, hzero _ ⟨((P.gBad z₀)^[k] P.topState).2.1, hlow⟩]
+            exact ha₀.le
+          · right
+            rw [hval]
+            have hmem : (((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ)
+                ∈ Icc a₀ assetCap := ⟨hhigh, ((P.gBad z₀)^[k] P.topState).2.2⟩
+            have hdec := hstep _ hmem
+            push_cast
+            rw [show assetCap - ((k : ℝ) + 1) * Δ = (assetCap - (k : ℝ) * Δ) - Δ by ring]
+            linarith
+  -- finitely many steps carry assets below the threshold
+  obtain ⟨N, hN⟩ := exists_nat_gt ((assetCap - a₀) / Δ)
+  refine ⟨N + 1, ?_⟩
+  have hNle : (((P.gBad z₀)^[N] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) ≤ a₀ := by
+    rcases key N with h | h
+    · exact h
+    · rw [div_lt_iff₀ hΔpos] at hN
+      linarith
+  refine Subtype.ext ?_
+  rw [Function.iterate_succ_apply']
+  change P.policy ((((P.gBad z₀)^[N] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ), z₀) = 0
+  exact hzero _ ⟨((P.gBad z₀)^[N] P.topState).2.1, hNle⟩
+
 end IncomeFluctuation
 
 end LeanEconomics
