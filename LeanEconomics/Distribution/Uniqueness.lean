@@ -389,6 +389,85 @@ theorem existsUnique_isStationary {z₀ : Z} {N : ℕ}
     ⟨Measure.dirac (Classical.ofNonempty : P.State), inferInstance⟩
   exact ⟨μ, hμ, fun ν hν => P.stationary_unique_of_exhausts hreach hexh hν hμ⟩
 
+/-! ### Convergence
+
+Uniqueness says there is one stationary distribution; convergence says the economy finds it.
+The same oscillation contraction gives both. Iterating the operator flattens any test
+function geometrically, and a flat test function cannot tell two distributions apart, so the
+iterates of ANY initial distribution become indistinguishable from the stationary one.
+
+This is what makes the stationary distribution computable rather than merely unique: it is
+the limit of iterating from wherever you start. -/
+
+theorem integral_pushProb_iterate (μ : ProbabilityMeasure P.State) (m : ℕ) (h : P.State →ᵇ ℝ) :
+    ∫ s, h s ∂((P.pushProb^[m] μ : ProbabilityMeasure P.State) : Measure P.State)
+      = ∫ s, (P.markovOp^[m] h) s ∂(μ : Measure P.State) := by
+  induction m generalizing h with
+  | zero => simp
+  | succ m ih =>
+      rw [Function.iterate_succ_apply', P.coe_pushProb, P.integral_push, ih,
+        Function.iterate_succ_apply]
+
+omit [MeasurableSpace Z] [BorelSpace Z] in
+/-- Oscillation cannot grow under the operator. -/
+theorem osc_iterate_le (h : P.State →ᵇ ℝ) (j : ℕ) :
+    P.supF (P.markovOp^[j] h) - P.infF (P.markovOp^[j] h) ≤ P.supF h - P.infF h := by
+  have h1 : P.supF (P.markovOp^[j] h) ≤ P.supF h :=
+    ciSup_le fun s => P.iterate_le_supF h j s
+  have h2 : P.infF h ≤ P.infF (P.markovOp^[j] h) :=
+    le_ciInf fun s => P.infF_le_iterate h j s
+  linarith
+
+/-- **The oscillation of an iterated test function vanishes.** -/
+theorem tendsto_osc_iterate {z₀ : Z} {s₀ : P.State} {p₀ : ℝ} {N : ℕ} (hp0 : 0 < p₀)
+    (hp : ∀ s : P.State, p₀ ≤ P.prob s z₀) (hbad : ∀ s, (P.badStep z₀)^[N] s = s₀)
+    (h : P.State →ᵇ ℝ) :
+    Tendsto (fun m => P.supF (P.markovOp^[m] h) - P.infF (P.markovOp^[m] h)) atTop (𝓝 0) := by
+  have hp1 : p₀ ≤ 1 := le_trans (hp Classical.ofNonempty) (P.prob_le_one _ _)
+  have hεpos : 0 < p₀ ^ N := pow_pos hp0 N
+  have hεle : p₀ ^ N ≤ 1 := pow_le_one₀ hp0.le hp1
+  rw [Metric.tendsto_atTop]
+  intro γ hγ
+  have hlim : Tendsto (fun k : ℕ => (1 - p₀ ^ N) ^ k * (P.supF h - P.infF h)) atTop (𝓝 0) := by
+    have := tendsto_pow_atTop_nhds_zero_of_lt_one (by linarith) (by linarith : 1 - p₀ ^ N < 1)
+    simpa using this.mul_const (P.supF h - P.infF h)
+  obtain ⟨k, hk⟩ := (hlim.eventually (gt_mem_nhds hγ)).exists
+  refine ⟨N * k, fun m hm => ?_⟩
+  obtain ⟨j, rfl⟩ := Nat.exists_eq_add_of_le hm
+  have hsplit : P.markovOp^[N * k + j] h = P.markovOp^[j] ((P.markovOp^[N])^[k] h) := by
+    rw [add_comm, Function.iterate_add_apply, Function.iterate_mul]
+  rw [Real.dist_eq, hsplit, sub_zero,
+    abs_of_nonneg (by linarith [P.infF_le_supF (P.markovOp^[j] ((P.markovOp^[N])^[k] h))])]
+  exact lt_of_le_of_lt (le_trans (P.osc_iterate_le _ j)
+    (P.osc_cycle_le hp0.le hp hbad k h)) hk
+
+/-- **Convergence to the stationary distribution.** From any starting point, the iterates of
+the distribution operator converge weakly to the stationary distribution. -/
+theorem tendsto_pushProb_iterate {z₀ : Z} {s₀ : P.State} {p₀ : ℝ} {N : ℕ} (hp0 : 0 < p₀)
+    (hp : ∀ s : P.State, p₀ ≤ P.prob s z₀) (hbad : ∀ s, (P.badStep z₀)^[N] s = s₀)
+    (μ₀ : ProbabilityMeasure P.State) {μ : ProbabilityMeasure P.State} (hμ : P.IsStationary μ) :
+    Tendsto (fun m => P.pushProb^[m] μ₀) atTop (𝓝 μ) := by
+  have hμ' : P.push (μ : Measure P.State) = (μ : Measure P.State) :=
+    congrArg (fun x : ProbabilityMeasure P.State => (x : Measure P.State)) hμ
+  rw [ProbabilityMeasure.tendsto_iff_forall_integral_tendsto]
+  intro h
+  rw [tendsto_iff_dist_tendsto_zero]
+  refine squeeze_zero (fun _ => dist_nonneg) (fun m => ?_)
+    (P.tendsto_osc_iterate hp0 hp hbad h)
+  -- the gap is at most the oscillation of the iterated test function
+  have hleft : ∫ s, h s ∂((P.pushProb^[m] μ₀ : ProbabilityMeasure P.State) : Measure P.State)
+      = ∫ s, (P.markovOp^[m] h) s ∂(μ₀ : Measure P.State) := P.integral_pushProb_iterate μ₀ m h
+  have hright : ∫ s, h s ∂(μ : Measure P.State)
+      = ∫ s, (P.markovOp^[m] h) s ∂(μ : Measure P.State) :=
+    (P.integral_iterate_eq hμ' m h).symm
+  rw [Real.dist_eq, hleft, hright]
+  have h1 := P.integral_le_supF (μ₀ : Measure P.State) (P.markovOp^[m] h)
+  have h2 := P.infF_le_integral (μ₀ : Measure P.State) (P.markovOp^[m] h)
+  have h3 := P.integral_le_supF (μ : Measure P.State) (P.markovOp^[m] h)
+  have h4 := P.infF_le_integral (μ : Measure P.State) (P.markovOp^[m] h)
+  rw [abs_le]
+  constructor <;> linarith
+
 end IncomeFluctuation
 
 end LeanEconomics
