@@ -7,6 +7,7 @@ import LeanEconomics.DynamicProgramming.Extended
 import LeanEconomics.Topology.IccCorrespondence
 import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 
 /-!
 # Consumption and savings with period utility unbounded below
@@ -51,6 +52,30 @@ open Set Filter Topology BoundedContinuousFunction
 
 namespace LeanEconomics
 
+/-- `c ↦ -1/c`, that is CES utility at `σ = 2`, is strictly concave on the positives.
+Mathlib has no convexity lemma for `x⁻¹`, and its `rpow` convexity results cover only
+exponents `≥ 1`, so this is proved by hand: the difference of the two sides is
+`a * b * (x - y)² / (x * y * (a * x + b * y))`. -/
+theorem strictConcaveOn_neg_inv : StrictConcaveOn ℝ (Ioi 0) (fun c : ℝ => -c⁻¹) := by
+  refine ⟨convex_Ioi 0, fun x hx y hy hxy a b ha hb hab => ?_⟩
+  have hx' : (0 : ℝ) < x := hx
+  have hy' : (0 : ℝ) < y := hy
+  have hs : (0 : ℝ) < a * x + b * y := by positivity
+  have hne : x - y ≠ 0 := sub_ne_zero.mpr hxy
+  have hpos : 0 < a * b * (x - y) ^ 2 := by positivity
+  have key : (a * x + b * y)⁻¹ < a * x⁻¹ + b * y⁻¹ := by
+    rw [← sub_pos]
+    have hb' : b = 1 - a := by linarith
+    subst hb'
+    have heq : a * x⁻¹ + (1 - a) * y⁻¹ - (a * x + (1 - a) * y)⁻¹
+        = (a * (1 - a) * (x - y) ^ 2) / (x * y * (a * x + (1 - a) * y)) := by
+      field_simp
+      ring
+    rw [heq]
+    positivity
+  simp only [smul_eq_mul]
+  linarith
+
 /-- A consumption-savings problem whose period utility is unbounded below. -/
 structure ConsumptionSavingsUnbounded where
   /-- Constant labour income. -/
@@ -72,6 +97,9 @@ structure ConsumptionSavingsUnbounded where
   /-- Utility falls to `-∞` as consumption vanishes. This single hypothesis replaces the
   four fields the floored version needed. -/
   tendsto_atBot_u : Tendsto u (𝓝[>] 0) atBot
+  /-- Diminishing marginal utility. Needed for a *unique* optimal policy, hence for an
+  agent distribution to be a well-defined object. -/
+  strictConcaveOn_u : StrictConcaveOn ℝ (Ioi 0) u
 
 namespace ConsumptionSavingsUnbounded
 
@@ -197,6 +225,235 @@ theorem exists_optimal_saving {a : ℝ} (ha : a ∈ Icc 0 P.assetCap) :
   rw [hrw, ← EReal.coe_add, EReal.coe_eq_coe_iff] at heq
   exact heq
 
+/-! ### Concavity and the optimal policy
+
+The `σ < 1` model gets concavity from the general criterion in
+`LeanEconomics.DynamicProgramming.Bellman`. That criterion is stated for a real-valued
+reward and does not apply here, because `ConcaveOn` over `EReal` would need an ordered
+module structure that does not sit well. The way round is that the `-∞` never appears where
+it matters: at an optimum consumption is strictly positive, so every value the argument
+touches is finite, and the reasoning can be carried out in the reals. -/
+
+theorem resources_eq_affine {x : ℝ} (hx : 0 ≤ x) :
+    P.resources x = P.income + (1 + P.interest) * x := by
+  simp only [resources, max_eq_right hx]
+
+theorem resources_affine_comb {x y θ φ : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) (hθ : 0 ≤ θ)
+    (hφ : 0 ≤ φ) (hθφ : θ + φ = 1) :
+    P.resources (θ * x + φ * y) = θ * P.resources x + φ * P.resources y := by
+  have hmix : 0 ≤ θ * x + φ * y := by positivity
+  rw [P.resources_eq_affine hmix, P.resources_eq_affine hx, P.resources_eq_affine hy]
+  linear_combination (-P.income) * hθφ
+
+theorem maxSaving_le_assetCap (a : ℝ) : P.maxSaving a ≤ P.assetCap :=
+  max_le P.assetCap_nonneg (min_le_left _ _)
+
+theorem feasible_subset_region {x a : ℝ} (ha : a ∈ P.toExtended.feasible x) :
+    a ∈ Icc 0 P.assetCap :=
+  ⟨ha.1, ha.2.trans (P.maxSaving_le_assetCap x)⟩
+
+theorem maxSaving_eq (x : ℝ) : P.maxSaving x = min P.assetCap (P.resources x) :=
+  max_eq_right (le_min P.assetCap_nonneg (P.resources_pos x).le)
+
+theorem feasible_convex {x y : ℝ} (hx : x ∈ Icc 0 P.assetCap) (hy : y ∈ Icc 0 P.assetCap)
+    {ax ay θ φ : ℝ} (hax : ax ∈ P.toExtended.feasible x) (hay : ay ∈ P.toExtended.feasible y)
+    (hθ : 0 ≤ θ) (hφ : 0 ≤ φ) (hθφ : θ + φ = 1) :
+    θ * ax + φ * ay ∈ P.toExtended.feasible (θ * x + φ * y) := by
+  obtain ⟨hax0, haxm⟩ := hax
+  obtain ⟨hay0, haym⟩ := hay
+  rw [P.maxSaving_eq x] at haxm
+  rw [P.maxSaving_eq y] at haym
+  have hmix : (0 : ℝ) ≤ θ * x + φ * y :=
+    add_nonneg (mul_nonneg hθ hx.1) (mul_nonneg hφ hy.1)
+  refine ⟨add_nonneg (mul_nonneg hθ hax0) (mul_nonneg hφ hay0), ?_⟩
+  rw [P.maxSaving_eq (θ * x + φ * y)]
+  refine le_min ?_ ?_
+  · have h1 : ax ≤ P.assetCap := haxm.trans (min_le_left _ _)
+    have h2 : ay ≤ P.assetCap := haym.trans (min_le_left _ _)
+    nlinarith
+  · have h1 : ax ≤ P.resources x := haxm.trans (min_le_right _ _)
+    have h2 : ay ≤ P.resources y := haym.trans (min_le_right _ _)
+    rw [P.resources_affine_comb hx.1 hy.1 hθ hφ hθφ]
+    nlinarith
+
+/-- A finite reward means strictly positive consumption. -/
+theorem consumption_pos_of_ne_bot {x a : ℝ} (h : P.toExtended.reward (x, a) ≠ ⊥) :
+    0 < P.consumption x a := by
+  by_contra hle
+  push Not at hle
+  refine h ?_
+  calc P.toExtended.reward (x, a)
+      = extendBot P.u (min P.maxConsumption (P.consumption x a)) := rfl
+    _ = ⊥ := extendBot_of_nonpos ((min_le_right _ _).trans hle)
+
+/-- Where consumption is positive the reward is an ordinary real utility. -/
+theorem reward_eq_coe {x a : ℝ} (hx : x ∈ Icc 0 P.assetCap) (ha : a ∈ P.toExtended.feasible x)
+    (hc : 0 < P.consumption x a) :
+    P.toExtended.reward (x, a) = ((P.u (P.consumption x a) : ℝ) : EReal) :=
+  calc P.toExtended.reward (x, a)
+      = extendBot P.u (min P.maxConsumption (P.consumption x a)) := rfl
+    _ = extendBot P.u (P.consumption x a) := by
+        rw [min_eq_right (P.consumption_le_maxConsumption hx ha.1)]
+    _ = _ := extendBot_of_pos hc
+
+/-- At an optimum consumption is positive and the value is an ordinary real expression. -/
+theorem bellmanFn_eq_of_optimal {v : ℝ →ᵇ ℝ} {x a : ℝ} (hx : x ∈ Icc 0 P.assetCap)
+    (ha : a ∈ P.toExtended.feasible x)
+    (heq : P.toExtended.objectiveE v x a = ((P.toExtended.bellmanFn v x : ℝ) : EReal)) :
+    0 < P.consumption x a ∧
+      P.toExtended.bellmanFn v x = P.u (P.consumption x a) + P.discount * v a := by
+  have hne : P.toExtended.reward (x, a) ≠ ⊥ := by
+    intro hb
+    rw [ExtendedProgram.objectiveE, hb, EReal.bot_add _] at heq
+    exact EReal.coe_ne_bot _ heq.symm
+  have hc := P.consumption_pos_of_ne_bot hne
+  refine ⟨hc, ?_⟩
+  rw [ExtendedProgram.objectiveE, P.reward_eq_coe hx ha hc, ← EReal.coe_add,
+    EReal.coe_eq_coe_iff] at heq
+  exact heq.symm
+
+/-- **The Bellman operator preserves concavity on the region.** -/
+theorem concaveOn_bellman (v : ℝ →ᵇ ℝ) (hv : ConcaveOn ℝ (Icc 0 P.assetCap) ⇑v) :
+    ConcaveOn ℝ (Icc 0 P.assetCap) ⇑(P.toExtended.bellman v) := by
+  refine ⟨convex_Icc _ _, fun x hx y hy θ φ hθ hφ hθφ => ?_⟩
+  obtain ⟨ax, hax, heqx⟩ := P.toExtended.exists_optimal_action v x
+  obtain ⟨ay, hay, heqy⟩ := P.toExtended.exists_optimal_action v y
+  obtain ⟨hcx, hbx⟩ := P.bellmanFn_eq_of_optimal hx hax heqx
+  obtain ⟨hcy, hby⟩ := P.bellmanFn_eq_of_optimal hy hay heqy
+  have hxy : θ * x + φ * y ∈ Icc 0 P.assetCap := by
+    simpa using convex_Icc (0 : ℝ) P.assetCap hx hy hθ hφ hθφ
+  have hmix := P.feasible_convex hx hy hax hay hθ hφ hθφ
+  have hcmix : P.consumption (θ * x + φ * y) (θ * ax + φ * ay)
+      = θ * P.consumption x ax + φ * P.consumption y ay := by
+    simp only [consumption]
+    rw [P.resources_affine_comb hx.1 hy.1 hθ hφ hθφ]
+    ring
+  have hcm : 0 < P.consumption (θ * x + φ * y) (θ * ax + φ * ay) := by
+    rw [hcmix]
+    rcases lt_or_eq_of_le hθ with h | h
+    · exact add_pos_of_pos_of_nonneg (mul_pos h hcx) (mul_nonneg hφ hcy.le)
+    · have hφ1 : φ = 1 := by linarith
+      rw [← h, hφ1]
+      simpa using hcy
+  -- the mixed action is available, so it bounds the mixed value from below
+  have hle := P.toExtended.le_bellmanFn v hmix
+  have hobj : P.toExtended.objectiveE v (θ * x + φ * y) (θ * ax + φ * ay)
+      = ((P.u (P.consumption (θ * x + φ * y) (θ * ax + φ * ay))
+          + P.discount * v (θ * ax + φ * ay) : ℝ) : EReal) := by
+    rw [ExtendedProgram.objectiveE, P.reward_eq_coe hxy hmix hcm, ← EReal.coe_add]
+    rfl
+  rw [hobj] at hle
+  have hle' : P.u (P.consumption (θ * x + φ * y) (θ * ax + φ * ay))
+      + P.discount * v (θ * ax + φ * ay) ≤ P.toExtended.bellmanFn v (θ * x + φ * y) := by
+    exact_mod_cast hle
+  -- concavity of utility and of the continuation value
+  have hu := P.strictConcaveOn_u.concaveOn.2 hcx hcy hθ hφ hθφ
+  have hvv := hv.2 (P.feasible_subset_region hax) (P.feasible_subset_region hay) hθ hφ hθφ
+  have hβ : (0 : ℝ) ≤ P.discount := P.discount.coe_nonneg
+  have hscaled := mul_le_mul_of_nonneg_left hvv hβ
+  simp only [smul_eq_mul] at hu hvv hscaled
+  rw [hcmix] at hle'
+  simp only [smul_eq_mul, ExtendedProgram.bellman_apply]
+  rw [hbx, hby]
+  linarith
+
+/-- **The value function is concave on `[0, assetCap]`**, for utility unbounded below. -/
+theorem concaveOn_valueFunction :
+    ConcaveOn ℝ (Icc 0 P.assetCap) ⇑P.toExtended.valueFunction :=
+  Blackwell.concaveOn_valueFunction (convex_Icc _ _) P.toExtended.blackwell
+    P.toExtended.discount_lt_one fun v hv => P.concaveOn_bellman v hv
+
+/-- **The optimal action is unique.** Two distinct optimal actions would be beaten by their
+midpoint, since utility is strictly concave and the continuation value concave. -/
+theorem optimal_action_unique {x : ℝ} (hx : x ∈ Icc 0 P.assetCap) {a₀ a₁ : ℝ}
+    (h₀ : a₀ ∈ P.toExtended.feasible x) (h₁ : a₁ ∈ P.toExtended.feasible x)
+    (hm₀ : P.toExtended.objectiveE P.toExtended.valueFunction x a₀
+      = ((P.toExtended.bellmanFn P.toExtended.valueFunction x : ℝ) : EReal))
+    (hm₁ : P.toExtended.objectiveE P.toExtended.valueFunction x a₁
+      = ((P.toExtended.bellmanFn P.toExtended.valueFunction x : ℝ) : EReal)) :
+    a₀ = a₁ := by
+  by_contra hne
+  obtain ⟨hc₀, hb₀⟩ := P.bellmanFn_eq_of_optimal hx h₀ hm₀
+  obtain ⟨hc₁, hb₁⟩ := P.bellmanFn_eq_of_optimal hx h₁ hm₁
+  have hhalf : (0 : ℝ) < 1 / 2 := by norm_num
+  have hsum : (1 : ℝ) / 2 + 1 / 2 = 1 := by norm_num
+  have hmem : (1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁ ∈ P.toExtended.feasible x := by
+    simpa using convex_Icc (0 : ℝ) (P.maxSaving x) h₀ h₁ hhalf.le hhalf.le hsum
+  have hcmid : P.consumption x ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁)
+      = (1 / 2 : ℝ) * P.consumption x a₀ + (1 / 2 : ℝ) * P.consumption x a₁ := by
+    simp only [consumption]; ring
+  have hcm : 0 < P.consumption x ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁) := by
+    rw [hcmid]; linarith
+  have hcne : P.consumption x a₀ ≠ P.consumption x a₁ := by
+    simp only [consumption]
+    intro h
+    exact hne (by linarith)
+  -- strict gain at the midpoint
+  have hu := P.strictConcaveOn_u.2 hc₀ hc₁ hcne hhalf hhalf hsum
+  have hvv := P.concaveOn_valueFunction.2 (P.feasible_subset_region h₀)
+    (P.feasible_subset_region h₁) hhalf.le hhalf.le hsum
+  have hβ : (0 : ℝ) ≤ P.discount := P.discount.coe_nonneg
+  have hscaled := mul_le_mul_of_nonneg_left hvv hβ
+  simp only [smul_eq_mul] at hu hvv hscaled
+  have hle := P.toExtended.le_bellmanFn P.toExtended.valueFunction hmem
+  have hobj : P.toExtended.objectiveE P.toExtended.valueFunction x
+        ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁)
+      = ((P.u (P.consumption x ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁))
+          + P.discount * P.toExtended.valueFunction ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁)
+            : ℝ) : EReal) := by
+    rw [ExtendedProgram.objectiveE, P.reward_eq_coe hx hmem hcm, ← EReal.coe_add]
+    rfl
+  rw [hobj] at hle
+  have hle' : P.u (P.consumption x ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁))
+      + P.discount * P.toExtended.valueFunction ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁)
+      ≤ P.toExtended.bellmanFn P.toExtended.valueFunction x := by exact_mod_cast hle
+  rw [hcmid] at hle'
+  linarith
+
+/-- The optimal saving choice. By `optimal_action_unique` this is *the* optimal choice on
+the region, not merely *an* optimal choice. -/
+noncomputable def policy (x : ℝ) : ℝ :=
+  Classical.choose (P.toExtended.exists_optimal_action P.toExtended.valueFunction x)
+
+theorem policy_mem (x : ℝ) : P.policy x ∈ P.toExtended.feasible x :=
+  (Classical.choose_spec
+    (P.toExtended.exists_optimal_action P.toExtended.valueFunction x)).1
+
+theorem policy_optimal (x : ℝ) :
+    P.toExtended.objectiveE P.toExtended.valueFunction x (P.policy x)
+      = ((P.toExtended.bellmanFn P.toExtended.valueFunction x : ℝ) : EReal) :=
+  (Classical.choose_spec
+    (P.toExtended.exists_optimal_action P.toExtended.valueFunction x)).2
+
+theorem policy_mem_region (x : ℝ) : P.policy x ∈ Icc 0 P.assetCap :=
+  P.feasible_subset_region (P.policy_mem x)
+
+/-- Consumption under the optimal policy is strictly positive: the household never starves
+itself. With a floor this had to be proved; here it follows from the value being real. -/
+theorem consumption_policy_pos {x : ℝ} (hx : x ∈ Icc 0 P.assetCap) :
+    0 < P.consumption x (P.policy x) :=
+  (P.bellmanFn_eq_of_optimal hx (P.policy_mem x) (P.policy_optimal x)).1
+
+/-- **Any optimal action is the policy.** -/
+theorem eq_policy_of_optimal {x : ℝ} (hx : x ∈ Icc 0 P.assetCap) {a : ℝ}
+    (ha : a ∈ P.toExtended.feasible x)
+    (hopt : P.toExtended.objectiveE P.toExtended.valueFunction x a
+      = ((P.toExtended.bellmanFn P.toExtended.valueFunction x : ℝ) : EReal)) :
+    a = P.policy x :=
+  P.optimal_action_unique hx ha (P.policy_mem x) hopt (P.policy_optimal x)
+
+/-- **The Bellman equation at the policy**, with honest utility and positive consumption. -/
+theorem valueFunction_eq_policy {x : ℝ} (hx : x ∈ Icc 0 P.assetCap) :
+    P.toExtended.valueFunction x
+      = P.u (P.consumption x (P.policy x))
+        + P.discount * P.toExtended.valueFunction (P.policy x) := by
+  have h := (P.bellmanFn_eq_of_optimal hx (P.policy_mem x) (P.policy_optimal x)).2
+  have hfix : P.toExtended.bellmanFn P.toExtended.valueFunction x
+      = P.toExtended.valueFunction x := by
+    conv_rhs => rw [← P.toExtended.bellman_valueFunction]
+    rfl
+  rw [← hfix, h]
+
 /-! ### Utilities that qualify -/
 
 /-- CES period utility. -/
@@ -235,6 +492,7 @@ noncomputable def calibrated : ConsumptionSavingsUnbounded where
     simp only [neg_le_neg_iff]
     gcongr
   tendsto_atBot_u := tendsto_neg_atTop_atBot.comp tendsto_inv_nhdsGT_zero
+  strictConcaveOn_u := strictConcaveOn_neg_inv
 
 /-- A log calibration (`σ = 1`). -/
 noncomputable def calibratedLog : ConsumptionSavingsUnbounded where
@@ -250,6 +508,7 @@ noncomputable def calibratedLog : ConsumptionSavingsUnbounded where
   continuousOn_u := continuousOn_log
   monotoneOn_u := monotoneOn_log
   tendsto_atBot_u := Real.tendsto_log_nhdsGT_zero
+  strictConcaveOn_u := strictConcaveOn_log_Ioi
 
 end ConsumptionSavingsUnbounded
 
