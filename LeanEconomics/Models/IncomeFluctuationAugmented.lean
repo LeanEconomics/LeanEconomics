@@ -208,6 +208,33 @@ noncomputable def sliceAt (w : P.AugState →ᵇ ℝ) (r : ℝ) : (ℝ × Z) →
 theorem sliceAt_apply (w : P.AugState →ᵇ ℝ) (r : ℝ) (t : ℝ × Z) :
     P.sliceAt w r t = w ((t.1, r), t.2) := rfl
 
+/-- The feasible sets agree on the slice. -/
+theorem feasible_aug_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
+    (hrr : 0 < 1 + r) (t : ℝ × Z) :
+    (P.withRate r hrr).toExtended.feasible t
+      = (P.toAugmented hrlo hle).feasible ((t.1, r), t.2) := by
+  change Icc 0 ((P.withRate r hrr).maxSaving t) = Icc 0 (P.augMaxSaving rlo rhi ((t.1, r), t.2))
+  rw [P.augMaxSaving_slice hr hrr t]
+
+/-- The objectives agree on the slice, for ANY continuation value. -/
+theorem objectiveE_aug_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
+    (hrr : 0 < 1 + r) (W : P.AugState →ᵇ ℝ) (t : ℝ × Z) (a : ℝ) :
+    (P.withRate r hrr).toExtended.objectiveE (P.sliceAt W r) t a
+      = (P.toAugmented hrlo hle).objectiveE W ((t.1, r), t.2) a := by
+  have hrew : (P.withRate r hrr).toExtended.reward (t, a)
+      = (P.toAugmented hrlo hle).reward (((t.1, r), t.2), a) := by
+    change extendBot P.u (min ((P.withRate r hrr).maxConsumption)
+          ((P.withRate r hrr).resources t - a))
+      = extendBot P.u (min (P.augMaxConsumption rlo rhi ((t.1, r), t.2))
+          (P.augResources rlo rhi ((t.1, r), t.2) - a))
+    rw [P.augMaxConsumption_slice hr hrr t, P.augResources_slice hr hrr t]
+  have hexp : (P.withRate r hrr).toExtended.expect (P.sliceAt W r) (t, a)
+      = (P.toAugmented hrlo hle).expect W (((t.1, r), t.2), a) := by
+    simp only [ExtendedStochasticProgram.expect]
+    rfl
+  simp only [ExtendedStochasticProgram.objectiveE, hrew, hexp]
+  rfl
+
 /-- **The slice of the augmented value function is the value function at that rate.** -/
 theorem sliceAt_valueFunction (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
     (hrr : 0 < 1 + r) :
@@ -216,28 +243,8 @@ theorem sliceAt_valueFunction (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r �
   set W := (P.toAugmented hrlo hle).valueFunction with hW
   set w := P.sliceAt W r with hw
   -- the two programmes have the same feasible set and the same objective on the slice
-  have hfeas : ∀ t : ℝ × Z, (P.withRate r hrr).toExtended.feasible t
-      = (P.toAugmented hrlo hle).feasible ((t.1, r), t.2) := by
-    intro t
-    change Icc 0 ((P.withRate r hrr).maxSaving t) = Icc 0 (P.augMaxSaving rlo rhi ((t.1, r), t.2))
-    rw [P.augMaxSaving_slice hr hrr t]
-  have hobj : ∀ (t : ℝ × Z) (a : ℝ),
-      (P.withRate r hrr).toExtended.objectiveE w t a
-        = (P.toAugmented hrlo hle).objectiveE W ((t.1, r), t.2) a := by
-    intro t a
-    have hrew : (P.withRate r hrr).toExtended.reward (t, a)
-        = (P.toAugmented hrlo hle).reward (((t.1, r), t.2), a) := by
-      change extendBot P.u (min ((P.withRate r hrr).maxConsumption)
-            ((P.withRate r hrr).resources t - a))
-        = extendBot P.u (min (P.augMaxConsumption rlo rhi ((t.1, r), t.2))
-            (P.augResources rlo rhi ((t.1, r), t.2) - a))
-      rw [P.augMaxConsumption_slice hr hrr t, P.augResources_slice hr hrr t]
-    have hexp : (P.withRate r hrr).toExtended.expect w (t, a)
-        = (P.toAugmented hrlo hle).expect W (((t.1, r), t.2), a) := by
-      simp only [ExtendedStochasticProgram.expect]
-      rfl
-    simp only [ExtendedStochasticProgram.objectiveE, hrew, hexp]
-    rfl
+  have hfeas := P.feasible_aug_eq hrlo hle hr hrr
+  have hobj := fun (t : ℝ × Z) (a : ℝ) => P.objectiveE_aug_eq hrlo hle hr hrr W t a
   -- so `w` is a fixed point of the `r`-operator
   refine ((P.withRate r hrr).toExtended.eq_valueFunction ?_).symm ▸ rfl
   refine BoundedContinuousFunction.ext fun t => ?_
@@ -250,6 +257,77 @@ theorem sliceAt_valueFunction (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r �
   simp only [ExtendedStochasticProgram.bellmanFn, ExtendedStochasticProgram.maxE, maxValueE]
   rw [hfeas t]
   exact congrArg EReal.toReal (congrArg sSup (Set.image_congr fun a _ => hobj t a))
+
+/-! ### The transfer
+
+Uniqueness of the maximiser is IMPORTED from the slice rather than reproved: since the two
+objectives and the two feasible sets coincide, the augmented argmax at `((a, r), z)` is the
+`r`-programme's argmax at `(a, z)`, which is already known to be a singleton. So the whole
+concavity and strict-concavity chain is reused rather than redone for the augmented state,
+which is the reason this route was worth taking. -/
+
+noncomputable def augPolicy (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (x : P.AugState) : ℝ :=
+  Classical.choose ((P.toAugmented hrlo hle).exists_optimal_action
+    (P.toAugmented hrlo hle).valueFunction x)
+
+theorem augPolicy_mem (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (x : P.AugState) :
+    P.augPolicy hrlo hle x ∈ (P.toAugmented hrlo hle).feasible x :=
+  (Classical.choose_spec ((P.toAugmented hrlo hle).exists_optimal_action
+    (P.toAugmented hrlo hle).valueFunction x)).1
+
+theorem augPolicy_optimal (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (x : P.AugState) :
+    (P.toAugmented hrlo hle).objectiveE (P.toAugmented hrlo hle).valueFunction x
+        (P.augPolicy hrlo hle x)
+      = (((P.toAugmented hrlo hle).bellmanFn (P.toAugmented hrlo hle).valueFunction x : ℝ) :
+        EReal) :=
+  (Classical.choose_spec ((P.toAugmented hrlo hle).exists_optimal_action
+    (P.toAugmented hrlo hle).valueFunction x)).2
+
+theorem augPolicy_mem_argmax (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (x : P.AugState) :
+    P.augPolicy hrlo hle x ∈ argmax ((P.toAugmented hrlo hle).objectiveE
+      (P.toAugmented hrlo hle).valueFunction) (P.toAugmented hrlo hle).feasible x := by
+  refine ⟨P.augPolicy_mem hrlo hle x, isMaxOn_iff.mpr fun b hb => ?_⟩
+  rw [P.augPolicy_optimal hrlo hle x]
+  exact (P.toAugmented hrlo hle).le_bellmanFn _ hb
+
+/-- **The augmented argmax is the sliced programme's policy.** -/
+theorem argmax_aug_eq_singleton (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
+    (hrr : 0 < 1 + r) {t : ℝ × Z} (ht : t.1 ∈ Icc 0 assetCap) :
+    argmax ((P.toAugmented hrlo hle).objectiveE (P.toAugmented hrlo hle).valueFunction)
+        (P.toAugmented hrlo hle).feasible ((t.1, r), t.2)
+      = {(P.withRate r hrr).policy t} := by
+  rw [← (P.withRate r hrr).argmax_eq_singleton ht]
+  have hobj : ∀ a, (P.withRate r hrr).toExtended.objectiveE
+        (P.withRate r hrr).toExtended.valueFunction t a
+      = (P.toAugmented hrlo hle).objectiveE (P.toAugmented hrlo hle).valueFunction
+        ((t.1, r), t.2) a := by
+    intro a
+    rw [← P.sliceAt_valueFunction hrlo hle hr hrr]
+    exact P.objectiveE_aug_eq hrlo hle hr hrr _ t a
+  have heq : (P.toAugmented hrlo hle).objectiveE (P.toAugmented hrlo hle).valueFunction
+        ((t.1, r), t.2)
+      = (P.withRate r hrr).toExtended.objectiveE
+        (P.withRate r hrr).toExtended.valueFunction t := (funext hobj).symm
+  have hfe := P.feasible_aug_eq hrlo hle hr hrr t
+  simp only [argmax, heq, ← hfe]
+
+theorem augPolicy_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
+    (hrr : 0 < 1 + r) {t : ℝ × Z} (ht : t.1 ∈ Icc 0 assetCap) :
+    P.augPolicy hrlo hle ((t.1, r), t.2) = (P.withRate r hrr).policy t := by
+  have hmem := P.augPolicy_mem_argmax hrlo hle ((t.1, r), t.2)
+  rw [P.argmax_aug_eq_singleton hrlo hle hr hrr ht] at hmem
+  exact hmem
+
+/-- **The policy is continuous in the state AND the interest rate, jointly.** -/
+theorem continuousOn_augPolicy (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) :
+    ContinuousOn (P.augPolicy hrlo hle)
+      {x : P.AugState | x.1.1 ∈ Icc 0 assetCap ∧ x.1.2 ∈ Icc rlo rhi} := by
+  refine continuousOn_of_upperHemicontinuous_singleton
+    ((P.toAugmented hrlo hle).upperHemicontinuous_argmax
+      (P.toAugmented hrlo hle).valueFunction) fun x hx => ?_
+  have hrr : 0 < 1 + x.1.2 := by have := hx.2.1; linarith
+  have h := P.argmax_aug_eq_singleton hrlo hle hx.2 hrr (t := (x.1.1, x.2)) hx.1
+  rw [h, P.augPolicy_eq hrlo hle hx.2 hrr (t := (x.1.1, x.2)) hx.1]
 
 end IncomeFluctuation
 
