@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Distribution.Uniqueness
+import LeanEconomics.Models.IncomeFluctuationLipschitz
 
 /-!
 # The uniqueness hypotheses are satisfiable
@@ -105,6 +106,100 @@ theorem myopic_hreach (z₀ : Fin 2) : ∀ z : Fin 2, 0 < myopic.transitionMatri
 theorem myopic_existsUnique_isStationary :
     ∃! μ : ProbabilityMeasure myopic.State, myopic.IsStationary μ :=
   myopic.existsUnique_isStationary (z₀ := 0) (N := 1) (myopic_hreach 0) (myopic_hexh 0)
+
+/-! ### An impatient household, where the constraint genuinely binds
+
+The myopic example above has `β = 0`, which settles satisfiability but not much else. This
+one has `β(1+r) = 1/100 < 1`: the household does value the future, and the borrowing
+constraint binds because it is impatient relative to the interest rate, which is the actual
+economics of the Doeblin argument.
+
+Nothing here is a new theorem. Every constant is explicit, so the hypotheses of
+`policy_eq_zero_of_corner` reduce to arithmetic:
+
+  maxConsumption = 2 + 1·1 = 3,  K = 2/minIncome² = 2,  m = 1/maxConsumption² = 1/9
+
+`L = 3` satisfies `(K + βL)(1+r) = 2.03 ≤ 3`, and `βL = 0.03 < 1/9 = m`.
+-/
+
+/-- An impatient household: `β = 1/100`, `r = 0`, income in `{1, 2}`, cap `1`. -/
+noncomputable def impatient : IncomeFluctuation (Fin 2) 1 where
+  income z := if z = 0 then 1 else 2
+  transitionMatrix _ _ := 1 / 2
+  interest := 0
+  discount := 1 / 100
+  u := fun c => -c⁻¹
+  minIncome := 1
+  maxIncome := 2
+  minIncome_pos := by norm_num
+  minIncome_le z := by fin_cases z <;> norm_num
+  le_maxIncome z := by fin_cases z <;> norm_num
+  transitionMatrix_nonneg _ _ := by norm_num
+  transitionMatrix_sum _ := by simp
+  interest_gt_neg_one := by norm_num
+  assetCap_nonneg := by norm_num
+  discount_lt_one := by norm_num
+  continuousOn_u := (continuousOn_id.inv₀ fun x hx => ne_of_gt hx).neg
+  monotoneOn_u := by
+    intro x hx y _ hxy
+    have : (0 : ℝ) < x := hx
+    simp only [neg_le_neg_iff]
+    gcongr
+  tendsto_atBot_u := tendsto_neg_atTop_atBot.comp tendsto_inv_nhdsGT_zero
+  strictConcaveOn_u := strictConcaveOn_neg_inv
+
+@[simp] theorem impatient_u (c : ℝ) : impatient.u c = -c⁻¹ := rfl
+@[simp] theorem impatient_minIncome : impatient.minIncome = 1 := rfl
+@[simp] theorem impatient_maxIncome : impatient.maxIncome = 2 := rfl
+@[simp] theorem impatient_interest : impatient.interest = 0 := rfl
+@[simp] theorem impatient_discount : (impatient.discount : ℝ) = 1 / 100 := rfl
+@[simp] theorem impatient_transitionMatrix (z z' : Fin 2) :
+    impatient.transitionMatrix z z' = 1 / 2 := rfl
+
+theorem impatient_maxConsumption : impatient.maxConsumption = 3 := by
+  simp only [maxConsumption, impatient_maxIncome, impatient_interest]; norm_num
+
+theorem impatient_slopeBoundU : impatient.slopeBoundU = 2 := by
+  simp only [slopeBoundU, slopeBound, impatient_minIncome, impatient_u]
+  norm_num
+
+/-- The marginal utility of consumption is at least `1/9` on the relevant range. -/
+theorem impatient_marginal (c d : ℝ) (hd : 0 < d) (hdc : d ≤ c)
+    (hc3 : c ≤ impatient.maxConsumption) :
+    (1 / 9 : ℝ) * (c - d) ≤ impatient.u c - impatient.u d := by
+  rw [impatient_maxConsumption] at hc3
+  have hc : 0 < c := lt_of_lt_of_le hd hdc
+  have hkey : -c⁻¹ - -d⁻¹ = (c - d) / (c * d) := by field_simp; ring
+  rw [impatient_u, impatient_u, hkey, le_div_iff₀ (by positivity)]
+  nlinarith [mul_nonneg (sub_nonneg.mpr hdc) (show (0 : ℝ) ≤ 9 - c * d by nlinarith)]
+
+/-- **The impatient household saves nothing at any asset level.** -/
+theorem impatient_policy_eq_zero {s : ℝ × Fin 2} (hs : s.1 ∈ Icc (0 : ℝ) 1) :
+    impatient.policy s = 0 := by
+  refine impatient.policy_eq_zero_of_corner (L := 3) (m := 1 / 9) ?_ ?_ ?_ hs
+  · refine impatient.valueFunction_lipschitz (by norm_num) ?_
+    rw [impatient_slopeBoundU, impatient_discount, impatient_interest]
+    norm_num
+  · exact impatient_marginal
+  · rw [impatient_discount]; norm_num
+
+theorem impatient_gBad (z₀ : Fin 2) (x : ↥(Icc (0 : ℝ) 1)) :
+    impatient.gBad z₀ x = impatient.botState :=
+  Subtype.ext (impatient_policy_eq_zero x.2)
+
+theorem impatient_hexh (z₀ : Fin 2) :
+    (impatient.gBad z₀)^[1] impatient.topState = impatient.botState :=
+  impatient_gBad z₀ impatient.topState
+
+theorem impatient_hreach (z₀ : Fin 2) : ∀ z : Fin 2, 0 < impatient.transitionMatrix z z₀ := by
+  intro z; norm_num
+
+/-- **A unique stationary agent distribution exists for an IMPATIENT household**, one that
+discounts the future at a positive rate and is driven to the borrowing constraint because
+`β(1+r) < 1`. -/
+theorem impatient_existsUnique_isStationary :
+    ∃! μ : ProbabilityMeasure impatient.State, impatient.IsStationary μ :=
+  impatient.existsUnique_isStationary (z₀ := 0) (N := 1) (impatient_hreach 0) (impatient_hexh 0)
 
 end IncomeFluctuation
 
