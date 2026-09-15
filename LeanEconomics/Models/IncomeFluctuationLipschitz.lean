@@ -269,6 +269,93 @@ theorem abs_bellmanFn_sub_le_of_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} 
   · exact key x y hx hy h
   · rw [abs_sub_comm, abs_sub_comm x y]; exact key y x hy hx h
 
+/-- **The value function is Lipschitz in assets**, with an explicit constant. Combining the
+preservation proof with the closed class. Any `L` with `(K + βL)(1+r) ≤ L` works, and such an
+`L` exists exactly when `β(1+r) < 1`. -/
+theorem valueFunction_lipschitz {L : ℝ} (hL : 0 ≤ L)
+    (hbig : (P.slopeBoundU + P.discount * L) * (1 + P.interest) ≤ L) :
+    ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
+      |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)| ≤ L * |x - y| :=
+  P.toExtended.blackwell.forall_lipschitzOn_valueFunction P.toExtended.discount_lt_one hL
+    (g := fun (z : Z) (a : ℝ) => (a, z))
+    (fun v hvv z x hx y hy => by
+      simpa only [ExtendedStochasticProgram.bellman_apply] using
+        P.abs_bellmanFn_sub_le_of_lipschitz hL (fun z' p hp q hq => hvv z' p hp q hq) hbig z hx hy)
+
+/-! ### The corner
+
+With the marginal value of wealth bounded above by `L`, saving nothing beats saving anything
+as soon as `β L` falls below a lower bound on the marginal utility of consumption. Both sides
+of that comparison are now explicit constants, and no derivative appears in either. -/
+
+/-- **An impatient household with a bounded marginal value of wealth saves nothing.** -/
+theorem policy_eq_zero_of_corner {L m : ℝ}
+    (hlip : ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
+      |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)| ≤ L * |x - y|)
+    (hmarg : ∀ c d : ℝ, 0 < d → d ≤ c → c ≤ P.maxConsumption → m * (c - d) ≤ P.u c - P.u d)
+    (hcond : P.discount * L < m) {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap) :
+    P.policy s = 0 := by
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  set V := P.toExtended.valueFunction with hV
+  have hmem0 : (0 : ℝ) ∈ P.toExtended.feasible s := ⟨le_rfl, le_max_left _ _⟩
+  have hc0 : 0 < P.consumption s 0 := by
+    simpa only [consumption, sub_zero] using P.resources_pos s
+  have hrw0 := P.reward_eq_coe hs hmem0 hc0
+  have hRmax : P.resources s ≤ P.maxConsumption := by
+    simpa only [consumption, sub_zero] using P.consumption_le_maxConsumption hs (le_refl 0)
+  -- nothing feasible beats saving nothing
+  have hdom : ∀ a ∈ P.toExtended.feasible s,
+      P.toExtended.objectiveE V s a
+        ≤ ((P.u (P.consumption s 0) + P.discount * P.toExtended.expect V (s, 0) : ℝ) : EReal) := by
+    intro a ha
+    rcases eq_or_ne (P.toExtended.reward (s, a)) ⊥ with hbot | hne
+    · rw [ExtendedStochasticProgram.objectiveE, hbot, EReal.bot_add]; exact bot_le
+    have hca : 0 < P.consumption s a := P.consumption_pos_of_ne_bot hne
+    have ha0 : 0 ≤ a := ha.1
+    have hacap : a ≤ assetCap := le_trans ha.2 (P.maxSaving_le_assetCap _)
+    have hrwa := P.reward_eq_coe hs ha hca
+    have hdx : (P.toExtended.discount : ℝ) = (P.discount : ℝ) := rfl
+    -- the utility gain from consuming instead of saving
+    have hu : m * a ≤ P.u (P.consumption s 0) - P.u (P.consumption s a) := by
+      have hcc : P.consumption s a ≤ P.consumption s 0 := by
+        simp only [consumption]; linarith
+      have := hmarg (P.consumption s 0) (P.consumption s a) hca hcc
+        (by simpa only [consumption, sub_zero] using hRmax)
+      have hdiff : P.consumption s 0 - P.consumption s a = a := by
+        simp only [consumption]; ring
+      rwa [hdiff] at this
+    -- the continuation loss from not saving
+    have hexp := P.abs_expect_sub_le_lipschitz hlip s.2 (a := a) (b := 0)
+      ⟨ha0, hacap⟩ ⟨le_rfl, P.assetCap_nonneg⟩ s.1 s.1
+    rw [abs_le] at hexp
+    simp only [ExtendedStochasticProgram.objectiveE, hrwa, hdx, ← EReal.coe_add,
+      EReal.coe_le_coe_iff]
+    have hprod : (P.discount : ℝ) * (P.toExtended.expect V ((s.1, s.2), a)
+        - P.toExtended.expect V ((s.1, s.2), 0)) ≤ P.discount * (L * |a - 0|) :=
+      mul_le_mul_of_nonneg_left hexp.2 hβ
+    rw [sub_zero, abs_of_nonneg ha0] at hprod
+    have hpp : (P.discount : ℝ) * (L * a) ≤ m * a := by
+      rcases eq_or_lt_of_le ha0 with h | h
+      · simp [← h]
+      · nlinarith
+    have hfix : ∀ c : ℝ, P.toExtended.expect V ((s.1, s.2), c)
+        = P.toExtended.expect V (s, c) := fun _ => rfl
+    rw [hfix, hfix] at hprod
+    linarith
+  -- so saving nothing attains the maximum, and the maximiser is unique
+  have hle : P.toExtended.bellmanFn V s
+      ≤ P.u (P.consumption s 0) + P.discount * P.toExtended.expect V (s, 0) :=
+    P.toExtended.bellmanFn_le V hdom
+  have hdx : (P.toExtended.discount : ℝ) = (P.discount : ℝ) := rfl
+  have hge : ((P.u (P.consumption s 0) + P.discount * P.toExtended.expect V (s, 0) : ℝ) : EReal)
+      ≤ ((P.toExtended.bellmanFn V s : ℝ) : EReal) := by
+    have h := P.toExtended.le_bellmanFn V hmem0
+    rwa [ExtendedStochasticProgram.objectiveE, hrw0, hdx, ← EReal.coe_add] at h
+  rw [EReal.coe_le_coe_iff] at hge
+  refine (P.eq_policy_of_optimal hs hmem0 ?_).symm
+  rw [ExtendedStochasticProgram.objectiveE, hrw0, hdx, ← EReal.coe_add, EReal.coe_eq_coe_iff]
+  linarith
+
 end IncomeFluctuation
 
 end LeanEconomics
