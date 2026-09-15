@@ -6,6 +6,7 @@ Authors: Robert Kirkby
 import LeanEconomics.DynamicProgramming.Bellman
 import LeanEconomics.Topology.IccCorrespondence
 import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
+import Mathlib.Analysis.Convex.SpecificFunctions.Pow
 
 /-!
 # Deterministic consumption and savings
@@ -212,6 +213,107 @@ theorem bellman_valueFunction :
 theorem eq_valueFunction {v : ℝ →ᵇ ℝ} (hv : P.toDynamicProgram.bellman v = v) :
     v = P.toDynamicProgram.valueFunction :=
   P.toDynamicProgram.eq_valueFunction hv
+
+/-! ### Concavity of the value function
+
+The criterion of `LeanEconomics.DynamicProgram.concaveOn_valueFunction`, discharged on the
+compact convex region `[0, assetCap]`. The clamps in `rewardFn` are inactive at every point
+involved -- all four lie in the feasible region -- so the reward reduces to CES utility of a
+consumption that is affine in the state and the action. -/
+
+theorem concaveOn_utility : ConcaveOn ℝ (Ici 0) P.utility := by
+  have hp0 : (0 : ℝ) ≤ 1 - P.crra := P.one_sub_crra_pos.le
+  have hp1 : (1 : ℝ) - P.crra ≤ 1 := by linarith [P.crra_nonneg]
+  have h := Real.concaveOn_rpow hp0 hp1
+  have heq : P.utility = fun c => (1 / (1 - P.crra)) • (c ^ (1 - P.crra)) := by
+    funext c
+    simp only [utility, smul_eq_mul]
+    ring
+  rw [heq]
+  exact h.smul (div_nonneg zero_le_one P.one_sub_crra_pos.le)
+
+theorem resources_nonneg {a : ℝ} (ha : 0 ≤ a) : 0 ≤ P.resources a := by
+  have : 0 ≤ (1 + P.interest) * a := mul_nonneg P.interest_gt_neg_one.le ha
+  simp only [resources]; linarith [P.income_pos]
+
+/-- On the region the outer clamp in `maxSaving` is inactive, leaving a concave function. -/
+theorem maxSaving_eq {a : ℝ} (ha : 0 ≤ a) :
+    P.maxSaving a = min P.assetCap (P.resources a) :=
+  max_eq_right (le_min P.assetCap_nonneg (P.resources_nonneg ha))
+
+theorem maxSaving_le_assetCap (a : ℝ) : P.maxSaving a ≤ P.assetCap :=
+  max_le P.assetCap_nonneg (min_le_left _ _)
+
+/-- Cash on hand is affine in assets. -/
+theorem resources_affine {x y θ φ : ℝ} (hθφ : θ + φ = 1) :
+    P.resources (θ • x + φ • y) = θ * P.resources x + φ * P.resources y := by
+  simp only [resources, smul_eq_mul]
+  linear_combination (-P.income) * hθφ
+
+theorem feasible_convex {x y : ℝ} (hx : x ∈ Icc 0 P.assetCap) (hy : y ∈ Icc 0 P.assetCap)
+    {ax ay θ φ : ℝ} (hax : ax ∈ P.toDynamicProgram.feasible x)
+    (hay : ay ∈ P.toDynamicProgram.feasible y) (hθ : 0 ≤ θ) (hφ : 0 ≤ φ) (hθφ : θ + φ = 1) :
+    θ • ax + φ • ay ∈ P.toDynamicProgram.feasible (θ • x + φ • y) := by
+  obtain ⟨hax0, haxm⟩ := hax
+  obtain ⟨hay0, haym⟩ := hay
+  rw [P.maxSaving_eq hx.1] at haxm
+  rw [P.maxSaving_eq hy.1] at haym
+  have hmix : (0 : ℝ) ≤ θ • x + φ • y := by
+    simp only [smul_eq_mul]
+    have := mul_nonneg hθ hx.1
+    have := mul_nonneg hφ hy.1
+    linarith
+  refine ⟨by simp only [smul_eq_mul]; nlinarith, ?_⟩
+  rw [P.maxSaving_eq hmix]
+  refine le_min ?_ ?_
+  · have h1 : ax ≤ P.assetCap := haxm.trans (min_le_left _ _)
+    have h2 : ay ≤ P.assetCap := haym.trans (min_le_left _ _)
+    simp only [smul_eq_mul]
+    nlinarith
+  · have h1 : ax ≤ P.resources x := haxm.trans (min_le_right _ _)
+    have h2 : ay ≤ P.resources y := haym.trans (min_le_right _ _)
+    rw [P.resources_affine hθφ]
+    simp only [smul_eq_mul]
+    nlinarith
+
+theorem consumption_nonneg {x ax : ℝ} (hx : 0 ≤ x)
+    (hax : ax ∈ P.toDynamicProgram.feasible x) : 0 ≤ P.consumption x ax := by
+  obtain ⟨-, haxm⟩ := hax
+  rw [P.maxSaving_eq hx] at haxm
+  have : ax ≤ P.resources x := haxm.trans (min_le_right _ _)
+  simp only [consumption]; linarith
+
+/-- **The value function is concave on `[0, assetCap]`.** This is what makes the optimal
+policy unique, and so what makes an agent distribution a well-defined object. -/
+theorem concaveOn_valueFunction :
+    ConcaveOn ℝ (Icc 0 P.assetCap) ⇑P.toDynamicProgram.valueFunction := by
+  refine P.toDynamicProgram.concaveOn_valueFunction (convex_Icc _ _) ?_ ?_ ?_ ?_
+  · intro x hx y hy ax hax ay hay θ φ hθ hφ hθφ
+    exact P.feasible_convex hx hy hax hay hθ hφ hθφ
+  · intro x hx y hy ax hax ay hay θ φ hθ hφ hθφ
+    have hmix : θ • x + φ • y ∈ Icc 0 P.assetCap := convex_Icc _ _ hx hy hθ hφ hθφ
+    have hmixa := P.feasible_convex hx hy hax hay hθ hφ hθφ
+    have hrx : P.toDynamicProgram.reward (x, ax) = P.utility (P.consumption x ax) :=
+      P.rewardFn_eq_utility hx hax
+    have hry : P.toDynamicProgram.reward (y, ay) = P.utility (P.consumption y ay) :=
+      P.rewardFn_eq_utility hy hay
+    have hrm : P.toDynamicProgram.reward (θ • x + φ • y, θ • ax + φ • ay)
+        = P.utility (P.consumption (θ • x + φ • y) (θ • ax + φ • ay)) :=
+      P.rewardFn_eq_utility hmix hmixa
+    have hcmix : P.consumption (θ • x + φ • y) (θ • ax + φ • ay)
+        = θ * P.consumption x ax + φ * P.consumption y ay := by
+      simp only [consumption]
+      rw [P.resources_affine hθφ]
+      simp only [smul_eq_mul]
+      ring
+    rw [hrx, hry, hrm, hcmix]
+    have h := P.concaveOn_utility.2 (P.consumption_nonneg hx.1 hax)
+      (P.consumption_nonneg hy.1 hay) hθ hφ hθφ
+    simpa [smul_eq_mul] using h
+  · intro x y ax ay θ φ
+    rfl
+  · intro x _ a ha
+    exact ⟨ha.1, ha.2.trans (P.maxSaving_le_assetCap x)⟩
 
 /-- A calibration: income 1, interest 5%, assets capped at 10, `σ = 1/2`, `β = 0.96`.
 Recorded to witness that the parameter restrictions can all hold at once -- otherwise
