@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuation
+import Mathlib.Algebra.Order.Group.Pointwise.Interval
 
 /-!
 # Consumption at the optimum is bounded away from zero
@@ -31,7 +32,7 @@ uniform in the state; and when `r` varies, `‖V‖` is controlled by the reward
 themselves uniform over a compact interval of rates.
 -/
 
-open Set Filter Topology
+open Set Filter Topology BoundedContinuousFunction
 
 namespace LeanEconomics
 
@@ -108,6 +109,54 @@ in `(r, s)`, which is what such a bound is wanted to prove in the first place. -
 theorem exists_consumption_policy_lower_bound :
     ∃ δ > 0, ∀ s : ℝ × Z, s.1 ∈ Icc 0 P.assetCap → δ ≤ P.consumption s (P.policy s) :=
   P.exists_lower_bound_of_utility_ge _ fun _ hs => P.le_utility_consumption_policy_of_bounds hs
+
+/-! ### A choice set that does not move
+
+The Bellman operator maximises over `Icc 0 (maxSaving s)`, an interval whose RIGHT ENDPOINT
+moves with the interest rate. Comparing the operator at two rates therefore means comparing
+suprema over two different sets, which is the awkward part of any such estimate.
+
+Writing the choice as a fraction `θ ∈ [0,1]` of the maximum feasible saving removes the
+problem: the choice set becomes `[0,1]` for every rate and every state, and all the rate
+dependence moves into the objective, where it can be estimated pointwise. `|sSup f - sSup g|`
+over a COMMON set is bounded by the pointwise gap; over two different sets it is not. -/
+
+theorem maxSaving_nonneg (s : ℝ × Z) : 0 ≤ P.maxSaving s := le_max_left _ _
+
+theorem maxSaving_le_resources (s : ℝ × Z) : P.maxSaving s ≤ P.resources s :=
+  max_le (P.resources_pos s).le (min_le_right _ _)
+
+/-- The feasible set is the image of the FIXED interval `[0,1]` under scaling by the maximum
+feasible saving. -/
+theorem feasible_eq_image (s : ℝ × Z) :
+    P.toExtended.feasible s = (fun θ => θ * P.maxSaving s) '' Icc 0 1 := by
+  rw [P.feasible_eq, image_mul_right_Icc (by norm_num) (P.maxSaving_nonneg s)]
+  norm_num
+
+/-- **The one-period value as a supremum over a fixed interval.** -/
+theorem maxE_eq_sSup_unit (v : (ℝ × Z) →ᵇ ℝ) (s : ℝ × Z) :
+    P.toExtended.maxE v s
+      = sSup ((fun θ => P.toExtended.objectiveE v s (θ * P.maxSaving s)) '' Icc 0 1) := by
+  rw [ExtendedStochasticProgram.maxE, maxValueE, P.feasible_eq_image, Set.image_image]
+
+/-- **Consumption is bounded below by a quantity free of the state and the interest rate.**
+
+Along the reparametrised choice, consumption is at least `minIncome * (1 - θ)`. The bound
+holds because the maximum feasible saving never exceeds current resources, so saving a
+fraction `θ` of it leaves at least a fraction `1 - θ` of resources to consume.
+
+This is the uniformity that makes the parametric estimate possible: it does not mention the
+state, and the only model data it mentions -- `minIncome` -- does not move with the interest
+rate. Away from `θ = 1` the reward is therefore real and bounded, so the `-∞` cannot
+interfere. -/
+theorem minIncome_mul_le_consumption {θ : ℝ} (hθ : θ ∈ Icc (0 : ℝ) 1) (s : ℝ × Z) :
+    P.minIncome * (1 - θ) ≤ P.consumption s (θ * P.maxSaving s) := by
+  have hms := P.maxSaving_le_resources s
+  have hms0 := P.maxSaving_nonneg s
+  have hR := P.minIncome_le_resources s
+  have h1 : θ * P.maxSaving s ≤ θ * P.resources s := by nlinarith [hθ.1]
+  simp only [consumption]
+  nlinarith [hθ.1, hθ.2, hR]
 
 end IncomeFluctuation
 
