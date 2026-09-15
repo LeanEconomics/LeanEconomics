@@ -28,7 +28,7 @@ give objectives differing only in the discounted expectation, and the expectatio
 the next asset level, which feasibility confines to the region.
 -/
 
-open Set BoundedContinuousFunction
+open Set Filter Topology BoundedContinuousFunction
 
 namespace LeanEconomics
 
@@ -154,6 +154,59 @@ theorem abs_valueFunction_sub_le_region {P Q : IncomeFluctuation Z assetCap} {D 
     rw [le_div_iff₀ (by linarith)]
     nlinarith [hstep]
   exact le_trans (hCle s hs) hC
+
+/-! ### The cutoff: actions worth keeping consume a bounded amount
+
+The pointwise comparison the sup-norm estimate needs is false at actions that consume almost
+nothing, because `u` falls to `-∞` there and two nearby rates can give utilities an arbitrary
+distance apart. Such actions are dominated: saving nothing is always feasible and is worth at
+least `loBound v = u minIncome - β‖v‖`, which the framework already places below the
+supremum (`le_maxE`).
+
+So it is enough to compare actions worth at least `loBound v`, and this section shows those
+actions consume at least a fixed `δ > 0`. The `δ` depends on `u` and on `‖v‖` only — not on
+the state and not on the interest rate, which is what the parametric argument needs. -/
+
+theorem abs_expect_le (v : (ℝ × Z) →ᵇ ℝ) (p : (ℝ × Z) × ℝ) :
+    |P.toExtended.expect v p| ≤ ‖v‖ := by
+  calc |P.toExtended.expect v p|
+      ≤ ∑ z', |P.toExtended.prob z' p * v (P.toExtended.transition z' p)| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ z' : Z, P.toExtended.prob z' p * ‖v‖ := by
+        refine Finset.sum_le_sum fun z' _ => ?_
+        rw [abs_mul, abs_of_nonneg (P.toExtended.prob_nonneg z' _)]
+        exact mul_le_mul_of_nonneg_left (v.norm_coe_le_norm _) (P.toExtended.prob_nonneg z' _)
+    _ = ‖v‖ := by rw [← Finset.sum_mul, P.toExtended.prob_sum, one_mul]
+
+/-- **Actions worth keeping consume a bounded amount.** -/
+theorem exists_cutoff_consumption (v : (ℝ × Z) →ᵇ ℝ) :
+    ∃ δ > 0, ∀ s : ℝ × Z, s ∈ P.region → ∀ a ∈ P.toExtended.feasible s,
+      ((P.toExtended.loBound v : ℝ) : EReal) ≤ P.toExtended.objectiveE v s a →
+      δ ≤ P.consumption s a := by
+  set R : ℝ := P.toExtended.loBound v - P.discount * ‖v‖ with hR
+  have hev : ∀ᶠ c in 𝓝[>] (0 : ℝ), P.u c < R := P.tendsto_atBot_u (eventually_lt_atBot R)
+  obtain ⟨δ, hδ, hsub⟩ := (nhdsGT_basis (0 : ℝ)).eventually_iff.mp hev
+  refine ⟨δ, hδ, fun s hs a ha hL => ?_⟩
+  by_contra hlt
+  rw [not_le] at hlt
+  -- a reward of `⊥` would make the whole objective `⊥`, which is below the cutoff
+  have hne : P.toExtended.reward (s, a) ≠ ⊥ := by
+    intro hbot
+    rw [ExtendedStochasticProgram.objectiveE, hbot, EReal.bot_add] at hL
+    exact EReal.coe_ne_bot _ (le_bot_iff.mp hL)
+  have hc : 0 < P.consumption s a := P.consumption_pos_of_ne_bot hne
+  -- so the reward is real, and the objective is a real inequality
+  have hrw := P.reward_eq_coe hs ha hc
+  rw [ExtendedStochasticProgram.objectiveE, hrw, ← EReal.coe_add, EReal.coe_le_coe_iff] at hL
+  have hexp := P.abs_expect_le v (s, a)
+  rw [abs_le] at hexp
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  have hdisc : (P.toExtended.discount : ℝ) = (P.discount : ℝ) := rfl
+  rw [hdisc] at hL
+  have hge : R ≤ P.u (P.consumption s a) := by
+    rw [hR]
+    nlinarith [hexp.2, hL]
+  exact absurd (hsub ⟨hc, hlt⟩) (not_lt.mpr hge)
 
 end IncomeFluctuation
 
