@@ -47,23 +47,10 @@ namespace IncomeFluctuation
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable {assetCap : ℝ}
 
-/-- `min c ·` is 1-Lipschitz. -/
+/-- `min c ·` is 1-Lipschitz. A direct corollary of Mathlib's `lipschitzWith_min`. -/
 theorem abs_min_sub_min_le (c x y : ℝ) : |min c x - min c y| ≤ |x - y| := by
-  have key : ∀ a b : ℝ, min c a - min c b ≤ |a - b| := by
-    intro a b
-    rcases le_total c b with h | h
-    · have h1 : min c a ≤ c := min_le_left _ _
-      have h2 : min c b = c := min_eq_left h
-      have h3 := abs_nonneg (a - b)
-      linarith
-    · have h1 : min c a ≤ a := min_le_right _ _
-      have h2 : min c b = b := min_eq_right h
-      have h3 : a ≤ b + |a - b| := by cases abs_cases (a - b) <;> linarith
-      linarith
-  refine abs_le.mpr ⟨?_, key x y⟩
-  have h := key y x
-  rw [abs_sub_comm] at h
-  linarith
+  have h : LipschitzWith 1 fun t : ℝ => min c t := LipschitzWith.const_min LipschitzWith.id c
+  simpa [Real.dist_eq] using h.dist_le_mul x y
 
 /-- Resources differ by the rate gap times assets — a quantity unbounded in the state. -/
 theorem resources_sub {P Q : IncomeFluctuation Z assetCap} (hinc : P.income = Q.income)
@@ -112,22 +99,11 @@ rate too, since it is `maxIncome + (1 + r) * assetCap`; and the chosen saving ha
 carried along, which is where the `θ` reparametrisation earns its place — with the choice
 written as a fraction of maximum feasible saving, the same `θ` can be fed to both programs. -/
 
-/-- `min` is 1-Lipschitz in both arguments at once. -/
+/-- `min` is 1-Lipschitz in both arguments at once: `lipschitzWith_min` read through the
+product's supremum metric. -/
 theorem abs_min_sub_min_le_max (A B x y : ℝ) :
     |min A x - min B y| ≤ max |A - B| |x - y| := by
-  set D := max |A - B| |x - y| with hD
-  have key : ∀ a b u v : ℝ, |a - b| ≤ D → |u - v| ≤ D → min a u - min b v ≤ D := by
-    intro a b u v hab huv
-    have h1 : a ≤ b + D := by cases abs_cases (a - b) <;> linarith
-    have h2 : u ≤ v + D := by cases abs_cases (u - v) <;> linarith
-    have h3 : min a u ≤ min (b + D) (v + D) := min_le_min h1 h2
-    rw [min_add_add_right] at h3
-    linarith
-  have hAB : |A - B| ≤ D := le_max_left _ _
-  have hxy : |x - y| ≤ D := le_max_right _ _
-  refine abs_le.mpr ⟨?_, key A B x y hAB hxy⟩
-  have h := key B A y x (by rwa [abs_sub_comm]) (by rwa [abs_sub_comm])
-  linarith
+  simpa [Prod.dist_eq, Real.dist_eq] using lipschitzWith_min.dist_le_mul (A, x) (B, y)
 
 /-- The clamp level itself moves with the rate, but only by a bounded amount. -/
 theorem abs_maxConsumption_sub {P Q : IncomeFluctuation Z assetCap}
