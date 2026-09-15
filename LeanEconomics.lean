@@ -25,3 +25,4 @@ import LeanEconomics.Distribution.Uniqueness
 import LeanEconomics.DynamicProgramming.Parametric
 import LeanEconomics.Equilibrium.Aiyagari
 import LeanEconomics.Models.IncomeFluctuationBounds
+import LeanEconomics.Models.IncomeFluctuationCrossRate
