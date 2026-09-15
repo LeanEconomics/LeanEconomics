@@ -315,6 +315,105 @@ theorem concaveOn_valueFunction :
   · intro x _ a ha
     exact ⟨ha.1, ha.2.trans (P.maxSaving_le_assetCap x)⟩
 
+/-! ### The optimal policy
+
+With the value function concave, the objective is strictly concave in the action, so the
+maximiser is unique and the optimal policy is a *function*. Berge's second half then makes
+it continuous. This is what an agent distribution needs: without uniqueness, "the
+distribution induced by the optimal policy" does not name anything. -/
+
+theorem strictConcaveOn_utility (hσ : 0 < P.crra) : StrictConcaveOn ℝ (Ici 0) P.utility := by
+  have h := Real.strictConcaveOn_rpow P.one_sub_crra_pos (by linarith : (1 : ℝ) - P.crra < 1)
+  have hd := P.one_sub_crra_pos
+  refine ⟨convex_Ici _, fun x hx y hy hxy a b ha hb hab => ?_⟩
+  have hrp := h.2 hx hy hxy ha hb hab
+  simp only [utility, smul_eq_mul] at hrp ⊢
+  have hgoal : a * (x ^ (1 - P.crra) / (1 - P.crra)) + b * (y ^ (1 - P.crra) / (1 - P.crra))
+      = (a * x ^ (1 - P.crra) + b * y ^ (1 - P.crra)) / (1 - P.crra) := by ring
+  rw [hgoal]
+  exact (div_lt_div_iff_of_pos_right hd).mpr hrp
+
+theorem feasible_subset_region {x a : ℝ} (ha : a ∈ P.toDynamicProgram.feasible x) :
+    a ∈ Icc 0 P.assetCap :=
+  ⟨ha.1, ha.2.trans (P.maxSaving_le_assetCap x)⟩
+
+/-- The objective is strictly concave in the action, being strictly concave utility of an
+affine consumption plus a concave continuation value. -/
+theorem strictConcaveOn_objective (hσ : 0 < P.crra) {x : ℝ} (hx : x ∈ Icc 0 P.assetCap) :
+    StrictConcaveOn ℝ (P.toDynamicProgram.feasible x)
+      (P.toDynamicProgram.objective P.toDynamicProgram.valueFunction x) := by
+  refine ⟨convex_Icc _ _, fun a₀ h₀ a₁ h₁ hne θ φ hθ hφ hθφ => ?_⟩
+  have hmix : θ • a₀ + φ • a₁ ∈ P.toDynamicProgram.feasible x :=
+    convex_Icc _ _ h₀ h₁ hθ.le hφ.le hθφ
+  have hr₀ : P.toDynamicProgram.reward (x, a₀) = P.utility (P.consumption x a₀) :=
+    P.rewardFn_eq_utility hx h₀
+  have hr₁ : P.toDynamicProgram.reward (x, a₁) = P.utility (P.consumption x a₁) :=
+    P.rewardFn_eq_utility hx h₁
+  have hrm : P.toDynamicProgram.reward (x, θ * a₀ + φ * a₁)
+      = P.utility (P.consumption x (θ * a₀ + φ * a₁)) := P.rewardFn_eq_utility hx hmix
+  have hc₀ : 0 ≤ P.consumption x a₀ := P.consumption_nonneg hx.1 h₀
+  have hc₁ : 0 ≤ P.consumption x a₁ := P.consumption_nonneg hx.1 h₁
+  have hcne : P.consumption x a₀ ≠ P.consumption x a₁ := by
+    simp only [consumption]
+    intro h
+    exact hne (by linarith)
+  have hcmix : P.consumption x (θ * a₀ + φ * a₁)
+      = θ * P.consumption x a₀ + φ * P.consumption x a₁ := by
+    simp only [consumption]
+    linear_combination (-P.resources x) * hθφ
+  have hu := (P.strictConcaveOn_utility hσ).2 hc₀ hc₁ hcne hθ hφ hθφ
+  have hV := P.concaveOn_valueFunction.2 (P.feasible_subset_region h₀)
+    (P.feasible_subset_region h₁) hθ.le hφ.le hθφ
+  have hβ : (0 : ℝ) ≤ P.toDynamicProgram.discount := P.discount.coe_nonneg
+  have hscaled := mul_le_mul_of_nonneg_left hV hβ
+  simp only [DynamicProgram.objective, smul_eq_mul] at hu hV hscaled ⊢
+  have htr₀ : P.toDynamicProgram.transition (x, a₀) = a₀ := rfl
+  have htr₁ : P.toDynamicProgram.transition (x, a₁) = a₁ := rfl
+  have htrm : P.toDynamicProgram.transition (x, θ * a₀ + φ * a₁) = θ * a₀ + φ * a₁ := rfl
+  rw [hr₀, hr₁, hrm, hcmix, htr₀, htr₁, htrm]
+  linarith
+
+/-- The optimal saving choice. -/
+noncomputable def policy (x : ℝ) : ℝ :=
+  Classical.choose (P.toDynamicProgram.exists_optimal_action P.toDynamicProgram.valueFunction x)
+
+theorem policy_mem (x : ℝ) : P.policy x ∈ P.toDynamicProgram.feasible x :=
+  (Classical.choose_spec
+    (P.toDynamicProgram.exists_optimal_action P.toDynamicProgram.valueFunction x)).1
+
+theorem policy_isMaxOn (x : ℝ) :
+    IsMaxOn (P.toDynamicProgram.objective P.toDynamicProgram.valueFunction x)
+      (P.toDynamicProgram.feasible x) (P.policy x) :=
+  isMaxOn_iff.mpr
+    (Classical.choose_spec
+      (P.toDynamicProgram.exists_optimal_action P.toDynamicProgram.valueFunction x)).2.2
+
+/-- **The optimal action is unique**, so the maximiser set is exactly the policy. -/
+theorem argmax_eq_singleton (hσ : 0 < P.crra) {x : ℝ} (hx : x ∈ Icc 0 P.assetCap) :
+    argmax (P.toDynamicProgram.objective P.toDynamicProgram.valueFunction)
+      P.toDynamicProgram.feasible x = {P.policy x} := by
+  ext a
+  simp only [argmax, Set.mem_ofPred_eq, Set.mem_singleton_iff]
+  constructor
+  · rintro ⟨ha, hmax⟩
+    exact (P.strictConcaveOn_objective hσ hx).eq_of_isMaxOn hmax (P.policy_isMaxOn x) ha
+      (P.policy_mem x)
+  · rintro rfl
+    exact ⟨P.policy_mem x, P.policy_isMaxOn x⟩
+
+/-- **The optimal policy is a continuous function** on the region. Upper hemicontinuity of
+the maximiser set is Berge; single-valuedness turns it into continuity. -/
+theorem continuousOn_policy (hσ : 0 < P.crra) :
+    ContinuousOn P.policy (Icc 0 P.assetCap) :=
+  continuousOn_of_upperHemicontinuous_singleton
+    (P.toDynamicProgram.upperHemicontinuous_argmax P.toDynamicProgram.valueFunction)
+    fun _ hx => P.argmax_eq_singleton hσ hx
+
+/-- The policy keeps the household inside the region, so `[0, assetCap]` is forward
+invariant under it -- which is what lets a distribution live there. -/
+theorem policy_mem_region (x : ℝ) : P.policy x ∈ Icc 0 P.assetCap :=
+  P.feasible_subset_region (P.policy_mem x)
+
 /-- A calibration: income 1, interest 5%, assets capped at 10, `σ = 1/2`, `β = 0.96`.
 Recorded to witness that the parameter restrictions can all hold at once -- otherwise
 everything above would be vacuous. -/

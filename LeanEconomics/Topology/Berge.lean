@@ -203,6 +203,40 @@ theorem upperHemicontinuousAt_argmax (hf : Continuous ↿f) (hΓne : ∀ x, (Γ 
     rw [← maxValue_eq hf (hΓc x') hy] at hlt'
     exact absurd h2 (not_lt.mpr hlt'.le)
 
+/-- **A single-valued upper hemicontinuous correspondence is a continuous function.** This
+is how the second half of Berge becomes a continuity statement about the optimal policy,
+once the maximiser is known to be unique. -/
+theorem continuous_of_upperHemicontinuous_singleton {Γ : X → Set Y} {g : X → Y}
+    (huhc : UpperHemicontinuous Γ) (hsingle : ∀ x, Γ x = {g x}) : Continuous g := by
+  rw [continuous_iff_continuousAt]
+  intro x
+  rw [ContinuousAt, tendsto_nhds]
+  intro V hV hgx
+  have hsub : Γ x ⊆ V := by
+    rw [hsingle x]
+    simpa using hgx
+  filter_upwards [huhc.forall_isOpen x V hV hsub] with x' h
+  refine h ?_
+  rw [hsingle x']
+  rfl
+
+/-- The same, on a set: single-valuedness is only needed where the conclusion is wanted.
+This is the version the household models need, since the optimal action is unique on the
+region where the value function is concave, not necessarily everywhere. -/
+theorem continuousOn_of_upperHemicontinuous_singleton {Γ : X → Set Y} {g : X → Y} {s : Set X}
+    (huhc : UpperHemicontinuous Γ) (hsingle : ∀ x ∈ s, Γ x = {g x}) : ContinuousOn g s := by
+  intro x hx
+  rw [ContinuousWithinAt, tendsto_nhds]
+  intro V hV hgx
+  have hsub : Γ x ⊆ V := by
+    rw [hsingle x hx]
+    simpa using hgx
+  filter_upwards [nhdsWithin_le_nhds (huhc.forall_isOpen x V hV hsub), self_mem_nhdsWithin]
+    with x' h hx'
+  refine h ?_
+  rw [hsingle x' hx']
+  rfl
+
 /-! ### A constraint set that does not move
 
 The degenerate case, recorded to show the hypotheses of the theorems above are
