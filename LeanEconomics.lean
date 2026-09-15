@@ -24,3 +24,4 @@ import LeanEconomics.Models.IncomeFluctuationMonotone
 import LeanEconomics.Distribution.Uniqueness
 import LeanEconomics.DynamicProgramming.Parametric
 import LeanEconomics.Equilibrium.Aiyagari
+import LeanEconomics.Models.IncomeFluctuationBounds

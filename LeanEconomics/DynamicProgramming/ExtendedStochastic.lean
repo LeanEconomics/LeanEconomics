@@ -266,6 +266,33 @@ noncomputable def valueFunction : S →ᵇ ℝ := D.blackwell.valueFunction D.di
 theorem bellman_valueFunction : D.bellman D.valueFunction = D.valueFunction :=
   D.blackwell.isFixedPt_valueFunction D.discount_lt_one
 
+/-- **An explicit bound on the value function**, in terms of the reward bounds alone.
+
+The right-hand side mentions no state and no fixed point, which is exactly what is needed to
+make bounds derived from `‖valueFunction‖` uniform across a FAMILY of programs: the reward
+bounds of a family are typically easy to control, whereas its value functions are not. -/
+theorem norm_valueFunction_le :
+    ‖D.valueFunction‖ ≤ max |D.rewardMin| |D.rewardMax| / (1 - D.discount) := by
+  have hβ1 : (D.discount : ℝ) < 1 := by exact_mod_cast D.discount_lt_one
+  have hβ0 : (0 : ℝ) ≤ (D.discount : ℝ) := D.discount.coe_nonneg
+  set M : ℝ := max |D.rewardMin| |D.rewardMax| with hM
+  have hM0 : 0 ≤ M := le_trans (abs_nonneg _) (le_max_left _ _)
+  have hV0 : 0 ≤ ‖D.valueFunction‖ := norm_nonneg _
+  have hkey : ‖D.valueFunction‖ ≤ M + D.discount * ‖D.valueFunction‖ := by
+    refine (BoundedContinuousFunction.norm_le (by positivity)).mpr fun s => ?_
+    have hfix : D.valueFunction s = D.bellmanFn D.valueFunction s := by
+      rw [← D.bellman_apply, D.bellman_valueFunction]
+    rw [Real.norm_eq_abs, hfix]
+    refine le_trans (D.abs_bellmanFn_le _ s) (max_le ?_ ?_)
+    · have h1 : |D.rewardMin| ≤ M := le_max_left _ _
+      rw [abs_le] at h1 ⊢
+      constructor <;> · simp only [loBound]; nlinarith [h1.1, h1.2]
+    · have h1 : |D.rewardMax| ≤ M := le_max_right _ _
+      rw [abs_le] at h1 ⊢
+      constructor <;> · simp only [hiBound]; nlinarith [h1.1, h1.2]
+  rw [le_div_iff₀ (by linarith)]
+  nlinarith [hkey]
+
 theorem eq_valueFunction {v : S →ᵇ ℝ} (hv : D.bellman v = v) : v = D.valueFunction :=
   D.blackwell.eq_valueFunction D.discount_lt_one hv
 
