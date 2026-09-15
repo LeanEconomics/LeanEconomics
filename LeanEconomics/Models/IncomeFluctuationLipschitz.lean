@@ -288,12 +288,18 @@ With the marginal value of wealth bounded above by `L`, saving nothing beats sav
 as soon as `β L` falls below a lower bound on the marginal utility of consumption. Both sides
 of that comparison are now explicit constants, and no derivative appears in either. -/
 
-/-- **An impatient household with a bounded marginal value of wealth saves nothing.** -/
-theorem policy_eq_zero_of_corner {L m : ℝ}
+/-- **The corner condition, state by state.** The marginal-utility bound is required only up
+to THIS state's resources, so the threshold is local: a state with few resources has high
+marginal utility and the constraint binds there, while a richer state may fail the test.
+
+That is what lets the borrowing constraint bind at a bad income draw without binding
+everywhere, which the global version could not express. -/
+theorem policy_eq_zero_of_corner_at {L m : ℝ}
     (hlip : ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
       |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)| ≤ L * |x - y|)
-    (hmarg : ∀ c d : ℝ, 0 < d → d ≤ c → c ≤ P.maxConsumption → m * (c - d) ≤ P.u c - P.u d)
-    (hcond : P.discount * L < m) {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap) :
+    {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap)
+    (hmarg : ∀ c d : ℝ, 0 < d → d ≤ c → c ≤ P.resources s → m * (c - d) ≤ P.u c - P.u d)
+    (hcond : P.discount * L < m) :
     P.policy s = 0 := by
   have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
   set V := P.toExtended.valueFunction with hV
@@ -320,7 +326,7 @@ theorem policy_eq_zero_of_corner {L m : ℝ}
       have hcc : P.consumption s a ≤ P.consumption s 0 := by
         simp only [consumption]; linarith
       have := hmarg (P.consumption s 0) (P.consumption s a) hca hcc
-        (by simpa only [consumption, sub_zero] using hRmax)
+        (by simp only [consumption, sub_zero]; exact le_rfl)
       have hdiff : P.consumption s 0 - P.consumption s a = a := by
         simp only [consumption]; ring
       rwa [hdiff] at this
@@ -355,6 +361,31 @@ theorem policy_eq_zero_of_corner {L m : ℝ}
   refine (P.eq_policy_of_optimal hs hmem0 ?_).symm
   rw [ExtendedStochasticProgram.objectiveE, hrw0, hdx, ← EReal.coe_add, EReal.coe_eq_coe_iff]
   linarith
+
+/-- The global corner condition, as a corollary. -/
+theorem policy_eq_zero_of_corner {L m : ℝ}
+    (hlip : ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
+      |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)| ≤ L * |x - y|)
+    (hmarg : ∀ c d : ℝ, 0 < d → d ≤ c → c ≤ P.maxConsumption → m * (c - d) ≤ P.u c - P.u d)
+    (hcond : P.discount * L < m) {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap) :
+    P.policy s = 0 :=
+  P.policy_eq_zero_of_corner_at hlip hs
+    (fun c d hd hdc hc => hmarg c d hd hdc
+      (le_trans hc (by simpa only [consumption, sub_zero] using
+        P.consumption_le_maxConsumption hs (le_refl 0))))
+    hcond
+
+/-- For `u c = -1/c`, the marginal-utility bound up to `R` is `1/R²`. So the state-dependent
+threshold reads `β L < 1 / resources²`: the constraint binds exactly where resources are small
+enough, and `resources = income + (1+r)·assets` rises with BOTH the income draw and the asset
+position. -/
+theorem crra_marginal {R : ℝ} (hR : 0 < R) (c d : ℝ) (hd : 0 < d) (hdc : d ≤ c) (hcR : c ≤ R) :
+    (1 / R ^ 2) * (c - d) ≤ (-c⁻¹) - (-d⁻¹) := by
+  have hc : 0 < c := lt_of_lt_of_le hd hdc
+  have hkey : -c⁻¹ - -d⁻¹ = (c - d) / (c * d) := by field_simp; ring
+  rw [show (1 : ℝ) / R ^ 2 * (c - d) = (c - d) / R ^ 2 by ring, hkey,
+    div_le_div_iff₀ (by positivity) (by positivity)]
+  nlinarith [mul_nonneg (sub_nonneg.mpr hdc) (sub_nonneg.mpr (show c * d ≤ R ^ 2 by nlinarith))]
 
 end IncomeFluctuation
 
