@@ -418,6 +418,7 @@ theorem osc_iterate_le (h : P.State →ᵇ ℝ) (j : ℕ) :
     le_ciInf fun s => P.infF_le_iterate h j s
   linarith
 
+omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **The oscillation of an iterated test function vanishes.** -/
 theorem tendsto_osc_iterate {z₀ : Z} {s₀ : P.State} {p₀ : ℝ} {N : ℕ} (hp0 : 0 < p₀)
     (hp : ∀ s : P.State, p₀ ≤ P.prob s z₀) (hbad : ∀ s, (P.badStep z₀)^[N] s = s₀)
