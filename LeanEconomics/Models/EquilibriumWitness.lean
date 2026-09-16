@@ -167,28 +167,25 @@ theorem dispersed_existsUnique_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 
   exact (dispersed.withRate r hrr).existsUnique_isStationary (z₀ := 0) (N := N)
     (fun z => by simp) hN
 
-theorem dispersed_gain_base : Real.log (50 / 49) < 1 / 16 * Real.log (3 / 2) := by
-  have e1 : (16 : ℝ) * Real.log (50 / 49) = Real.log ((50 / 49 : ℝ) ^ (16 : ℕ)) := by
+theorem dispersed_gain_top : Real.log (40 / 39) < 1 / 16 * Real.log (58 / 37) := by
+  have e1 : (16 : ℝ) * Real.log (40 / 39) = Real.log ((40 / 39 : ℝ) ^ (16 : ℕ)) := by
     rw [Real.log_pow]; push_cast; ring
-  have hlt : Real.log ((50 / 49 : ℝ) ^ (16 : ℕ)) < Real.log (3 / 2) :=
+  have hlt : Real.log ((40 / 39 : ℝ) ^ (16 : ℕ)) < Real.log (58 / 37) :=
     Real.log_lt_log (by positivity) (by norm_num)
   rw [← e1] at hlt
   linarith
 
-/-- **A positive floor under capital supply, at every rate in the interval.** -/
-theorem dispersed_floor_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (hrr : 0 < 1 + r)
-    (μ : ProbabilityMeasure dispersed.State)
-    (hμ : (dispersed.withRate r hrr).IsStationary μ) :
-    1 / 200 ≤ dispersed.aggregateCapital μ := by
-  have hmono := gain_term_mono (y₀ := 1 / 100) (t := 1 / 100) (by norm_num) (by norm_num)
-    (s₀ := 1) (s₁ := 1 + r) (by norm_num) (by linarith [hr.1])
-  have hbase : Real.log (1 + 1 * (1 / 100) / (1 / 100 + 1 * (1 / 100))) = Real.log (3 / 2) := by
-    norm_num
-  rw [hbase] at hmono
-  have hkey := (dispersed.withRate r hrr).le_aggregateCapital_of_gain (by simp) hμ
-    (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (h := 1 / 50) (by norm_num) (by norm_num) (by norm_num)
+/-- **A positive floor under capital supply at the top of the interval**, which is the only place
+the equilibrium argument needs one. Taking `h` at `r = 1/20` rather than at `r = 0` — the gain
+condition is easier at higher rates — raises the floor from `1/200` to `1/160`. -/
+theorem dispersed_floor_top (hrr : 0 < 1 + 1 / 20) (μ : ProbabilityMeasure dispersed.State)
+    (hμ : (dispersed.withRate (1 / 20) hrr).IsStationary μ) :
+    1 / 160 ≤ dispersed.aggregateCapital μ := by
+  have hkey := (dispersed.withRate (1 / 20) hrr).le_aggregateCapital_of_gain (by simp) hμ
+    (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (h := 1 / 40) (by norm_num) (by norm_num) (by norm_num)
     (fun z => by simp) ?_
-  · have heq : (dispersed.withRate r hrr).aggregateCapital μ = dispersed.aggregateCapital μ := rfl
+  · have heq : (dispersed.withRate (1 / 20) hrr).aggregateCapital μ
+        = dispersed.aggregateCapital μ := rfl
     rw [heq] at hkey
     norm_num at hkey
     linarith
@@ -197,19 +194,35 @@ theorem dispersed_floor_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (h
       dispersed_income_zero, dispersed_income_one, dispersed_discount,
       dispersed_transitionMatrix]
     norm_num
-    linarith [dispersed_gain_base, hmono]
+    linarith [dispersed_gain_top]
 
 /-- **An Aiyagari equilibrium.** Every hypothesis discharged: a unique stationary agent
 distribution at each rate in `[0, 1/20]`, capital supply bounded below by `1/200` there, and a
 Cobb–Douglas firm chosen to meet it. -/
 theorem dispersed_exists_equilibrium :
-    ∃ A δ : ℝ, 0 < A ∧ ∃ r ∈ Icc (0 : ℝ) (1 / 20),
+    ∃ A δ : ℝ, 0 < A ∧ 0 < 0 + δ ∧ ∃ r ∈ Icc (0 : ℝ) (1 / 20),
       IsAiyagariEquilibrium
         (dispersed.rateFamily (by norm_num : (0:ℝ) < 1 + 0) (by norm_num : (0:ℝ) ≤ 1 / 20))
         (capitalDemand A δ) r :=
   dispersed.exists_equilibrium_of_uniqueness_and_floor (by norm_num) (by norm_num)
     (fun r hr hrr => dispersed_existsUnique_uniform hr hrr) (by norm_num)
-    (fun r hr hrr μ hμ => dispersed_floor_uniform hr hrr μ hμ)
+    (fun hrr μ hμ => dispersed_floor_top hrr μ hμ)
+
+/-- **The same equilibrium in implied-rate form**: at the equilibrium rate, the capital the
+households hold implies that rate back. -/
+theorem dispersed_exists_equilibrium_impliedRate :
+    ∃ A δ : ℝ, 0 < A ∧ ∃ r ∈ Icc (0 : ℝ) (1 / 20),
+      ∃ μ : ProbabilityMeasure dispersed.State,
+        ((dispersed.rateFamily (by norm_num : (0:ℝ) < 1 + 0)
+          (by norm_num : (0:ℝ) ≤ 1 / 20)) r).IsStationary μ ∧
+        0 < ((dispersed.rateFamily (by norm_num : (0:ℝ) < 1 + 0)
+          (by norm_num : (0:ℝ) ≤ 1 / 20)) r).aggregateCapital μ ∧
+        impliedRate A δ (((dispersed.rateFamily (by norm_num : (0:ℝ) < 1 + 0)
+          (by norm_num : (0:ℝ) ≤ 1 / 20)) r).aggregateCapital μ) = r := by
+  obtain ⟨A, δ, hA, hrδ, r, hr, heq⟩ := dispersed_exists_equilibrium
+  refine ⟨A, δ, hA, r, hr, ?_⟩
+  have hrpos : 0 < r + δ := by linarith [hr.1]
+  exact (isAiyagariEquilibrium_iff_impliedRate hA hrpos).mp heq
 
 
 end LeanEconomics

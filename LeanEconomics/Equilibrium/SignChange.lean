@@ -5,6 +5,7 @@ Authors: Robert Kirkby
 -/
 import LeanEconomics.Equilibrium.Firm
 import LeanEconomics.Equilibrium.PositiveCapital
+import LeanEconomics.Models.IncomeFluctuationConsumption
 
 /-!
 # The sign change, both ends
@@ -183,16 +184,19 @@ theorem withRate_congr {a b : ℝ} (hab : a = b) (h₁ : 0 < 1 + a) (h₂ : 0 < 
   subst hab; rfl
 
 /-- **An Aiyagari equilibrium from household-side hypotheses alone.** Uniqueness of the stationary
-distribution at each rate, and a positive floor under capital supply, suffice: the firm is then
-calibrated to meet them. -/
+distribution at each rate, and a positive floor under capital supply AT THE TOP OF THE INTERVAL,
+suffice: the firm is then calibrated to meet them.
+
+The floor is needed only at `rhi`, which matters: `gain_term_mono` says the gain condition is
+easier at higher rates, so the floor may be taken at the best rate rather than the worst. -/
 theorem exists_equilibrium_of_uniqueness_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
     (hlt : rlo < rhi)
     (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r,
       ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ)
     {m : ℝ} (hm : 0 < m)
-    (hfloor : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r, ∀ μ : ProbabilityMeasure P.State,
-      (P.withRate r hrr).IsStationary μ → m ≤ P.aggregateCapital μ) :
-    ∃ A δ : ℝ, 0 < A ∧ ∃ r ∈ Icc rlo rhi,
+    (hfloor : ∀ hrhi : 0 < 1 + rhi, ∀ μ : ProbabilityMeasure P.State,
+      (P.withRate rhi hrhi).IsStationary μ → m ≤ P.aggregateCapital μ) :
+    ∃ A δ : ℝ, 0 < A ∧ 0 < rlo + δ ∧ ∃ r ∈ Icc rlo rhi,
       IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) (capitalDemand A δ) r := by
   classical
   have hle : rlo ≤ rhi := hlt.le
@@ -219,15 +223,66 @@ theorem exists_equilibrium_of_uniqueness_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1
   have hhi' : rhi ∈ Icc rlo rhi := ⟨hle, le_rfl⟩
   have hrhi : 0 < 1 + rhi := by linarith
   have hub : P.aggregateCapital (ν rlo) ≤ assetCap := P.aggregateCapital_le _
-  have hlbhi : m ≤ P.aggregateCapital (ν rhi) := hfloor rhi hhi' hrhi _ (hν rhi hhi' hrhi)
+  have hlbhi : m ≤ P.aggregateCapital (ν rhi) := hfloor hrhi _ (hν rhi hhi' hrhi)
   have hmM : m ≤ assetCap := le_trans hlbhi (P.aggregateCapital_le _)
   -- and the firm that meets them
   obtain ⟨A, δ, hA, hrδ, hDlo, hDhi⟩ := exists_firm_of_bounds hlt hm hmM
-  refine ⟨A, δ, hA, P.exists_equilibrium_of_selection hrlo hle ν hν hunique (capitalDemand A δ)
-    (continuousOn_capitalDemand hrδ) ?_ ?_⟩
+  refine ⟨A, δ, hA, hrδ, P.exists_equilibrium_of_selection hrlo hle ν hν hunique
+    (capitalDemand A δ) (continuousOn_capitalDemand hrδ) ?_ ?_⟩
   · exact le_trans hub hDlo
   · exact le_trans hDhi hlbhi
 
+
+/-- **Capital supply is bounded above by the impatience of the household.** Every household saves
+at most `1 - ε` of its resources, capital is mean saving, and resources are income plus the return
+on capital — so the bound closes on itself.
+
+This is the quantitative form of "assets are small when the household is impatient", and it blows
+up exactly as `(1-ε)(1+r) → 1`, which is where the household stops running its assets down. -/
+theorem aggregateCapital_le_of_consumption_bound {μ : ProbabilityMeasure P.State}
+    (hμ : P.IsStationary μ) {ε : ℝ} (hε1 : ε ≤ 1)
+    (hlt : (1 - ε) * (1 + P.interest) < 1)
+    (hlb : ∀ (z : Z), ∀ a ∈ Icc (0 : ℝ) assetCap, ε * P.resources (a, z) ≤ P.consumptionFn z a) :
+    P.aggregateCapital μ ≤ (1 - ε) * P.maxIncome / (1 - (1 - ε) * (1 + P.interest)) := by
+  have hε0 : (0 : ℝ) ≤ 1 - ε := by linarith
+  have hr : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  set K : ℝ := P.aggregateCapital μ with hKdef
+  have hK : K = ∫ s, P.policyCoord s ∂(μ : Measure P.State) :=
+    P.aggregateCapital_eq_integral_policy hμ
+  have hA : ∫ s, P.assetCoord s ∂(μ : Measure P.State) = K := rfl
+  have hbound : ∀ s : P.State, P.policyCoord s
+      ≤ (1 - ε) * P.maxIncome + (1 - ε) * (1 + P.interest) * P.assetCoord s := by
+    intro s
+    have hmem : ((s.1 : ℝ)) ∈ Icc (0 : ℝ) assetCap := s.1.2
+    have hlbs := hlb s.2 _ hmem
+    have hres : P.resources ((s.1 : ℝ), s.2) = P.income s.2 + (1 + P.interest) * (s.1 : ℝ) := by
+      simp only [resources, max_eq_right hmem.1]
+    have hpol : P.policyCoord s
+        = P.resources ((s.1 : ℝ), s.2) - P.consumptionFn s.2 (s.1 : ℝ) := by
+      simp only [policyCoord_apply, incl, consumptionFn, consumption]; ring
+    have hinc : P.income s.2 ≤ P.maxIncome := P.le_maxIncome _
+    have hacoord : P.assetCoord s = (s.1 : ℝ) := rfl
+    rw [hpol, hres, hacoord]
+    rw [hres] at hlbs
+    nlinarith [hlbs, hinc, hε0, hr, hmem.1]
+  have hsplit : ∫ s, ((1 - ε) * P.maxIncome + (1 - ε) * (1 + P.interest) * P.assetCoord s)
+        ∂(μ : Measure P.State)
+      = (1 - ε) * P.maxIncome + (1 - ε) * (1 + P.interest) * K := by
+    have hprob : IsProbabilityMeasure (μ : Measure P.State) := μ.2
+    rw [integral_add (integrable_const _) ((P.assetCoord.integrable _).const_mul _)]
+    have h1 : ∫ _s : P.State, (1 - ε) * P.maxIncome ∂(μ : Measure P.State)
+        = (1 - ε) * P.maxIncome := by simp
+    have h2 : ∫ s, (1 - ε) * (1 + P.interest) * P.assetCoord s ∂(μ : Measure P.State)
+        = (1 - ε) * (1 + P.interest) * K := by rw [integral_const_mul, hA]
+    rw [h1, h2]
+  have hint : ∫ s, P.policyCoord s ∂(μ : Measure P.State)
+      ≤ (1 - ε) * P.maxIncome + (1 - ε) * (1 + P.interest) * K := by
+    rw [← hsplit]
+    exact integral_mono (P.policyCoord.integrable _)
+      ((integrable_const _).add ((P.assetCoord.integrable _).const_mul _)) hbound
+  rw [← hK] at hint
+  rw [le_div_iff₀ (by linarith)]
+  nlinarith [hint]
 
 end IncomeFluctuation
 

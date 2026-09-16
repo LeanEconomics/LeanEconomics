@@ -97,6 +97,52 @@ theorem exists_capitalDemand_ge (δ : ℝ) {M : ℝ} (hM : 0 ≤ M) :
   rw [hexp, mul_one_div, div_le_one (by positivity)]
   nlinarith
 
+/-! ### The implied rate
+
+Equilibrium is often stated the other way round: a rate `r` induces a capital stock, the capital
+stock induces a marginal product, and equilibrium is where the induced rate returns `r`. That is
+the same condition — `impliedRate` inverts `capitalDemand` — and `capitalDemand_eq_iff` says so. -/
+
+/-- The net marginal product of capital at stock `K`: the rate a firm holding `K` would pay. -/
+noncomputable def impliedRate (A δ K : ℝ) : ℝ := A / (2 * Real.sqrt K) - δ
+
+/-- **`impliedRate` inverts `capitalDemand`.** Demanding `K` at rate `r` is the same as `K`
+implying `r`. -/
+theorem capitalDemand_eq_iff {A δ r K : ℝ} (hA : 0 < A) (hr : 0 < r + δ) (hK : 0 < K) :
+    K = capitalDemand A δ r ↔ impliedRate A δ K = r := by
+  constructor
+  · rintro rfl
+    exact capitalDemand_marginalProduct hA hr
+  · intro h
+    have hsK : 0 < Real.sqrt K := Real.sqrt_pos.mpr hK
+    have hrw : A / (2 * Real.sqrt K) = r + δ := by
+      simp only [impliedRate] at h; linarith
+    have hsq : Real.sqrt K = A / (2 * (r + δ)) := by
+      field_simp at hrw ⊢
+      linarith [hrw]
+    have hKeq : K = (Real.sqrt K) ^ 2 := (Real.sq_sqrt hK.le).symm
+    rw [hKeq, hsq]
+    simp only [capitalDemand]
+    field_simp
+    ring
+
+
+/-- **Equilibrium in implied-rate form.** A rate is an equilibrium exactly when the capital its
+households hold implies it back. -/
+theorem isAiyagariEquilibrium_iff_impliedRate {Z : Type*} [Fintype Z] [Nonempty Z]
+    [TopologicalSpace Z] [DiscreteTopology Z] [MeasurableSpace Z] [BorelSpace Z] {assetCap : ℝ}
+    {Pf : ℝ → IncomeFluctuation Z assetCap} {A δ r : ℝ} (hA : 0 < A) (hr : 0 < r + δ) :
+    IsAiyagariEquilibrium Pf (capitalDemand A δ) r ↔
+      ∃ μ : ProbabilityMeasure (Pf r).State, (Pf r).IsStationary μ ∧
+        0 < (Pf r).aggregateCapital μ ∧ impliedRate A δ ((Pf r).aggregateCapital μ) = r := by
+  constructor
+  · rintro ⟨μ, hμ, hK⟩
+    have hpos : 0 < (Pf r).aggregateCapital μ := by rw [hK]; exact capitalDemand_pos hA hr
+    exact ⟨μ, hμ, hpos, (capitalDemand_eq_iff hA hr hpos).mp hK⟩
+  · rintro ⟨μ, hμ, hpos, himp⟩
+    exact ⟨μ, hμ, (capitalDemand_eq_iff hA hr hpos).mpr himp⟩
+
+
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
