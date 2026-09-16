@@ -49,3 +49,4 @@ import LeanEconomics.Models.PrecautionaryWitness
 import LeanEconomics.Models.DispersedWitness
 import LeanEconomics.Equilibrium.SignChange
 import LeanEconomics.Models.UniformRate
+import LeanEconomics.Models.EquilibriumWitness
