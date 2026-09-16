@@ -334,6 +334,51 @@ theorem concaveOn_consumptionFn_of_preserves
     (((hpt x hx).const_smul θ).add ((hpt y hy).const_smul φ)) (hpt _ hm)
     (Eventually.of_forall fun n => (hcons n z).2 hx hy hθ hφ hθφ)
 
+/-! ### The asset cap obstructs concavity, and `hT` is stated too strongly
+
+Attempting `hT` for log utility — the one CRRA specification this structure admits with Light's
+condition, by `crra_pinch` — turns up an obstruction that has nothing to do with Carroll and
+Kimball and everything to do with the cap.
+
+Where the cap binds the household cannot save more, so every extra unit of resources is consumed
+and the consumption function has slope exactly `1 + r`. Below, wherever it saves strictly more,
+the slope is strictly less. Increments therefore RISE across the kink, which concavity forbids.
+`not_concaveOn_consumptionFn_of_cap_binds` proves it.
+
+So `hT` as stated is not merely hard, it is FALSE for any calibration whose cap binds, quite
+apart from the HARA question. Concavity of the consumption function on `Icc 0 assetCap` needs the
+cap to be SLACK — above the natural asset bound, so that the household never wants to save that
+much. That is exactly what `exists_decline_of_consumption_lower_bound` is about, and by
+`one_sub_mpc_mul_of_asymptotic` the condition behind it is `β (1 + r) < 1`.
+
+Which ties the two halves of the development together: the imposed `assetCap`, so far a
+bookkeeping device for compactness, has to be justified economically before the Carroll–Kimball
+hypothesis can even be true. -/
+
+/-- Once the cap binds it binds for ever after, since the policy is monotone and capped. -/
+theorem policy_eq_assetCap_of_le {y w : ℝ} {z : Z} (hy : y ∈ Icc 0 assetCap)
+    (hw : w ∈ Icc 0 assetCap) (hyw : y ≤ w) (h : P.policy (y, z) = assetCap) :
+    P.policy (w, z) = assetCap := by
+  exact le_antisymm (P.policy_mem_region _).2
+    (le_trans (le_of_eq h.symm) (P.policy_mono hy hw hyw))
+
+/-- **A binding asset cap rules out a concave consumption function.** -/
+theorem not_concaveOn_consumptionFn_of_cap_binds {x y w : ℝ} {z : Z}
+    (hx : x ∈ Icc (0 : ℝ) assetCap) (hw : w ∈ Icc (0 : ℝ) assetCap)
+    (hxy : x < y) (hyw : y < w)
+    (hrise : P.policy (x, z) < P.policy (y, z))
+    (hflat : P.policy (y, z) = P.policy (w, z)) :
+    ¬ ConcaveOn ℝ (Icc 0 assetCap) (P.consumptionFn z) := by
+  intro hconc
+  have hy : y ∈ Icc (0 : ℝ) assetCap := ⟨le_trans hx.1 hxy.le, le_trans hyw.le hw.2⟩
+  have h := hconc.slope_anti_adjacent hx hw hxy hyw
+  have hres : ∀ a ∈ Icc (0 : ℝ) assetCap,
+      P.resources (a, z) = P.income z + (1 + P.interest) * a :=
+    fun a ha => by simp only [resources, max_eq_right ha.1]
+  simp only [consumptionFn, consumption, hres x hx, hres y hy, hres w hw] at h
+  rw [div_le_div_iff₀ (by linarith) (by linarith)] at h
+  nlinarith [h, hrise, hflat, sub_pos.mpr hxy, sub_pos.mpr hyw]
+
 end IncomeFluctuation
 
 end LeanEconomics
