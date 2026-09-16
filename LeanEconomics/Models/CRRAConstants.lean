@@ -546,6 +546,77 @@ theorem crra_policy_lt_self {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hθ0 
     mul_le_mul_of_nonneg_left hmono (by positivity)
   linarith
 
+/-! ### The asset cap never binds
+
+`not_concaveOn_consumptionFn_of_cap_binds` makes Carroll and Kimball's conclusion FALSE wherever
+saving reaches the cap, so the cap is the obstruction to Light's uniqueness argument, not the
+utility class. It can be removed by calibration rather than by weakening the theory: run
+`crra_policy_le_mul` by contradiction. If saving reached the cap then consumption would be at
+most `maxIncome + (1 + r - θ) · assetCap`, and the saving bound evaluated THERE has to exceed
+the cap.
+
+The point of doing it this way is that the bound does not degrade as the cap grows -- the
+right-hand side rises with `assetCap` while the left rises only through `oscGap` -- so raising
+the cap always eventually works. A cruder estimate that keeps `maxConsumption ^ γ` on the left
+grows on both sides and closes the window for `γ` near one, which is an artefact of the
+estimate. -/
+
+/-- **Saving never reaches the asset cap.** -/
+theorem crra_policy_lt_assetCap {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hθ0 : 0 < θ)
+    (hθ1 : θ < 1) (hb : P.Bounded) (hu : P.u = crraUtility γ)
+    (hpc : P.PositiveConsumption)
+    (hlt : (P.discount * P.oscGap / θ)
+        * (P.maxIncome + (1 + P.interest - θ) * assetCap) ^ γ < assetCap)
+    {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
+    P.policy (a, z) < assetCap := by
+  by_contra hcon
+  rw [not_lt] at hcon
+  have hcap := P.assetCap_nonneg
+  have hosc := P.oscGap_nonneg
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  set b : ℝ := P.policy (a, z) with hbdef
+  set c : ℝ := P.consumption (a, z) b with hcdef
+  have hkey := P.crra_policy_le_mul hγ0 hγ1 hθ0 hθ1 hb hu hpc ha z
+  rw [← hbdef, ← hcdef] at hkey
+  have hc0 : 0 < c := by rw [hcdef, hbdef]; exact P.consumption_policy_pos hpc ha
+  -- if saving reached the cap, what is left to consume is small
+  have hres : P.resources (a, z) ≤ P.maxConsumption := by
+    have := P.consumption_le_maxConsumption (s := (a, z)) ha (le_refl (0 : ℝ))
+    simpa only [IncomeFluctuation.consumption, sub_zero] using this
+  have hsum : c + (1 - θ) * b = P.resources (a, z) - θ * b := by
+    simp only [hcdef, IncomeFluctuation.consumption]; ring
+  have hle : c + (1 - θ) * b
+      ≤ P.maxIncome + (1 + P.interest - θ) * assetCap := by
+    rw [hsum]
+    have hθb : θ * assetCap ≤ θ * b := mul_le_mul_of_nonneg_left hcon hθ0.le
+    simp only [IncomeFluctuation.maxConsumption] at hres
+    nlinarith [hres, hθb]
+  have hnn : (0 : ℝ) ≤ c + (1 - θ) * b := by
+    have : 0 ≤ (1 - θ) * b := mul_nonneg (by linarith) (P.policy_mem_region (a, z)).1
+    linarith
+  have hmono : (c + (1 - θ) * b) ^ γ
+      ≤ (P.maxIncome + (1 + P.interest - θ) * assetCap) ^ γ :=
+    Real.rpow_le_rpow hnn hle hγ0.le
+  have hscale : (P.discount * P.oscGap / θ) * (c + (1 - θ) * b) ^ γ
+      ≤ (P.discount * P.oscGap / θ)
+        * (P.maxIncome + (1 + P.interest - θ) * assetCap) ^ γ :=
+    mul_le_mul_of_nonneg_left hmono (by positivity)
+  linarith
+
+/-- **The disproof of Carroll and Kimball is disarmed.** Where saving never reaches the cap, the
+hypothesis of `not_concaveOn_consumptionFn_of_cap_binds` -- a flat stretch of the policy at the
+top of the asset region -- cannot occur, so nothing in this development contradicts concavity of
+the consumption function. That is not a proof of concavity; it is the removal of the obstruction
+that made one impossible. -/
+theorem no_flat_at_cap {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hθ0 : 0 < θ) (hθ1 : θ < 1)
+    (hb : P.Bounded) (hu : P.u = crraUtility γ)
+    (hpc : P.PositiveConsumption)
+    (hlt : (P.discount * P.oscGap / θ)
+        * (P.maxIncome + (1 + P.interest - θ) * assetCap) ^ γ < assetCap)
+    {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
+    P.policy (a, z) ≠ assetCap :=
+  ne_of_lt (P.crra_policy_lt_assetCap hγ0 hγ1 hθ0 hθ1 hb hu hpc hlt ha z)
+
 /-- **A quantitative CES saving floor**, the form the sign-change argument consumes. -/
 theorem crra_policy_ge_of_gain {γ : ℝ} (hγ : 0 < γ) (hu : P.u = crraUtility γ)
     (hpc : P.PositiveConsumption) (z₁ : Z) {h : ℝ} (hh0 : 0 < h) (hhcap : h ≤ assetCap)
