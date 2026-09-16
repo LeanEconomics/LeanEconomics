@@ -130,8 +130,9 @@ theorem capitalDemand_eq_iff {A δ r K : ℝ} (hA : 0 < A) (hr : 0 < r + δ) (hK
 /-- **Equilibrium in implied-rate form.** A rate is an equilibrium exactly when the capital its
 households hold implies it back. -/
 theorem isAiyagariEquilibrium_iff_impliedRate {Z : Type*} [Fintype Z] [Nonempty Z]
-    [TopologicalSpace Z] [DiscreteTopology Z] [MeasurableSpace Z] [BorelSpace Z] {assetCap : ℝ}
-    {Pf : ℝ → IncomeFluctuation Z assetCap} {A δ r : ℝ} (hA : 0 < A) (hr : 0 < r + δ) :
+    [TopologicalSpace Z] [DiscreteTopology Z] [MeasurableSpace Z] [BorelSpace Z]
+    {assetFloor assetCap : ℝ}
+    {Pf : ℝ → IncomeFluctuation Z assetFloor assetCap} {A δ r : ℝ} (hA : 0 < A) (hr : 0 < r + δ) :
     IsAiyagariEquilibrium Pf (capitalDemand A δ) r ↔
       ∃ μ : ProbabilityMeasure (Pf r).State, (Pf r).IsStationary μ ∧
         0 < (Pf r).aggregateCapital μ ∧ impliedRate A δ ((Pf r).aggregateCapital μ) = r := by
@@ -147,7 +148,7 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- **Capital supply never exceeds the asset cap**, because every household's assets are
 capped. This is what makes the low end of the sign change a theorem. -/
@@ -158,11 +159,11 @@ theorem aggregateCapital_le (μ : ProbabilityMeasure P.State) :
         integral_mono (P.assetCoord.integrable _) (integrable_const _) hle
     _ = assetCap := by simp
 
-/-- Capital supply is nonnegative. -/
-theorem aggregateCapital_nonneg (μ : ProbabilityMeasure P.State) :
-    0 ≤ P.aggregateCapital μ := by
-  have hle : ∀ s : P.State, (0 : ℝ) ≤ P.assetCoord s := fun s => s.1.2.1
-  calc (0 : ℝ) = ∫ _s, (0 : ℝ) ∂(μ : Measure P.State) := by simp
+/-- Capital supply never falls below the borrowing limit. -/
+theorem assetFloor_le_aggregateCapital (μ : ProbabilityMeasure P.State) :
+    assetFloor ≤ P.aggregateCapital μ := by
+  have hle : ∀ s : P.State, assetFloor ≤ P.assetCoord s := fun s => s.1.2.1
+  calc assetFloor = ∫ _s, assetFloor ∂(μ : Measure P.State) := by simp
     _ ≤ P.aggregateCapital μ :=
         integral_mono (integrable_const _) (P.assetCoord.integrable _) hle
 

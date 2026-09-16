@@ -32,8 +32,8 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ}
-variable (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-! ### The range of a bounded continuous function -/
 
@@ -323,7 +323,7 @@ household is exhausted in `N` periods, everyone is, because the asset map is inc
 bounded below by zero. -/
 
 /-- The asset map under the worst income shock. -/
-noncomputable def gBad (z₀ : Z) (x : ↥(Icc (0 : ℝ) assetCap)) : ↥(Icc (0 : ℝ) assetCap) :=
+noncomputable def gBad (z₀ : Z) (x : ↥(Icc assetFloor assetCap)) : ↥(Icc assetFloor assetCap) :=
   P.nextAssets (x, z₀)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
@@ -331,21 +331,21 @@ theorem gBad_mono (z₀ : Z) : Monotone (P.gBad z₀) := fun x y hxy =>
   P.policy_mono x.2 y.2 hxy
 
 /-- The richest state. -/
-def topState : ↥(Icc (0 : ℝ) assetCap) := ⟨assetCap, ⟨P.assetCap_nonneg, le_rfl⟩⟩
+def topState : ↥(Icc assetFloor assetCap) := ⟨assetCap, ⟨P.assetFloor_le_assetCap, le_rfl⟩⟩
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
-theorem le_topState (x : ↥(Icc (0 : ℝ) assetCap)) : x ≤ P.topState := x.2.2
+theorem le_topState (x : ↥(Icc assetFloor assetCap)) : x ≤ P.topState := x.2.2
 
 /-- The bottom state: the borrowing constraint. -/
-def botState : ↥(Icc (0 : ℝ) assetCap) := ⟨0, ⟨le_rfl, P.assetCap_nonneg⟩⟩
+def botState : ↥(Icc assetFloor assetCap) := ⟨assetFloor, ⟨le_rfl, P.assetFloor_le_assetCap⟩⟩
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
-theorem botState_le (x : ↥(Icc (0 : ℝ) assetCap)) : P.botState ≤ x := x.2.1
+theorem botState_le (x : ↥(Icc assetFloor assetCap)) : P.botState ≤ x := x.2.1
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **Monotonicity reduces exhaustion to the worst case.** -/
 theorem gBad_iterate_eq_bot {z₀ : Z} {N : ℕ} (hexh : (P.gBad z₀)^[N] P.topState = P.botState)
-    (x : ↥(Icc (0 : ℝ) assetCap)) : (P.gBad z₀)^[N] x = P.botState :=
+    (x : ↥(Icc assetFloor assetCap)) : (P.gBad z₀)^[N] x = P.botState :=
   le_antisymm (hexh ▸ (P.gBad_mono z₀).iterate N (P.le_topState x)) (P.botState_le _)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
@@ -488,8 +488,8 @@ needs differentiability of the utility and the first-order condition. This devel
 deliberately has neither. The lemma below extracts only the part that does not. -/
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
-theorem exists_exhaust_of_decline {z₀ : Z} {a₀ : ℝ} (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
-    (hzero : ∀ a ∈ Icc (0 : ℝ) a₀, P.policy (a, z₀) = 0)
+theorem exists_exhaust_of_decline {z₀ : Z} {a₀ : ℝ} (ha₀ : assetFloor < a₀) (hle : a₀ ≤ assetCap)
+    (hzero : ∀ a ∈ Icc assetFloor a₀, P.policy (a, z₀) = assetFloor)
     (hdecl : ∀ a ∈ Icc a₀ assetCap, P.policy (a, z₀) < a) :
     ∃ N : ℕ, (P.gBad z₀)^[N] P.topState = P.botState := by
   classical
@@ -508,29 +508,29 @@ theorem exists_exhaust_of_decline {z₀ : Z} {a₀ : ℝ} (ha₀ : 0 < a₀) (hl
     rw [hΔdef]
     linarith
   -- after `k` steps either the threshold is reached or assets have fallen by `k·Δ`
-  have key : ∀ k : ℕ, (((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) ≤ a₀ ∨
-      (((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) ≤ assetCap - k * Δ := by
+  have key : ∀ k : ℕ, (((P.gBad z₀)^[k] P.topState : ↥(Icc assetFloor assetCap)) : ℝ) ≤ a₀ ∨
+      (((P.gBad z₀)^[k] P.topState : ↥(Icc assetFloor assetCap)) : ℝ) ≤ assetCap - k * Δ := by
     intro k
     induction k with
     | zero => right; simp [topState]
     | succ k ih =>
         rw [Function.iterate_succ_apply']
         have hval : (((P.gBad z₀) ((P.gBad z₀)^[k] P.topState) :
-            ↥(Icc (0 : ℝ) assetCap)) : ℝ)
-            = P.policy ((((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ), z₀) := rfl
+            ↥(Icc assetFloor assetCap)) : ℝ)
+            = P.policy ((((P.gBad z₀)^[k] P.topState : ↥(Icc assetFloor assetCap)) : ℝ), z₀) := rfl
         rcases ih with h | h
         · -- already at or below the threshold: the next step is exactly zero
           left
           rw [hval, hzero _ ⟨((P.gBad z₀)^[k] P.topState).2.1, h⟩]
           exact ha₀.le
-        · rcases le_total (((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) a₀
+        · rcases le_total (((P.gBad z₀)^[k] P.topState : ↥(Icc assetFloor assetCap)) : ℝ) a₀
             with hlow | hhigh
           · left
             rw [hval, hzero _ ⟨((P.gBad z₀)^[k] P.topState).2.1, hlow⟩]
             exact ha₀.le
           · right
             rw [hval]
-            have hmem : (((P.gBad z₀)^[k] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ)
+            have hmem : (((P.gBad z₀)^[k] P.topState : ↥(Icc assetFloor assetCap)) : ℝ)
                 ∈ Icc a₀ assetCap := ⟨hhigh, ((P.gBad z₀)^[k] P.topState).2.2⟩
             have hdec := hstep _ hmem
             push_cast
@@ -539,14 +539,15 @@ theorem exists_exhaust_of_decline {z₀ : Z} {a₀ : ℝ} (ha₀ : 0 < a₀) (hl
   -- finitely many steps carry assets below the threshold
   obtain ⟨N, hN⟩ := exists_nat_gt ((assetCap - a₀) / Δ)
   refine ⟨N + 1, ?_⟩
-  have hNle : (((P.gBad z₀)^[N] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) ≤ a₀ := by
+  have hNle : (((P.gBad z₀)^[N] P.topState : ↥(Icc assetFloor assetCap)) : ℝ) ≤ a₀ := by
     rcases key N with h | h
     · exact h
     · rw [div_lt_iff₀ hΔpos] at hN
       linarith
   refine Subtype.ext ?_
   rw [Function.iterate_succ_apply']
-  change P.policy ((((P.gBad z₀)^[N] P.topState : ↥(Icc (0 : ℝ) assetCap)) : ℝ), z₀) = 0
+  change P.policy ((((P.gBad z₀)^[N] P.topState : ↥(Icc assetFloor assetCap)) : ℝ), z₀)
+    = assetFloor
   exact hzero _ ⟨((P.gBad z₀)^[N] P.topState).2.1, hNle⟩
 
 end IncomeFluctuation

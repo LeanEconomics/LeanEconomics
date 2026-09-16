@@ -35,7 +35,7 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- **The lazy agent's value.** The saving `a'` is frozen; only current assets vary. -/
 noncomputable def lazyValue (v : (ℝ × Z) →ᵇ ℝ) (z : Z) (a' a : ℝ) : ℝ :=
@@ -43,7 +43,7 @@ noncomputable def lazyValue (v : (ℝ × Z) →ᵇ ℝ) (z : Z) (a' a : ℝ) : �
     + P.discount * ∑ z' : Z, P.transitionMatrix z z' * v (a', z')
 
 /-- Resources are affine in assets above the borrowing constraint. -/
-theorem hasDerivAt_resources {z : Z} {a : ℝ} (ha : 0 < a) :
+theorem hasDerivAt_resources {z : Z} {a : ℝ} (ha : assetFloor < a) :
     HasDerivAt (fun x => P.resources (x, z)) (1 + P.interest) a := by
   have heq : (fun x => P.resources (x, z)) =ᶠ[𝓝 a] fun x => P.income z + (1 + P.interest) * x := by
     filter_upwards [lt_mem_nhds ha] with x hx
@@ -53,7 +53,8 @@ theorem hasDerivAt_resources {z : Z} {a : ℝ} (ha : 0 < a) :
 
 /-- **The lazy value is differentiable**, because current assets enter only through the
 reward once the saving is frozen. -/
-theorem hasDerivAt_lazyValue (v : (ℝ × Z) →ᵇ ℝ) (z : Z) (a' : ℝ) {a du : ℝ} (ha : 0 < a)
+theorem hasDerivAt_lazyValue (v : (ℝ × Z) →ᵇ ℝ) (z : Z) (a' : ℝ) {a du : ℝ}
+    (ha : assetFloor < a)
     (hu : HasDerivAt P.u du (P.resources (a, z) - a')) :
     HasDerivAt (P.lazyValue v z a') ((1 + P.interest) * du) a := by
   have hinner : HasDerivAt (fun x => P.resources (x, z) - a') (1 + P.interest) a :=
@@ -67,7 +68,7 @@ theorem hasDerivAt_lazyValue (v : (ℝ × Z) →ᵇ ℝ) (z : Z) (a' : ℝ) {a d
 
 /-- **The lazy value is a lower bound**: freezing a feasible saving can only do worse than
 optimising. -/
-theorem lazyValue_le (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap)
+theorem lazyValue_le (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a ∈ Icc assetFloor assetCap)
     (hmem : a' ∈ P.toExtended.feasible (a, z)) (hc : 0 < P.consumption (a, z) a') :
     P.lazyValue v z a' a ≤ P.toExtended.bellmanFn v (a, z) := by
   have hobj := P.toExtended.le_bellmanFn v hmem
@@ -78,7 +79,7 @@ theorem lazyValue_le (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a �
   exact hobj
 
 /-- At the optimum the lazy value touches the Bellman value. -/
-theorem lazyValue_eq (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap)
+theorem lazyValue_eq (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a ∈ Icc assetFloor assetCap)
     (hmem : a' ∈ P.toExtended.feasible (a, z)) (hc : 0 < P.consumption (a, z) a')
     (hopt : P.toExtended.objectiveE v (a, z) a'
       = ((P.toExtended.bellmanFn v (a, z) : ℝ) : EReal)) :
@@ -97,33 +98,33 @@ poorer states it need not be, so the lower bound is only local. Continuity of th
 boundary gives an interval on which it survives, provided the saving is interior there. -/
 
 theorem hasDerivAt_valueFunction (hpc : P.PositiveConsumption) {z : Z} {a du : ℝ}
-    (ha : 0 < a) (hacap : a < assetCap)
-    (hconc : ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
+    (ha : assetFloor < a) (hacap : a < assetCap)
+    (hconc : ConcaveOn ℝ (Icc assetFloor assetCap)
       fun x => P.toExtended.valueFunction (x, z))
     (hint : P.policy (a, z) < P.maxSaving (a, z))
     (hu : HasDerivAt P.u du (P.resources (a, z) - P.policy (a, z))) :
     HasDerivAt (fun x => P.toExtended.valueFunction (x, z)) ((1 + P.interest) * du) a := by
   set V := P.toExtended.valueFunction with hV
   set a' := P.policy (a, z) with ha'
-  have hamem : ((a, z) : ℝ × Z).1 ∈ Icc (0 : ℝ) assetCap := ⟨ha.le, hacap.le⟩
+  have hamem : ((a, z) : ℝ × Z).1 ∈ Icc assetFloor assetCap := ⟨ha.le, hacap.le⟩
   have hc : 0 < P.consumption (a, z) a' := P.consumption_policy_pos hpc hamem
-  have ha'0 : 0 ≤ a' := (P.policy_mem (a, z)).1
+  have ha'0 : assetFloor ≤ a' := (P.policy_mem (a, z)).1
   -- the frozen saving stays feasible, and consumption stays positive, near `a`
   have hcms : ContinuousAt (fun x => P.maxSaving (x, z)) a :=
     (P.continuous_maxSaving.comp (continuous_id.prodMk continuous_const)).continuousAt
   have hccon : ContinuousAt (fun x => P.consumption (x, z) a') a :=
     ((P.continuous_resources.comp (continuous_id.prodMk continuous_const)).sub
       continuous_const).continuousAt
-  have hev : {x : ℝ | 0 < x ∧ x < assetCap ∧ a' < P.maxSaving (x, z)
+  have hev : {x : ℝ | assetFloor < x ∧ x < assetCap ∧ a' < P.maxSaving (x, z)
       ∧ 0 < P.consumption (x, z) a'} ∈ 𝓝 a := by
-    have h1 : ∀ᶠ x in 𝓝 a, 0 < x := lt_mem_nhds ha
+    have h1 : ∀ᶠ x in 𝓝 a, assetFloor < x := lt_mem_nhds ha
     have h2 : ∀ᶠ x in 𝓝 a, x < assetCap := gt_mem_nhds hacap
     have h3 : ∀ᶠ x in 𝓝 a, a' < P.maxSaving (x, z) := hcms.eventually_const_lt hint
     have h4 : ∀ᶠ x in 𝓝 a, 0 < P.consumption (x, z) a' := hccon.eventually_const_lt hc
     filter_upwards [h1, h2, h3, h4] with x hx1 hx2 hx3 hx4 using ⟨hx1, hx2, hx3, hx4⟩
   obtain ⟨l, r, hmem, hsub⟩ := mem_nhds_iff_exists_Ioo_subset.mp hev
   -- on that interval the lazy value is a lower bound
-  have hIsub : Ioo l r ⊆ Icc (0 : ℝ) assetCap := fun x hx =>
+  have hIsub : Ioo l r ⊆ Icc assetFloor assetCap := fun x hx =>
     ⟨(hsub hx).1.le, (hsub hx).2.1.le⟩
   have hlow : ∀ x ∈ Ioo l r, P.lazyValue V z a' x ≤ V (x, z) := by
     intro x hx

@@ -28,13 +28,13 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable {assetCap : ℝ}
-variable (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetFloor assetCap)
 
-/-- The state space is nonempty: a household with no assets is in it. This has to be given
-by hand, since `0 ≤ assetCap` is data carried by `P` rather than an instance. -/
+/-- The state space is nonempty: a household at the borrowing limit is in it. This has to be
+given by hand, since `assetFloor ≤ assetCap` is data carried by `P` rather than an instance. -/
 instance instNonemptyState : Nonempty P.State :=
-  ⟨⟨⟨0, ⟨le_refl 0, P.assetCap_nonneg⟩⟩, Classical.ofNonempty⟩⟩
+  ⟨⟨⟨assetFloor, ⟨le_refl assetFloor, P.assetFloor_le_assetCap⟩⟩, Classical.ofNonempty⟩⟩
 
 /-- The average of the first `n + 1` iterates of the distribution operator. -/
 noncomputable def cesaro (μ₀ : ProbabilityMeasure P.State) (n : ℕ) : Measure P.State :=

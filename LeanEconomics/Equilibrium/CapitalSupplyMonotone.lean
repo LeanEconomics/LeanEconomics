@@ -52,23 +52,23 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable {assetCap : ℝ}
+variable {assetFloor assetCap : ℝ}
 
 /-! ### Stochastic dominance in the asset coordinate -/
 
 omit [Fintype Z] [Nonempty Z] [DiscreteTopology Z] [MeasurableSpace Z] [BorelSpace Z] in
 /-- Bounded continuous functions that rise with assets, at each income state separately. These
 are the test functions of first-order stochastic dominance in the asset coordinate. -/
-def MonoAsset (h : (↥(Icc (0 : ℝ) assetCap) × Z) →ᵇ ℝ) : Prop :=
-  ∀ (z : Z) (a b : ↥(Icc (0 : ℝ) assetCap)), a ≤ b → h (a, z) ≤ h (b, z)
+def MonoAsset (h : (↥(Icc assetFloor assetCap) × Z) →ᵇ ℝ) : Prop :=
+  ∀ (z : Z) (a b : ↥(Icc assetFloor assetCap)), a ≤ b → h (a, z) ≤ h (b, z)
 
 /-- **First-order stochastic dominance in assets.** -/
-def Dominates (μ ν : ProbabilityMeasure (↥(Icc (0 : ℝ) assetCap) × Z)) : Prop :=
-  ∀ h : (↥(Icc (0 : ℝ) assetCap) × Z) →ᵇ ℝ, MonoAsset h →
+def Dominates (μ ν : ProbabilityMeasure (↥(Icc assetFloor assetCap) × Z)) : Prop :=
+  ∀ h : (↥(Icc assetFloor assetCap) × Z) →ᵇ ℝ, MonoAsset h →
     ∫ s, h s ∂(μ : Measure _) ≤ ∫ s, h s ∂(ν : Measure _)
 
 omit [Fintype Z] [Nonempty Z] [DiscreteTopology Z] [BorelSpace Z] in
-theorem Dominates.refl (μ : ProbabilityMeasure (↥(Icc (0 : ℝ) assetCap) × Z)) :
+theorem Dominates.refl (μ : ProbabilityMeasure (↥(Icc assetFloor assetCap) × Z)) :
     Dominates μ μ := fun _ _ => le_rfl
 
 set_option linter.unusedFintypeInType false in
@@ -76,8 +76,8 @@ omit [Nonempty Z] in
 /-- **Dominance survives weak limits**, because the test functions are bounded and
 continuous. -/
 theorem Dominates.of_tendsto
-    {μs νs : ℕ → ProbabilityMeasure (↥(Icc (0 : ℝ) assetCap) × Z)}
-    {μ ν : ProbabilityMeasure (↥(Icc (0 : ℝ) assetCap) × Z)}
+    {μs νs : ℕ → ProbabilityMeasure (↥(Icc assetFloor assetCap) × Z)}
+    {μ ν : ProbabilityMeasure (↥(Icc assetFloor assetCap) × Z)}
     (hμ : Tendsto μs atTop (𝓝 μ)) (hν : Tendsto νs atTop (𝓝 ν))
     (hd : ∀ n, Dominates (μs n) (νs n)) : Dominates μ ν := fun h hh =>
   le_of_tendsto_of_tendsto
@@ -87,7 +87,7 @@ theorem Dominates.of_tendsto
 
 /-! ### The operator preserves the test class, and respects a larger policy -/
 
-variable (P Q : IncomeFluctuation Z assetCap)
+variable (P Q : IncomeFluctuation Z assetFloor assetCap)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **The Markov operator preserves the test class.** The expected value tomorrow of a payoff
@@ -104,7 +104,7 @@ omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **A uniformly larger policy gives a larger operator**, on the test class. -/
 theorem markovOp_le_of_policy_le
     (hprob : ∀ z z' : Z, P.transitionMatrix z z' = Q.transitionMatrix z z')
-    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → P.policy s ≤ Q.policy s)
+    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → P.policy s ≤ Q.policy s)
     {h : P.State →ᵇ ℝ} (hh : MonoAsset h) (s : P.State) :
     P.markovOp h s ≤ Q.markovOp h s := by
   simp only [markovOp_apply]
@@ -116,7 +116,7 @@ theorem markovOp_le_of_policy_le
 /-- **One period preserves dominance.** -/
 theorem Dominates.pushProb
     (hprob : ∀ z z' : Z, P.transitionMatrix z z' = Q.transitionMatrix z z')
-    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → P.policy s ≤ Q.policy s)
+    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → P.policy s ≤ Q.policy s)
     {μ ν : ProbabilityMeasure P.State} (hd : Dominates μ ν) :
     Dominates (P.pushProb μ) (Q.pushProb ν) := by
   intro h hh
@@ -134,7 +134,7 @@ Convergence is the hypothesis rather than the Doeblin data, because that is all 
 uses; `dominates_stationary_of_policy_le` supplies it from the minorisation. -/
 theorem dominates_of_policy_le
     (hprob : ∀ z z' : Z, P.transitionMatrix z z' = Q.transitionMatrix z z')
-    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → P.policy s ≤ Q.policy s)
+    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → P.policy s ≤ Q.policy s)
     {μ₀ μ ν : ProbabilityMeasure P.State}
     (hP : Tendsto (fun m => P.pushProb^[m] μ₀) atTop (𝓝 μ))
     (hQ : Tendsto (fun m => Q.pushProb^[m] μ₀) atTop (𝓝 ν)) :
@@ -150,7 +150,7 @@ theorem dominates_of_policy_le
 the borrowing constraint that `Distribution.Uniqueness` runs on. -/
 theorem dominates_stationary_of_policy_le
     (hprob : ∀ z z' : Z, P.transitionMatrix z z' = Q.transitionMatrix z z')
-    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → P.policy s ≤ Q.policy s)
+    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → P.policy s ≤ Q.policy s)
     {zP : Z} {sP : P.State} {pP : ℝ} {NP : ℕ} (hpP0 : 0 < pP)
     (hpP : ∀ s : P.State, pP ≤ P.prob s zP) (hbadP : ∀ s, (P.badStep zP)^[NP] s = sP)
     {zQ : Z} {sQ : Q.State} {pQ : ℝ} {NQ : ℕ} (hpQ0 : 0 < pQ)
@@ -170,7 +170,7 @@ theorem monoAsset_assetCoord : MonoAsset P.assetCoord := fun _ _ _ hab => hab
 as in the first, aggregate capital is at least as large. -/
 theorem aggregateCapital_le_of_policy_le
     (hprob : ∀ z z' : Z, P.transitionMatrix z z' = Q.transitionMatrix z z')
-    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → P.policy s ≤ Q.policy s)
+    (hpol : ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → P.policy s ≤ Q.policy s)
     {zP : Z} {sP : P.State} {pP : ℝ} {NP : ℕ} (hpP0 : 0 < pP)
     (hpP : ∀ s : P.State, pP ≤ P.prob s zP) (hbadP : ∀ s, (P.badStep zP)^[NP] s = sP)
     {zQ : Z} {sQ : Q.State} {pQ : ℝ} {NQ : ℕ} (hpQ0 : 0 < pQ)
@@ -186,11 +186,11 @@ This is exactly the hypothesis `hS` of `equilibriumRate_unique`, so with Light's
 hand — the policy rising in the rate — the equilibrium rate is unique. Theorem 1 is the only
 thing still missing, and `IncomeFluctuationCarrollKimball` has reduced it to one step. -/
 theorem monotoneOn_capitalSupply_of_policy_mono {rlo rhi : ℝ}
-    (Pf : ℝ → IncomeFluctuation Z assetCap)
+    (Pf : ℝ → IncomeFluctuation Z assetFloor assetCap)
     (hprob : ∀ r r' : ℝ, ∀ z z' : Z,
       (Pf r).transitionMatrix z z' = (Pf r').transitionMatrix z z')
     (hpol : ∀ r ∈ Icc rlo rhi, ∀ r' ∈ Icc rlo rhi, r ≤ r' →
-      ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → (Pf r).policy s ≤ (Pf r').policy s)
+      ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → (Pf r).policy s ≤ (Pf r').policy s)
     (μ₀ : ProbabilityMeasure P.State) (ν : ℝ → ProbabilityMeasure P.State)
     (hconv : ∀ r ∈ Icc rlo rhi, Tendsto (fun m => (Pf r).pushProb^[m] μ₀) atTop (𝓝 (ν r))) :
     MonotoneOn (fun r => P.aggregateCapital (ν r)) (Icc rlo rhi) := fun r hr r' hr' hrr =>

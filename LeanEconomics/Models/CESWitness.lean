@@ -49,7 +49,7 @@ open Set Filter Topology MeasureTheory
 namespace LeanEconomics
 
 /-- An impatient household with CES utility at `γ = 1/2` and 5000:1 income dispersion. -/
-noncomputable def cesWitness : IncomeFluctuation (Fin 2) (1 / 10) where
+noncomputable def cesWitness : IncomeFluctuation (Fin 2) 0 (1 / 10) where
   income z := if z = 0 then 1 / 5000 else 1
   transitionMatrix _ _ := 1 / 2
   interest := 0
@@ -63,7 +63,10 @@ noncomputable def cesWitness : IncomeFluctuation (Fin 2) (1 / 10) where
   transitionMatrix_nonneg _ _ := by norm_num
   transitionMatrix_sum _ := by simp
   interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
   assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
   discount_lt_one := by norm_num
   dom := Ici 0
   Ioi_subset_dom := Ioi_subset_Ici_self
@@ -79,6 +82,8 @@ noncomputable def cesWitness : IncomeFluctuation (Fin 2) (1 / 10) where
 @[simp] theorem cesWitness_interest : cesWitness.interest = 0 := rfl
 @[simp] theorem cesWitness_discount : (cesWitness.discount : ℝ) = 1 / 16 := rfl
 @[simp] theorem cesWitness_minIncome : cesWitness.minIncome = 1 / 5000 := rfl
+@[simp] theorem cesWitness_minConsumption : cesWitness.minConsumption = 1 / 5000 := by
+  norm_num [cesWitness]
 @[simp] theorem cesWitness_maxIncome : cesWitness.maxIncome = 1 := rfl
 @[simp] theorem cesWitness_transitionMatrix (z z' : Fin 2) :
     cesWitness.transitionMatrix z z' = 1 / 2 := rfl
@@ -125,7 +130,7 @@ theorem cesWitness_oscGap_le : cesWitness.oscGap ≤ 56 / 25 := by
   have h1 : Real.sqrt (11 / 10) ≤ 21 / 20 := sqrt_le_of_sq (by norm_num) (by norm_num)
   have h2 : (0 : ℝ) ≤ Real.sqrt (1 / 5000) := Real.sqrt_nonneg _
   simp only [IncomeFluctuation.oscGap, cesWitness_u, cesWitness_maxConsumption,
-    cesWitness_minIncome, cesWitness_discount, crraUtility_half]
+    cesWitness_minConsumption, cesWitness_discount, crraUtility_half]
   rw [div_le_iff₀ (by norm_num)]
   nlinarith [h1, h2]
 
@@ -203,7 +208,7 @@ theorem cesWitness_crraLipschitz_le : cesWitness.crraLipschitz (1 / 2) ≤ 37715
   have hinv1 : (Real.sqrt 2)⁻¹ ≤ 1 := by
     rw [inv_eq_one_div, div_le_one h2pos]
     nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 2 by norm_num), h2pos]
-  simp only [IncomeFluctuation.crraLipschitz, cesWitness_minIncome, cesWitness_interest,
+  simp only [IncomeFluctuation.crraLipschitz, cesWitness_minConsumption, cesWitness_interest,
     cesWitness_discount, crraSlopeBound, show (1 : ℝ) - 1 / 2 = 1 / 2 from by norm_num,
     rpow_neg_half (show (0:ℝ) ≤ 1 / 5000 by norm_num), ← Real.sqrt_eq_rpow]
   rw [div_le_div_iff₀ (by norm_num) (by norm_num)]
@@ -300,12 +305,13 @@ Every condition is monotone in the interest rate, so one check at `r = 1/100` co
 The CES route needs no bound on `‖V‖` along the way: `oscGap` is a formula in the primitives, and
 its only rate dependence is through `maxConsumption`. -/
 
-theorem cesWitness_withRate_positiveConsumption {r : ℝ} (hrr : 0 < 1 + r) :
+theorem cesWitness_withRate_positiveConsumption {r : ℝ} (hrr : cesWitness.RateOK r) :
     (cesWitness.withRate r hrr).PositiveConsumption :=
   (cesWitness.withRate r hrr).positiveConsumption_of_bounded_crra (γ := 1 / 2) (by norm_num)
     (by norm_num) rfl rfl
 
-theorem cesWitness_oscGap_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100)) (hrr : 0 < 1 + r) :
+theorem cesWitness_oscGap_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100))
+    (hrr : cesWitness.RateOK r) :
     (cesWitness.withRate r hrr).oscGap ≤ 9 / 4 := by
   have hmax : (cesWitness.withRate r hrr).maxConsumption ≤ 1101 / 1000 := by
     simp only [IncomeFluctuation.maxConsumption, IncomeFluctuation.withRate_maxIncome,
@@ -315,15 +321,17 @@ theorem cesWitness_oscGap_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 10
     le_trans (Real.sqrt_le_sqrt hmax) (sqrt_le_of_sq (by norm_num) (by norm_num))
   have h2 : (0 : ℝ) ≤ Real.sqrt (1 / 5000) := Real.sqrt_nonneg _
   simp only [IncomeFluctuation.oscGap, IncomeFluctuation.withRate_u,
-    IncomeFluctuation.withRate_minIncome, IncomeFluctuation.withRate_discount,
-    cesWitness_u, cesWitness_minIncome, cesWitness_discount, crraUtility_half]
+    IncomeFluctuation.withRate_minConsumption, IncomeFluctuation.withRate_discount,
+    cesWitness_u, cesWitness_minConsumption, cesWitness_discount, crraUtility_half]
   rw [div_le_iff₀ (by norm_num)]
   nlinarith [h1, h2]
 
-theorem cesWitness_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100)) (hrr : 0 < 1 + r)
+theorem cesWitness_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100))
+    (hrr : cesWitness.RateOK r)
     {a : ℝ} (ha : a ∈ Icc (1 / 100 : ℝ) (1 / 10)) :
     (cesWitness.withRate r hrr).policy (a, 0) < a := by
-  have hrhi : (0 : ℝ) < 1 + 1 / 100 := by norm_num
+  have hrhi : cesWitness.RateOK (1 / 100 : ℝ) :=
+    IncomeFluctuation.rateOK_of_floor_zero (by norm_num)
   have hmem : a ∈ Icc (0 : ℝ) (1 / 10) := ⟨by linarith [ha.1], ha.2⟩
   refine cesWitness.crra_policy_lt_self_uniform (γ := 1 / 2) (θ := 39 / 40) (by norm_num)
     (by norm_num) (by norm_num) (by norm_num) rfl rfl hrr hrhi hr.2 (by linarith [hr.1])
@@ -350,18 +358,20 @@ theorem cesWitness_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100)
     _ < 1 / 100 := by norm_num
     _ ≤ a := ha.1
 
-theorem cesWitness_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100)) (hrr : 0 < 1 + r)
+theorem cesWitness_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100))
+    (hrr : cesWitness.RateOK r)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) (1 / 100)) :
     (cesWitness.withRate r hrr).policy (a, 0) = 0 := by
-  have hrhi : (0 : ℝ) < 1 + 1 / 100 := by norm_num
+  have hrhi : cesWitness.RateOK (1 / 100 : ℝ) :=
+    IncomeFluctuation.rateOK_of_floor_zero (by norm_num)
   have hmem : a ∈ Icc (0 : ℝ) (1 / 10) := ⟨ha.1, by linarith [ha.2]⟩
   refine cesWitness.crra_policy_eq_zero_uniform (γ := 1 / 2) (by norm_num) (by norm_num)
     rfl rfl hrr hrhi hr.2 (by norm_num) hmem 0 ?_
   have hslope := cesWitness_crraSlopeBound_le
   have hlip : (cesWitness.withRate (1 / 100) hrhi).crraLipschitz (1 / 2) ≤ 96 := by
-    simp only [IncomeFluctuation.crraLipschitz, IncomeFluctuation.withRate_minIncome,
+    simp only [IncomeFluctuation.crraLipschitz, IncomeFluctuation.withRate_minConsumption,
       IncomeFluctuation.withRate_interest, IncomeFluctuation.withRate_discount,
-      cesWitness_minIncome, cesWitness_discount]
+      cesWitness_minConsumption, cesWitness_discount]
     rw [div_le_iff₀ (by norm_num)]
     linarith [hslope]
   have hres : (cesWitness.withRate (1 / 100) hrhi).resources (a, 0)
@@ -381,7 +391,7 @@ theorem cesWitness_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100))
 
 /-- **A unique stationary distribution at every rate in the interval.** -/
 theorem cesWitness_existsUnique_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100))
-    (hrr : 0 < 1 + r) :
+    (hrr : cesWitness.RateOK r) :
     ∃! μ : ProbabilityMeasure cesWitness.State,
       (cesWitness.withRate r hrr).IsStationary μ := by
   obtain ⟨N, hN⟩ := (cesWitness.withRate r hrr).exists_exhaust_of_decline (z₀ := 0)
@@ -396,7 +406,7 @@ theorem cesWitness_existsUnique_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 /
 At `r = 1/100` every stationary distribution carries at least `1/400000` of capital. The whole
 condition is the integer inequality `40960000 · 2101 < 10201 · 99999`. -/
 
-theorem cesWitness_floor_top (hrhi : 0 < 1 + (1 / 100 : ℝ))
+theorem cesWitness_floor_top (hrhi : cesWitness.RateOK (1 / 100 : ℝ))
     (μ : ProbabilityMeasure cesWitness.State)
     (hμ : (cesWitness.withRate (1 / 100) hrhi).IsStationary μ) :
     1 / 400000 ≤ cesWitness.aggregateCapital μ := by

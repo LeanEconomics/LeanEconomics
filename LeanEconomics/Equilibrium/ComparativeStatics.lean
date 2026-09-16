@@ -46,7 +46,7 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P Q : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P Q : IncomeFluctuation Z assetFloor assetCap)
 
 /-! ### A wider budget set is better
 
@@ -157,10 +157,14 @@ theorem RicherThan.budgetDominates (h : P.RicherThan Q) : P.BudgetDominates Q wh
   same_u := h.same_u
   same_dom := h.same_dom
 
-theorem HigherRateThan.budgetDominates (h : P.HigherRateThan Q) : P.BudgetDominates Q where
+/-- A higher rate dominates only for a household that is not in debt: with a negative borrowing
+limit a rate rise raises debt service, and a debtor's budget set shrinks. The hypothesis
+`hfl` is what rules that out. -/
+theorem HigherRateThan.budgetDominates (hfl : 0 ≤ assetFloor) (h : P.HigherRateThan Q) :
+    P.BudgetDominates Q where
   resources_le s := by
     simp only [resources, h.same_income s.2]
-    have hnn : (0 : ℝ) ≤ max 0 s.1 := le_max_left _ _
+    have hnn : (0 : ℝ) ≤ max assetFloor s.1 := le_trans hfl (le_max_left _ _)
     nlinarith [h.interest_le, hnn]
   maxConsumption_le := by
     simp only [maxConsumption, h.same_maxIncome]
@@ -176,9 +180,10 @@ theorem RicherThan.valueFunction_le (h : P.RicherThan Q) (s : ℝ × Z) :
   h.budgetDominates.valueFunction_le s
 
 /-- **A higher interest rate is better**, with no restriction on preferences. -/
-theorem HigherRateThan.valueFunction_le (h : P.HigherRateThan Q) (s : ℝ × Z) :
+theorem HigherRateThan.valueFunction_le (hfl : 0 ≤ assetFloor) (h : P.HigherRateThan Q)
+    (s : ℝ × Z) :
     P.toExtended.valueFunction s ≤ Q.toExtended.valueFunction s :=
-  h.budgetDominates.valueFunction_le s
+  (h.budgetDominates hfl).valueFunction_le s
 
 /-! ### Patience
 
@@ -220,7 +225,8 @@ theorem MorePatientThan.reward_eq (h : P.MorePatientThan Q) (p : (ℝ × Z) × �
   simp only [clampedConsumption, consumption, hres, hmax, h.same_u, h.same_dom]
 
 /-- **More patience is better**, when utility is bounded below by zero. -/
-theorem MorePatientThan.valueFunction_le (h : P.MorePatientThan Q) (hmin : 0 ≤ P.u P.minIncome)
+theorem MorePatientThan.valueFunction_le (h : P.MorePatientThan Q)
+    (hmin : 0 ≤ P.u P.minConsumption)
     (s : ℝ × Z) : P.toExtended.valueFunction s ≤ Q.toExtended.valueFunction s := by
   refine ExtendedStochasticProgram.valueFunction_le_of_bellman_le_on P.toExtended Q.toExtended
     (fun v => 0 ≤ ⇑v) (by intro _; simp) ?_ ?_ s
@@ -264,7 +270,7 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- **A change that raises saving raises the equilibrium aggregate.**
 
@@ -272,12 +278,12 @@ variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
 saves at least as much. `hdecP` is the general-equilibrium feedback: in the unperturbed economy a
 larger aggregate depresses saving. Neither is proved here -- `hdecP` is Light's Theorem 1 and
 `hPQ` is whatever the perturbation is -- and together they give the comparison of equilibria. -/
-theorem mfe_aggregateCapital_le (Pf Qf : ℝ → IncomeFluctuation Z assetCap)
+theorem mfe_aggregateCapital_le (Pf Qf : ℝ → IncomeFluctuation Z assetFloor assetCap)
     (hprob : ∀ K₁ K₂ : ℝ, ∀ z z' : Z,
       (Qf K₁).transitionMatrix z z' = (Pf K₂).transitionMatrix z z')
-    (hdecP : ∀ {K₁ K₂ : ℝ}, K₁ ≤ K₂ → ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap →
+    (hdecP : ∀ {K₁ K₂ : ℝ}, K₁ ≤ K₂ → ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap →
       (Pf K₂).policy s ≤ (Pf K₁).policy s)
-    (hPQ : ∀ K : ℝ, ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → (Pf K).policy s ≤ (Qf K).policy s)
+    (hPQ : ∀ K : ℝ, ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → (Pf K).policy s ≤ (Qf K).policy s)
     (hconvP : ∀ (K : ℝ) (μ₀ μ : ProbabilityMeasure P.State), (Pf K).IsStationary μ →
       Tendsto (fun n => (Pf K).pushProb^[n] μ₀) atTop (𝓝 μ))
     (hconvQ : ∀ (K : ℝ) (μ₀ μ : ProbabilityMeasure P.State), (Qf K).IsStationary μ →
@@ -293,7 +299,8 @@ theorem mfe_aggregateCapital_le (Pf Qf : ℝ → IncomeFluctuation Z assetCap)
   set Kν : ℝ := P.aggregateCapital ν with hKν
   -- at the smaller aggregate the perturbed economy saves at least as much as the
   -- unperturbed one does at the larger
-  have hchain : ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → (Pf Kμ).policy s ≤ (Qf Kν).policy s := by
+  have hchain : ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap →
+      (Pf Kμ).policy s ≤ (Qf Kν).policy s := by
     intro s hs
     exact le_trans (hdecP hcon.le s hs) (hPQ Kν s hs)
   have hdom := dominates_of_policy_le (Pf Kμ) (Qf Kν) (fun z z' => (hprob Kν Kμ z z').symm)

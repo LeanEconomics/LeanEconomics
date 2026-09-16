@@ -43,12 +43,13 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap) {lam : ℝ}
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap) {lam : ℝ}
 
 /-- **The economy in different units**: every income and the asset cap multiplied by `λ > 0`.
 Preferences are untouched -- it is CRRA's own scaling law that makes this a rescaling rather than
 a different model. -/
-noncomputable def scale (hlam : 0 < lam) : IncomeFluctuation Z (lam * assetCap) where
+noncomputable def scale (hlam : 0 < lam) :
+    IncomeFluctuation Z (lam * assetFloor) (lam * assetCap) where
   income z := lam * P.income z
   transitionMatrix := P.transitionMatrix
   interest := P.interest
@@ -62,7 +63,13 @@ noncomputable def scale (hlam : 0 < lam) : IncomeFluctuation Z (lam * assetCap) 
   transitionMatrix_nonneg := P.transitionMatrix_nonneg
   transitionMatrix_sum := P.transitionMatrix_sum
   interest_gt_neg_one := P.interest_gt_neg_one
+  assetFloor_le_assetCap := mul_le_mul_of_nonneg_left P.assetFloor_le_assetCap hlam.le
   assetCap_nonneg := mul_nonneg hlam.le P.assetCap_nonneg
+  minConsumption := lam * P.minConsumption
+  minConsumption_pos := mul_pos hlam P.minConsumption_pos
+  minConsumption_le_floor := by
+    have := P.minConsumption_le_floor
+    nlinarith [hlam.le]
   discount_lt_one := P.discount_lt_one
   dom := P.dom
   Ioi_subset_dom := P.Ioi_subset_dom
@@ -85,10 +92,8 @@ noncomputable def scale (hlam : 0 < lam) : IncomeFluctuation Z (lam * assetCap) 
 theorem scale_resources (hlam : 0 < lam) (a : ℝ) (z : Z) :
     (P.scale hlam).resources (lam * a, z) = lam * P.resources (a, z) := by
   simp only [resources, scale, IncomeFluctuation.resources]
-  rw [show max 0 (lam * a) = lam * max 0 a from by
-    rcases le_total a 0 with h | h
-    · rw [max_eq_left h, max_eq_left (by nlinarith)]; ring
-    · rw [max_eq_right h, max_eq_right (by positivity)]]
+  rw [show max (lam * assetFloor) (lam * a) = lam * max assetFloor a from
+    (mul_max_of_nonneg _ _ hlam.le).symm]
   ring
 
 theorem scale_maxConsumption (hlam : 0 < lam) :
@@ -101,11 +106,9 @@ theorem scale_maxSaving (hlam : 0 < lam) (a : ℝ) (z : Z) :
   simp only [maxSaving, P.scale_resources hlam a z]
   rw [show min (lam * assetCap) (lam * P.resources (a, z))
       = lam * min assetCap (P.resources (a, z)) from (mul_min_of_nonneg _ _ hlam.le).symm,
-    show max 0 (lam * min assetCap (P.resources (a, z)))
-      = lam * max 0 (min assetCap (P.resources (a, z))) from by
-        rcases le_total (min assetCap (P.resources (a, z))) 0 with h | h
-        · rw [max_eq_left h, max_eq_left (by nlinarith)]; ring
-        · rw [max_eq_right h, max_eq_right (by positivity)]]
+    show max (lam * assetFloor) (lam * min assetCap (P.resources (a, z)))
+      = lam * max assetFloor (min assetCap (P.resources (a, z))) from
+        (mul_max_of_nonneg _ _ hlam.le).symm]
 
 theorem scale_consumption (hlam : 0 < lam) (a a' : ℝ) (z : Z) :
     (P.scale hlam).consumption (lam * a, z) (lam * a') = lam * P.consumption (a, z) a' := by
@@ -128,9 +131,9 @@ theorem scale_feasible (hlam : 0 < lam) {a a' : ℝ} {z : Z} :
   rw [(P.scale hlam).feasible_eq, P.feasible_eq, P.scale_maxSaving hlam a z]
   constructor
   · rintro ⟨h1, h2⟩
-    exact ⟨nonneg_of_mul_nonneg_right h1 hlam, le_of_mul_le_mul_left h2 hlam⟩
+    exact ⟨le_of_mul_le_mul_left h1 hlam, le_of_mul_le_mul_left h2 hlam⟩
   · rintro ⟨h1, h2⟩
-    exact ⟨by positivity, mul_le_mul_of_nonneg_left h2 hlam.le⟩
+    exact ⟨mul_le_mul_of_nonneg_left h1 hlam.le, mul_le_mul_of_nonneg_left h2 hlam.le⟩
 
 /-! ### The rescaled value function
 
@@ -304,10 +307,10 @@ the log case, where the value function only shifts. -/
 /-- **Homotheticity of the policy.** -/
 theorem policy_scale (hlam : 0 < lam) (hdom : ∀ c : ℝ, lam * c ∈ P.dom ↔ c ∈ P.dom)
     (hu : ∀ c ∈ P.dom, P.u (lam * c) = k * P.u c + m) (hk : 0 < k)
-    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
+    {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) (z : Z) :
     (P.scale hlam).policy (lam * a, z) = lam * P.policy (a, z) := by
-  have hamem : lam * a ∈ Icc (0 : ℝ) (lam * assetCap) :=
-    ⟨mul_nonneg hlam.le ha.1, mul_le_mul_of_nonneg_left ha.2 hlam.le⟩
+  have hamem : lam * a ∈ Icc (lam * assetFloor) (lam * assetCap) :=
+    ⟨mul_le_mul_of_nonneg_left ha.1 hlam.le, mul_le_mul_of_nonneg_left ha.2 hlam.le⟩
   -- the rescaled optimum is optimal in the scaled economy, and the optimum is unique
   refine ((P.scale hlam).eq_policy_of_optimal hamem
     ((P.scale_feasible hlam).mpr (P.policy_mem (a, z))) ?_).symm
@@ -371,7 +374,7 @@ theorem dom_scale_invariant_of_bounded (hlam : 0 < lam) (hb : P.Bounded) (c : �
 /-- **Homotheticity for CES with `γ < 1`.** Scale every income and the cap by `λ`: the policy
 scales by `λ` exactly. -/
 theorem crra_policy_scale {γ : ℝ} (_hγ0 : 0 < γ) (hγ1 : γ < 1) (hlam : 0 < lam)
-    (hb : P.Bounded) (hu : P.u = crraUtility γ) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
+    (hb : P.Bounded) (hu : P.u = crraUtility γ) {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) (z : Z) :
     (P.scale hlam).policy (lam * a, z) = lam * P.policy (a, z) := by
   refine P.policy_scale (k := lam ^ (1 - γ)) (m := 0) hlam
     (P.dom_scale_invariant_of_bounded hlam hb) ?_ (Real.rpow_pos_of_pos hlam _) ha z

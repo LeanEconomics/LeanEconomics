@@ -55,10 +55,13 @@ theorem clampRate_eq {rlo rhi r : ℝ} (hr : r ∈ Icc rlo rhi) : clampRate rlo 
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap) (rlo rhi : ℝ)
+-- The augmented state space is built for a household whose borrowing limit is at zero: the
+-- clamped rate moves the debt service, so a negative limit would have to be re-checked at every
+-- rate in the interval. The general-floor machinery is upstream.
+variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap) (rlo rhi : ℝ)
 
 /-- The augmented state: assets, the interest rate, and the income state. -/
-abbrev AugState (_P : IncomeFluctuation Z assetCap) : Type _ := (ℝ × ℝ) × Z
+abbrev AugState (_P : IncomeFluctuation Z (0 : ℝ) assetCap) : Type _ := (ℝ × ℝ) × Z
 
 noncomputable def augResources (s : P.AugState) : ℝ :=
   P.income s.2 + (1 + clampRate rlo rhi s.1.2) * max 0 s.1.1
@@ -203,17 +206,17 @@ then literally equal on the slice, and uniqueness of the fixed point does the re
 
 variable {r : ℝ}
 
-theorem augResources_slice (hr : r ∈ Icc rlo rhi) (hrr : 0 < 1 + r) (t : ℝ × Z) :
+theorem augResources_slice (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) (t : ℝ × Z) :
     P.augResources rlo rhi ((t.1, r), t.2) = (P.withRate r hrr).resources t := by
   simp only [augResources, resources, clampRate_eq hr]
   rfl
 
-theorem augMaxConsumption_slice (hr : r ∈ Icc rlo rhi) (hrr : 0 < 1 + r) (t : ℝ × Z) :
+theorem augMaxConsumption_slice (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) (t : ℝ × Z) :
     P.augMaxConsumption rlo rhi ((t.1, r), t.2) = (P.withRate r hrr).maxConsumption := by
   simp only [augMaxConsumption, maxConsumption, clampRate_eq hr]
-  rfl
+  norm_num
 
-theorem augMaxSaving_slice (hr : r ∈ Icc rlo rhi) (hrr : 0 < 1 + r) (t : ℝ × Z) :
+theorem augMaxSaving_slice (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) (t : ℝ × Z) :
     P.augMaxSaving rlo rhi ((t.1, r), t.2) = (P.withRate r hrr).maxSaving t := by
   simp only [augMaxSaving, maxSaving, P.augResources_slice hr hrr t]
 
@@ -228,7 +231,7 @@ theorem sliceAt_apply (w : P.AugState →ᵇ ℝ) (r : ℝ) (t : ℝ × Z) :
 
 /-- The feasible sets agree on the slice. -/
 theorem feasible_aug_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
-    (hrr : 0 < 1 + r) (t : ℝ × Z) :
+    (hrr : P.RateOK r) (t : ℝ × Z) :
     (P.withRate r hrr).toExtended.feasible t
       = (P.toAugmented hrlo hle).feasible ((t.1, r), t.2) := by
   change Icc 0 ((P.withRate r hrr).maxSaving t) = Icc 0 (P.augMaxSaving rlo rhi ((t.1, r), t.2))
@@ -236,7 +239,7 @@ theorem feasible_aug_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc
 
 /-- The objectives agree on the slice, for ANY continuation value. -/
 theorem objectiveE_aug_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
-    (hrr : 0 < 1 + r) (W : P.AugState →ᵇ ℝ) (t : ℝ × Z) (a : ℝ) :
+    (hrr : P.RateOK r) (W : P.AugState →ᵇ ℝ) (t : ℝ × Z) (a : ℝ) :
     (P.withRate r hrr).toExtended.objectiveE (P.sliceAt W r) t a
       = (P.toAugmented hrlo hle).objectiveE W ((t.1, r), t.2) a := by
   have hrew : (P.withRate r hrr).toExtended.reward (t, a)
@@ -257,7 +260,7 @@ theorem objectiveE_aug_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ I
 
 /-- **The slice of the augmented value function is the value function at that rate.** -/
 theorem sliceAt_valueFunction (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
-    (hrr : 0 < 1 + r) :
+    (hrr : P.RateOK r) :
     P.sliceAt (P.toAugmented hrlo hle).valueFunction r
       = (P.withRate r hrr).toExtended.valueFunction := by
   set W := (P.toAugmented hrlo hle).valueFunction with hW
@@ -312,7 +315,7 @@ theorem augPolicy_mem_argmax (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (x : P.Aug
 
 /-- **The augmented argmax is the sliced programme's policy.** -/
 theorem argmax_aug_eq_singleton (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
-    (hrr : 0 < 1 + r) {t : ℝ × Z} (ht : t.1 ∈ Icc 0 assetCap) :
+    (hrr : P.RateOK r) {t : ℝ × Z} (ht : t.1 ∈ Icc (0 : ℝ) assetCap) :
     argmax ((P.toAugmented hrlo hle).objectiveE (P.toAugmented hrlo hle).valueFunction)
         (P.toAugmented hrlo hle).feasible ((t.1, r), t.2)
       = {(P.withRate r hrr).policy t} := by
@@ -332,7 +335,7 @@ theorem argmax_aug_eq_singleton (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r
   simp only [argmax, heq, ← hfe]
 
 theorem augPolicy_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rlo rhi)
-    (hrr : 0 < 1 + r) {t : ℝ × Z} (ht : t.1 ∈ Icc 0 assetCap) :
+    (hrr : P.RateOK r) {t : ℝ × Z} (ht : t.1 ∈ Icc (0 : ℝ) assetCap) :
     P.augPolicy hrlo hle ((t.1, r), t.2) = (P.withRate r hrr).policy t := by
   have hmem := P.augPolicy_mem_argmax hrlo hle ((t.1, r), t.2)
   rw [P.argmax_aug_eq_singleton hrlo hle hr hrr ht] at hmem
@@ -341,11 +344,11 @@ theorem augPolicy_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ Icc rl
 /-- **The policy is continuous in the state AND the interest rate, jointly.** -/
 theorem continuousOn_augPolicy (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) :
     ContinuousOn (P.augPolicy hrlo hle)
-      {x : P.AugState | x.1.1 ∈ Icc 0 assetCap ∧ x.1.2 ∈ Icc rlo rhi} := by
+      {x : P.AugState | x.1.1 ∈ Icc (0 : ℝ) assetCap ∧ x.1.2 ∈ Icc rlo rhi} := by
   refine continuousOn_of_upperHemicontinuous_singleton
     ((P.toAugmented hrlo hle).upperHemicontinuous_argmax
       (P.toAugmented hrlo hle).valueFunction) fun x hx => ?_
-  have hrr : 0 < 1 + x.1.2 := by have := hx.2.1; linarith
+  have hrr : P.RateOK x.1.2 := rateOK_of_floor_zero (by have := hx.2.1; linarith)
   have h := P.argmax_aug_eq_singleton hrlo hle hx.2 hrr (t := (x.1.1, x.2)) hx.1
   rw [h, P.augPolicy_eq hrlo hle hx.2 hrr (t := (x.1.1, x.2)) hx.1]
 
@@ -372,10 +375,10 @@ theorem exists_policy_modulus (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) {ε : ℝ
       ∀ r' ∈ Icc rlo rhi, |r - r'| < η →
       |P.augPolicy hrlo hle ((a, r), z) - P.augPolicy hrlo hle ((a, r'), z)| < ε := by
     intro z
-    set K : Set (ℝ × ℝ) := Icc 0 assetCap ×ˢ Icc rlo rhi with hK
+    set K : Set (ℝ × ℝ) := Icc (0 : ℝ) assetCap ×ˢ Icc rlo rhi with hK
     have hKc : IsCompact K := isCompact_Icc.prod isCompact_Icc
     have hmaps : MapsTo (fun p : ℝ × ℝ => ((p, z) : P.AugState)) K
-        {x : P.AugState | x.1.1 ∈ Icc 0 assetCap ∧ x.1.2 ∈ Icc rlo rhi} :=
+        {x : P.AugState | x.1.1 ∈ Icc (0 : ℝ) assetCap ∧ x.1.2 ∈ Icc rlo rhi} :=
       fun p hp => ⟨hp.1, hp.2⟩
     have hcont : ContinuousOn (fun p : ℝ × ℝ => P.augPolicy hrlo hle (p, z)) K :=
       (P.continuousOn_augPolicy hrlo hle).comp
@@ -400,8 +403,8 @@ theorem exists_policy_modulus (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) {ε : ℝ
 theorem exists_policy_modulus_withRate (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) {ε : ℝ}
     (hε : 0 < ε) :
     ∃ η > 0, ∀ (z : Z), ∀ a ∈ Icc (0 : ℝ) assetCap,
-      ∀ (r : ℝ) (_hr : r ∈ Icc rlo rhi) (hrr : 0 < 1 + r),
-      ∀ (r' : ℝ) (_hr' : r' ∈ Icc rlo rhi) (hrr' : 0 < 1 + r'),
+      ∀ (r : ℝ) (_hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r),
+      ∀ (r' : ℝ) (_hr' : r' ∈ Icc rlo rhi) (hrr' : P.RateOK r'),
       |r - r'| < η →
       |(P.withRate r hrr).policy (a, z) - (P.withRate r' hrr').policy (a, z)| < ε := by
   obtain ⟨η, hη, hspec⟩ := P.exists_policy_modulus hrlo hle hε
@@ -446,8 +449,8 @@ theorem exists_modulus_state (h : P.State →ᵇ ℝ) {ε : ℝ} (hε : 0 < ε) 
 statement the distribution's closed-graph argument consumes. -/
 theorem exists_markovFn_modulus (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (h : P.State →ᵇ ℝ)
     {ε : ℝ} (hε : 0 < ε) :
-    ∃ η > 0, ∀ (r : ℝ) (_hr : r ∈ Icc rlo rhi) (hrr : 0 < 1 + r)
-      (r' : ℝ) (_hr' : r' ∈ Icc rlo rhi) (hrr' : 0 < 1 + r'),
+    ∃ η > 0, ∀ (r : ℝ) (_hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r)
+      (r' : ℝ) (_hr' : r' ∈ Icc rlo rhi) (hrr' : P.RateOK r'),
       |r - r'| < η → ∀ s : P.State,
         |(P.withRate r hrr).markovFn h s - (P.withRate r' hrr').markovFn h s| ≤ ε := by
   obtain ⟨ηh, hηh, hh⟩ := P.exists_modulus_state h hε
@@ -471,9 +474,9 @@ then pins the limit down. -/
 variable [MeasurableSpace Z] [BorelSpace Z]
 
 theorem exists_almost_stationary_modulus (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi)
-    {r₀ : ℝ} (hr₀ : r₀ ∈ Icc rlo rhi) (hrr₀ : 0 < 1 + r₀) (h : P.State →ᵇ ℝ)
+    {r₀ : ℝ} (hr₀ : r₀ ∈ Icc rlo rhi) (hrr₀ : P.RateOK r₀) (h : P.State →ᵇ ℝ)
     {ε : ℝ} (hε : 0 < ε) :
-    ∃ η > 0, ∀ (r : ℝ) (_hr : r ∈ Icc rlo rhi) (hrr : 0 < 1 + r), |r - r₀| < η →
+    ∃ η > 0, ∀ (r : ℝ) (_hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r), |r - r₀| < η →
       ∀ ν : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary ν →
         |∫ s, (P.withRate r₀ hrr₀).markovOp h s ∂(ν : Measure P.State)
           - ∫ s, h s ∂(ν : Measure P.State)| ≤ ε := by
@@ -519,8 +522,8 @@ asked of them, and it is supplied by the selection `ν` rather than assumed of t
 the Doeblin hypotheses need not be carried across the whole interval. -/
 
 theorem tendsto_stationary (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) {r₀ : ℝ}
-    (hr₀ : r₀ ∈ Icc rlo rhi) (hrr₀ : 0 < 1 + r₀) (ν : ℝ → ProbabilityMeasure P.State)
-    (hν : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r, (P.withRate r hrr).IsStationary (ν r))
+    (hr₀ : r₀ ∈ Icc rlo rhi) (hrr₀ : P.RateOK r₀) (ν : ℝ → ProbabilityMeasure P.State)
+    (hν : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, (P.withRate r hrr).IsStationary (ν r))
     (huniq : ∀ μ : ProbabilityMeasure P.State,
       (P.withRate r₀ hrr₀).IsStationary μ → μ = ν r₀) :
     Tendsto ν (𝓝[Icc rlo rhi] r₀) (𝓝 (ν r₀)) := by
@@ -551,7 +554,7 @@ theorem tendsto_stationary (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) {r₀ : ℝ}
             filter_upwards [Metric.ball_mem_nhds r₀ hη] with x hx
             rwa [Metric.mem_ball, Real.dist_eq] at hx
           filter_upwards [h1, h2] with r hr1 hr2
-          have hrr : 0 < 1 + r := by have := hr1.1; linarith
+          have hrr : P.RateOK r := rateOK_of_floor_zero (by have := hr1.1; linarith)
           exact hest r hr1 hrr hr2 (ν r) (hν r hr1 hrr)
         -- a cluster point inherits a closed condition
         have hmap : ClusterPt (G μ) (Filter.map (fun r => G (ν r)) (𝓝[Icc rlo rhi] r₀)) := by

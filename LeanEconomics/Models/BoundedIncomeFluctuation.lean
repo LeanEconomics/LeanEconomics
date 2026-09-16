@@ -122,7 +122,7 @@ theorem marginalInadaOn_Ici_crraUtility {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- Utility is bounded below: the domain is the closed half-line. -/
 def Bounded : Prop := P.dom = Ici 0
@@ -144,7 +144,7 @@ structure. The parameters are those of `dispersed`, so the two economies differ 
 curvature of `u`. -/
 
 /-- A household with CES utility at `γ = 1/2`: square-root utility, bounded below. -/
-noncomputable def sqrtCES : IncomeFluctuation (Fin 2) 1 where
+noncomputable def sqrtCES : IncomeFluctuation (Fin 2) 0 1 where
   income z := if z = 0 then 1 / 100 else 1
   transitionMatrix _ _ := 1 / 2
   interest := 0
@@ -158,7 +158,10 @@ noncomputable def sqrtCES : IncomeFluctuation (Fin 2) 1 where
   transitionMatrix_nonneg _ _ := by norm_num
   transitionMatrix_sum _ := by simp
   interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
   assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
   discount_lt_one := by norm_num
   dom := Ici 0
   Ioi_subset_dom := Ioi_subset_Ici_self

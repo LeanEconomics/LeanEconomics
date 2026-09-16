@@ -77,23 +77,24 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ}
-variable (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- Continuation values that are concave along each asset slice. This is what makes the optimal
 action unique, and it is preserved by the Bellman operator. -/
-def ConcaveSlices (assetCap : ℝ) (v : (ℝ × Z) →ᵇ ℝ) : Prop :=
-  ∀ z : Z, ConcaveOn ℝ (Icc 0 assetCap) fun a => v (a, z)
+def ConcaveSlices (assetFloor assetCap : ℝ) (v : (ℝ × Z) →ᵇ ℝ) : Prop :=
+  ∀ z : Z, ConcaveOn ℝ (Icc assetFloor assetCap) fun a => v (a, z)
 
 omit [Fintype Z] [Nonempty Z] [DiscreteTopology Z] in
-theorem concaveSlices_zero : ConcaveSlices assetCap (0 : (ℝ × Z) →ᵇ ℝ) :=
+theorem concaveSlices_zero : ConcaveSlices assetFloor assetCap (0 : (ℝ × Z) →ᵇ ℝ) :=
   fun _ => ⟨convex_Icc _ _, fun _ _ _ _ _ _ _ _ _ => by simp⟩
 
-theorem concaveSlices_bellman {v : (ℝ × Z) →ᵇ ℝ} (hv : ConcaveSlices assetCap v) :
-    ConcaveSlices assetCap (P.toExtended.bellman v) :=
+theorem concaveSlices_bellman {v : (ℝ × Z) →ᵇ ℝ} (hv : ConcaveSlices assetFloor assetCap v) :
+    ConcaveSlices assetFloor assetCap (P.toExtended.bellman v) :=
   fun z => P.concaveOn_bellman v hv z
 
-theorem concaveSlices_valueFunction : ConcaveSlices assetCap P.toExtended.valueFunction :=
+theorem concaveSlices_valueFunction :
+    ConcaveSlices assetFloor assetCap P.toExtended.valueFunction :=
   P.concaveOn_valueFunction
 
 /-! ### The optimal action of an arbitrary continuation
@@ -103,8 +104,9 @@ argument needs it along the whole approximating sequence, so the same proof is r
 continuation whose slices are concave. -/
 
 /-- **The optimal action is unique** for any continuation with concave slices. -/
-theorem optimal_action_unique_of_concaveSlices {v : (ℝ × Z) →ᵇ ℝ} (hv : ConcaveSlices assetCap v)
-    {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {a₀ a₁ : ℝ}
+theorem optimal_action_unique_of_concaveSlices {v : (ℝ × Z) →ᵇ ℝ}
+    (hv : ConcaveSlices assetFloor assetCap v)
+    {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) {a₀ a₁ : ℝ}
     (h₀ : a₀ ∈ P.toExtended.feasible s) (h₁ : a₁ ∈ P.toExtended.feasible s)
     (hm₀ : P.toExtended.objectiveE v s a₀ = ((P.toExtended.bellmanFn v s : ℝ) : EReal))
     (hm₁ : P.toExtended.objectiveE v s a₁ = ((P.toExtended.bellmanFn v s : ℝ) : EReal)) :
@@ -115,7 +117,8 @@ theorem optimal_action_unique_of_concaveSlices {v : (ℝ × Z) →ᵇ ℝ} (hv :
   have hhalf : (0 : ℝ) < 1 / 2 := by norm_num
   have hsum : (1 : ℝ) / 2 + 1 / 2 = 1 := by norm_num
   have hmem : (1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁ ∈ P.toExtended.feasible s := by
-    simpa using convex_Icc (0 : ℝ) (P.maxSaving s) h₀ h₁ hhalf.le hhalf.le hsum
+    rw [P.feasible_eq] at h₀ h₁ ⊢
+    exact convex_Icc assetFloor (P.maxSaving s) h₀ h₁ hhalf.le hhalf.le hsum
   have hcmid : P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁)
       = (1 / 2 : ℝ) * P.consumption s a₀ + (1 / 2 : ℝ) * P.consumption s a₁ := by
     simp only [consumption]; ring
@@ -184,7 +187,7 @@ is to consume all cash on hand. Its consumption function is `resources`, affine 
 region, so the induction has a base. -/
 
 /-- Saving more cannot raise the reward: consumption falls, and utility rises with it. -/
-theorem reward_antitone {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {x y : ℝ}
+theorem reward_antitone {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) {x y : ℝ}
     (hx : x ∈ P.toExtended.feasible s) (hy : y ∈ P.toExtended.feasible s) (hxy : x ≤ y) :
     P.toExtended.reward (s, y) ≤ P.toExtended.reward (s, x) := by
   by_cases h : P.consumption s y ∈ P.dom
@@ -198,38 +201,41 @@ theorem reward_antitone {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {x y : ℝ}
     rw [hb]; exact bot_le
 
 /-- **With nothing to gain from saving, the household saves nothing.** -/
-theorem policyOf_zero {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
-    P.policyOf 0 s = 0 := by
-  have hmem0 : (0 : ℝ) ∈ P.toExtended.feasible s := ⟨le_rfl, le_max_left _ _⟩
-  have hc0 : 0 < P.consumption s 0 := by
-    simpa only [consumption, sub_zero] using P.resources_pos s
+theorem policyOf_zero {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) :
+    P.policyOf 0 s = assetFloor := by
+  have hmem0 : assetFloor ∈ P.toExtended.feasible s := ⟨le_rfl, le_max_left _ _⟩
+  have hc0 : 0 < P.consumption s assetFloor := by
+    have h1 := P.minConsumption_le_consumption_floor s
+    have h2 := P.minConsumption_pos
+    simp only [consumption]; linarith
   have hobj : ∀ a : ℝ, P.toExtended.objectiveE (0 : (ℝ × Z) →ᵇ ℝ) s a
       = P.toExtended.reward (s, a) := by
     intro a
     simp [ExtendedStochasticProgram.objectiveE, ExtendedStochasticProgram.expect]
   have hle : ∀ a ∈ P.toExtended.feasible s,
-      P.toExtended.objectiveE (0 : (ℝ × Z) →ᵇ ℝ) s a ≤ ((P.u (P.consumption s 0) : ℝ) : EReal) := by
+      P.toExtended.objectiveE (0 : (ℝ × Z) →ᵇ ℝ) s a
+        ≤ ((P.u (P.consumption s assetFloor) : ℝ) : EReal) := by
     intro a ha
     rw [hobj a, ← P.reward_eq_coe hs hmem0 hc0]
     exact P.reward_antitone hs hmem0 ha ha.1
   have hb := P.toExtended.bellmanFn_le (0 : (ℝ × Z) →ᵇ ℝ) hle
-  have hopt : P.toExtended.objectiveE (0 : (ℝ × Z) →ᵇ ℝ) s 0
+  have hopt : P.toExtended.objectiveE (0 : (ℝ × Z) →ᵇ ℝ) s assetFloor
       = ((P.toExtended.bellmanFn (0 : (ℝ × Z) →ᵇ ℝ) s : ℝ) : EReal) := by
     refine le_antisymm (P.toExtended.le_bellmanFn _ hmem0) ?_
-    rw [hobj 0, P.reward_eq_coe hs hmem0 hc0, EReal.coe_le_coe_iff]
+    rw [hobj assetFloor, P.reward_eq_coe hs hmem0 hc0, EReal.coe_le_coe_iff]
     exact hb
   exact optimal_action_unique_of_concaveSlices P concaveSlices_zero hs (P.policyOf_mem _ _) hmem0
     (P.policyOf_optimal _ _) hopt
 
-theorem consumptionFnOf_zero {z : Z} {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
-    P.consumptionFnOf 0 z a = P.income z + (1 + P.interest) * a := by
+theorem consumptionFnOf_zero {z : Z} {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) :
+    P.consumptionFnOf 0 z a = P.income z + (1 + P.interest) * a - assetFloor := by
   rw [consumptionFnOf, P.policyOf_zero (s := (a, z)) ha]
-  simp only [consumption, resources, sub_zero, max_eq_right ha.1]
+  simp only [consumption, resources, max_eq_right ha.1]
 
 theorem concaveOn_consumptionFnOf_zero (z : Z) :
-    ConcaveOn ℝ (Icc 0 assetCap) (P.consumptionFnOf 0 z) := by
+    ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFnOf 0 z) := by
   refine ⟨convex_Icc _ _, fun x hx y hy θ φ hθ hφ hθφ => ?_⟩
-  have hm : θ • x + φ • y ∈ Icc (0 : ℝ) assetCap := convex_Icc _ _ hx hy hθ hφ hθφ
+  have hm : θ • x + φ • y ∈ Icc assetFloor assetCap := convex_Icc _ _ hx hy hθ hφ hθφ
   simp only [smul_eq_mul] at hm ⊢
   rw [P.consumptionFnOf_zero hx, P.consumptionFnOf_zero hy, P.consumptionFnOf_zero hm]
   have hφ' : φ = 1 - θ := by linarith
@@ -285,8 +291,8 @@ theorem tendsto_objectiveE {v : ℕ → (ℝ × Z) →ᵇ ℝ} {w : (ℝ × Z) �
 
 /-- **Optimal actions survive a uniform limit.** -/
 theorem tendsto_policyOf {v : ℕ → (ℝ × Z) →ᵇ ℝ} {w : (ℝ × Z) →ᵇ ℝ}
-    (hv : Tendsto v atTop (𝓝 w)) (hw : ConcaveSlices assetCap w)
-    {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
+    (hv : Tendsto v atTop (𝓝 w)) (hw : ConcaveSlices assetFloor assetCap w)
+    {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) :
     Tendsto (fun n => P.policyOf (v n) s) atTop (𝓝 (P.policyOf w s)) := by
   refine tendsto_of_subseq_tendsto fun ns hns => ?_
   obtain ⟨L, hLK, φ, hφ, hφlim⟩ := (P.toExtended.isCompact_feasible s).tendsto_subseq
@@ -319,17 +325,17 @@ discharged: the base case, the induction, the limit.
 
 `hT` is Carroll and Kimball (1996) — see the module docstring for what proving it would take. -/
 theorem concaveOn_consumptionFn_of_preserves
-    (hT : ∀ v : (ℝ × Z) →ᵇ ℝ, ConcaveSlices assetCap v →
-      (∀ z, ConcaveOn ℝ (Icc 0 assetCap) (P.consumptionFnOf v z)) →
-      ∀ z, ConcaveOn ℝ (Icc 0 assetCap) (P.consumptionFnOf (P.toExtended.bellman v) z))
-    (z : Z) : ConcaveOn ℝ (Icc 0 assetCap) (P.consumptionFn z) := by
+    (hT : ∀ v : (ℝ × Z) →ᵇ ℝ, ConcaveSlices assetFloor assetCap v →
+      (∀ z, ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFnOf v z)) →
+      ∀ z, ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFnOf (P.toExtended.bellman v) z))
+    (z : Z) : ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFn z) := by
   set T := P.toExtended.bellman with hTdef
-  have hslices : ∀ n : ℕ, ConcaveSlices assetCap (T^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
+  have hslices : ∀ n : ℕ, ConcaveSlices assetFloor assetCap (T^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
     intro n
     induction n with
     | zero => exact concaveSlices_zero
     | succ k ih => rw [Function.iterate_succ_apply']; exact P.concaveSlices_bellman ih
-  have hcons : ∀ n : ℕ, ∀ z, ConcaveOn ℝ (Icc 0 assetCap)
+  have hcons : ∀ n : ℕ, ∀ z, ConcaveOn ℝ (Icc assetFloor assetCap)
       (P.consumptionFnOf (T^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z) := by
     intro n
     induction n with
@@ -337,7 +343,7 @@ theorem concaveOn_consumptionFn_of_preserves
     | succ k ih => rw [Function.iterate_succ_apply']; exact hT _ (hslices k) ih
   have hlim : Tendsto (fun n => T^[n] (0 : (ℝ × Z) →ᵇ ℝ)) atTop (𝓝 P.toExtended.valueFunction) :=
     P.toExtended.tendsto_iterate_valueFunction 0
-  have hpt : ∀ a ∈ Icc (0 : ℝ) assetCap,
+  have hpt : ∀ a ∈ Icc assetFloor assetCap,
       Tendsto (fun n => P.consumptionFnOf (T^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a) atTop
         (𝓝 (P.consumptionFn z a)) := by
     intro a ha
@@ -347,7 +353,7 @@ theorem concaveOn_consumptionFn_of_preserves
     rw [he]
     simpa only [consumptionFnOf, consumption] using tendsto_const_nhds.sub hp
   refine ⟨convex_Icc _ _, fun x hx y hy θ φ hθ hφ hθφ => ?_⟩
-  have hm : θ • x + φ • y ∈ Icc (0 : ℝ) assetCap := convex_Icc _ _ hx hy hθ hφ hθφ
+  have hm : θ • x + φ • y ∈ Icc assetFloor assetCap := convex_Icc _ _ hx hy hθ hφ hθφ
   refine le_of_tendsto_of_tendsto
     (((hpt x hx).const_smul θ).add ((hpt y hy).const_smul φ)) (hpt _ hm)
     (Eventually.of_forall fun n => (hcons n z).2 hx hy hθ hφ hθφ)
@@ -364,7 +370,7 @@ the slope is strictly less. Increments therefore RISE across the kink, which con
 `not_concaveOn_consumptionFn_of_cap_binds` proves it.
 
 So `hT` as stated is not merely hard, it is FALSE for any calibration whose cap binds, quite
-apart from the HARA question. Concavity of the consumption function on `Icc 0 assetCap` needs the
+apart from the HARA question. Concavity of the consumption function on the asset region needs the
 cap to be SLACK — above the natural asset bound, so that the household never wants to save that
 much. That is exactly what `exists_decline_of_consumption_lower_bound` is about, and by
 `one_sub_mpc_mul_of_asymptotic` the condition behind it is `β (1 + r) < 1`.
@@ -374,23 +380,23 @@ bookkeeping device for compactness, has to be justified economically before the 
 hypothesis can even be true. -/
 
 /-- Once the cap binds it binds for ever after, since the policy is monotone and capped. -/
-theorem policy_eq_assetCap_of_le {y w : ℝ} {z : Z} (hy : y ∈ Icc 0 assetCap)
-    (hw : w ∈ Icc 0 assetCap) (hyw : y ≤ w) (h : P.policy (y, z) = assetCap) :
+theorem policy_eq_assetCap_of_le {y w : ℝ} {z : Z} (hy : y ∈ Icc assetFloor assetCap)
+    (hw : w ∈ Icc assetFloor assetCap) (hyw : y ≤ w) (h : P.policy (y, z) = assetCap) :
     P.policy (w, z) = assetCap := by
   exact le_antisymm (P.policy_mem_region _).2
     (le_trans (le_of_eq h.symm) (P.policy_mono hy hw hyw))
 
 /-- **A binding asset cap rules out a concave consumption function.** -/
 theorem not_concaveOn_consumptionFn_of_cap_binds {x y w : ℝ} {z : Z}
-    (hx : x ∈ Icc (0 : ℝ) assetCap) (hw : w ∈ Icc (0 : ℝ) assetCap)
+    (hx : x ∈ Icc assetFloor assetCap) (hw : w ∈ Icc assetFloor assetCap)
     (hxy : x < y) (hyw : y < w)
     (hrise : P.policy (x, z) < P.policy (y, z))
     (hflat : P.policy (y, z) = P.policy (w, z)) :
-    ¬ ConcaveOn ℝ (Icc 0 assetCap) (P.consumptionFn z) := by
+    ¬ ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFn z) := by
   intro hconc
-  have hy : y ∈ Icc (0 : ℝ) assetCap := ⟨le_trans hx.1 hxy.le, le_trans hyw.le hw.2⟩
+  have hy : y ∈ Icc assetFloor assetCap := ⟨le_trans hx.1 hxy.le, le_trans hyw.le hw.2⟩
   have h := hconc.slope_anti_adjacent hx hw hxy hyw
-  have hres : ∀ a ∈ Icc (0 : ℝ) assetCap,
+  have hres : ∀ a ∈ Icc assetFloor assetCap,
       P.resources (a, z) = P.income z + (1 + P.interest) * a :=
     fun a ha => by simp only [resources, max_eq_right ha.1]
   simp only [consumptionFn, consumption, hres x hx, hres y hy, hres w hw] at h

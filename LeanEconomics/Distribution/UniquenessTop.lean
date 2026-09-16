@@ -44,13 +44,13 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **Monotonicity reduces accumulation to the best case.** If the poorest household reaches the
 cap in `N` good draws, everyone does. -/
 theorem gBad_iterate_eq_top {z₁ : Z} {N : ℕ} (hgro : (P.gBad z₁)^[N] P.botState = P.topState)
-    (x : ↥(Icc (0 : ℝ) assetCap)) : (P.gBad z₁)^[N] x = P.topState :=
+    (x : ↥(Icc assetFloor assetCap)) : (P.gBad z₁)^[N] x = P.topState :=
   le_antisymm (P.le_topState _) (hgro ▸ (P.gBad_mono z₁).iterate N (P.botState_le x))
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
@@ -87,60 +87,61 @@ The mirror of `exists_exhaust_of_decline`: below a threshold assets strictly gro
 cap binds, and compactness turns the strict growth into a uniform increment. -/
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
-theorem exists_growth_to_cap {z₁ : Z} {a₁ : ℝ} (ha₁0 : 0 ≤ a₁) (ha₁ : a₁ ≤ assetCap)
+theorem exists_growth_to_cap {z₁ : Z} {a₁ : ℝ} (ha₁0 : assetFloor ≤ a₁) (ha₁ : a₁ ≤ assetCap)
     (hcap : ∀ a ∈ Icc a₁ assetCap, P.policy (a, z₁) = assetCap)
-    (hgro : ∀ a ∈ Icc (0 : ℝ) a₁, a < P.policy (a, z₁)) :
+    (hgro : ∀ a ∈ Icc assetFloor a₁, a < P.policy (a, z₁)) :
     ∃ N : ℕ, (P.gBad z₁)^[N] P.botState = P.topState := by
   classical
-  have hne : (Icc (0 : ℝ) a₁).Nonempty := ⟨0, ⟨le_rfl, ha₁0⟩⟩
-  have hcont : ContinuousOn (fun a : ℝ => P.policy (a, z₁) - a) (Icc 0 a₁) := by
+  have hne : (Icc assetFloor a₁).Nonempty := ⟨assetFloor, ⟨le_rfl, ha₁0⟩⟩
+  have hcont : ContinuousOn (fun a : ℝ => P.policy (a, z₁) - a) (Icc assetFloor a₁) := by
     refine ContinuousOn.sub (P.continuousOn_policy.comp
       (continuous_id.prodMk continuous_const).continuousOn fun a ha => ?_) continuousOn_id
     exact ⟨ha.1, le_trans ha.2 ha₁⟩
   obtain ⟨am, hamem, hamin⟩ := isCompact_Icc.exists_isMinOn hne hcont
   set Δ : ℝ := P.policy (am, z₁) - am with hΔdef
   have hΔpos : 0 < Δ := by rw [hΔdef]; linarith [hgro am hamem]
-  have hstep : ∀ a ∈ Icc (0 : ℝ) a₁, a + Δ ≤ P.policy (a, z₁) := fun a ha => by
+  have hstep : ∀ a ∈ Icc assetFloor a₁, a + Δ ≤ P.policy (a, z₁) := fun a ha => by
     have h := hamin ha
     rw [Set.mem_ofPred_eq] at h
     rw [hΔdef]; linarith
   have key : ∀ k : ℕ,
-      a₁ ≤ (((P.gBad z₁)^[k] P.botState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) ∨
-      (k : ℝ) * Δ ≤ (((P.gBad z₁)^[k] P.botState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) := by
+      a₁ ≤ (((P.gBad z₁)^[k] P.botState : ↥(Icc assetFloor assetCap)) : ℝ) ∨
+      assetFloor + (k : ℝ) * Δ
+        ≤ (((P.gBad z₁)^[k] P.botState : ↥(Icc assetFloor assetCap)) : ℝ) := by
     intro k
     induction k with
     | zero => right; simp [botState]
     | succ k ih =>
         rw [Function.iterate_succ_apply']
         have hval : (((P.gBad z₁) ((P.gBad z₁)^[k] P.botState) :
-            ↥(Icc (0 : ℝ) assetCap)) : ℝ)
-            = P.policy ((((P.gBad z₁)^[k] P.botState : ↥(Icc (0 : ℝ) assetCap)) : ℝ), z₁) := rfl
+            ↥(Icc assetFloor assetCap)) : ℝ)
+            = P.policy ((((P.gBad z₁)^[k] P.botState : ↥(Icc assetFloor assetCap)) : ℝ), z₁) := rfl
         rcases ih with h | h
         · left
           rw [hval, hcap _ ⟨h, ((P.gBad z₁)^[k] P.botState).2.2⟩]
           exact ha₁
-        · rcases le_total a₁ (((P.gBad z₁)^[k] P.botState : ↥(Icc (0 : ℝ) assetCap)) : ℝ)
+        · rcases le_total a₁ (((P.gBad z₁)^[k] P.botState : ↥(Icc assetFloor assetCap)) : ℝ)
             with hhigh | hlow
           · left
             rw [hval, hcap _ ⟨hhigh, ((P.gBad z₁)^[k] P.botState).2.2⟩]
             exact ha₁
           · right
             rw [hval]
-            have hmem : (((P.gBad z₁)^[k] P.botState : ↥(Icc (0 : ℝ) assetCap)) : ℝ)
-                ∈ Icc (0 : ℝ) a₁ := ⟨((P.gBad z₁)^[k] P.botState).2.1, hlow⟩
+            have hmem : (((P.gBad z₁)^[k] P.botState : ↥(Icc assetFloor assetCap)) : ℝ)
+                ∈ Icc assetFloor a₁ := ⟨((P.gBad z₁)^[k] P.botState).2.1, hlow⟩
             have hinc := hstep _ hmem
             push_cast
             linarith
-  obtain ⟨N, hN⟩ := exists_nat_gt (a₁ / Δ)
+  obtain ⟨N, hN⟩ := exists_nat_gt ((a₁ - assetFloor) / Δ)
   refine ⟨N + 1, ?_⟩
-  have hNge : a₁ ≤ (((P.gBad z₁)^[N] P.botState : ↥(Icc (0 : ℝ) assetCap)) : ℝ) := by
+  have hNge : a₁ ≤ (((P.gBad z₁)^[N] P.botState : ↥(Icc assetFloor assetCap)) : ℝ) := by
     rcases key N with h | h
     · exact h
     · rw [div_lt_iff₀ hΔpos] at hN
       linarith
   rw [Function.iterate_succ_apply']
   refine Subtype.ext ?_
-  change P.policy ((((P.gBad z₁)^[N] P.botState : ↥(Icc (0 : ℝ) assetCap)) : ℝ), z₁) = assetCap
+  change P.policy ((((P.gBad z₁)^[N] P.botState : ↥(Icc assetFloor assetCap)) : ℝ), z₁) = assetCap
   exact hcap _ ⟨hNge, ((P.gBad z₁)^[N] P.botState).2.2⟩
 
 end IncomeFluctuation

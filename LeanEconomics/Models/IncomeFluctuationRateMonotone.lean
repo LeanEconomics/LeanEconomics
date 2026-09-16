@@ -60,8 +60,10 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
+-- Light's rescaling `a ↦ ((1+r₁)/(1+r₂))·a` maps the asset region into itself only when the
+-- borrowing limit is at zero (or non-positive), so this file is stated at a zero limit.
 variable {assetCap : ℝ}
-variable (P Q : IncomeFluctuation Z assetCap)
+variable (P Q : IncomeFluctuation Z 0 assetCap)
 
 /-- **Increasing differences of the continuation across two rates**: the integrated form of
 Light's `f'(·, R₂) ≥ f'(·, R₁)`. No derivative, and closed under pointwise limits. -/
@@ -92,7 +94,7 @@ states, here two objectives at one state. -/
 theorem policy_le_of_cont_increasingDifferences
     (hu : P.u = Q.u) (hdom : P.dom = Q.dom) (hβ : (P.discount : ℝ) = (Q.discount : ℝ))
     (hid : ContIncreasingDifferences P Q)
-    {a₁ a₂ : ℝ} {z : Z} (h₁ : a₁ ∈ Icc 0 assetCap) (h₂ : a₂ ∈ Icc 0 assetCap)
+    {a₁ a₂ : ℝ} {z : Z} (h₁ : a₁ ∈ Icc (0 : ℝ) assetCap) (h₂ : a₂ ∈ Icc (0 : ℝ) assetCap)
     (hres : P.resources (a₁, z) = Q.resources (a₂, z)) :
     P.policy (a₁, z) ≤ Q.policy (a₂, z) := by
   by_contra hcon
@@ -148,7 +150,7 @@ theorem rateScale_pos : 0 < rateScale P Q :=
 theorem rateScale_le_one (hr : P.interest ≤ Q.interest) : rateScale P Q ≤ 1 := by
   rw [rateScale, div_le_one Q.interest_gt_neg_one]; linarith
 
-theorem resources_rateScale (hinc : P.income = Q.income) {a : ℝ} (ha : a ∈ Icc 0 assetCap)
+theorem resources_rateScale (hinc : P.income = Q.income) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap)
     (z : Z) :
     P.resources (a, z) = Q.resources (rateScale P Q * a, z) := by
   have hscale : (0 : ℝ) ≤ rateScale P Q * a := mul_nonneg (rateScale_pos P Q).le ha.1
@@ -158,7 +160,7 @@ theorem resources_rateScale (hinc : P.income = Q.income) {a : ℝ} (ha : a ∈ I
   have hne : (1 : ℝ) + Q.interest ≠ 0 := Q.interest_gt_neg_one.ne'
   field_simp
 
-theorem rateScale_mem (hr : P.interest ≤ Q.interest) {a : ℝ} (ha : a ∈ Icc 0 assetCap) :
+theorem rateScale_mem (hr : P.interest ≤ Q.interest) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
     rateScale P Q * a ∈ Icc (0 : ℝ) assetCap := by
   have h1 := rateScale_pos P Q
   have h2 := rateScale_le_one P Q hr
@@ -176,7 +178,7 @@ theorem policy_mono_interest (hu : P.u = Q.u) (hdom : P.dom = Q.dom)
     (hβ : (P.discount : ℝ) = (Q.discount : ℝ))
     (hinc : P.income = Q.income) (hr : P.interest ≤ Q.interest)
     (hid : ContIncreasingDifferences P Q)
-    {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
+    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
     P.policy (a, z) ≤ Q.policy (a, z) := by
   have hmem := rateScale_mem P Q hr ha
   refine le_trans (policy_le_of_cont_increasingDifferences P Q hu hdom hβ hid ha hmem
@@ -186,9 +188,9 @@ theorem policy_mono_interest (hu : P.u = Q.u) (hdom : P.dom = Q.dom)
 
 /-- **Theorem 1 for a rate family**, in the form `CapitalSupplyMonotone` consumes: the policy of
 `P.withRate r` rises with `r`. -/
-theorem policy_mono_withRate {r₁ r₂ : ℝ} (h₁ : 0 < 1 + r₁) (h₂ : 0 < 1 + r₂) (hr : r₁ ≤ r₂)
+theorem policy_mono_withRate {r₁ r₂ : ℝ} (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (hr : r₁ ≤ r₂)
     (hid : ContIncreasingDifferences (P.withRate r₁ h₁) (P.withRate r₂ h₂))
-    {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
+    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
     (P.withRate r₁ h₁).policy (a, z) ≤ (P.withRate r₂ h₂).policy (a, z) :=
   policy_mono_interest (P.withRate r₁ h₁) (P.withRate r₂ h₂) rfl rfl rfl rfl hr hid ha z
 

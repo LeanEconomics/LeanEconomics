@@ -35,19 +35,20 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- The region the model lives on. -/
-def region (_P : IncomeFluctuation Z assetCap) : Set (ℝ × Z) := {s | s.1 ∈ Icc 0 assetCap}
+def region (_P : IncomeFluctuation Z assetFloor assetCap) : Set (ℝ × Z) :=
+  {s | s.1 ∈ Icc assetFloor assetCap}
 
 theorem isCompact_region : IsCompact P.region := by
-  have himg : P.region = (Icc 0 assetCap) ×ˢ (univ : Set Z) := by
+  have himg : P.region = (Icc assetFloor assetCap) ×ˢ (univ : Set Z) := by
     ext s; simp [region, Set.mem_prod]
   rw [himg]
   exact isCompact_Icc.prod isCompact_univ
 
 theorem region_nonempty : P.region.Nonempty :=
-  ⟨(0, Classical.ofNonempty), by simp [region, P.assetCap_nonneg]⟩
+  ⟨(assetFloor, Classical.ofNonempty), by simp [region, P.assetFloor_le_assetCap]⟩
 
 /-- **The expectation only samples the region.** This is forward invariance in the form the
 estimate needs. -/
@@ -96,7 +97,8 @@ theorem abs_bellmanFn_sub_le_region {v w : (ℝ × Z) →ᵇ ℝ} {c : ℝ}
     rw [EReal.coe_add]
     exact add_le_add (P.toExtended.le_bellmanFn w ha) (le_refl _)
   have hc : 0 ≤ c :=
-    le_trans (abs_nonneg _) (hvw (0, Classical.ofNonempty) (by simp [region, P.assetCap_nonneg]))
+    le_trans (abs_nonneg _)
+      (hvw (assetFloor, Classical.ofNonempty) (by simp [region, P.assetFloor_le_assetCap]))
   have k1 := key v w hvw
   have k2 := key w v fun t ht => by rw [abs_sub_comm]; exact hvw t ht
   rw [abs_le]
@@ -109,7 +111,7 @@ comparative statics in the interest rate never needs a global sup-norm estimate.
 Since the agent distribution also lives on the region, this is all the equilibrium argument
 requires. Note it needs no second programme on the compact state space and no transport --
 it is a direct estimate on the objects already built. -/
-theorem abs_valueFunction_sub_le_region {P Q : IncomeFluctuation Z assetCap} {D : ℝ}
+theorem abs_valueFunction_sub_le_region {P Q : IncomeFluctuation Z assetFloor assetCap} {D : ℝ}
     (hD : ∀ t : ℝ × Z, t ∈ P.region →
       |P.toExtended.bellmanFn Q.toExtended.valueFunction t
         - Q.toExtended.valueFunction t| ≤ D)
@@ -262,15 +264,15 @@ set_option linter.unusedFintypeInType false in
 income states. The finiteness of `Z` is used in the PROOF, to combine the per-state moduli,
 though it does not appear in the statement. -/
 theorem exists_modulus_v (v : (ℝ × Z) →ᵇ ℝ) {ε : ℝ} (hε : 0 < ε) :
-    ∃ η > 0, ∀ z' : Z, ∀ a₁ ∈ Icc (0 : ℝ) assetCap, ∀ a₂ ∈ Icc (0 : ℝ) assetCap,
+    ∃ η > 0, ∀ z' : Z, ∀ a₁ ∈ Icc assetFloor assetCap, ∀ a₂ ∈ Icc assetFloor assetCap,
       |a₁ - a₂| < η → |v (a₁, z') - v (a₂, z')| < ε := by
   -- one modulus per income state
-  have hslice : ∀ z' : Z, ∃ η > 0, ∀ a₁ ∈ Icc (0 : ℝ) assetCap, ∀ a₂ ∈ Icc (0 : ℝ) assetCap,
+  have hslice : ∀ z' : Z, ∃ η > 0, ∀ a₁ ∈ Icc assetFloor assetCap, ∀ a₂ ∈ Icc assetFloor assetCap,
       |a₁ - a₂| < η → |v (a₁, z') - v (a₂, z')| < ε := by
     intro z'
-    have hcont : ContinuousOn (fun a : ℝ => v (a, z')) (Icc 0 assetCap) :=
+    have hcont : ContinuousOn (fun a : ℝ => v (a, z')) (Icc assetFloor assetCap) :=
       (v.continuous.comp (continuous_id.prodMk continuous_const)).continuousOn
-    have huc : UniformContinuousOn (fun a : ℝ => v (a, z')) (Icc 0 assetCap) :=
+    have huc : UniformContinuousOn (fun a : ℝ => v (a, z')) (Icc assetFloor assetCap) :=
       isCompact_Icc.uniformContinuousOn_of_continuous hcont
     obtain ⟨η, hη, hspec⟩ := Metric.uniformContinuousOn_iff.mp huc ε hε
     refine ⟨η, hη, fun a₁ h₁ a₂ h₂ hd => ?_⟩

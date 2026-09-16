@@ -58,7 +58,7 @@ theorem crraUtility_fifteen_sixteenths (c : ℝ) :
   ring
 
 /-- A household with CES utility at `γ = 15/16` and the log witness's own calibration. -/
-noncomputable def nearLog : IncomeFluctuation (Fin 2) 1 where
+noncomputable def nearLog : IncomeFluctuation (Fin 2) 0 1 where
   income z := if z = 0 then 1 / 100 else 1
   transitionMatrix _ _ := 1 / 2
   interest := 0
@@ -72,7 +72,10 @@ noncomputable def nearLog : IncomeFluctuation (Fin 2) 1 where
   transitionMatrix_nonneg _ _ := by norm_num
   transitionMatrix_sum _ := by simp
   interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
   assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
   discount_lt_one := by norm_num
   dom := Ici 0
   Ioi_subset_dom := Ioi_subset_Ici_self
@@ -88,6 +91,8 @@ noncomputable def nearLog : IncomeFluctuation (Fin 2) 1 where
 @[simp] theorem nearLog_interest : nearLog.interest = 0 := rfl
 @[simp] theorem nearLog_discount : (nearLog.discount : ℝ) = 1 / 8 := rfl
 @[simp] theorem nearLog_minIncome : nearLog.minIncome = 1 / 100 := rfl
+@[simp] theorem nearLog_minConsumption : nearLog.minConsumption = 1 / 100 := by
+  norm_num [nearLog]
 @[simp] theorem nearLog_maxIncome : nearLog.maxIncome = 1 := rfl
 @[simp] theorem nearLog_transitionMatrix (z z' : Fin 2) :
     nearLog.transitionMatrix z z' = 1 / 2 := rfl
@@ -97,7 +102,7 @@ theorem nearLog_bounded : nearLog.Bounded := rfl
 theorem nearLog_positiveConsumption : nearLog.PositiveConsumption :=
   nearLog.positiveConsumption_of_bounded_crra (by norm_num) (by norm_num) rfl rfl
 
-theorem nearLog_withRate_positiveConsumption {r : ℝ} (hrr : 0 < 1 + r) :
+theorem nearLog_withRate_positiveConsumption {r : ℝ} (hrr : nearLog.RateOK r) :
     (nearLog.withRate r hrr).PositiveConsumption :=
   (nearLog.withRate r hrr).positiveConsumption_of_bounded_crra (γ := 15 / 16) (by norm_num)
     (by norm_num) rfl rfl
@@ -117,7 +122,8 @@ theorem nearLog_not_unbounded : ¬ nearLog.Unbounded := by
 `oscGap = 16 (maxConsumption ^ (1/16) - minIncome ^ (1/16)) / (1 - β)`, pinned by
 `401/200 ≤ (10445/10000) ^ 16` and `(7498/10000) ^ 16 ≤ 1/100`. -/
 
-theorem nearLog_oscGap_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : 0 < 1 + r) :
+theorem nearLog_oscGap_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) :
     (nearLog.withRate r hrr).oscGap ≤ 27 / 5 := by
   have hmaxpos : (0 : ℝ) ≤ (nearLog.withRate r hrr).maxConsumption :=
     (nearLog.withRate r hrr).maxConsumption_pos.le
@@ -133,13 +139,13 @@ theorem nearLog_oscGap_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
     le_rpow_of_pow_le (m := 1) (n := 16) (by norm_num) (by norm_num) (by norm_num)
       (by norm_num) (by norm_num)
   simp only [IncomeFluctuation.oscGap, IncomeFluctuation.withRate_u,
-    IncomeFluctuation.withRate_minIncome, IncomeFluctuation.withRate_discount,
-    nearLog_u, nearLog_minIncome, nearLog_discount, crraUtility_fifteen_sixteenths]
+    IncomeFluctuation.withRate_minConsumption, IncomeFluctuation.withRate_discount,
+    nearLog_u, nearLog_minConsumption, nearLog_discount, crraUtility_fifteen_sixteenths]
   rw [div_le_iff₀ (by norm_num)]
   linarith [hhi, hlo]
 
 /-- The coefficient `β · oscGap / θ` that multiplies every saving bound. -/
-theorem nearLog_coef_le (hrhi : 0 < 1 + (1 / 200 : ℝ)) :
+theorem nearLog_coef_le (hrhi : nearLog.RateOK (1 / 200 : ℝ)) :
     ((nearLog.withRate (1 / 200) hrhi).discount : ℝ)
         * (nearLog.withRate (1 / 200) hrhi).oscGap / (999 / 1000) ≤ 25 / 37 := by
   have hosc := nearLog_oscGap_le_uniform (r := 1 / 200) (by norm_num) hrhi
@@ -147,7 +153,7 @@ theorem nearLog_coef_le (hrhi : 0 < 1 + (1 / 200 : ℝ)) :
     div_le_iff₀ (by norm_num)]
   linarith [hosc]
 
-theorem nearLog_coef_nonneg (hrhi : 0 < 1 + (1 / 200 : ℝ)) :
+theorem nearLog_coef_nonneg (hrhi : nearLog.RateOK (1 / 200 : ℝ)) :
     (0 : ℝ) ≤ ((nearLog.withRate (1 / 200) hrhi).discount : ℝ)
         * (nearLog.withRate (1 / 200) hrhi).oscGap / (999 / 1000) := by
   rw [show (((nearLog.withRate (1 / 200) hrhi).discount : ℝ)) = 1 / 8 from rfl]
@@ -161,7 +167,7 @@ Saving would have to reach `1` for `not_concaveOn_consumptionFn_of_cap_binds` to
 consumption would be at most `1 + (1 + r - θ) · 1 = 503/500`, and the saving bound there is
 `503/740 < 1`. -/
 
-theorem nearLog_policy_lt_cap {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : 0 < 1 + r)
+theorem nearLog_policy_lt_cap {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : nearLog.RateOK r)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) (z : Fin 2) :
     (nearLog.withRate r hrr).policy (a, z) < 1 := by
   refine (nearLog.withRate r hrr).crra_policy_lt_assetCap (γ := 15 / 16) (θ := 999 / 1000)
@@ -200,10 +206,11 @@ theorem nearLog_policy_lt_cap {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hr
 
 /-! ### Decline above `1/50`, uniformly in the rate -/
 
-theorem nearLog_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : 0 < 1 + r)
+theorem nearLog_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : nearLog.RateOK r)
     {a : ℝ} (ha : a ∈ Icc (1 / 50 : ℝ) 1) :
     (nearLog.withRate r hrr).policy (a, 0) < a := by
-  have hrhi : (0 : ℝ) < 1 + 1 / 200 := by norm_num
+  have hrhi : nearLog.RateOK (1 / 200 : ℝ) :=
+    IncomeFluctuation.rateOK_of_floor_zero (by norm_num)
   have hmem : a ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ha.1], ha.2⟩
   refine nearLog.crra_policy_lt_self_uniform (γ := 15 / 16) (θ := 999 / 1000) (by norm_num)
     (by norm_num) (by norm_num) (by norm_num) rfl rfl hrr hrhi hr.2 (by linarith [hr.1])
@@ -249,17 +256,18 @@ theorem nearLog_crraSlopeBound_le : crraSlopeBound (15 / 16) (1 / 100) ≤ 111 :
   rw [div_le_iff₀ (by norm_num)]
   nlinarith [hminv, hinv, hinv1, inv_nonneg.mpr hmpos.le]
 
-theorem nearLog_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : 0 < 1 + r)
+theorem nearLog_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : nearLog.RateOK r)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) (1 / 50)) :
     (nearLog.withRate r hrr).policy (a, 0) = 0 := by
-  have hrhi : (0 : ℝ) < 1 + 1 / 200 := by norm_num
+  have hrhi : nearLog.RateOK (1 / 200 : ℝ) :=
+    IncomeFluctuation.rateOK_of_floor_zero (by norm_num)
   have hmem : a ∈ Icc (0 : ℝ) 1 := ⟨ha.1, by linarith [ha.2]⟩
   refine nearLog.crra_policy_eq_zero_uniform (γ := 15 / 16) (by norm_num) (by norm_num)
     rfl rfl hrr hrhi hr.2 (by norm_num) hmem 0 ?_
   have hlip : (nearLog.withRate (1 / 200) hrhi).crraLipschitz (15 / 16) ≤ 128 := by
-    simp only [IncomeFluctuation.crraLipschitz, IncomeFluctuation.withRate_minIncome,
+    simp only [IncomeFluctuation.crraLipschitz, IncomeFluctuation.withRate_minConsumption,
       IncomeFluctuation.withRate_interest, IncomeFluctuation.withRate_discount,
-      nearLog_minIncome, nearLog_discount]
+      nearLog_minConsumption, nearLog_discount]
     rw [div_le_iff₀ (by norm_num)]
     linarith [nearLog_crraSlopeBound_le]
   have hres : (nearLog.withRate (1 / 200) hrhi).resources (a, 0)
@@ -281,7 +289,8 @@ theorem nearLog_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (h
   nlinarith [hlip, hge]
 
 /-- **A unique stationary distribution at every rate in `[0, 1/200]`.** -/
-theorem nearLog_existsUnique_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : 0 < 1 + r) :
+theorem nearLog_existsUnique_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) :
     ∃! μ : ProbabilityMeasure nearLog.State, (nearLog.withRate r hrr).IsStationary μ := by
   obtain ⟨N, hN⟩ := (nearLog.withRate r hrr).exists_exhaust_of_decline (z₀ := 0)
     (a₀ := 1 / 50) (by norm_num) (by norm_num)
@@ -296,7 +305,7 @@ At `r = 1/200` the gain condition is `6400 · A⁻¹ < 201 · B⁻¹` for the tw
 quantities, pinned by `(2000201/200000000) ^ 15 ≤ (1/74) ^ 16` and
 `(9/10) ^ 16 ≤ (999999/1000000) ^ 15`. -/
 
-theorem nearLog_floor_top (hrhi : 0 < 1 + (1 / 200 : ℝ))
+theorem nearLog_floor_top (hrhi : nearLog.RateOK (1 / 200 : ℝ))
     (μ : ProbabilityMeasure nearLog.State)
     (hμ : (nearLog.withRate (1 / 200) hrhi).IsStationary μ) :
     1 / 4000000 ≤ nearLog.aggregateCapital μ := by

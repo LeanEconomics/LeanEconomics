@@ -75,20 +75,22 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+-- Stated at a zero borrowing limit: the quantitative saving bounds and Light's rescaling
+-- that these results rest on are proved there.
+variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **The policy falls in aggregate capital**, given Light's Theorem 1 and a family whose
 interest rate falls in aggregate capital. This is the hypothesis `mfe_unique` asks for, and the
 only economics in it is that capital demand slopes down. -/
-theorem hdec_of_rate_antitone (Pf : ℝ → IncomeFluctuation Z assetCap)
+theorem hdec_of_rate_antitone (Pf : ℝ → IncomeFluctuation Z (0 : ℝ) assetCap)
     (hu : ∀ K₁ K₂ : ℝ, (Pf K₁).u = (Pf K₂).u)
     (hdom : ∀ K₁ K₂ : ℝ, (Pf K₁).dom = (Pf K₂).dom)
     (hβ : ∀ K₁ K₂ : ℝ, ((Pf K₁).discount : ℝ) = ((Pf K₂).discount : ℝ))
     (hinc : ∀ K₁ K₂ : ℝ, (Pf K₁).income = (Pf K₂).income)
     (hrate : ∀ K₁ K₂ : ℝ, K₁ ≤ K₂ → (Pf K₂).interest ≤ (Pf K₁).interest)
     (hid : ∀ K₁ K₂ : ℝ, K₁ ≤ K₂ → ContIncreasingDifferences (Pf K₂) (Pf K₁))
-    {K₁ K₂ : ℝ} (hK : K₁ ≤ K₂) (s : ℝ × Z) (hs : s.1 ∈ Icc 0 assetCap) :
+    {K₁ K₂ : ℝ} (hK : K₁ ≤ K₂) (s : ℝ × Z) (hs : s.1 ∈ Icc (0 : ℝ) assetCap) :
     (Pf K₂).policy s ≤ (Pf K₁).policy s := by
   have h := policy_mono_interest (Pf K₂) (Pf K₁) (hu K₂ K₁) (hdom K₂ K₁) (hβ K₂ K₁)
     (hinc K₂ K₁) (hrate K₁ K₂ hK) (hid K₁ K₂ hK) (a := s.1) hs s.2
@@ -97,7 +99,7 @@ theorem hdec_of_rate_antitone (Pf : ℝ → IncomeFluctuation Z assetCap)
 /-- **Uniqueness of the mean-field equilibrium for a rate family.** Every hypothesis is either
 supplied by the existing development or is `ContIncreasingDifferences`, which is Carroll and
 Kimball; see the module docstring for why HARA does not discharge it in a capped model. -/
-theorem mfe_unique_of_rate_family (Pf : ℝ → IncomeFluctuation Z assetCap)
+theorem mfe_unique_of_rate_family (Pf : ℝ → IncomeFluctuation Z (0 : ℝ) assetCap)
     (hu : ∀ K₁ K₂ : ℝ, (Pf K₁).u = (Pf K₂).u)
     (hdom : ∀ K₁ K₂ : ℝ, (Pf K₁).dom = (Pf K₂).dom)
     (hβ : ∀ K₁ K₂ : ℝ, ((Pf K₁).discount : ℝ) = ((Pf K₂).discount : ℝ))

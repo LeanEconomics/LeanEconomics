@@ -37,24 +37,24 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- The Lipschitz constant of `u` above the lowest possible consumption. -/
-noncomputable def slopeBoundU : ℝ := slopeBound P.u P.minIncome
+noncomputable def slopeBoundU : ℝ := slopeBound P.u P.minConsumption
 
 theorem slopeBoundU_nonneg : 0 ≤ P.slopeBoundU :=
-  slopeBound_nonneg P.monotoneOn_u P.minIncome_pos
+  slopeBound_nonneg P.monotoneOn_u P.minConsumption_pos
 
-theorem abs_u_sub_le {c d : ℝ} (hc : P.minIncome ≤ c) (hd : P.minIncome ≤ d) :
+theorem abs_u_sub_le {c d : ℝ} (hc : P.minConsumption ≤ c) (hd : P.minConsumption ≤ d) :
     |P.u c - P.u d| ≤ P.slopeBoundU * |c - d| :=
-  P.strictConcaveOn_u.concaveOn.abs_sub_le_slopeBound_mul P.monotoneOn_u P.minIncome_pos hc hd
+  P.strictConcaveOn_u.concaveOn.abs_sub_le_slopeBound_mul P.monotoneOn_u P.minConsumption_pos hc hd
 
 /-- The expectation inherits a Lipschitz bound from the continuation value, since the two
 states share the income draw and hence the transition weights. -/
 theorem abs_expect_sub_le_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ}
-    (hv : ∀ z : Z, ∀ p ∈ Icc (0 : ℝ) assetCap, ∀ q ∈ Icc (0 : ℝ) assetCap,
+    (hv : ∀ z : Z, ∀ p ∈ Icc assetFloor assetCap, ∀ q ∈ Icc assetFloor assetCap,
       |v (p, z) - v (q, z)| ≤ L * |p - q|)
-    (z : Z) {a b : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (hb : b ∈ Icc (0 : ℝ) assetCap)
+    (z : Z) {a b : ℝ} (ha : a ∈ Icc assetFloor assetCap) (hb : b ∈ Icc assetFloor assetCap)
     (x y : ℝ) :
     |P.toExtended.expect v ((x, z), a) - P.toExtended.expect v ((y, z), b)| ≤ L * |a - b| := by
   have hp : ∀ (w : ℝ) (c : ℝ), P.toExtended.expect v ((w, z), c)
@@ -71,9 +71,9 @@ theorem abs_expect_sub_le_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ}
 
 /-- **The richer state's value exceeds the poorer's by at most the swap cost.** -/
 theorem bellmanFn_sub_le_of_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL : 0 ≤ L)
-    (hv : ∀ z : Z, ∀ p ∈ Icc (0 : ℝ) assetCap, ∀ q ∈ Icc (0 : ℝ) assetCap,
+    (hv : ∀ z : Z, ∀ p ∈ Icc assetFloor assetCap, ∀ q ∈ Icc assetFloor assetCap,
       |v (p, z) - v (q, z)| ≤ L * |p - q|)
-    (z : Z) {x y : ℝ} (hx : x ∈ Icc (0 : ℝ) assetCap) (hy : y ∈ Icc (0 : ℝ) assetCap)
+    (z : Z) {x y : ℝ} (hx : x ∈ Icc assetFloor assetCap) (hy : y ∈ Icc assetFloor assetCap)
     (hxy : y ≤ x) :
     P.toExtended.bellmanFn v (x, z) - P.toExtended.bellmanFn v (y, z)
       ≤ (P.slopeBoundU + P.discount * L) * ((1 + P.interest) * (x - y)) := by
@@ -90,24 +90,24 @@ theorem bellmanFn_sub_le_of_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL 
   · rw [ExtendedStochasticProgram.objectiveE, hbot, EReal.bot_add]; exact bot_le
   -- consumption is positive at the richer state, so the objective is real there
   have hc : P.consumption (x, z) a ∈ P.dom := P.consumption_mem_dom_of_ne_bot hx ha hne
-  have ha0 : 0 ≤ a := ha.1
+  have ha0 : assetFloor ≤ a := ha.1
   have hacap : a ≤ assetCap := le_trans ha.2 (P.maxSaving_le_assetCap _)
   have haR : a ≤ P.resources (x, z) := le_trans ha.2 (P.maxSaving_le_resources _)
-  set b : ℝ := max 0 (a - Δ) with hbdef
-  have hb0 : 0 ≤ b := le_max_left _ _
+  set b : ℝ := max assetFloor (a - Δ) with hbdef
+  have hb0 : assetFloor ≤ b := le_max_left _ _
   have hba : b ≤ a := by rw [hbdef]; exact max_le ha0 (by linarith)
   have hbmem : b ∈ P.toExtended.feasible (y, z) := by
     rw [P.feasible_eq, P.maxSaving_eq]
     refine ⟨hb0, le_min (le_trans hba hacap) ?_⟩
     rw [hbdef]
-    exact max_le (P.resources_pos _).le (by linarith [hres])
+    exact max_le (P.assetFloor_lt_resources _).le (by linarith [hres])
   -- consumption at the poorer state under the swapped action
   have hcy : P.consumption (y, z) b = P.resources (y, z) - b := rfl
   have hcymem : P.consumption (y, z) b ∈ P.dom := by
-    rcases le_total a Δ with h | h
+    rcases le_total (a - assetFloor) Δ with h | h
     · refine P.mem_dom_of_pos ?_
       rw [hcy, hbdef, max_eq_left (by linarith)]
-      simpa using P.resources_pos (y, z)
+      linarith [P.minConsumption_le_consumption_floor (y, z), P.minConsumption_pos]
     · refine P.dom_upward hc (le_of_eq ?_)
       rw [hcy, hbdef, max_eq_right (by linarith)]
       simp only [consumption]; linarith [hres]
@@ -118,28 +118,28 @@ theorem bellmanFn_sub_le_of_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL 
     ⟨ha0, hacap⟩ ⟨hb0, le_trans hba hacap⟩ x y
   have hgapa : |a - b| ≤ Δ := by
     rw [hbdef]
-    rcases le_total a Δ with h | h
-    · rw [max_eq_left (by linarith), sub_zero, abs_of_nonneg ha0]; exact h
+    rcases le_total (a - assetFloor) Δ with h | h
+    · rw [max_eq_left (by linarith), abs_of_nonneg (by linarith)]; exact h
     · rw [max_eq_right (by linarith)]
       rw [show a - (a - Δ) = Δ by ring, abs_of_nonneg hΔ0]
   -- the utility term: equal consumptions off the truncation, both above `minIncome` on it
   have hutil : P.u (P.consumption (x, z) a) - P.u (P.consumption (y, z) b)
       ≤ P.slopeBoundU * Δ := by
-    rcases le_total Δ a with h | h
+    rcases le_total Δ (a - assetFloor) with h | h
     · -- no truncation: consumption is unchanged
       have : P.consumption (y, z) b = P.consumption (x, z) a := by
         rw [hcy, hbdef, max_eq_right (by linarith)]
         simp only [consumption]; linarith [hres]
       rw [this, sub_self]
       positivity
-    · -- truncation: the poorer household consumes all its resources
-      have hb0' : b = 0 := by rw [hbdef, max_eq_left (by linarith)]
-      have hcyval : P.consumption (y, z) b = P.resources (y, z) := by rw [hcy, hb0']; ring
-      have h1 : P.minIncome ≤ P.consumption (y, z) b := by
-        rw [hcyval]; exact P.minIncome_le_resources _
-      have h2 : P.minIncome ≤ P.consumption (x, z) a := by
+    · -- truncation: the poorer household borrows to the limit and eats the rest
+      have hb0' : b = assetFloor := by rw [hbdef, max_eq_left (by linarith)]
+      have hcyval : P.consumption (y, z) b = P.resources (y, z) - assetFloor := by
+        rw [hcy, hb0']
+      have h1 : P.minConsumption ≤ P.consumption (y, z) b := by
+        rw [hcyval]; exact P.minConsumption_le_consumption_floor _
+      have h2 : P.minConsumption ≤ P.consumption (x, z) a := by
         simp only [consumption]
-        have := P.minIncome_le_resources (y, z)
         rw [hcyval] at h1
         linarith [hres]
       have := P.abs_u_sub_le h2 h1
@@ -172,9 +172,9 @@ theorem bellmanFn_sub_le_of_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL 
 no utility bound at all: where it truncates, the richer household consumes strictly more, so
 the utility term has the helpful sign. -/
 theorem bellmanFn_sub_le_of_lipschitz' {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL : 0 ≤ L)
-    (hv : ∀ z : Z, ∀ p ∈ Icc (0 : ℝ) assetCap, ∀ q ∈ Icc (0 : ℝ) assetCap,
+    (hv : ∀ z : Z, ∀ p ∈ Icc assetFloor assetCap, ∀ q ∈ Icc assetFloor assetCap,
       |v (p, z) - v (q, z)| ≤ L * |p - q|)
-    (z : Z) {x y : ℝ} (hx : x ∈ Icc (0 : ℝ) assetCap) (hy : y ∈ Icc (0 : ℝ) assetCap)
+    (z : Z) {x y : ℝ} (hx : x ∈ Icc assetFloor assetCap) (hy : y ∈ Icc assetFloor assetCap)
     (hxy : y ≤ x) :
     P.toExtended.bellmanFn v (y, z) - P.toExtended.bellmanFn v (x, z)
       ≤ P.discount * L * ((1 + P.interest) * (x - y)) := by
@@ -189,11 +189,11 @@ theorem bellmanFn_sub_le_of_lipschitz' {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL
   rcases eq_or_ne (P.toExtended.reward ((y, z), b)) ⊥ with hbot | hne
   · rw [ExtendedStochasticProgram.objectiveE, hbot, EReal.bot_add]; exact bot_le
   have hcy : P.consumption (y, z) b ∈ P.dom := P.consumption_mem_dom_of_ne_bot hy hb hne
-  have hb0 : 0 ≤ b := hb.1
+  have hb0 : assetFloor ≤ b := hb.1
   have hbcap : b ≤ assetCap := le_trans hb.2 (P.maxSaving_le_assetCap _)
   have hbR : b ≤ P.resources (y, z) := le_trans hb.2 (P.maxSaving_le_resources _)
   set a : ℝ := min (b + Δ) (P.maxSaving (x, z)) with hadef
-  have ha0 : 0 ≤ a := le_min (by linarith) (P.maxSaving_nonneg _)
+  have ha0 : assetFloor ≤ a := le_min (by linarith) (P.assetFloor_le_maxSaving _)
   have hamem : a ∈ P.toExtended.feasible (x, z) := ⟨ha0, min_le_right _ _⟩
   have hacap : a ≤ assetCap := le_trans (min_le_right _ _) (P.maxSaving_le_assetCap _)
   -- consumption at the richer state is at least what the poorer household had
@@ -245,15 +245,15 @@ theorem bellmanFn_sub_le_of_lipschitz' {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL
 
 /-- **The Bellman operator preserves Lipschitz continuity in assets.** -/
 theorem abs_bellmanFn_sub_le_of_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL : 0 ≤ L)
-    (hv : ∀ z : Z, ∀ p ∈ Icc (0 : ℝ) assetCap, ∀ q ∈ Icc (0 : ℝ) assetCap,
+    (hv : ∀ z : Z, ∀ p ∈ Icc assetFloor assetCap, ∀ q ∈ Icc assetFloor assetCap,
       |v (p, z) - v (q, z)| ≤ L * |p - q|)
     (hbig : (P.slopeBoundU + P.discount * L) * (1 + P.interest) ≤ L)
-    (z : Z) {x y : ℝ} (hx : x ∈ Icc (0 : ℝ) assetCap) (hy : y ∈ Icc (0 : ℝ) assetCap) :
+    (z : Z) {x y : ℝ} (hx : x ∈ Icc assetFloor assetCap) (hy : y ∈ Icc assetFloor assetCap) :
     |P.toExtended.bellmanFn v (x, z) - P.toExtended.bellmanFn v (y, z)| ≤ L * |x - y| := by
   have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
   have hK := P.slopeBoundU_nonneg
   have hone : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
-  have key : ∀ p q : ℝ, p ∈ Icc (0 : ℝ) assetCap → q ∈ Icc (0 : ℝ) assetCap → q ≤ p →
+  have key : ∀ p q : ℝ, p ∈ Icc assetFloor assetCap → q ∈ Icc assetFloor assetCap → q ≤ p →
       |P.toExtended.bellmanFn v (p, z) - P.toExtended.bellmanFn v (q, z)| ≤ L * |p - q| := by
     intro p q hp hq hqp
     have h1 := P.bellmanFn_sub_le_of_lipschitz hL hv z hp hq hqp
@@ -276,7 +276,7 @@ preservation proof with the closed class. Any `L` with `(K + βL)(1+r) ≤ L` wo
 `L` exists exactly when `β(1+r) < 1`. -/
 theorem valueFunction_lipschitz {L : ℝ} (hL : 0 ≤ L)
     (hbig : (P.slopeBoundU + P.discount * L) * (1 + P.interest) ≤ L) :
-    ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
+    ∀ z : Z, ∀ x ∈ Icc assetFloor assetCap, ∀ y ∈ Icc assetFloor assetCap,
       |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)| ≤ L * |x - y| :=
   P.toExtended.blackwell.forall_lipschitzOn_valueFunction P.toExtended.discount_lt_one hL
     (g := fun (z : Z) (a : ℝ) => (a, z))
@@ -297,65 +297,73 @@ marginal utility and the constraint binds there, while a richer state may fail t
 That is what lets the borrowing constraint bind at a bad income draw without binding
 everywhere, which the global version could not express. -/
 theorem policy_eq_zero_of_corner_at {L m : ℝ}
-    (hlip : ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
+    (hlip : ∀ z : Z, ∀ x ∈ Icc assetFloor assetCap, ∀ y ∈ Icc assetFloor assetCap,
       |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)| ≤ L * |x - y|)
-    {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap)
-    (hmarg : ∀ c d : ℝ, d ∈ P.dom → d ≤ c → c ≤ P.resources s → m * (c - d) ≤ P.u c - P.u d)
+    {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap)
+    (hmarg : ∀ c d : ℝ, d ∈ P.dom → d ≤ c → c ≤ P.resources s - assetFloor →
+      m * (c - d) ≤ P.u c - P.u d)
     (hcond : P.discount * L < m) :
-    P.policy s = 0 := by
+    P.policy s = assetFloor := by
   have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
   set V := P.toExtended.valueFunction with hV
-  have hmem0 : (0 : ℝ) ∈ P.toExtended.feasible s := ⟨le_rfl, le_max_left _ _⟩
-  have hc0 : 0 < P.consumption s 0 := by
-    simpa only [consumption, sub_zero] using P.resources_pos s
+  have hmem0 : assetFloor ∈ P.toExtended.feasible s := ⟨le_rfl, le_max_left _ _⟩
+  have hc0 : 0 < P.consumption s assetFloor := by
+    have := P.minConsumption_le_consumption_floor s
+    have := P.minConsumption_pos
+    simp only [consumption]; linarith
   have hrw0 := P.reward_eq_coe hs hmem0 hc0
-  have hRmax : P.resources s ≤ P.maxConsumption := by
-    simpa only [consumption, sub_zero] using P.consumption_le_maxConsumption hs (le_refl 0)
-  -- nothing feasible beats saving nothing
+  have hRmax : P.resources s - assetFloor ≤ P.maxConsumption :=
+    P.consumption_le_maxConsumption hs (le_refl assetFloor)
+  -- nothing feasible beats borrowing to the limit
   have hdom : ∀ a ∈ P.toExtended.feasible s,
       P.toExtended.objectiveE V s a
-        ≤ ((P.u (P.consumption s 0) + P.discount * P.toExtended.expect V (s, 0) : ℝ) : EReal) := by
+        ≤ ((P.u (P.consumption s assetFloor)
+            + P.discount * P.toExtended.expect V (s, assetFloor) : ℝ) : EReal) := by
     intro a ha
     rcases eq_or_ne (P.toExtended.reward (s, a)) ⊥ with hbot | hne
     · rw [ExtendedStochasticProgram.objectiveE, hbot, EReal.bot_add]; exact bot_le
     have hca : P.consumption s a ∈ P.dom := P.consumption_mem_dom_of_ne_bot hs ha hne
-    have ha0 : 0 ≤ a := ha.1
+    have ha0 : assetFloor ≤ a := ha.1
     have hacap : a ≤ assetCap := le_trans ha.2 (P.maxSaving_le_assetCap _)
     have hrwa := P.reward_eq_coe_dom hs ha hca
     have hdx : (P.toExtended.discount : ℝ) = (P.discount : ℝ) := rfl
     -- the utility gain from consuming instead of saving
-    have hu : m * a ≤ P.u (P.consumption s 0) - P.u (P.consumption s a) := by
-      have hcc : P.consumption s a ≤ P.consumption s 0 := by
+    have hu : m * (a - assetFloor)
+        ≤ P.u (P.consumption s assetFloor) - P.u (P.consumption s a) := by
+      have hcc : P.consumption s a ≤ P.consumption s assetFloor := by
         simp only [consumption]; linarith
-      have := hmarg (P.consumption s 0) (P.consumption s a) hca hcc
-        (by simp only [consumption, sub_zero]; exact le_rfl)
-      have hdiff : P.consumption s 0 - P.consumption s a = a := by
+      have := hmarg (P.consumption s assetFloor) (P.consumption s a) hca hcc
+        (by simp only [consumption]; exact le_rfl)
+      have hdiff : P.consumption s assetFloor - P.consumption s a = a - assetFloor := by
         simp only [consumption]; ring
       rwa [hdiff] at this
     -- the continuation loss from not saving
-    have hexp := P.abs_expect_sub_le_lipschitz hlip s.2 (a := a) (b := 0)
-      ⟨ha0, hacap⟩ ⟨le_rfl, P.assetCap_nonneg⟩ s.1 s.1
+    have hexp := P.abs_expect_sub_le_lipschitz hlip s.2 (a := a) (b := assetFloor)
+      ⟨ha0, hacap⟩ ⟨le_rfl, P.assetFloor_le_assetCap⟩ s.1 s.1
     rw [abs_le] at hexp
     simp only [ExtendedStochasticProgram.objectiveE, hrwa, hdx, ← EReal.coe_add,
       EReal.coe_le_coe_iff]
     have hprod : (P.discount : ℝ) * (P.toExtended.expect V ((s.1, s.2), a)
-        - P.toExtended.expect V ((s.1, s.2), 0)) ≤ P.discount * (L * |a - 0|) :=
+        - P.toExtended.expect V ((s.1, s.2), assetFloor))
+        ≤ P.discount * (L * |a - assetFloor|) :=
       mul_le_mul_of_nonneg_left hexp.2 hβ
-    rw [sub_zero, abs_of_nonneg ha0] at hprod
-    have hpp : (P.discount : ℝ) * (L * a) ≤ m * a := by
+    rw [abs_of_nonneg (by linarith : (0:ℝ) ≤ a - assetFloor)] at hprod
+    have hpp : (P.discount : ℝ) * (L * (a - assetFloor)) ≤ m * (a - assetFloor) := by
       rcases eq_or_lt_of_le ha0 with h | h
-      · simp [← h]
+      · rw [← h]; simp
       · nlinarith
     have hfix : ∀ c : ℝ, P.toExtended.expect V ((s.1, s.2), c)
         = P.toExtended.expect V (s, c) := fun _ => rfl
     rw [hfix, hfix] at hprod
     linarith
-  -- so saving nothing attains the maximum, and the maximiser is unique
+  -- so borrowing to the limit attains the maximum, and the maximiser is unique
   have hle : P.toExtended.bellmanFn V s
-      ≤ P.u (P.consumption s 0) + P.discount * P.toExtended.expect V (s, 0) :=
+      ≤ P.u (P.consumption s assetFloor)
+        + P.discount * P.toExtended.expect V (s, assetFloor) :=
     P.toExtended.bellmanFn_le V hdom
   have hdx : (P.toExtended.discount : ℝ) = (P.discount : ℝ) := rfl
-  have hge : ((P.u (P.consumption s 0) + P.discount * P.toExtended.expect V (s, 0) : ℝ) : EReal)
+  have hge : ((P.u (P.consumption s assetFloor)
+      + P.discount * P.toExtended.expect V (s, assetFloor) : ℝ) : EReal)
       ≤ ((P.toExtended.bellmanFn V s : ℝ) : EReal) := by
     have h := P.toExtended.le_bellmanFn V hmem0
     rwa [ExtendedStochasticProgram.objectiveE, hrw0, hdx, ← EReal.coe_add] at h
@@ -366,15 +374,14 @@ theorem policy_eq_zero_of_corner_at {L m : ℝ}
 
 /-- The global corner condition, as a corollary. -/
 theorem policy_eq_zero_of_corner {L m : ℝ}
-    (hlip : ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
+    (hlip : ∀ z : Z, ∀ x ∈ Icc assetFloor assetCap, ∀ y ∈ Icc assetFloor assetCap,
       |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)| ≤ L * |x - y|)
     (hmarg : ∀ c d : ℝ, d ∈ P.dom → d ≤ c → c ≤ P.maxConsumption → m * (c - d) ≤ P.u c - P.u d)
-    (hcond : P.discount * L < m) {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap) :
-    P.policy s = 0 :=
+    (hcond : P.discount * L < m) {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) :
+    P.policy s = assetFloor :=
   P.policy_eq_zero_of_corner_at hlip hs
     (fun c d hd hdc hc => hmarg c d hd hdc
-      (le_trans hc (by simpa only [consumption, sub_zero] using
-        P.consumption_le_maxConsumption hs (le_refl 0))))
+      (le_trans hc (P.consumption_le_maxConsumption hs (le_refl assetFloor))))
     hcond
 
 /-- For `u c = -1/c`, the marginal-utility bound up to `R` is `1/R²`. So the state-dependent

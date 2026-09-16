@@ -98,7 +98,7 @@ theorem continuousOn_extendDom_Ioi {u : ℝ → ℝ} (hc : ContinuousOn u (Ioi 0
 
 /-- The income fluctuation problem, with period utility unbounded below. -/
 structure IncomeFluctuation (Z : Type*) [Fintype Z] [Nonempty Z] [TopologicalSpace Z]
-    [DiscreteTopology Z] (assetCap : ℝ) where
+    [DiscreteTopology Z] (assetFloor assetCap : ℝ) where
   /-- Income in each state. -/
   income : Z → ℝ
   /-- The Markov transition matrix on income states. -/
@@ -119,7 +119,22 @@ structure IncomeFluctuation (Z : Type*) [Fintype Z] [Nonempty Z] [TopologicalSpa
   transitionMatrix_nonneg : ∀ z z', 0 ≤ transitionMatrix z z'
   transitionMatrix_sum : ∀ z, ∑ z', transitionMatrix z z' = 1
   interest_gt_neg_one : 0 < 1 + interest
+  /-- The borrowing limit is below the asset cap, so the household always has somewhere to be. -/
+  assetFloor_le_assetCap : assetFloor ≤ assetCap
+  /-- The asset cap is a large positive number; nothing in the development needs it to be small,
+  but several bounds need it to have a sign. -/
   assetCap_nonneg : 0 ≤ assetCap
+  /-- **A declared floor on consumption**, at most what a household pinned at the borrowing limit
+  can afford. Carrying it as data rather than computing it from the rate is what lets the same
+  household problem be re-run at a different interest rate without moving the reward's lower
+  bound: `minConsumption` is the rate-free part of the natural-borrowing-limit condition. -/
+  minConsumption : ℝ := minIncome + interest * assetFloor
+  /-- **The borrowing limit is sustainable**: at the limit, income covers the interest on the debt
+  with something left to eat. With `assetFloor = 0` this is `0 < minIncome`; with a negative limit
+  it is Aiyagari's natural-borrowing-limit condition, and it is what replaces positivity of cash
+  on hand -- resources can be negative when the household is in debt, while consumption cannot. -/
+  minConsumption_pos : 0 < minConsumption
+  minConsumption_le_floor : minConsumption ≤ minIncome + interest * assetFloor
   discount_lt_one : discount < 1
   /-- The consumption levels at which utility is required to behave. `Ioi 0` when utility is
   unbounded below, `Ici 0` when it is bounded there. -/
@@ -139,17 +154,19 @@ structure IncomeFluctuation (Z : Type*) [Fintype Z] [Nonempty Z] [TopologicalSpa
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ}
-variable (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- Cash on hand, with assets read as nonnegative. -/
-noncomputable def resources (s : ℝ × Z) : ℝ := P.income s.2 + (1 + P.interest) * max 0 s.1
+noncomputable def resources (s : ℝ × Z) : ℝ :=
+  P.income s.2 + (1 + P.interest) * max assetFloor s.1
 
 /-- The largest consumption the capped problem allows. -/
-noncomputable def maxConsumption : ℝ := P.maxIncome + (1 + P.interest) * assetCap
+noncomputable def maxConsumption : ℝ :=
+  P.maxIncome + (1 + P.interest) * assetCap - assetFloor
 
 /-- The largest asset holding that can be carried forward. -/
-noncomputable def maxSaving (s : ℝ × Z) : ℝ := max 0 (min assetCap (P.resources s))
+noncomputable def maxSaving (s : ℝ × Z) : ℝ := max assetFloor (min assetCap (P.resources s))
 
 /-- Consumption on the budget line. -/
 noncomputable def consumption (s : ℝ × Z) (a' : ℝ) : ℝ := P.resources s - a'
@@ -165,25 +182,61 @@ the domain on which utility behaves. No floor. -/
 noncomputable def rewardFn (p : (ℝ × Z) × ℝ) : EReal :=
   extendDom P.dom P.u (P.clampedConsumption p)
 
-theorem minIncome_le_resources (s : ℝ × Z) : P.minIncome ≤ P.resources s := by
-  have : 0 ≤ (1 + P.interest) * max 0 s.1 :=
-    mul_nonneg P.interest_gt_neg_one.le (le_max_left _ _)
+/-- **The rates at which the borrowing limit is sustainable.** Raising the interest rate raises
+the debt service on a negative floor, so a floor that supports positive consumption at one rate
+need not support it at another: sustainability is part of what it means for a rate to be
+admissible, not a consequence of `-1 < r`. With `assetFloor = 0` the second conjunct is free. -/
+def RateOK (P : IncomeFluctuation Z assetFloor assetCap) (r : ℝ) : Prop :=
+  0 < 1 + r ∧ P.minConsumption ≤ P.minIncome + r * assetFloor
+
+theorem RateOK.one_add_pos {P : IncomeFluctuation Z assetFloor assetCap} {r : ℝ}
+    (h : P.RateOK r) : 0 < 1 + r := h.1
+
+theorem RateOK.sustainable {P : IncomeFluctuation Z assetFloor assetCap} {r : ℝ}
+    (h : P.RateOK r) : P.minConsumption ≤ P.minIncome + r * assetFloor := h.2
+
+/-- At a zero borrowing limit every admissible rate is sustainable. -/
+theorem rateOK_of_floor_zero {P : IncomeFluctuation Z 0 assetCap} {r : ℝ} (hr : 0 < 1 + r) :
+    P.RateOK r := ⟨hr, by simpa using P.minConsumption_le_floor⟩
+
+/-- Sustainability is linear in the rate, so it is inherited from the endpoints of an interval. -/
+theorem rateOK_of_mem_Icc {rlo rhi r : ℝ} (hlo : P.RateOK rlo) (hhi : P.RateOK rhi)
+    (hr : r ∈ Set.Icc rlo rhi) : P.RateOK r := by
+  refine ⟨by linarith [hr.1, hlo.1], ?_⟩
+  rcases le_total (0 : ℝ) assetFloor with hf | hf
+  · nlinarith [hlo.2, hr.1, hr.2]
+  · nlinarith [hhi.2, hr.1, hr.2]
+
+theorem rateOK_self : P.RateOK P.interest := ⟨P.interest_gt_neg_one, P.minConsumption_le_floor⟩
+
+theorem minConsumption_le_consumption_floor (s : ℝ × Z) :
+    P.minConsumption ≤ P.resources s - assetFloor := by
+  have h1 : assetFloor ≤ max assetFloor s.1 := le_max_left _ _
+  have h2 : (1 + P.interest) * assetFloor ≤ (1 + P.interest) * max assetFloor s.1 :=
+    mul_le_mul_of_nonneg_left h1 P.interest_gt_neg_one.le
   have := P.minIncome_le s.2
+  have := P.minConsumption_le_floor
   simp only [resources]; linarith
 
-theorem resources_pos (s : ℝ × Z) : 0 < P.resources s :=
-  lt_of_lt_of_le P.minIncome_pos (P.minIncome_le_resources s)
+/-- **Cash on hand always exceeds the borrowing limit**, so something can always be eaten. This
+replaces positivity of cash on hand: in debt, resources can be negative while consumption cannot.
+-/
+theorem assetFloor_lt_resources (s : ℝ × Z) : assetFloor < P.resources s := by
+  have h1 := P.minConsumption_le_consumption_floor s
+  have h2 := P.minConsumption_pos
+  linarith
 
 theorem minIncome_le_maxIncome : P.minIncome ≤ P.maxIncome :=
   (P.minIncome_le Classical.ofNonempty).trans (P.le_maxIncome _)
 
-theorem minIncome_le_maxConsumption : P.minIncome ≤ P.maxConsumption := by
-  have : 0 ≤ (1 + P.interest) * assetCap :=
-    mul_nonneg P.interest_gt_neg_one.le P.assetCap_nonneg
-  simp only [maxConsumption]; linarith [P.minIncome_le_maxIncome]
+theorem minConsumption_le_maxConsumption : P.minConsumption ≤ P.maxConsumption := by
+  have h : (1 + P.interest) * assetFloor ≤ (1 + P.interest) * assetCap :=
+    mul_le_mul_of_nonneg_left P.assetFloor_le_assetCap P.interest_gt_neg_one.le
+  simp only [maxConsumption]
+  linarith [P.minIncome_le_maxIncome, P.minConsumption_le_floor]
 
 theorem maxConsumption_pos : 0 < P.maxConsumption :=
-  lt_of_lt_of_le P.minIncome_pos P.minIncome_le_maxConsumption
+  lt_of_lt_of_le P.minConsumption_pos P.minConsumption_le_maxConsumption
 
 theorem mem_dom_of_pos {c : ℝ} (hc : 0 < c) : c ∈ P.dom := P.Ioi_subset_dom hc
 
@@ -233,7 +286,7 @@ theorem continuous_rewardFn : Continuous P.rewardFn :=
 
 /-- The problem as a stochastic dynamic program with an extended-real reward. -/
 noncomputable def toExtended : ExtendedStochasticProgram (ℝ × Z) ℝ Z where
-  feasible s := Icc 0 (P.maxSaving s)
+  feasible s := Icc assetFloor (P.maxSaving s)
   isCompact_feasible _ := isCompact_Icc
   feasible_nonempty _ := nonempty_Icc.mpr (le_max_left _ _)
   upperHemicontinuous_feasible := upperHemicontinuous_Icc continuous_const P.continuous_maxSaving
@@ -249,19 +302,21 @@ noncomputable def toExtended : ExtendedStochasticProgram (ℝ × Z) ℝ Z where
       exact P.monotoneOn_u_dom h P.maxConsumption_mem_dom (P.clampedConsumption_le _)
     · rw [extendDom_of_not_mem h]
       exact bot_le
-  select := ⟨fun _ => 0, continuous_const⟩
+  select := ⟨fun _ => assetFloor, continuous_const⟩
   select_mem := fun _ => ⟨le_rfl, le_max_left _ _⟩
-  rewardMin := P.u P.minIncome
+  rewardMin := P.u P.minConsumption
   le_reward_select := by
     intro s
     simp only [ContinuousMap.coe_mk, rewardFn]
-    have h : P.minIncome ≤ P.clampedConsumption (s, 0) := by
-      refine le_min P.minIncome_le_maxConsumption (le_max_of_le_right ?_)
-      simp only [consumption, sub_zero]
-      exact P.minIncome_le_resources s
-    have hpos : 0 < P.clampedConsumption (s, 0) := lt_of_lt_of_le P.minIncome_pos h
+    have h : P.minConsumption ≤ P.clampedConsumption (s, assetFloor) := by
+      refine le_min P.minConsumption_le_maxConsumption (le_max_of_le_right ?_)
+      simp only [consumption]
+      exact P.minConsumption_le_consumption_floor s
+    have hpos : 0 < P.clampedConsumption (s, assetFloor) :=
+      lt_of_lt_of_le P.minConsumption_pos h
     rw [extendDom_of_mem (P.mem_dom_of_pos hpos), EReal.coe_le_coe_iff]
-    exact P.monotoneOn_u_dom (P.mem_dom_of_pos P.minIncome_pos) (P.mem_dom_of_pos hpos) h
+    exact P.monotoneOn_u_dom (P.mem_dom_of_pos P.minConsumption_pos)
+      (P.mem_dom_of_pos hpos) h
   transition z' := ⟨fun p => (p.2, z'), continuous_snd.prodMk continuous_const⟩
   prob z' := ⟨fun p => P.transitionMatrix p.1.2 z',
     (continuous_of_discreteTopology (f := fun z => P.transitionMatrix z z')).comp
@@ -272,19 +327,19 @@ noncomputable def toExtended : ExtendedStochasticProgram (ℝ × Z) ℝ Z where
   discount_lt_one := P.discount_lt_one
 
 @[simp]
-theorem feasible_eq (s : ℝ × Z) : P.toExtended.feasible s = Icc 0 (P.maxSaving s) := rfl
+theorem feasible_eq (s : ℝ × Z) : P.toExtended.feasible s = Icc assetFloor (P.maxSaving s) := rfl
 
 theorem maxSaving_le_resources (s : ℝ × Z) : P.maxSaving s ≤ P.resources s :=
-  max_le (P.resources_pos s).le (min_le_right _ _)
+  max_le (P.assetFloor_lt_resources s).le (min_le_right _ _)
 
 theorem consumption_nonneg {s : ℝ × Z} {a : ℝ} (ha : a ∈ P.toExtended.feasible s) :
     0 ≤ P.consumption s a := by
   simp only [consumption]
   linarith [le_trans ha.2 (P.maxSaving_le_resources s)]
 
-theorem consumption_le_maxConsumption {s : ℝ × Z} {a' : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
-    (ha' : 0 ≤ a') : P.consumption s a' ≤ P.maxConsumption := by
-  have hmax : max 0 s.1 = s.1 := max_eq_right hs.1
+theorem consumption_le_maxConsumption {s : ℝ × Z} {a' : ℝ} (hs : s.1 ∈ Icc assetFloor assetCap)
+    (ha' : assetFloor ≤ a') : P.consumption s a' ≤ P.maxConsumption := by
+  have hmax : max assetFloor s.1 = s.1 := max_eq_right hs.1
   have : (1 + P.interest) * s.1 ≤ (1 + P.interest) * assetCap :=
     mul_le_mul_of_nonneg_left hs.2 P.interest_gt_neg_one.le
   simp only [consumption, resources, maxConsumption, hmax]
@@ -309,13 +364,13 @@ theorem consumption_pos_of_ne_bot (hd : P.Unbounded) {s : ℝ × Z} {a : ℝ}
 
 /-- On the feasible set the clamps are both inactive, so the reward's argument is consumption
 itself. -/
-theorem clampedConsumption_eq {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
+theorem clampedConsumption_eq {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc assetFloor assetCap)
     (ha : a ∈ P.toExtended.feasible s) : P.clampedConsumption (s, a) = P.consumption s a := by
   have h0 : 0 ≤ P.consumption s a := P.consumption_nonneg ha
   simp only [clampedConsumption, max_eq_right h0,
     min_eq_right (P.consumption_le_maxConsumption hs ha.1)]
 
-theorem consumption_mem_dom_of_ne_bot {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
+theorem consumption_mem_dom_of_ne_bot {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc assetFloor assetCap)
     (ha : a ∈ P.toExtended.feasible s) (h : P.toExtended.reward (s, a) ≠ ⊥) :
     P.consumption s a ∈ P.dom := by
   have := P.clampedConsumption_mem_dom_of_ne_bot h
@@ -323,7 +378,7 @@ theorem consumption_mem_dom_of_ne_bot {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc
 
 /-- **The reward is the utility of consumption**, wherever consumption lies in the domain on
 which utility is required to behave. -/
-theorem reward_eq_coe_dom {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
+theorem reward_eq_coe_dom {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc assetFloor assetCap)
     (ha : a ∈ P.toExtended.feasible s) (hc : P.consumption s a ∈ P.dom) :
     P.toExtended.reward (s, a) = ((P.u (P.consumption s a) : ℝ) : EReal) :=
   calc P.toExtended.reward (s, a)
@@ -331,7 +386,7 @@ theorem reward_eq_coe_dom {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
     _ = extendDom P.dom P.u (P.consumption s a) := by rw [P.clampedConsumption_eq hs ha]
     _ = _ := extendDom_of_mem hc
 
-theorem reward_eq_coe {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
+theorem reward_eq_coe {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc assetFloor assetCap)
     (ha : a ∈ P.toExtended.feasible s) (hc : 0 < P.consumption s a) :
     P.toExtended.reward (s, a) = ((P.u (P.consumption s a) : ℝ) : EReal) :=
   P.reward_eq_coe_dom hs ha (P.mem_dom_of_pos hc)
@@ -339,8 +394,8 @@ theorem reward_eq_coe {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
 /-- **The stochastic Bellman equation, with honest utility and positive consumption.** That
 consumption is positive at the optimum is a consequence of the value being real, not a
 separate development. -/
-theorem exists_optimal_saving {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
-    ∃ a' ∈ Icc 0 (P.maxSaving s), P.consumption s a' ∈ P.dom ∧
+theorem exists_optimal_saving {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) :
+    ∃ a' ∈ Icc assetFloor (P.maxSaving s), P.consumption s a' ∈ P.dom ∧
       P.toExtended.valueFunction s
         = P.u (P.consumption s a')
           + P.discount * ∑ z', P.transitionMatrix s.2 z'
@@ -365,29 +420,43 @@ deterministic argument, with the continuation value now an expectation: it is co
 next period's assets because each `V (·, z')` is, and the transition probabilities are
 nonnegative. -/
 
-theorem resources_eq_affine {s : ℝ × Z} (hs : 0 ≤ s.1) :
+/-- A convex combination stays above a common lower bound. Used wherever the borrowing limit
+has to survive an averaging argument, which with a floor of zero was `add_nonneg`. -/
+theorem le_convex_comb {c x y θ φ : ℝ} (hx : c ≤ x) (hy : c ≤ y) (hθ : 0 ≤ θ) (hφ : 0 ≤ φ)
+    (hθφ : θ + φ = 1) : c ≤ θ * x + φ * y := by
+  have key : θ * x + φ * y - c = θ * (x - c) + φ * (y - c) := by linear_combination c * hθφ
+  linarith [key, mul_nonneg hθ (sub_nonneg.mpr hx), mul_nonneg hφ (sub_nonneg.mpr hy)]
+
+theorem convex_comb_le {c x y θ φ : ℝ} (hx : x ≤ c) (hy : y ≤ c) (hθ : 0 ≤ θ) (hφ : 0 ≤ φ)
+    (hθφ : θ + φ = 1) : θ * x + φ * y ≤ c := by
+  have key : c - (θ * x + φ * y) = θ * (c - x) + φ * (c - y) := by
+    linear_combination (-c) * hθφ
+  linarith [key, mul_nonneg hθ (sub_nonneg.mpr hx), mul_nonneg hφ (sub_nonneg.mpr hy)]
+
+theorem resources_eq_affine {s : ℝ × Z} (hs : assetFloor ≤ s.1) :
     P.resources s = P.income s.2 + (1 + P.interest) * s.1 := by
   simp only [resources, max_eq_right hs]
 
-theorem resources_affine_comb {x y θ φ : ℝ} {z : Z} (hx : 0 ≤ x) (hy : 0 ≤ y)
+theorem resources_affine_comb {x y θ φ : ℝ} {z : Z} (hx : assetFloor ≤ x)
+    (hy : assetFloor ≤ y)
     (hθ : 0 ≤ θ) (hφ : 0 ≤ φ) (hθφ : θ + φ = 1) :
     P.resources (θ * x + φ * y, z) = θ * P.resources (x, z) + φ * P.resources (y, z) := by
-  have hmix : (0 : ℝ) ≤ θ * x + φ * y := add_nonneg (mul_nonneg hθ hx) (mul_nonneg hφ hy)
+  have hmix : assetFloor ≤ θ * x + φ * y := le_convex_comb hx hy hθ hφ hθφ
   rw [P.resources_eq_affine hmix, P.resources_eq_affine hx, P.resources_eq_affine hy]
   linear_combination (-(P.income z)) * hθφ
 
 theorem maxSaving_le_assetCap (s : ℝ × Z) : P.maxSaving s ≤ assetCap :=
-  max_le P.assetCap_nonneg (min_le_left _ _)
+  max_le P.assetFloor_le_assetCap (min_le_left _ _)
 
 theorem feasible_subset_region {s : ℝ × Z} {a : ℝ} (ha : a ∈ P.toExtended.feasible s) :
-    a ∈ Icc 0 assetCap :=
+    a ∈ Icc assetFloor assetCap :=
   ⟨ha.1, ha.2.trans (P.maxSaving_le_assetCap s)⟩
 
 theorem maxSaving_eq (s : ℝ × Z) : P.maxSaving s = min assetCap (P.resources s) :=
-  max_eq_right (le_min P.assetCap_nonneg (P.resources_pos s).le)
+  max_eq_right (le_min P.assetFloor_le_assetCap (P.assetFloor_lt_resources s).le)
 
-theorem feasible_convex {x y : ℝ} {z : Z} (hx : x ∈ Icc 0 assetCap)
-    (hy : y ∈ Icc 0 assetCap) {ax ay θ φ : ℝ}
+theorem feasible_convex {x y : ℝ} {z : Z} (hx : x ∈ Icc assetFloor assetCap)
+    (hy : y ∈ Icc assetFloor assetCap) {ax ay θ φ : ℝ}
     (hax : ax ∈ P.toExtended.feasible (x, z)) (hay : ay ∈ P.toExtended.feasible (y, z))
     (hθ : 0 ≤ θ) (hφ : 0 ≤ φ) (hθφ : θ + φ = 1) :
     θ * ax + φ * ay ∈ P.toExtended.feasible (θ * x + φ * y, z) := by
@@ -395,19 +464,19 @@ theorem feasible_convex {x y : ℝ} {z : Z} (hx : x ∈ Icc 0 assetCap)
   obtain ⟨hay0, haym⟩ := hay
   rw [P.maxSaving_eq (x, z)] at haxm
   rw [P.maxSaving_eq (y, z)] at haym
-  refine ⟨add_nonneg (mul_nonneg hθ hax0) (mul_nonneg hφ hay0), ?_⟩
+  refine ⟨le_convex_comb hax0 hay0 hθ hφ hθφ, ?_⟩
   rw [P.maxSaving_eq (θ * x + φ * y, z)]
   refine le_min ?_ ?_
   · have h1 : ax ≤ assetCap := haxm.trans (min_le_left _ _)
     have h2 : ay ≤ assetCap := haym.trans (min_le_left _ _)
-    nlinarith
+    exact convex_comb_le h1 h2 hθ hφ hθφ
   · have h1 : ax ≤ P.resources (x, z) := haxm.trans (min_le_right _ _)
     have h2 : ay ≤ P.resources (y, z) := haym.trans (min_le_right _ _)
     rw [P.resources_affine_comb hx.1 hy.1 hθ hφ hθφ]
-    nlinarith
+    exact add_le_add (mul_le_mul_of_nonneg_left h1 hθ) (mul_le_mul_of_nonneg_left h2 hφ)
 
 theorem bellmanFn_eq_of_optimal {v : (ℝ × Z) →ᵇ ℝ} {s : ℝ × Z} {a : ℝ}
-    (hs : s.1 ∈ Icc 0 assetCap) (ha : a ∈ P.toExtended.feasible s)
+    (hs : s.1 ∈ Icc assetFloor assetCap) (ha : a ∈ P.toExtended.feasible s)
     (heq : P.toExtended.objectiveE v s a
       = ((P.toExtended.bellmanFn v s : ℝ) : EReal)) :
     P.consumption s a ∈ P.dom ∧
@@ -425,15 +494,15 @@ theorem bellmanFn_eq_of_optimal {v : (ℝ × Z) →ᵇ ℝ} {s : ℝ × Z} {a : 
 
 /-- **The Bellman operator preserves concavity along each asset slice.** -/
 theorem concaveOn_bellman (v : (ℝ × Z) →ᵇ ℝ)
-    (hv : ∀ z : Z, ConcaveOn ℝ (Icc 0 assetCap) fun a => v (a, z)) (z : Z) :
-    ConcaveOn ℝ (Icc 0 assetCap) fun a => (P.toExtended.bellman v) (a, z) := by
+    (hv : ∀ z : Z, ConcaveOn ℝ (Icc assetFloor assetCap) fun a => v (a, z)) (z : Z) :
+    ConcaveOn ℝ (Icc assetFloor assetCap) fun a => (P.toExtended.bellman v) (a, z) := by
   refine ⟨convex_Icc _ _, fun x hx y hy θ φ hθ hφ hθφ => ?_⟩
   obtain ⟨ax, hax, heqx⟩ := P.toExtended.exists_optimal_action v (x, z)
   obtain ⟨ay, hay, heqy⟩ := P.toExtended.exists_optimal_action v (y, z)
   obtain ⟨hcx, hbx⟩ := P.bellmanFn_eq_of_optimal hx hax heqx
   obtain ⟨hcy, hby⟩ := P.bellmanFn_eq_of_optimal hy hay heqy
-  have hxy : θ * x + φ * y ∈ Icc 0 assetCap := by
-    simpa using convex_Icc (0 : ℝ) assetCap hx hy hθ hφ hθφ
+  have hxy : θ * x + φ * y ∈ Icc assetFloor assetCap := by
+    simpa using convex_Icc assetFloor assetCap hx hy hθ hφ hθφ
   have hmix := P.feasible_convex hx hy hax hay hθ hφ hθφ
   have hcmix : P.consumption (θ * x + φ * y, z) (θ * ax + φ * ay)
       = θ * P.consumption (x, z) ax + φ * P.consumption (y, z) ay := by
@@ -473,13 +542,13 @@ theorem concaveOn_bellman (v : (ℝ × Z) →ᵇ ℝ)
 
 /-- **The value function is concave in assets, for each income state.** -/
 theorem concaveOn_valueFunction (z : Z) :
-    ConcaveOn ℝ (Icc 0 assetCap) fun a => P.toExtended.valueFunction (a, z) :=
+    ConcaveOn ℝ (Icc assetFloor assetCap) fun a => P.toExtended.valueFunction (a, z) :=
   Blackwell.forall_concaveOn_valueFunction (convex_Icc _ _) (fun (z : Z) (a : ℝ) => (a, z))
     P.toExtended.blackwell P.toExtended.discount_lt_one
     (fun v hv => P.concaveOn_bellman v hv) z
 
 /-- **The optimal action is unique.** -/
-theorem optimal_action_unique {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {a₀ a₁ : ℝ}
+theorem optimal_action_unique {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) {a₀ a₁ : ℝ}
     (h₀ : a₀ ∈ P.toExtended.feasible s) (h₁ : a₁ ∈ P.toExtended.feasible s)
     (hm₀ : P.toExtended.objectiveE P.toExtended.valueFunction s a₀
       = ((P.toExtended.bellmanFn P.toExtended.valueFunction s : ℝ) : EReal))
@@ -492,7 +561,7 @@ theorem optimal_action_unique {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {a₀
   have hhalf : (0 : ℝ) < 1 / 2 := by norm_num
   have hsum : (1 : ℝ) / 2 + 1 / 2 = 1 := by norm_num
   have hmem : (1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁ ∈ P.toExtended.feasible s := by
-    simpa using convex_Icc (0 : ℝ) (P.maxSaving s) h₀ h₁ hhalf.le hhalf.le hsum
+    simpa using convex_Icc assetFloor (P.maxSaving s) h₀ h₁ hhalf.le hhalf.le hsum
   have hcmid : P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁)
       = (1 / 2 : ℝ) * P.consumption s a₀ + (1 / 2 : ℝ) * P.consumption s a₁ := by
     simp only [consumption]; ring
@@ -548,10 +617,10 @@ theorem policy_optimal (s : ℝ × Z) :
   (Classical.choose_spec
     (P.toExtended.exists_optimal_action P.toExtended.valueFunction s)).2
 
-theorem policy_mem_region (s : ℝ × Z) : P.policy s ∈ Icc 0 assetCap :=
+theorem policy_mem_region (s : ℝ × Z) : P.policy s ∈ Icc assetFloor assetCap :=
   P.feasible_subset_region (P.policy_mem s)
 
-theorem consumption_policy_mem_dom {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
+theorem consumption_policy_mem_dom {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) :
     P.consumption s (P.policy s) ∈ P.dom :=
   (P.bellmanFn_eq_of_optimal hs (P.policy_mem s) (P.policy_optimal s)).1
 
@@ -559,7 +628,7 @@ theorem consumption_policy_mem_dom {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) 
 (`positiveConsumption_of_unbounded`); when it is bounded, it has to be earned from a marginal
 Inada condition, which is what `ConsumptionFloor` does. -/
 def PositiveConsumption : Prop :=
-  ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → 0 < P.consumption s (P.policy s)
+  ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → 0 < P.consumption s (P.policy s)
 
 /-- **Utility really does diverge when the domain is the open half-line.** The structure no
 longer carries `tendsto_atBot_u`, but it has not lost it: `continuousOn_extendDom` says the
@@ -583,16 +652,16 @@ theorem positiveConsumption_of_unbounded (hd : P.Unbounded) : P.PositiveConsumpt
   rwa [hd] at this
 
 theorem consumption_policy_pos (hpc : P.PositiveConsumption) {s : ℝ × Z}
-    (hs : s.1 ∈ Icc 0 assetCap) : 0 < P.consumption s (P.policy s) := hpc s hs
+    (hs : s.1 ∈ Icc assetFloor assetCap) : 0 < P.consumption s (P.policy s) := hpc s hs
 
-theorem eq_policy_of_optimal {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {a : ℝ}
+theorem eq_policy_of_optimal {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) {a : ℝ}
     (ha : a ∈ P.toExtended.feasible s)
     (hopt : P.toExtended.objectiveE P.toExtended.valueFunction s a
       = ((P.toExtended.bellmanFn P.toExtended.valueFunction s : ℝ) : EReal)) :
     a = P.policy s :=
   P.optimal_action_unique hs ha (P.policy_mem s) hopt (P.policy_optimal s)
 
-theorem argmax_eq_singleton {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
+theorem argmax_eq_singleton {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) :
     argmax (P.toExtended.objectiveE P.toExtended.valueFunction) P.toExtended.feasible s
       = {P.policy s} := by
   ext a
@@ -610,13 +679,13 @@ theorem argmax_eq_singleton {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
 /-- **The optimal policy is continuous** on the region of states with assets in
 `[0, assetCap]`. -/
 theorem continuousOn_policy :
-    ContinuousOn P.policy {s : ℝ × Z | s.1 ∈ Icc 0 assetCap} :=
+    ContinuousOn P.policy {s : ℝ × Z | s.1 ∈ Icc assetFloor assetCap} :=
   continuousOn_of_upperHemicontinuous_singleton
     (P.toExtended.upperHemicontinuous_argmax P.toExtended.valueFunction)
     fun _ hs => P.argmax_eq_singleton hs
 
 /-- **The Bellman equation at the policy.** -/
-theorem valueFunction_eq_policy {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
+theorem valueFunction_eq_policy {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap) :
     P.toExtended.valueFunction s
       = P.u (P.consumption s (P.policy s))
         + P.discount * ∑ z', P.transitionMatrix s.2 z'
@@ -629,7 +698,7 @@ theorem valueFunction_eq_policy {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
   rw [← hfix, h]
 
 /-- A two-state calibration with `σ = 2`, where CES utility is `-1 / c`. -/
-noncomputable def calibrated : IncomeFluctuation (Fin 2) 10 where
+noncomputable def calibrated : IncomeFluctuation (Fin 2) 0 10 where
   income z := if z = 0 then 1 / 2 else 3 / 2
   transitionMatrix _ _ := 1 / 2
   interest := 1 / 20
@@ -643,7 +712,10 @@ noncomputable def calibrated : IncomeFluctuation (Fin 2) 10 where
   transitionMatrix_nonneg _ _ := by norm_num
   transitionMatrix_sum _ := by simp
   interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
   assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
   discount_lt_one := by norm_num
   dom := Ioi 0
   Ioi_subset_dom := subset_rfl

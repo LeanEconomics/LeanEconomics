@@ -51,18 +51,18 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 omit [BorelSpace Z] in
 /-- Aggregate capital does not depend on which household problem is posed on the region: the
 asset coordinate is the asset coordinate. -/
-theorem aggregateCapital_congr (Q : IncomeFluctuation Z assetCap)
+theorem aggregateCapital_congr (Q : IncomeFluctuation Z assetFloor assetCap)
     (μ : ProbabilityMeasure P.State) : P.aggregateCapital μ = Q.aggregateCapital μ := rfl
 
 /-- **A mean-field equilibrium**: a distribution stationary for the household problem posed at
 its OWN aggregate capital. `P` names the region and the aggregator, both of which are the same
 for every member of the family. -/
-def IsMeanFieldEquilibrium (Pf : ℝ → IncomeFluctuation Z assetCap)
+def IsMeanFieldEquilibrium (Pf : ℝ → IncomeFluctuation Z assetFloor assetCap)
     (μ : ProbabilityMeasure P.State) : Prop :=
   (Pf (P.aggregateCapital μ)).IsStationary μ
 
@@ -71,10 +71,10 @@ equilibria carry the same aggregate capital.
 
 No continuity and no intermediate value theorem: the argument is stochastic dominance plus
 ergodicity. -/
-theorem mfe_aggregateCapital_eq (Pf : ℝ → IncomeFluctuation Z assetCap)
+theorem mfe_aggregateCapital_eq (Pf : ℝ → IncomeFluctuation Z assetFloor assetCap)
     (hprob : ∀ K₁ K₂ : ℝ, ∀ z z' : Z,
       (Pf K₁).transitionMatrix z z' = (Pf K₂).transitionMatrix z z')
-    (hdec : ∀ {K₁ K₂ : ℝ}, K₁ ≤ K₂ → ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap →
+    (hdec : ∀ {K₁ K₂ : ℝ}, K₁ ≤ K₂ → ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap →
       (Pf K₂).policy s ≤ (Pf K₁).policy s)
     (hconv : ∀ (K : ℝ) (μ₀ μ : ProbabilityMeasure P.State), (Pf K).IsStationary μ →
       Tendsto (fun n => (Pf K).pushProb^[n] μ₀) atTop (𝓝 μ))
@@ -100,10 +100,10 @@ theorem mfe_aggregateCapital_eq (Pf : ℝ → IncomeFluctuation Z assetCap)
 
 /-- **Uniqueness of the mean-field equilibrium.** Equal aggregates mean the two distributions are
 stationary for the SAME household problem, and ergodicity finishes. -/
-theorem mfe_unique (Pf : ℝ → IncomeFluctuation Z assetCap)
+theorem mfe_unique (Pf : ℝ → IncomeFluctuation Z assetFloor assetCap)
     (hprob : ∀ K₁ K₂ : ℝ, ∀ z z' : Z,
       (Pf K₁).transitionMatrix z z' = (Pf K₂).transitionMatrix z z')
-    (hdec : ∀ {K₁ K₂ : ℝ}, K₁ ≤ K₂ → ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap →
+    (hdec : ∀ {K₁ K₂ : ℝ}, K₁ ≤ K₂ → ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap →
       (Pf K₂).policy s ≤ (Pf K₁).policy s)
     (hconv : ∀ (K : ℝ) (μ₀ μ : ProbabilityMeasure P.State), (Pf K).IsStationary μ →
       Tendsto (fun n => (Pf K).pushProb^[n] μ₀) atTop (𝓝 μ))

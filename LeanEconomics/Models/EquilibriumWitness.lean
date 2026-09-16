@@ -60,11 +60,12 @@ theorem log_two_lt : Real.log 2 < 139 / 189 :=
 
 /-! ### The value function, bounded uniformly over the interval -/
 
-theorem dispersed_norm_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (hrr : 0 < 1 + r) :
+theorem dispersed_norm_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20))
+    (hrr : dispersed.RateOK r) :
     ‖(dispersed.withRate r hrr).toExtended.valueFunction‖ ≤ 8 / 7 * Real.log 100 := by
   have h := (dispersed.withRate r hrr).toExtended.norm_valueFunction_le
   have hmin : (dispersed.withRate r hrr).toExtended.rewardMin
-      = (dispersed.withRate r hrr).u (dispersed.withRate r hrr).minIncome := rfl
+      = (dispersed.withRate r hrr).u (dispersed.withRate r hrr).minConsumption := rfl
   have hmax : (dispersed.withRate r hrr).toExtended.rewardMax
       = (dispersed.withRate r hrr).u (dispersed.withRate r hrr).maxConsumption := rfl
   have hdisc : ((dispersed.withRate r hrr).toExtended.discount : ℝ)
@@ -73,9 +74,9 @@ theorem dispersed_norm_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) 
     simp only [IncomeFluctuation.maxConsumption, IncomeFluctuation.withRate_maxIncome,
       IncomeFluctuation.withRate_interest, dispersed_maxIncome]
     ring
-  rw [hmin, hmax, hdisc, hmc, IncomeFluctuation.withRate_u, IncomeFluctuation.withRate_minIncome,
-    IncomeFluctuation.withRate_discount, dispersed_u, dispersed_minIncome,
-    dispersed_discount] at h
+  rw [hmin, hmax, hdisc, hmc, IncomeFluctuation.withRate_u,
+    IncomeFluctuation.withRate_minConsumption, IncomeFluctuation.withRate_discount, dispersed_u,
+    dispersed_minConsumption, dispersed_discount] at h
   have h1 : |Real.log (1 / 100)| = Real.log 100 := by
     rw [show (1 : ℝ) / 100 = (100 : ℝ)⁻¹ by norm_num, Real.log_inv, abs_neg,
       abs_of_nonneg (Real.log_nonneg (by norm_num))]
@@ -92,15 +93,16 @@ theorem dispersed_norm_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) 
 
 /-- Every rate variant of the witness still has log utility, hence the open domain, hence
 positive consumption at the optimum. -/
-theorem dispersed_withRate_unbounded {r : ℝ} (hrr : 0 < 1 + r) :
+theorem dispersed_withRate_unbounded {r : ℝ} (hrr : dispersed.RateOK r) :
     (dispersed.withRate r hrr).Unbounded := rfl
 
-theorem dispersed_withRate_positiveConsumption {r : ℝ} (hrr : 0 < 1 + r) :
+theorem dispersed_withRate_positiveConsumption {r : ℝ} (hrr : dispersed.RateOK r) :
     (dispersed.withRate r hrr).PositiveConsumption :=
   (dispersed.withRate r hrr).positiveConsumption_of_unbounded rfl
 
 /-- The linear consumption bound holds with a single constant across the interval. -/
-theorem dispersed_consumption_bound {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (hrr : 0 < 1 + r)
+theorem dispersed_consumption_bound {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20))
+    (hrr : dispersed.RateOK r)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) (z : Fin 2) :
     1 / (1 + 4 / 7 * Real.log 100) * (dispersed.withRate r hrr).resources (a, z)
       ≤ (dispersed.withRate r hrr).consumptionFn z a := by
@@ -122,7 +124,7 @@ theorem dispersed_epsUniform_gt : 7 / 27 < 1 / (1 + 4 / 7 * Real.log 100) := by
   linarith
 
 /-- **Assets decline above `1/30`, at every rate in the interval.** -/
-theorem dispersed_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (hrr : 0 < 1 + r)
+theorem dispersed_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (hrr : dispersed.RateOK r)
     {a : ℝ} (ha : a ∈ Icc (1 / 30 : ℝ) 1) :
     (dispersed.withRate r hrr).policy (a, 0) < a := by
   have hmem : a ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ha.1], ha.2⟩
@@ -131,7 +133,7 @@ theorem dispersed_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) 
   have hε1 : 1 / (1 + 4 / 7 * Real.log 100) ≤ 1 := by
     rw [div_le_one (by linarith)]; linarith
   refine dispersed.policy_lt_self_of_rate_le hrr hr.2 hε1 hmem
-    (dispersed_consumption_bound hr hrr hmem 0) ?_
+    (by simpa using dispersed_consumption_bound hr hrr hmem 0) ?_
   simp only [dispersed_income_zero]
   set ε : ℝ := 1 / (1 + 4 / 7 * Real.log 100) with hεdef
   have hcoef : (0 : ℝ) < 1 - (1 - ε) * (1 + 1 / 20) := by nlinarith [heps]
@@ -140,11 +142,12 @@ theorem dispersed_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) 
   nlinarith [heps, hstep]
 
 /-- **The borrowing constraint binds below `1/30`, at every rate in the interval.** -/
-theorem dispersed_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (hrr : 0 < 1 + r)
+theorem dispersed_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (hrr : dispersed.RateOK r)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) (1 / 30)) :
     (dispersed.withRate r hrr).policy (a, 0) = 0 := by
   have hmem : a ∈ Icc (0 : ℝ) 1 := ⟨ha.1, by linarith [ha.2]⟩
-  have hrhi : (0 : ℝ) < 1 + 1 / 20 := by norm_num
+  have hrhi : dispersed.RateOK (1 / 20 : ℝ) :=
+    IncomeFluctuation.rateOK_of_floor_zero (by norm_num)
   have hβ : ((dispersed.discount : ℝ)) * (1 + 1 / 20) < 1 := by
     rw [dispersed_discount]; norm_num
   refine dispersed.log_policy_eq_zero_uniform rfl (by simp) hrr hrhi hr.2 hβ hmem 0 ?_
@@ -155,9 +158,9 @@ theorem dispersed_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (
     ring
   have hlip : (dispersed.withRate (1 / 20) hrhi).logLipschitz
       = 33600 * Real.log 2 / 139 := by
-    simp only [IncomeFluctuation.logLipschitz, IncomeFluctuation.withRate_minIncome,
+    simp only [IncomeFluctuation.logLipschitz, IncomeFluctuation.withRate_minConsumption,
       IncomeFluctuation.withRate_interest, IncomeFluctuation.withRate_discount,
-      dispersed_minIncome, dispersed_discount]
+      dispersed_minConsumption, dispersed_discount]
     norm_num
     ring
   rw [IncomeFluctuation.withRate_discount, dispersed_discount, hlip, hres]
@@ -168,7 +171,7 @@ theorem dispersed_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (
 
 /-- **A unique stationary distribution at every rate in the interval.** -/
 theorem dispersed_existsUnique_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20))
-    (hrr : 0 < 1 + r) :
+    (hrr : dispersed.RateOK r) :
     ∃! μ : ProbabilityMeasure dispersed.State, (dispersed.withRate r hrr).IsStationary μ := by
   obtain ⟨N, hN⟩ := (dispersed.withRate r hrr).exists_exhaust_of_decline (z₀ := 0) (a₀ := 1 / 30)
     (by norm_num) (by norm_num)
@@ -188,7 +191,8 @@ theorem dispersed_gain_top : Real.log (40 / 39) < 1 / 16 * Real.log (58 / 37) :=
 /-- **A positive floor under capital supply at the top of the interval**, which is the only place
 the equilibrium argument needs one. Taking `h` at `r = 1/20` rather than at `r = 0` — the gain
 condition is easier at higher rates — raises the floor from `1/200` to `1/160`. -/
-theorem dispersed_floor_top (hrr : 0 < 1 + 1 / 20) (μ : ProbabilityMeasure dispersed.State)
+theorem dispersed_floor_top (hrr : dispersed.RateOK (1 / 20))
+    (μ : ProbabilityMeasure dispersed.State)
     (hμ : (dispersed.withRate (1 / 20) hrr).IsStationary μ) :
     1 / 160 ≤ dispersed.aggregateCapital μ := by
   have hkey := (dispersed.withRate (1 / 20) hrr).le_aggregateCapital_of_gain

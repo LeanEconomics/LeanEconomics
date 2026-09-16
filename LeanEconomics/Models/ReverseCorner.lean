@@ -57,13 +57,16 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+-- The reverse corner is a calibrated statement: it is proved for a household whose borrowing
+-- limit is at zero, which is where the log continuation bound of `PositiveCapital` lives.
+variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **The asset cap binds where resources are large.** The household saves the maximum. -/
 theorem policy_eq_assetCap_of_corner (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
     {s : ℝ × Z}
-    (hs : s.1 ∈ Icc 0 assetCap) (hcap : 0 < assetCap) (hres : assetCap < P.resources s) (z₀ : Z)
+    (hs : s.1 ∈ Icc (0 : ℝ) assetCap) (hcap : 0 < assetCap)
+    (hres : assetCap < P.resources s) (z₀ : Z)
     (hcond : 1 / (P.resources s - assetCap)
       ≤ P.discount * (P.transitionMatrix s.2 z₀ * (P.income z₀
           * Real.log (1 + (1 + P.interest) * assetCap / P.income z₀)
@@ -75,7 +78,7 @@ theorem policy_eq_assetCap_of_corner (hpc : P.PositiveConsumption) (hu : P.u = R
   have hmc : P.maxSaving s = assetCap := by
     rw [P.maxSaving_eq]; exact min_eq_left hres.le
   have hmem : assetCap ∈ P.toExtended.feasible s := by
-    rw [P.feasible_eq, hmc]; exact ⟨hcap.le, le_rfl⟩
+    rw [P.feasible_eq, hmc]; exact ⟨P.assetCap_nonneg, le_rfl⟩
   have hcpos : 0 < P.consumption s assetCap := by
     simp only [consumption]; linarith
   set T₀ : ℝ := (1 + P.interest) * assetCap / P.income z₀ with hT₀def
@@ -90,7 +93,7 @@ theorem policy_eq_assetCap_of_corner (hpc : P.PositiveConsumption) (hu : P.u = R
     set Δ : ℝ := assetCap - x with hΔdef
     have hΔ : 0 < Δ := by rw [hΔdef]; linarith
     have hxmem : x ∈ Icc (0 : ℝ) assetCap := ⟨hx.1, hlt.le⟩
-    have hcapmem : assetCap ∈ Icc (0 : ℝ) assetCap := ⟨hcap.le, le_rfl⟩
+    have hcapmem : assetCap ∈ Icc (0 : ℝ) assetCap := ⟨P.assetCap_nonneg, le_rfl⟩
     -- the utility loss, bounded above by concavity of log
     have hml : 0 < P.resources s - assetCap := by linarith
     have hratio : P.consumption s x / P.consumption s assetCap
@@ -107,7 +110,7 @@ theorem policy_eq_assetCap_of_corner (hpc : P.PositiveConsumption) (hu : P.u = R
         (by positivity)
       linarith
     -- the continuation gain, bounded below by its chord
-    have hgen := P.log_cont_sub_ge_gen hpc hu s.2 z₀ hxmem hcapmem hlt.le
+    have hgen := P.log_cont_sub_ge_gen rfl hpc hu s.2 z₀ hxmem hcapmem hlt.le
     set t : ℝ := (1 + P.interest) * (assetCap - x) / (P.income z₀ + (1 + P.interest) * x)
       with htdef
     have hden : 0 < P.income z₀ + (1 + P.interest) * x := by nlinarith [hx.1]

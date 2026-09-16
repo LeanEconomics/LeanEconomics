@@ -28,13 +28,15 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+-- Calibrated CES bounds, stated at a zero borrowing limit like the rest of the quantitative
+-- layer (`CRRAConstants`).
+variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
 
-@[simp] theorem withRate_dom (r : ℝ) (hr : 0 < 1 + r) : (P.withRate r hr).dom = P.dom := rfl
+@[simp] theorem withRate_dom (r : ℝ) (hr : P.RateOK r) : (P.withRate r hr).dom = P.dom := rfl
 
 /-! ### The oscillation gap rises with the rate -/
 
-theorem oscGap_le_of_le {r₀ r₁ : ℝ} (h₀ : 0 < 1 + r₀) (h₁ : 0 < 1 + r₁) (hle : r₀ ≤ r₁) :
+theorem oscGap_le_of_le {r₀ r₁ : ℝ} (h₀ : P.RateOK r₀) (h₁ : P.RateOK r₁) (hle : r₀ ≤ r₁) :
     (P.withRate r₀ h₀).oscGap ≤ (P.withRate r₁ h₁).oscGap := by
   have hβ : (P.discount : ℝ) < 1 := by exact_mod_cast P.discount_lt_one
   have hmax : (P.withRate r₀ h₀).maxConsumption ≤ (P.withRate r₁ h₁).maxConsumption := by
@@ -43,27 +45,31 @@ theorem oscGap_le_of_le {r₀ r₁ : ℝ} (h₀ : 0 < 1 + r₀) (h₁ : 0 < 1 + 
   have hu : P.u ((P.withRate r₀ h₀).maxConsumption) ≤ P.u ((P.withRate r₁ h₁).maxConsumption) :=
     P.monotoneOn_u_dom (P.mem_dom_of_pos (P.withRate r₀ h₀).maxConsumption_pos)
       (P.mem_dom_of_pos (P.withRate r₁ h₁).maxConsumption_pos) hmax
-  simp only [oscGap, withRate_u, withRate_minIncome, withRate_discount]
+  have hmc₀ : (P.withRate r₀ h₀).minConsumption = P.minConsumption := rfl
+  have hmc₁ : (P.withRate r₁ h₁).minConsumption = P.minConsumption := rfl
+  simp only [oscGap, withRate_u, hmc₀, hmc₁, withRate_discount]
   refine div_le_div_of_nonneg_right ?_ (by linarith)
   linarith
 
 /-! ### The corner condition rises with the rate -/
 
 theorem crraLipschitz_le_of_le {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) {r₀ r₁ : ℝ}
-    (h₀ : 0 < 1 + r₀) (h₁ : 0 < 1 + r₁) (hle : r₀ ≤ r₁)
+    (h₀ : P.RateOK r₀) (h₁ : P.RateOK r₁) (hle : r₀ ≤ r₁)
     (hβ₁ : (P.discount : ℝ) * (1 + r₁) < 1) :
     (P.withRate r₀ h₀).crraLipschitz γ ≤ (P.withRate r₁ h₁).crraLipschitz γ := by
   have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
   have hβ₀ : (P.discount : ℝ) * (1 + r₀) < 1 := by nlinarith
-  have hK : (0 : ℝ) ≤ crraSlopeBound γ P.minIncome :=
-    crraSlopeBound_nonneg hγ0 hγ1 P.minIncome_pos
-  simp only [crraLipschitz, withRate_minIncome, withRate_interest, withRate_discount]
-  rw [div_le_div_iff₀ (by linarith) (by linarith)]
-  nlinarith [mul_le_mul_of_nonneg_left (by linarith : (1 : ℝ) + r₀ ≤ 1 + r₁) hK, hβ, h₀.le]
+  have hK : (0 : ℝ) ≤ crraSlopeBound γ P.minConsumption :=
+    crraSlopeBound_nonneg hγ0 hγ1 P.minConsumption_pos
+  have hmc₀ : (P.withRate r₀ h₀).minConsumption = P.minConsumption := rfl
+  have hmc₁ : (P.withRate r₁ h₁).minConsumption = P.minConsumption := rfl
+  simp only [crraLipschitz, hmc₀, hmc₁, withRate_interest, withRate_discount]
+  rw [div_le_div_iff₀ (by linarith [h₀.1]) (by linarith [h₁.1])]
+  nlinarith [mul_le_mul_of_nonneg_left (by linarith : (1 : ℝ) + r₀ ≤ 1 + r₁) hK, hβ, h₀.1.le]
 
 /-- **The CES corner condition, checked once at the top of the interval.** -/
 theorem crra_policy_eq_zero_uniform {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hb : P.Bounded)
-    (hu : P.u = crraUtility γ) {r₀ r₁ : ℝ} (h₀ : 0 < 1 + r₀) (h₁ : 0 < 1 + r₁) (hle : r₀ ≤ r₁)
+    (hu : P.u = crraUtility γ) {r₀ r₁ : ℝ} (h₀ : P.RateOK r₀) (h₁ : P.RateOK r₁) (hle : r₀ ≤ r₁)
     (hβ₁ : (P.discount : ℝ) * (1 + r₁) < 1)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z)
     (hlt : (P.withRate r₁ h₁).discount * (P.withRate r₁ h₁).crraLipschitz γ
@@ -75,7 +81,8 @@ theorem crra_policy_eq_zero_uniform {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (
     (by simpa using hβ₀) ha ?_
   have hlip := P.crraLipschitz_le_of_le hγ0 hγ1 h₀ h₁ hle hβ₁
   have hres := P.resources_le_of_le h₀ h₁ hle ha.1 z
-  have hpos₀ : 0 < (P.withRate r₀ h₀).resources (a, z) := (P.withRate r₀ h₀).resources_pos _
+  have hpos₀ : 0 < (P.withRate r₀ h₀).resources (a, z) :=
+    (P.withRate r₀ h₀).assetFloor_lt_resources _
   have hlipβ : (P.withRate r₀ h₀).discount * (P.withRate r₀ h₀).crraLipschitz γ
       ≤ (P.withRate r₁ h₁).discount * (P.withRate r₁ h₁).crraLipschitz γ := by
     simp only [withRate_discount]
@@ -91,7 +98,7 @@ widens `1 + r - θ` -- so this endpoint is the top of the interval too. -/
 
 theorem crra_policy_lt_self_uniform {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hθ0 : 0 < θ)
     (hθ1 : θ < 1) (hb : P.Bounded) (hu : P.u = crraUtility γ) {r₀ r₁ : ℝ}
-    (h₀ : 0 < 1 + r₀) (h₁ : 0 < 1 + r₁) (hle : r₀ ≤ r₁) (hθr : θ ≤ 1 + r₀)
+    (h₀ : P.RateOK r₀) (h₁ : P.RateOK r₁) (hle : r₀ ≤ r₁) (hθr : θ ≤ 1 + r₀)
     (hpc : (P.withRate r₀ h₀).PositiveConsumption)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z)
     (hlt : ((P.withRate r₁ h₁).discount * (P.withRate r₁ h₁).oscGap / θ)

@@ -43,7 +43,7 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 /-- A myopic household: the calibration, with the discount factor set to zero. -/
-noncomputable def myopic : IncomeFluctuation (Fin 2) 10 :=
+noncomputable def myopic : IncomeFluctuation (Fin 2) 0 10 :=
   { calibrated with discount := 0, discount_lt_one := by norm_num }
 
 @[simp] theorem myopic_discount : (myopic.discount : ℝ) = 0 := rfl
@@ -60,7 +60,7 @@ theorem myopic_policy_eq_zero {s : ℝ × Fin 2} (hs : s.1 ∈ Icc (0 : ℝ) 10)
   set V := myopic.toExtended.valueFunction with hV
   have hmem : (0 : ℝ) ∈ myopic.toExtended.feasible s := ⟨le_rfl, le_max_left _ _⟩
   have hc0 : 0 < myopic.consumption s 0 := by
-    simpa only [consumption, sub_zero] using myopic.resources_pos s
+    simpa only [consumption, sub_zero] using myopic.assetFloor_lt_resources s
   -- the reward at zero saving is the utility of all resources
   have hrew0 := myopic.reward_eq_coe hs hmem hc0
   -- and nothing feasible beats it
@@ -74,7 +74,7 @@ theorem myopic_policy_eq_zero {s : ℝ × Fin 2} (hs : s.1 ∈ Icc (0 : ℝ) 10)
     · rw [extendDom_of_mem h, EReal.coe_le_coe_iff]
       refine myopic.monotoneOn_u_dom h (myopic.mem_dom_of_pos hc0) ?_
       refine le_trans (min_le_right _ _) (max_le ?_ ?_)
-      · simpa only [consumption, sub_zero] using (myopic.resources_pos s).le
+      · simpa only [consumption, sub_zero] using (myopic.assetFloor_lt_resources s).le
       · simp only [consumption, sub_zero]
         linarith [ha.1]
     · rw [extendDom_of_not_mem h]; exact bot_le
@@ -124,7 +124,7 @@ Nothing here is a new theorem. Every constant is explicit, so the hypotheses of
 -/
 
 /-- An impatient household: `β = 1/100`, `r = 0`, income in `{1, 2}`, cap `1`. -/
-noncomputable def impatient : IncomeFluctuation (Fin 2) 1 where
+noncomputable def impatient : IncomeFluctuation (Fin 2) 0 1 where
   income z := if z = 0 then 1 else 2
   transitionMatrix _ _ := 1 / 2
   interest := 0
@@ -138,7 +138,10 @@ noncomputable def impatient : IncomeFluctuation (Fin 2) 1 where
   transitionMatrix_nonneg _ _ := by norm_num
   transitionMatrix_sum _ := by simp
   interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
   assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
   discount_lt_one := by norm_num
   dom := Ioi 0
   Ioi_subset_dom := subset_rfl
@@ -165,8 +168,11 @@ noncomputable def impatient : IncomeFluctuation (Fin 2) 1 where
 theorem impatient_maxConsumption : impatient.maxConsumption = 3 := by
   simp only [maxConsumption, impatient_maxIncome, impatient_interest]; norm_num
 
+theorem impatient_minConsumption : impatient.minConsumption = 1 := by
+  norm_num [impatient]
+
 theorem impatient_slopeBoundU : impatient.slopeBoundU = 2 := by
-  simp only [slopeBoundU, slopeBound, impatient_minIncome, impatient_u]
+  simp only [slopeBoundU, slopeBound, impatient_minConsumption, impatient_u]
   norm_num
 
 /-- The marginal utility of consumption is at least `1/9` on the relevant range. -/

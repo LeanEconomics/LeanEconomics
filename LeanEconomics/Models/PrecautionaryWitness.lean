@@ -37,7 +37,7 @@ namespace LeanEconomics
 
 /-- An impatient household with log utility and DISPERSED income: `β = 1/2`, `r = 0`, income in
 `{1/100, 1}` with iid draws, asset cap `1`. -/
-noncomputable def precautionary : IncomeFluctuation (Fin 2) 1 where
+noncomputable def precautionary : IncomeFluctuation (Fin 2) 0 1 where
   income z := if z = 0 then 1 / 100 else 1
   transitionMatrix _ _ := 1 / 2
   interest := 0
@@ -51,7 +51,10 @@ noncomputable def precautionary : IncomeFluctuation (Fin 2) 1 where
   transitionMatrix_nonneg _ _ := by norm_num
   transitionMatrix_sum _ := by simp
   interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
   assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
   discount_lt_one := by norm_num
   dom := Ioi 0
   Ioi_subset_dom := subset_rfl
@@ -85,7 +88,7 @@ distribution. -/
 theorem precautionary_aggregateCapital_pos
     {μ : ProbabilityMeasure precautionary.State} (hμ : precautionary.IsStationary μ) :
     0 < precautionary.aggregateCapital μ := by
-  refine precautionary.aggregateCapital_pos_of_primitives
+  refine precautionary.aggregateCapital_pos_of_primitives rfl
     (precautionary.positiveConsumption_of_unbounded rfl) precautionary_u hμ
     (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (by norm_num) (fun z => by norm_num)
     (h := 1 / 2) (by norm_num) (by norm_num) (by norm_num) ?_

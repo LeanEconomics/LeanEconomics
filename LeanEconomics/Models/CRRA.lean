@@ -195,7 +195,7 @@ so the two witnesses sit on either side of Light's condition, and every utility 
 discharged by a single lemma about the CRRA family. -/
 
 /-- An impatient household with log utility: `β = 1/100`, `r = 0`, income in `{1, 2}`, cap `1`. -/
-noncomputable def logImpatient : IncomeFluctuation (Fin 2) 1 where
+noncomputable def logImpatient : IncomeFluctuation (Fin 2) 0 1 where
   income z := if z = 0 then 1 else 2
   transitionMatrix _ _ := 1 / 2
   interest := 0
@@ -209,7 +209,10 @@ noncomputable def logImpatient : IncomeFluctuation (Fin 2) 1 where
   transitionMatrix_nonneg _ _ := by norm_num
   transitionMatrix_sum _ := by simp
   interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
   assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
   discount_lt_one := by norm_num
   dom := Ioi 0
   Ioi_subset_dom := subset_rfl

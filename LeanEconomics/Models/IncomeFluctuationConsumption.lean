@@ -54,12 +54,12 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ}
-variable (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- **The continuation value is concave in savings**, being a non-negative combination of the
 value function's concave slices. -/
-theorem concaveOn_cont (z : Z) : ConcaveOn ℝ (Icc 0 assetCap) (P.cont z) := by
+theorem concaveOn_cont (z : Z) : ConcaveOn ℝ (Icc assetFloor assetCap) (P.cont z) := by
   refine ⟨convex_Icc _ _, fun x hx y hy θ φ hθ hφ hθφ => ?_⟩
   simp only [cont, smul_eq_mul]
   rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
@@ -72,7 +72,7 @@ theorem concaveOn_cont (z : Z) : ConcaveOn ℝ (Icc 0 assetCap) (P.cont z) := by
 noncomputable def consumptionFn (z : Z) (a : ℝ) : ℝ :=
   P.consumption (a, z) (P.policy (a, z))
 
-theorem consumptionFn_pos (hpc : P.PositiveConsumption) {a : ℝ} (ha : a ∈ Icc 0 assetCap)
+theorem consumptionFn_pos (hpc : P.PositiveConsumption) {a : ℝ} (ha : a ∈ Icc assetFloor assetCap)
     (z : Z) :
     0 < P.consumptionFn z a :=
   P.consumption_policy_pos hpc (s := (a, z)) ha
@@ -98,8 +98,8 @@ resource gap, which leaves consumption alone and moves only the continuation —
 comparison is increasing differences of the continuation, exactly as `policy_mono` is
 increasing differences of `u`. -/
 theorem consumptionFn_mono {a a' : ℝ} {z : Z}
-    (ha : a ∈ Icc 0 assetCap)
-    (ha' : a' ∈ Icc 0 assetCap) (hle : a ≤ a') :
+    (ha : a ∈ Icc assetFloor assetCap)
+    (ha' : a' ∈ Icc assetFloor assetCap) (hle : a ≤ a') :
     P.consumptionFn z a ≤ P.consumptionFn z a' := by
   set Δ : ℝ := P.resources (a', z) - P.resources (a, z) with hΔdef
   have hΔ : 0 ≤ Δ := by
@@ -137,8 +137,8 @@ theorem consumptionFn_mono {a a' : ℝ} {z : Z}
   have hI := P.objR_le_of_mem ha hshiftdown (by rw [he2]; exact hc2)
   have hII := P.objR_le_of_mem ha' hshiftup (by rw [he1]; exact hc1)
   -- increasing differences of the continuation
-  have hbreg : b ∈ Icc (0 : ℝ) assetCap := P.policy_mem_region _
-  have hb'reg : b' ∈ Icc (0 : ℝ) assetCap := P.policy_mem_region _
+  have hbreg : b ∈ Icc assetFloor assetCap := P.policy_mem_region _
+  have hb'reg : b' ∈ Icc assetFloor assetCap := P.policy_mem_region _
   have hshift := (P.concaveOn_cont z).sub_le_sub_of_shift (c₁ := b) (c₂ := b' - Δ) (Δ := Δ)
     hbreg (by simpa using hb'reg) (by linarith) hΔ
   rw [sub_add_cancel] at hshift
@@ -160,8 +160,8 @@ theorem consumptionFn_mono {a a' : ℝ} {z : Z}
 /-- **The marginal propensities are both non-negative.** Consumption rises with assets, and by
 no more than resources do — the second half is `policy_mono`. -/
 theorem sub_le_sub_of_le_resources {a a' : ℝ} {z : Z}
-    (ha : a ∈ Icc 0 assetCap)
-    (ha' : a' ∈ Icc 0 assetCap) (hle : a ≤ a') :
+    (ha : a ∈ Icc assetFloor assetCap)
+    (ha' : a' ∈ Icc assetFloor assetCap) (hle : a ≤ a') :
     0 ≤ P.consumptionFn z a' - P.consumptionFn z a ∧
       P.consumptionFn z a' - P.consumptionFn z a
         ≤ P.resources (a', z) - P.resources (a, z) := by
@@ -171,7 +171,7 @@ theorem sub_le_sub_of_le_resources {a a' : ℝ} {z : Z}
   linarith
 
 theorem monotoneOn_consumptionFn (z : Z) :
-    MonotoneOn (P.consumptionFn z) (Icc 0 assetCap) :=
+    MonotoneOn (P.consumptionFn z) (Icc assetFloor assetCap) :=
   fun _ ha _ ha' h => P.consumptionFn_mono ha ha' h
 
 /-! ### A linear lower bound on consumption makes assets decline
@@ -210,8 +210,10 @@ theorem one_sub_mpc_mul_of_asymptotic {β R γ : ℝ} (hβ : 0 ≤ β) (hR : 0 <
 assets pass an explicit threshold. The share `ε` has to be large enough that `(1 - ε)(1 + r) < 1`
 — with Ma and Toda's asymptotic MPC that is exactly `β(1 + r) < 1`. -/
 theorem policy_lt_self_of_consumption_lower_bound {z : Z} {ε a : ℝ}
-    (ha : a ∈ Icc (0 : ℝ) assetCap) (hlb : ε * P.resources (a, z) ≤ P.consumptionFn z a)
-    (hgt : (1 - ε) * P.income z < (1 - (1 - ε) * (1 + P.interest)) * a) :
+    (ha : a ∈ Icc assetFloor assetCap)
+    (hlb : ε * (P.resources (a, z) - assetFloor) ≤ P.consumptionFn z a)
+    (hgt : (1 - ε) * P.income z + ε * assetFloor
+      < (1 - (1 - ε) * (1 + P.interest)) * a) :
     P.policy (a, z) < a := by
   have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a := by
     simp only [resources, max_eq_right ha.1]
@@ -221,7 +223,8 @@ theorem policy_lt_self_of_consumption_lower_bound {z : Z} {ε a : ℝ}
   rw [hres] at hlb
   rw [hpol]
   have e1 : P.income z + (1 + P.interest) * a - P.consumptionFn z a
-      ≤ (1 - ε) * P.income z + (1 - ε) * ((1 + P.interest) * a) := by nlinarith [hlb]
+      ≤ (1 - ε) * P.income z + (1 - ε) * ((1 + P.interest) * a) + ε * assetFloor := by
+    nlinarith [hlb]
   rw [show (1 - (1 - ε) * (1 + P.interest)) * a
       = a - (1 - ε) * ((1 + P.interest) * a) by ring] at hgt
   linarith
@@ -230,9 +233,11 @@ theorem policy_lt_self_of_consumption_lower_bound {z : Z} {ε a : ℝ}
 consumption. This is the hypothesis `hdecl` of `exists_exhaust_of_decline`. -/
 theorem exists_decline_of_consumption_lower_bound {z : Z} {ε : ℝ}
     (hε : (1 - ε) * (1 + P.interest) < 1)
-    (hlb : ∀ a ∈ Icc (0 : ℝ) assetCap, ε * P.resources (a, z) ≤ P.consumptionFn z a) :
-    ∃ ā : ℝ, ∀ a ∈ Icc (0 : ℝ) assetCap, ā < a → P.policy (a, z) < a := by
-  refine ⟨(1 - ε) * P.income z / (1 - (1 - ε) * (1 + P.interest)), fun a ha hā => ?_⟩
+    (hlb : ∀ a ∈ Icc assetFloor assetCap,
+      ε * (P.resources (a, z) - assetFloor) ≤ P.consumptionFn z a) :
+    ∃ ā : ℝ, ∀ a ∈ Icc assetFloor assetCap, ā < a → P.policy (a, z) < a := by
+  refine ⟨((1 - ε) * P.income z + ε * assetFloor)
+    / (1 - (1 - ε) * (1 + P.interest)), fun a ha hā => ?_⟩
   refine P.policy_lt_self_of_consumption_lower_bound ha (hlb a ha) ?_
   rw [div_lt_iff₀ (by linarith)] at hā
   linarith

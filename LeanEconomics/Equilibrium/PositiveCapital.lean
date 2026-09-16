@@ -56,8 +56,8 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ}
-variable (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-! ### Strict monotonicity -/
 
@@ -82,8 +82,8 @@ theorem strictMonoOn_u : StrictMonoOn P.u (Ioi 0) := by
 /-- **The value function is strictly increasing in assets.** More assets buy strictly more
 consumption at the same saving plan. -/
 theorem valueFunction_lt_of_lt (hpc : P.PositiveConsumption) {x y : ℝ} {z : Z}
-    (hx : x ∈ Icc 0 assetCap)
-    (hy : y ∈ Icc 0 assetCap) (hxy : x < y) :
+    (hx : x ∈ Icc assetFloor assetCap)
+    (hy : y ∈ Icc assetFloor assetCap) (hxy : x < y) :
     P.toExtended.valueFunction (x, z) < P.toExtended.valueFunction (y, z) := by
   have hbm : P.policy (x, z) ∈ P.toExtended.feasible (x, z) := P.policy_mem _
   have hbm' : P.policy (x, z) ∈ P.toExtended.feasible (y, z) := P.feasible_mono hxy.le hbm
@@ -109,7 +109,7 @@ theorem valueFunction_lt_of_lt (hpc : P.PositiveConsumption) {x y : ℝ} {z : Z}
 /-- **The continuation is strictly increasing**, since some income state has positive
 probability. -/
 theorem cont_lt_of_lt (hpc : P.PositiveConsumption) (z : Z) {x y : ℝ}
-    (hx : x ∈ Icc 0 assetCap) (hy : y ∈ Icc 0 assetCap)
+    (hx : x ∈ Icc assetFloor assetCap) (hy : y ∈ Icc assetFloor assetCap)
     (hxy : x < y) : P.cont z x < P.cont z y := by
   obtain ⟨z₀, hz₀⟩ : ∃ z₀ : Z, 0 < P.transitionMatrix z z₀ := by
     by_contra hcon
@@ -127,16 +127,18 @@ theorem cont_lt_of_lt (hpc : P.PositiveConsumption) (z : Z) {x y : ℝ}
 
 /-! ### Capital is the mean of the policy -/
 
-theorem norm_policy_incl_le (s : P.State) : ‖P.policy (P.incl s)‖ ≤ assetCap := by
+theorem norm_policy_incl_le (s : P.State) :
+    ‖P.policy (P.incl s)‖ ≤ |assetFloor| + |assetCap| := by
   have h := P.policy_mem_region (P.incl s)
   rw [Real.norm_eq_abs, abs_le]
-  exact ⟨by linarith [h.1, P.assetCap_nonneg], h.2⟩
+  exact ⟨by linarith [h.1, neg_abs_le assetFloor, abs_nonneg assetCap],
+    by linarith [h.2, le_abs_self assetCap, abs_nonneg assetFloor]⟩
 
 /-- Saving carried forward, as a bounded continuous function of the state. -/
 noncomputable def policyCoord : P.State →ᵇ ℝ :=
   ofNormedAddCommGroup (fun s => P.policy (P.incl s))
-    (P.continuousOn_policy.comp_continuous P.continuous_incl P.incl_mem) assetCap
-    P.norm_policy_incl_le
+    (P.continuousOn_policy.comp_continuous P.continuous_incl P.incl_mem)
+    (|assetFloor| + |assetCap|) P.norm_policy_incl_le
 
 @[simp] theorem policyCoord_apply (s : P.State) : P.policyCoord s = P.policy (P.incl s) := rfl
 
@@ -205,12 +207,13 @@ omit [MeasurableSpace Z] [BorelSpace Z] in
 is `log (m / (m - h))`, which falls as resources grow, while the gain `β (cont h - cont 0)` is a
 fixed positive number. So it is enough to check the comparison at `a = 0`, the poorest state in
 that income, and it then holds at every asset level. -/
-theorem policy_pos_of_cost (z₁ : Z) {h κ : ℝ} (hh0 : 0 < h)
+theorem policy_pos_of_cost (hfl : assetFloor = 0) (z₁ : Z) {h κ : ℝ} (hh0 : 0 < h)
     (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
     (hcost : ∀ R : ℝ, P.income z₁ ≤ R → P.u R - P.u (R - h) ≤ κ)
     (hgain : κ < P.discount * (P.cont z₁ h - P.cont z₁ 0))
-    {a : ℝ} (ha : a ∈ Icc 0 assetCap) :
+    {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) :
     0 < P.policy (a, z₁) := by
+  subst hfl
   rcases lt_or_eq_of_le (P.policy_mem_region (a, z₁)).1 with hpos | hzero
   · exact hpos
   exfalso
@@ -230,14 +233,16 @@ theorem policy_pos_of_cost (z₁ : Z) {h κ : ℝ} (hh0 : 0 < h)
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- The log instance of `policy_pos_of_cost`: the cost of saving `h` is `log (m / (m - h))`,
 which falls as resources grow, so it is enough to check it at the poorest state in that income. -/
-theorem policy_pos_of_income (hu : P.u = Real.log) (z₁ : Z) {h : ℝ} (hh0 : 0 < h)
+theorem policy_pos_of_income (hfl : assetFloor = 0) (hu : P.u = Real.log) (z₁ : Z) {h : ℝ}
+    (hh0 : 0 < h)
     (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
     (hgain : Real.log (P.income z₁ / (P.income z₁ - h))
       < P.discount * (P.cont z₁ h - P.cont z₁ 0))
-    {a : ℝ} (ha : a ∈ Icc 0 assetCap) :
+    {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) :
     0 < P.policy (a, z₁) := by
+  subst hfl
   have hinc0 : 0 < P.income z₁ := lt_trans hh0 hhinc
-  refine P.policy_pos_of_cost z₁ hh0 hhcap hhinc (fun R hm => ?_) hgain ha
+  refine P.policy_pos_of_cost rfl z₁ hh0 hhcap hhinc (fun R hm => ?_) hgain ha
   rw [hu]
   have hR : 0 < R := lt_of_lt_of_le hinc0 hm
   have hmono : R / (R - h) ≤ P.income z₁ / (P.income z₁ - h) := by
@@ -249,16 +254,17 @@ theorem policy_pos_of_income (hu : P.u = Real.log) (z₁ : Z) {h : ℝ} (hh0 : 0
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- A uniform positive lower bound on saving across the asset region, by compactness. -/
-theorem exists_policy_lower_bound_of_cost (z₁ : Z) {h κ : ℝ} (hh0 : 0 < h)
+theorem exists_policy_lower_bound_of_cost (hfl : assetFloor = 0) (z₁ : Z) {h κ : ℝ} (hh0 : 0 < h)
     (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
     (hcost : ∀ R : ℝ, P.income z₁ ≤ R → P.u R - P.u (R - h) ≤ κ)
     (hgain : κ < P.discount * (P.cont z₁ h - P.cont z₁ 0)) :
-    ∃ ε > 0, ∀ a ∈ Icc (0 : ℝ) assetCap, ε ≤ P.policy (a, z₁) := by
-  have hne : (Icc (0 : ℝ) assetCap).Nonempty := ⟨0, ⟨le_rfl, P.assetCap_nonneg⟩⟩
-  have hcont : ContinuousOn (fun a : ℝ => P.policy (a, z₁)) (Icc 0 assetCap) :=
+    ∃ ε > 0, ∀ a ∈ Icc assetFloor assetCap, ε ≤ P.policy (a, z₁) := by
+  subst hfl
+  have hne : (Icc (0 : ℝ) assetCap).Nonempty := ⟨0, ⟨le_rfl, P.assetFloor_le_assetCap⟩⟩
+  have hcont : ContinuousOn (fun a : ℝ => P.policy (a, z₁)) (Icc (0 : ℝ) assetCap) :=
     P.continuousOn_policy.comp (by fun_prop) fun a ha => ha
   obtain ⟨a₀, ha₀, hmin⟩ := isCompact_Icc.exists_isMinOn hne hcont
-  exact ⟨P.policy (a₀, z₁), P.policy_pos_of_cost z₁ hh0 hhcap hhinc hcost hgain ha₀,
+  exact ⟨P.policy (a₀, z₁), P.policy_pos_of_cost rfl z₁ hh0 hhcap hhinc hcost hgain ha₀,
     fun a ha => isMinOn_iff.mp hmin a ha⟩
 
 /-! ### Positive aggregate capital -/
@@ -266,15 +272,16 @@ theorem exists_policy_lower_bound_of_cost (z₁ : Z) {h κ : ℝ} (hh0 : 0 < h)
 /-- **Aggregate capital is strictly positive.** Households in income state `z₁` save at least
 `ε`, the stationary distribution puts at least `p₀` of its mass there, and aggregate capital is
 mean saving. -/
-theorem aggregateCapital_pos_of_cost {μ : ProbabilityMeasure P.State}
+theorem aggregateCapital_pos_of_cost (hfl : assetFloor = 0) {μ : ProbabilityMeasure P.State}
     (hμ : P.IsStationary μ) {z₁ : Z} {p₀ : ℝ} (hp0 : 0 < p₀)
     (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
     {h κ : ℝ} (hh0 : 0 < h) (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
     (hcost : ∀ R : ℝ, P.income z₁ ≤ R → P.u R - P.u (R - h) ≤ κ)
     (hgain : κ < P.discount * (P.cont z₁ h - P.cont z₁ 0)) :
     0 < P.aggregateCapital μ := by
+  subst hfl
   obtain ⟨ε, hε, hεle⟩ :=
-    P.exists_policy_lower_bound_of_cost z₁ hh0 hhcap hhinc hcost hgain
+    P.exists_policy_lower_bound_of_cost rfl z₁ hh0 hhcap hhinc hcost hgain
   rw [P.aggregateCapital_eq_integral_policy hμ]
   have hbound : ∀ s : P.State, ε * P.incomeIndicator z₁ s ≤ P.policyCoord s := by
     intro s
@@ -297,15 +304,17 @@ theorem aggregateCapital_pos_of_cost {μ : ProbabilityMeasure P.State}
           (P.policyCoord.integrable _) hbound
 
 /-- The log instance of `aggregateCapital_pos_of_cost`. -/
-theorem aggregateCapital_pos (hu : P.u = Real.log) {μ : ProbabilityMeasure P.State}
+theorem aggregateCapital_pos (hfl : assetFloor = 0) (hu : P.u = Real.log)
+    {μ : ProbabilityMeasure P.State}
     (hμ : P.IsStationary μ) {z₁ : Z} {p₀ : ℝ} (hp0 : 0 < p₀)
     (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
     {h : ℝ} (hh0 : 0 < h) (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
     (hgain : Real.log (P.income z₁ / (P.income z₁ - h))
       < P.discount * (P.cont z₁ h - P.cont z₁ 0)) :
     0 < P.aggregateCapital μ := by
+  subst hfl
   have hinc0 : 0 < P.income z₁ := lt_trans hh0 hhinc
-  refine P.aggregateCapital_pos_of_cost hμ hp0 hp hh0 hhcap hhinc (fun R hm => ?_) hgain
+  refine P.aggregateCapital_pos_of_cost rfl hμ hp0 hp hh0 hhcap hhinc (fun R hm => ?_) hgain
   rw [hu]
   have hmono : R / (R - h) ≤ P.income z₁ / (P.income z₁ - h) := by
     rw [div_le_div_iff₀ (by linarith) (by linarith)]
@@ -334,22 +343,23 @@ of `u'`, which is why it is available without a third derivative. -/
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 theorem valueFunction_le_of_le (hpc : P.PositiveConsumption) {x y : ℝ} {z : Z}
-    (hx : x ∈ Icc 0 assetCap)
-    (hy : y ∈ Icc 0 assetCap) (hxy : x ≤ y) :
+    (hx : x ∈ Icc assetFloor assetCap)
+    (hy : y ∈ Icc assetFloor assetCap) (hxy : x ≤ y) :
     P.toExtended.valueFunction (x, z) ≤ P.toExtended.valueFunction (y, z) := by
   rcases eq_or_lt_of_le hxy with rfl | hlt
   · exact le_rfl
   · exact (P.valueFunction_lt_of_lt hpc hx hy hlt).le
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
-theorem resources_zero (z : Z) : P.resources (0, z) = P.income z := by
+theorem resources_zero (hfl : assetFloor = 0) (z : Z) : P.resources (0, z) = P.income z := by
+  subst hfl
   simp only [resources]; norm_num
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **The value of extra assets is at least the one-period utility gain**, got by carrying the
 poorer household's own saving plan forward. -/
 theorem valueFunction_sub_ge (hpc : P.PositiveConsumption) {x y : ℝ}
-    (hx : x ∈ Icc 0 assetCap) (hy : y ∈ Icc 0 assetCap)
+    (hx : x ∈ Icc assetFloor assetCap) (hy : y ∈ Icc assetFloor assetCap)
     (hxy : x ≤ y) (z : Z) :
     P.u (P.consumption (x, z) (P.policy (x, z)) + (1 + P.interest) * (y - x))
         - P.u (P.consumption (x, z) (P.policy (x, z)))
@@ -380,7 +390,7 @@ theorem valueFunction_sub_ge (hpc : P.PositiveConsumption) {x y : ℝ}
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- The continuation rises with saving. -/
 theorem cont_le_of_le (hpc : P.PositiveConsumption) (z : Z) {x y : ℝ}
-    (hx : x ∈ Icc 0 assetCap) (hy : y ∈ Icc 0 assetCap)
+    (hx : x ∈ Icc assetFloor assetCap) (hy : y ∈ Icc assetFloor assetCap)
     (hxy : x ≤ y) : P.cont z x ≤ P.cont z y := by
   simp only [cont]
   refine Finset.sum_le_sum fun z' _ => ?_
@@ -389,12 +399,14 @@ theorem cont_le_of_le (hpc : P.PositiveConsumption) (z : Z) {x y : ℝ}
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **The continuation's gain between two saving levels, in primitives.** -/
-theorem log_cont_sub_ge_gen (hpc : P.PositiveConsumption) (hu : P.u = Real.log) (z z₀ : Z)
+theorem log_cont_sub_ge_gen (hfl : assetFloor = 0) (hpc : P.PositiveConsumption)
+    (hu : P.u = Real.log) (z z₀ : Z)
     {x y : ℝ}
-    (hx : x ∈ Icc (0 : ℝ) assetCap) (hy : y ∈ Icc (0 : ℝ) assetCap) (hxy : x ≤ y) :
+    (hx : x ∈ Icc assetFloor assetCap) (hy : y ∈ Icc assetFloor assetCap) (hxy : x ≤ y) :
     P.transitionMatrix z z₀ * Real.log (1 + (1 + P.interest) * (y - x)
         / (P.income z₀ + (1 + P.interest) * x))
       ≤ P.cont z y - P.cont z x := by
+  subst hfl
   have hRh : 0 ≤ (1 + P.interest) * (y - x) :=
     mul_nonneg P.interest_gt_neg_one.le (by linarith)
   have hsum : P.cont z y - P.cont z x = ∑ z' : Z, P.transitionMatrix z z' *
@@ -439,17 +451,20 @@ omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **The continuation's gain from zero, in primitives.** Only the term for income state `z₀` is
 kept; the rest are non-negative. For a LOW income `z₀` the logarithm is large, and that is the
 precautionary motive. -/
-theorem log_cont_sub_ge (hpc : P.PositiveConsumption) (hu : P.u = Real.log) (z z₀ : Z) {h : ℝ}
-    (hh : h ∈ Icc (0 : ℝ) assetCap) :
+theorem log_cont_sub_ge (hfl : assetFloor = 0) (hpc : P.PositiveConsumption)
+    (hu : P.u = Real.log) (z z₀ : Z) {h : ℝ}
+    (hh : h ∈ Icc assetFloor assetCap) :
     P.transitionMatrix z z₀ * Real.log (1 + (1 + P.interest) * h / P.income z₀)
       ≤ P.cont z h - P.cont z 0 := by
-  have h0 : (0 : ℝ) ∈ Icc (0 : ℝ) assetCap := ⟨le_rfl, P.assetCap_nonneg⟩
-  have := P.log_cont_sub_ge_gen hpc hu z z₀ h0 hh hh.1
+  subst hfl
+  have h0 : (0 : ℝ) ∈ Icc (0 : ℝ) assetCap := ⟨le_rfl, P.assetFloor_le_assetCap⟩
+  have := P.log_cont_sub_ge_gen rfl hpc hu z z₀ h0 hh hh.1
   simpa using this
 
 /-- **Aggregate capital is strictly positive, from primitives alone.** Every hypothesis is stated
 in `β`, `r`, the income levels and the transition matrix. -/
-theorem aggregateCapital_pos_of_primitives (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
+theorem aggregateCapital_pos_of_primitives (hfl : assetFloor = 0)
+    (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
     {μ : ProbabilityMeasure P.State} (hμ : P.IsStationary μ) {z₁ z₀ : Z} {p₀ : ℝ} (hp0 : 0 < p₀)
     (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
     {h : ℝ} (hh0 : 0 < h) (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
@@ -457,21 +472,23 @@ theorem aggregateCapital_pos_of_primitives (hpc : P.PositiveConsumption) (hu : P
       < P.discount * (P.transitionMatrix z₁ z₀
           * Real.log (1 + (1 + P.interest) * h / P.income z₀))) :
     0 < P.aggregateCapital μ := by
-  refine P.aggregateCapital_pos hu hμ hp0 hp hh0 hhcap hhinc (lt_of_lt_of_le hgain ?_)
-  exact mul_le_mul_of_nonneg_left (P.log_cont_sub_ge hpc hu z₁ z₀ ⟨hh0.le, hhcap⟩)
+  subst hfl
+  refine P.aggregateCapital_pos rfl hu hμ hp0 hp hh0 hhcap hhinc (lt_of_lt_of_le hgain ?_)
+  exact mul_le_mul_of_nonneg_left (P.log_cont_sub_ge rfl hpc hu z₁ z₀ ⟨hh0.le, hhcap⟩)
     P.discount.coe_nonneg
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **A quantitative lower bound on saving.** A household with enough income saves at least
 `h/2`, not merely something positive — which is what a sign change needs, since the rate at
 which demand falls below supply has to be chosen from a number. -/
-theorem policy_ge_of_cost (hpc : P.PositiveConsumption) (z₁ : Z)
+theorem policy_ge_of_cost (hfl : assetFloor = 0) (hpc : P.PositiveConsumption) (z₁ : Z)
     {h κ : ℝ} (hh0 : 0 < h)
     (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
     (hcost : ∀ R b : ℝ, P.income z₁ ≤ R → 0 ≤ b → b ≤ h → P.u (R - b) - P.u (R - h) ≤ κ)
     (hgain : κ < P.discount * (P.cont z₁ h - P.cont z₁ (h / 2)))
-    {a : ℝ} (ha : a ∈ Icc 0 assetCap) :
+    {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) :
     h / 2 ≤ P.policy (a, z₁) := by
+  subst hfl
   by_contra hcon
   rw [not_le] at hcon
   have hinc0 : 0 < P.income z₁ := lt_trans hh0 hhinc
@@ -498,15 +515,17 @@ theorem policy_ge_of_cost (hpc : P.PositiveConsumption) (z₁ : Z)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- The log instance of `policy_ge_of_cost`. -/
-theorem policy_ge_of_gain (hpc : P.PositiveConsumption) (hu : P.u = Real.log) (z₁ : Z)
+theorem policy_ge_of_gain (hfl : assetFloor = 0) (hpc : P.PositiveConsumption)
+    (hu : P.u = Real.log) (z₁ : Z)
     {h : ℝ} (hh0 : 0 < h)
     (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
     (hgain : Real.log (P.income z₁ / (P.income z₁ - h))
       < P.discount * (P.cont z₁ h - P.cont z₁ (h / 2)))
-    {a : ℝ} (ha : a ∈ Icc 0 assetCap) :
+    {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) :
     h / 2 ≤ P.policy (a, z₁) := by
+  subst hfl
   have hinc0 : 0 < P.income z₁ := lt_trans hh0 hhinc
-  refine P.policy_ge_of_cost hpc z₁ hh0 hhcap hhinc (fun R b hm hb0 hbh => ?_) hgain ha
+  refine P.policy_ge_of_cost rfl hpc z₁ hh0 hhcap hhinc (fun R b hm hb0 hbh => ?_) hgain ha
   rw [hu]
   have hratio : (R - b) / (R - h) ≤ P.income z₁ / (P.income z₁ - h) := by
     rw [div_le_div_iff₀ (by linarith) (by linarith)]

@@ -53,8 +53,8 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ}
-variable (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ}
+variable (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- The slack in the "save nothing" comparison: twice the size of the value function, discounted. -/
 noncomputable def deviationGap : ℝ := 2 * P.discount * ‖P.toExtended.valueFunction‖
@@ -68,17 +68,20 @@ theorem deviationGap_nonneg : 0 ≤ P.deviationGap := by
 /-- **The optimum beats saving nothing, so utility cannot fall far short of the utility of
 eating everything.** This holds for any utility function; it is the log case that turns it into
 a linear bound. -/
-theorem utility_resources_sub_le {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
-    P.u (P.resources (a, z)) - P.u (P.consumptionFn z a) ≤ P.deviationGap := by
-  have hmem0 : (0 : ℝ) ∈ P.toExtended.feasible (a, z) := ⟨le_rfl, le_max_left _ _⟩
-  have hc0 : 0 < P.consumption (a, z) 0 := by
-    simpa only [consumption, sub_zero] using P.resources_pos (a, z)
+theorem utility_resources_sub_le {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) (z : Z) :
+    P.u (P.resources (a, z) - assetFloor) - P.u (P.consumptionFn z a) ≤ P.deviationGap := by
+  have hmem0 : assetFloor ∈ P.toExtended.feasible (a, z) := ⟨le_rfl, le_max_left _ _⟩
+  have hc0 : 0 < P.consumption (a, z) assetFloor := by
+    have h1 := P.minConsumption_le_consumption_floor (a, z)
+    have h2 := P.minConsumption_pos
+    simp only [consumption]; linarith
   have hopt := P.objR_le_of_mem ha hmem0 (P.mem_dom_of_pos hc0)
-  simp only [objR, consumption, sub_zero] at hopt
+  simp only [objR, consumption] at hopt
   have hb1 := abs_le.mp (P.abs_cont_le z (P.policy (a, z)))
-  have hb2 := abs_le.mp (P.abs_cont_le z 0)
+  have hb2 := abs_le.mp (P.abs_cont_le z assetFloor)
   have hβ : (0 : ℝ) ≤ P.discount := P.discount.coe_nonneg
-  have hgap : (P.discount : ℝ) * (P.cont z (P.policy (a, z)) - P.cont z 0) ≤ P.deviationGap := by
+  have hgap : (P.discount : ℝ) * (P.cont z (P.policy (a, z)) - P.cont z assetFloor)
+      ≤ P.deviationGap := by
     simp only [deviationGap]
     nlinarith [hb1.2, hb2.1, hβ]
   simp only [consumptionFn, consumption]
@@ -88,16 +91,20 @@ theorem utility_resources_sub_le {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
 a bound that scales with resources rather than being a constant. -/
 theorem log_consumption_linear_lower_bound (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
     {a : ℝ}
-    (ha : a ∈ Icc 0 assetCap) (z : Z) :
-    Real.exp (-P.deviationGap) * P.resources (a, z) ≤ P.consumptionFn z a := by
-  have hm : 0 < P.resources (a, z) := P.resources_pos (a, z)
+    (ha : a ∈ Icc assetFloor assetCap) (z : Z) :
+    Real.exp (-P.deviationGap) * (P.resources (a, z) - assetFloor) ≤ P.consumptionFn z a := by
+  have hm : 0 < P.resources (a, z) - assetFloor := by
+    have h1 := P.minConsumption_le_consumption_floor (a, z)
+    have h2 := P.minConsumption_pos
+    linarith
   have hc : 0 < P.consumptionFn z a := P.consumptionFn_pos hpc ha z
   have hkey := P.utility_resources_sub_le ha z
   rw [hu] at hkey
-  have hdiv : Real.log (P.resources (a, z) / P.consumptionFn z a) ≤ P.deviationGap := by
+  have hdiv : Real.log ((P.resources (a, z) - assetFloor) / P.consumptionFn z a)
+      ≤ P.deviationGap := by
     rw [Real.log_div hm.ne' hc.ne']
     exact hkey
-  have hle : P.resources (a, z) / P.consumptionFn z a ≤ Real.exp P.deviationGap :=
+  have hle : (P.resources (a, z) - assetFloor) / P.consumptionFn z a ≤ Real.exp P.deviationGap :=
     (Real.log_le_iff_le_exp (by positivity)).mp hdiv
   rw [div_le_iff₀ hc] at hle
   rw [Real.exp_neg]
@@ -113,7 +120,7 @@ ask only for `β (1 + r) < 1`. -/
 theorem exists_natural_asset_bound_log (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
     (z : Z)
     (hr : (1 - Real.exp (-P.deviationGap)) * (1 + P.interest) < 1) :
-    ∃ ā : ℝ, ∀ a ∈ Icc (0 : ℝ) assetCap, ā < a → P.policy (a, z) < a :=
+    ∃ ā : ℝ, ∀ a ∈ Icc assetFloor assetCap, ā < a → P.policy (a, z) < a :=
   P.exists_decline_of_consumption_lower_bound hr
     fun _ ha => P.log_consumption_linear_lower_bound hpc hu ha z
 
@@ -150,13 +157,19 @@ theorem log_sub_log_ge {c d : ℝ} (hc : 0 < c) (hd : 0 ≤ d) :
   rw [he] at h
   linarith
 
+/-- The arithmetic behind `b ≤ 2 G c`, isolated so the search stays small. -/
+private theorem two_gap_cancel {B G c θ : ℝ} (hθkey : θ * (1 + G) - G = 1 / 2)
+    (hcancel : θ * B ≤ G * (c + (1 - θ) * B)) : B ≤ 2 * G * c := by
+  have h : B * (θ * (1 + G) - G) = B * (1 / 2) := by rw [hθkey]
+  linarith [hcancel, h]
+
 /-- **A polynomial linear lower bound on consumption.** Sharper than
 `log_consumption_linear_lower_bound` whenever the value function is large, and proved from a
 deviation to `θ` times the optimal saving rather than to zero. -/
 theorem log_consumption_linear_lower_bound' (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
     {a : ℝ}
-    (ha : a ∈ Icc 0 assetCap) (z : Z) :
-    P.resources (a, z) / (1 + 2 * P.deviationGap) ≤ P.consumptionFn z a := by
+    (ha : a ∈ Icc assetFloor assetCap) (z : Z) :
+    (P.resources (a, z) - assetFloor) / (1 + 2 * P.deviationGap) ≤ P.consumptionFn z a := by
   have hres0 : P.resources (a, z) = P.consumptionFn z a + P.policy (a, z) := by
     simp only [consumptionFn, consumption]; ring
   have hc0 : 0 < P.consumptionFn z a := P.consumptionFn_pos hpc ha z
@@ -166,64 +179,74 @@ theorem log_consumption_linear_lower_bound' (hpc : P.PositiveConsumption) (hu : 
   set c : ℝ := P.consumptionFn z a with hcdef
   have hc : 0 < c := hc0
   have hres : P.resources (a, z) = c + b := hres0
-  have hb2 : b ≤ 2 * G * c := by
+  have hb2 : b - assetFloor ≤ 2 * G * c := by
     rcases eq_or_lt_of_le (P.policy_mem_region (a, z)).1 with hzero | hbpos
     · rw [← hbdef] at hzero
-      rw [← hzero]
-      positivity
+      rw [← hzero, sub_self]
+      exact mul_nonneg (by linarith) hc.le
     rw [← hbdef] at hbpos
+    have hbf : (0 : ℝ) < b - assetFloor := by linarith
     set θ : ℝ := (G + 1 / 2) / (1 + G) with hθdef
     have hden : (0 : ℝ) < 1 + G := by linarith
     have hθ0 : 0 < θ := by rw [hθdef]; positivity
     have hθ1 : θ < 1 := by rw [hθdef, div_lt_one hden]; linarith
     have h1θ : (0 : ℝ) < 1 - θ := by linarith
     have hθkey : θ * (1 + G) - G = 1 / 2 := by rw [hθdef]; field_simp; ring
-    have hbreg : b ∈ Icc (0 : ℝ) assetCap := P.policy_mem_region _
-    have hmem0 : (0 : ℝ) ∈ Icc (0 : ℝ) assetCap := ⟨le_rfl, P.assetCap_nonneg⟩
-    have hθb0 : 0 < θ * b := mul_pos hθ0 hbpos
-    have hθbb : θ * b < b := by nlinarith
-    have hfeas : θ * b ∈ P.toExtended.feasible (a, z) := by
+    have hbreg : b ∈ Icc assetFloor assetCap := P.policy_mem_region _
+    have hmem0 : assetFloor ∈ Icc assetFloor assetCap := ⟨le_rfl, P.assetFloor_le_assetCap⟩
+    -- deviate from `b` a fraction `1-θ` of the way back to the borrowing limit
+    set d : ℝ := assetFloor + θ * (b - assetFloor) with hddef
+    have hθb0 : assetFloor < d := by rw [hddef]; nlinarith
+    have hθbb : d < b := by rw [hddef]; nlinarith
+    have hfeas : d ∈ P.toExtended.feasible (a, z) := by
       rw [P.feasible_eq]
-      exact ⟨hθb0.le, by linarith [(P.policy_mem (a, z)).2]⟩
-    have hcons : P.consumption (a, z) (θ * b) = c + (1 - θ) * b := by
-      simp only [consumption]
+      exact ⟨by linarith, by linarith [(P.policy_mem (a, z)).2]⟩
+    have hcons : P.consumption (a, z) d = c + (1 - θ) * (b - assetFloor) := by
+      simp only [consumption, hddef]
       rw [hres]
       ring
-    have hdpos : (0 : ℝ) ≤ (1 - θ) * b := by positivity
-    have hcpos : 0 < P.consumption (a, z) (θ * b) := by rw [hcons]; linarith
+    have hdpos : (0 : ℝ) ≤ (1 - θ) * (b - assetFloor) := mul_nonneg h1θ.le hbf.le
+    have hcpos : 0 < P.consumption (a, z) d := by rw [hcons]; linarith
     have hopt := P.objR_le_of_mem ha hfeas (P.mem_dom_of_pos hcpos)
     simp only [objR, hcons, hu] at hopt
     rw [show P.consumption (a, z) (P.policy (a, z)) = c from rfl,
       show P.policy (a, z) = b from rfl] at hopt
     -- concavity bounds the continuation loss
     have hslope := (P.concaveOn_cont z).slope_anti_adjacent hmem0 hbreg hθb0 hθbb
-    have hb1 := abs_le.mp (P.abs_cont_le z (θ * b))
-    have hb0 := abs_le.mp (P.abs_cont_le z 0)
+    have hb1 := abs_le.mp (P.abs_cont_le z d)
+    have hb0 := abs_le.mp (P.abs_cont_le z assetFloor)
     have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
-    have hloss : P.cont z b - P.cont z (θ * b)
+    have hd1 : d - assetFloor = θ * (b - assetFloor) := by rw [hddef]; ring
+    have hd2 : b - d = (1 - θ) * (b - assetFloor) := by rw [hddef]; ring
+    have hloss : P.cont z b - P.cont z d
         ≤ 2 * ‖P.toExtended.valueFunction‖ * (1 - θ) / θ := by
       rw [div_le_div_iff₀ (by linarith) (by linarith)] at hslope
+      rw [hd1, hd2] at hslope
       rw [le_div_iff₀ hθ0]
-      nlinarith [hslope, hb1.2, hb0.1, hθb0, hbpos]
+      have hkey : (P.cont z b - P.cont z d) * θ * (b - assetFloor)
+          ≤ 2 * ‖P.toExtended.valueFunction‖ * (1 - θ) * (b - assetFloor) := by
+        nlinarith [hslope, hb1.2, hb0.1, hbf, h1θ]
+      exact le_of_mul_le_mul_right hkey hbf
     have heq : (P.discount : ℝ) * (2 * ‖P.toExtended.valueFunction‖ * (1 - θ) / θ)
         = G * (1 - θ) / θ := by
       rw [hGdef, IncomeFluctuation.deviationGap]; ring
-    have hβloss : (P.discount : ℝ) * (P.cont z b - P.cont z (θ * b)) ≤ G * (1 - θ) / θ := by
+    have hβloss : (P.discount : ℝ) * (P.cont z b - P.cont z d) ≤ G * (1 - θ) / θ := by
       have hmul := mul_le_mul_of_nonneg_left hloss hβ
       linarith [hmul, heq.le, heq.ge]
     -- the utility gain
     have hgain := log_sub_log_ge hc hdpos
-    have hdist : (P.discount : ℝ) * (P.cont z b - P.cont z (θ * b))
-        = (P.discount : ℝ) * P.cont z b - (P.discount : ℝ) * P.cont z (θ * b) := by ring
-    have hchain : (1 - θ) * b / (c + (1 - θ) * b) ≤ G * (1 - θ) / θ := by
+    have hdist : (P.discount : ℝ) * (P.cont z b - P.cont z d)
+        = (P.discount : ℝ) * P.cont z b - (P.discount : ℝ) * P.cont z d := by ring
+    have hchain : (1 - θ) * (b - assetFloor) / (c + (1 - θ) * (b - assetFloor))
+        ≤ G * (1 - θ) / θ := by
       linarith [hopt, hβloss, hgain, hdist.le, hdist.ge]
     rw [div_le_div_iff₀ (by linarith) hθ0] at hchain
-    have hcancel : θ * b ≤ G * (c + (1 - θ) * b) := by
+    have hcancel : θ * (b - assetFloor) ≤ G * (c + (1 - θ) * (b - assetFloor)) := by
       refine le_of_mul_le_mul_left ?_ h1θ
       nlinarith [hchain]
-    nlinarith [hcancel, hθkey, hc, hbpos, hG]
+    exact two_gap_cancel hθkey hcancel
   rw [hres, div_le_iff₀ (by linarith)]
-  nlinarith [hb2, hc]
+  linarith [hb2]
 
 /-! ### The other half of exhaustion: the corner, for log
 
@@ -259,20 +282,20 @@ theorem log_marginal_bound {R : ℝ} (hR : 0 < R) {c d : ℝ} (hd : 0 < d) (hdc 
 
 /-- The slope bound of `log` at the income floor, in closed form. -/
 theorem log_slopeBoundU (hu : P.u = Real.log) :
-    P.slopeBoundU = 2 * Real.log 2 / P.minIncome := by
-  have hm := P.minIncome_pos
+    P.slopeBoundU = 2 * Real.log 2 / P.minConsumption := by
+  have hm := P.minConsumption_pos
   simp only [slopeBoundU, slopeBound, hu]
-  rw [← Real.log_div hm.ne' (by positivity), show P.minIncome / (P.minIncome / 2) = 2 by
+  rw [← Real.log_div hm.ne' (by positivity), show P.minConsumption / (P.minConsumption / 2) = 2 by
     field_simp]
   field_simp
 
 /-- The Lipschitz constant the operator's own estimate is a fixed point of. -/
 noncomputable def logLipschitz : ℝ :=
-  2 * Real.log 2 / P.minIncome * (1 + P.interest) / (1 - P.discount * (1 + P.interest))
+  2 * Real.log 2 / P.minConsumption * (1 + P.interest) / (1 - P.discount * (1 + P.interest))
 
 theorem logLipschitz_nonneg (hβR : P.discount * (1 + P.interest) < 1) :
     0 ≤ P.logLipschitz := by
-  have hm := P.minIncome_pos
+  have hm := P.minConsumption_pos
   have hr := P.interest_gt_neg_one
   have hlog : (0 : ℝ) ≤ Real.log 2 := Real.log_nonneg (by norm_num)
   refine div_nonneg (by positivity) (by linarith)
@@ -280,7 +303,7 @@ theorem logLipschitz_nonneg (hβR : P.discount * (1 + P.interest) < 1) :
 /-- **The value function is Lipschitz with the explicit log constant.** -/
 theorem log_valueFunction_lipschitz (hu : P.u = Real.log)
     (hβR : P.discount * (1 + P.interest) < 1) :
-    ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
+    ∀ z : Z, ∀ x ∈ Icc assetFloor assetCap, ∀ y ∈ Icc assetFloor assetCap,
       |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)|
         ≤ P.logLipschitz * |x - y| := by
   refine P.valueFunction_lipschitz (P.logLipschitz_nonneg hβR) (le_of_eq ?_)
@@ -292,13 +315,16 @@ theorem log_valueFunction_lipschitz (hu : P.u = Real.log)
 /-- **The borrowing constraint binds where resources are small**, with an explicit threshold in
 the primitives. -/
 theorem log_policy_eq_zero_of_resources (hdom : P.Unbounded) (hu : P.u = Real.log)
-    (hβR : P.discount * (1 + P.interest) < 1) {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap)
-    (hlt : P.discount * P.logLipschitz < 1 / P.resources s) :
-    P.policy s = 0 :=
+    (hβR : P.discount * (1 + P.interest) < 1) {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap)
+    (hlt : P.discount * P.logLipschitz < 1 / (P.resources s - assetFloor)) :
+    P.policy s = assetFloor :=
   P.policy_eq_zero_of_corner_at (P.log_valueFunction_lipschitz hu hβR) hs
     (fun c d hd hdc hc => by
       rw [hu]
-      exact log_marginal_bound (P.resources_pos s) (by rw [hdom] at hd; exact hd) hdc hc)
+      refine log_marginal_bound ?_ (by rw [hdom] at hd; exact hd) hdc hc
+      have h1 := P.minConsumption_le_consumption_floor s
+      have h2 := P.minConsumption_pos
+      linarith)
     hlt
 
 

@@ -114,7 +114,9 @@ namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable [MeasurableSpace Z] [BorelSpace Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+-- Stated at a zero borrowing limit: the quantitative saving bounds and Light's rescaling
+-- that these results rest on are proved there.
+variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
 
 /-- **A quantitative lower bound on capital supply.** Households in income state `z₁` save at
 least `ε`, the stationary distribution puts at least `p₀` of its mass there, and capital is mean
@@ -156,11 +158,11 @@ theorem le_aggregateCapital_of_gain (hpc : P.PositiveConsumption) (hu : P.u = Re
           / (P.income z₀ + (1 + P.interest) * (h / 2))))) :
     h / 2 * p₀ ≤ P.aggregateCapital μ := by
   refine P.le_aggregateCapital hμ (by linarith) hp fun a ha => ?_
-  refine P.policy_ge_of_gain hpc hu z₁ hh0 hhcap hhinc ?_ ha
+  refine P.policy_ge_of_gain rfl hpc hu z₁ hh0 hhcap hhinc ?_ ha
   refine lt_of_lt_of_le hgain (mul_le_mul_of_nonneg_left ?_ P.discount.coe_nonneg)
   have hhalf : h / 2 ∈ Icc (0 : ℝ) assetCap := ⟨by linarith, by linarith⟩
   have hfull : h ∈ Icc (0 : ℝ) assetCap := ⟨hh0.le, hhcap⟩
-  have hgen := P.log_cont_sub_ge_gen hpc hu z₁ z₀ hhalf hfull (by linarith)
+  have hgen := P.log_cont_sub_ge_gen rfl hpc hu z₁ z₀ hhalf hfull (by linarith)
   rw [show h - h / 2 = h / 2 from by ring] at hgen
   exact hgen
 
@@ -180,7 +182,7 @@ The firm is chosen last, by `exists_firm_of_bounds`, from the supply floor `m` a
 -/
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
-theorem withRate_congr {a b : ℝ} (hab : a = b) (h₁ : 0 < 1 + a) (h₂ : 0 < 1 + b) :
+theorem withRate_congr {a b : ℝ} (hab : a = b) (h₁ : P.RateOK a) (h₂ : P.RateOK b) :
     P.withRate a h₁ = P.withRate b h₂ := by
   subst hab; rfl
 
@@ -192,27 +194,28 @@ The floor is needed only at `rhi`, which matters: `gain_term_mono` says the gain
 easier at higher rates, so the floor may be taken at the best rate rather than the worst. -/
 theorem exists_equilibrium_of_uniqueness_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
     (hlt : rlo < rhi)
-    (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r,
+    (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r,
       ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ)
     {m : ℝ} (hm : 0 < m)
-    (hfloor : ∀ hrhi : 0 < 1 + rhi, ∀ μ : ProbabilityMeasure P.State,
+    (hfloor : ∀ hrhi : P.RateOK rhi, ∀ μ : ProbabilityMeasure P.State,
       (P.withRate rhi hrhi).IsStationary μ → m ≤ P.aggregateCapital μ) :
     ∃ A δ : ℝ, 0 < A ∧ 0 < rlo + δ ∧ ∃ r ∈ Icc rlo rhi,
       IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) (capitalDemand A δ) r := by
   classical
   have hle : rlo ≤ rhi := hlt.le
   have hclamp : ∀ r : ℝ, clampRate rlo rhi r ∈ Icc rlo rhi := clampRate_mem hle
-  have hpos : ∀ r : ℝ, 0 < 1 + clampRate rlo rhi r := one_add_clampRate_pos hrlo hle
+  have hpos : ∀ r : ℝ, P.RateOK (clampRate rlo rhi r) :=
+    fun r => rateOK_of_floor_zero (one_add_clampRate_pos hrlo hle r)
   have hE : ∀ r : ℝ, ∃! μ : ProbabilityMeasure P.State,
       (P.withRate (clampRate rlo rhi r) (hpos r)).IsStationary μ :=
     fun r => huniq _ (hclamp r) (hpos r)
   set ν : ℝ → ProbabilityMeasure P.State := fun r => (hE r).choose with hνdef
-  have hν : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r, (P.withRate r hrr).IsStationary (ν r) := by
+  have hν : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, (P.withRate r hrr).IsStationary (ν r) := by
     intro r hr hrr
     have hc : clampRate rlo rhi r = r := clampRate_eq hr
     rw [← P.withRate_congr hc (hpos r) hrr]
     exact (hE r).choose_spec.1
-  have hunique : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r, ∀ μ : ProbabilityMeasure P.State,
+  have hunique : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ μ : ProbabilityMeasure P.State,
       (P.withRate r hrr).IsStationary μ → μ = ν r := by
     intro r hr hrr μ hμ
     have hc : clampRate rlo rhi r = r := clampRate_eq hr
@@ -222,7 +225,7 @@ theorem exists_equilibrium_of_uniqueness_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1
   -- the two bounds on capital supply
   have hlo' : rlo ∈ Icc rlo rhi := ⟨le_rfl, hle⟩
   have hhi' : rhi ∈ Icc rlo rhi := ⟨hle, le_rfl⟩
-  have hrhi : 0 < 1 + rhi := by linarith
+  have hrhi : P.RateOK rhi := rateOK_of_floor_zero (by linarith)
   have hub : P.aggregateCapital (ν rlo) ≤ assetCap := P.aggregateCapital_le _
   have hlbhi : m ≤ P.aggregateCapital (ν rhi) := hfloor hrhi _ (hν rhi hhi' hrhi)
   have hmM : m ≤ assetCap := le_trans hlbhi (P.aggregateCapital_le _)
@@ -310,8 +313,8 @@ theorem gain_term_mono {y₀ t : ℝ} (hy₀ : 0 < y₀) (ht : 0 < t) {s₀ s₁
 supply. Both ends of the sign change are now theorems; what is assumed is a positive floor under
 capital supply, uniform in the rate. -/
 theorem exists_equilibrium_of_bounds {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z]
-    [DiscreteTopology Z] [MeasurableSpace Z] [BorelSpace Z] {assetCap : ℝ}
-    {Pf : ℝ → IncomeFluctuation Z assetCap} {S : ℝ → ℝ} (δ : ℝ) {m M : ℝ} (hm : 0 < m)
+    [DiscreteTopology Z] [MeasurableSpace Z] [BorelSpace Z] {assetFloor assetCap : ℝ}
+    {Pf : ℝ → IncomeFluctuation Z assetFloor assetCap} {S : ℝ → ℝ} (δ : ℝ) {m M : ℝ} (hm : 0 < m)
     (hlb : ∀ r, m ≤ S r) (hub : ∀ r, S r ≤ M)
     (hS : ∀ r, ∃ μ : ProbabilityMeasure (Pf r).State,
       (Pf r).IsStationary μ ∧ (Pf r).aggregateCapital μ = S r)

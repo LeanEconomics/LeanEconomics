@@ -31,29 +31,31 @@ namespace LeanEconomics
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- The same household problem at a different interest rate. -/
-def withRate (r : ℝ) (hr : 0 < 1 + r) : IncomeFluctuation Z assetCap :=
-  { P with interest := r, interest_gt_neg_one := hr }
+def withRate (r : ℝ) (hr : P.RateOK r) : IncomeFluctuation Z assetFloor assetCap :=
+  { P with interest := r, interest_gt_neg_one := hr.1, minConsumption_le_floor := hr.2 }
 
-@[simp] theorem withRate_interest (r : ℝ) (hr : 0 < 1 + r) :
+@[simp] theorem withRate_interest (r : ℝ) (hr : P.RateOK r) :
     (P.withRate r hr).interest = r := rfl
-@[simp] theorem withRate_income (r : ℝ) (hr : 0 < 1 + r) :
+@[simp] theorem withRate_income (r : ℝ) (hr : P.RateOK r) :
     (P.withRate r hr).income = P.income := rfl
-@[simp] theorem withRate_maxIncome (r : ℝ) (hr : 0 < 1 + r) :
+@[simp] theorem withRate_maxIncome (r : ℝ) (hr : P.RateOK r) :
     (P.withRate r hr).maxIncome = P.maxIncome := rfl
-@[simp] theorem withRate_minIncome (r : ℝ) (hr : 0 < 1 + r) :
+@[simp] theorem withRate_minIncome (r : ℝ) (hr : P.RateOK r) :
     (P.withRate r hr).minIncome = P.minIncome := rfl
-@[simp] theorem withRate_u (r : ℝ) (hr : 0 < 1 + r) :
+@[simp] theorem withRate_minConsumption (r : ℝ) (hr : P.RateOK r) :
+    (P.withRate r hr).minConsumption = P.minConsumption := rfl
+@[simp] theorem withRate_u (r : ℝ) (hr : P.RateOK r) :
     (P.withRate r hr).u = P.u := rfl
-@[simp] theorem withRate_discount (r : ℝ) (hr : 0 < 1 + r) :
+@[simp] theorem withRate_discount (r : ℝ) (hr : P.RateOK r) :
     (P.withRate r hr).discount = P.discount := rfl
-@[simp] theorem withRate_transitionMatrix (r : ℝ) (hr : 0 < 1 + r) :
+@[simp] theorem withRate_transitionMatrix (r : ℝ) (hr : P.RateOK r) :
     (P.withRate r hr).transitionMatrix = P.transitionMatrix := rfl
-@[simp] theorem withRate_region (r : ℝ) (hr : 0 < 1 + r) :
+@[simp] theorem withRate_region (r : ℝ) (hr : P.RateOK r) :
     (P.withRate r hr).region = P.region := rfl
-@[simp] theorem withRate_loBound (r : ℝ) (hr : 0 < 1 + r) (v : (ℝ × Z) →ᵇ ℝ) :
+@[simp] theorem withRate_loBound (r : ℝ) (hr : P.RateOK r) (v : (ℝ × Z) →ᵇ ℝ) :
     (P.withRate r hr).toExtended.loBound v = P.toExtended.loBound v := rfl
 
 /-- **From argument gaps to an objective comparison.**
@@ -62,7 +64,7 @@ The reward is real at both actions because consumption is positive at both -- wh
 the cutoff delivers -- so the extended-real objective collapses to a real one and the
 comparison is ordinary arithmetic. Keeping the two gaps as hypotheses separates the analytic
 work from the arithmetic. -/
-theorem objectiveE_le_of_gaps (v : (ℝ × Z) →ᵇ ℝ) {r r' : ℝ} (hr : 0 < 1 + r) (hr' : 0 < 1 + r')
+theorem objectiveE_le_of_gaps (v : (ℝ × Z) →ᵇ ℝ) {r r' : ℝ} (hr : P.RateOK r) (hr' : P.RateOK r')
     {s : ℝ × Z} (hs : s ∈ P.region) {a a' : ℝ}
     (ha : a ∈ (P.withRate r hr).toExtended.feasible s)
     (ha' : a' ∈ (P.withRate r' hr').toExtended.feasible s)
@@ -108,27 +110,22 @@ Actions below the cutoff need no comparison at all: they are already worth less 
 theorem exists_rate_modulus (hd : P.Unbounded) (v : (ℝ × Z) →ᵇ ℝ) {rlo rhi : ℝ}
     (hrlo : 0 < 1 + rlo)
     {ε : ℝ} (hε : 0 < ε) :
-    ∃ η > 0, ∀ (r r' : ℝ) (hr : 0 < 1 + r) (hr' : 0 < 1 + r'),
+    ∃ η > 0, ∀ (r r' : ℝ) (hr : P.RateOK r) (hr' : P.RateOK r'),
       rlo ≤ r → r ≤ rhi → rlo ≤ r' → r' ≤ rhi → |r - r'| < η →
       ∀ s ∈ P.region,
         (P.withRate r hr).toExtended.bellmanFn v s
           ≤ (P.withRate r' hr').toExtended.bellmanFn v s + ε := by
   classical
-  have hcap := P.assetCap_nonneg
+  have hcap := P.assetFloor_le_assetCap
   have hmaxI : 0 ≤ P.maxIncome := le_trans P.minIncome_pos.le P.minIncome_le_maxIncome
   obtain ⟨δ, hδ, hδspec⟩ := P.exists_cutoff hd v
-  set K₁ : ℝ := assetCap / (1 + rlo) + 1 with hK₁def
-  set K₂ : ℝ := (P.maxIncome + assetCap) / (1 + rlo) + assetCap + assetCap / (1 + rlo) + 1
-    with hK₂def
-  have hK₁ : 1 ≤ K₁ := by rw [hK₁def]; have : 0 ≤ assetCap / (1 + rlo) := by positivity
-                          linarith
-  have hK₂ : 1 ≤ K₂ := by
-    rw [hK₂def]
-    have h1 : 0 ≤ (P.maxIncome + assetCap) / (1 + rlo) := by positivity
-    have h2 : 0 ≤ assetCap / (1 + rlo) := by positivity
-    linarith
+  have hB : 0 ≤ P.stateBoundCross rlo := P.stateBoundCross_nonneg hrlo
+  set K₁ : ℝ := P.stateBoundCross rlo + 1 with hK₁def
+  set K₂ : ℝ := 2 * P.stateBoundCross rlo + 1 with hK₂def
+  have hK₁ : 1 ≤ K₁ := by rw [hK₁def]; linarith
+  have hK₂ : 1 ≤ K₂ := by rw [hK₂def]; linarith
   obtain ⟨η₁, hη₁, hmu⟩ :=
-    P.exists_modulus_u (lo := δ / 2) (hi := P.maxIncome + (1 + rhi) * assetCap)
+    P.exists_modulus_u (lo := δ / 2) (hi := P.maxIncome + (1 + rhi) * assetCap - assetFloor)
       (by linarith) (half_pos hε)
   obtain ⟨η₂, hη₂, hmv⟩ := exists_modulus_v (assetCap := assetCap) v (half_pos hε)
   refine ⟨min (min (η₂ / K₁) (η₁ / K₂)) (δ / (2 * K₂)), by positivity, ?_⟩
@@ -143,20 +140,24 @@ theorem exists_rate_modulus (hd : P.Unbounded) (v : (ℝ × Z) →ᵇ ℝ) {rlo 
     have hafe := ha
     rw [A.feasible_eq_image] at hafe
     obtain ⟨θ, hθ, rfl⟩ := hafe
-    set a' : ℝ := θ * B.maxSaving s with ha'def
+    set a' : ℝ := (assetFloor + θ * B.savingRoom s) with ha'def
     have ha' : a' ∈ B.toExtended.feasible s := by rw [B.feasible_eq_image]; exact ⟨θ, hθ, rfl⟩
     -- consumption at the first rate is bounded below by the cutoff
-    have hcA : δ ≤ A.consumption s (θ * A.maxSaving s) :=
+    have hcA : δ ≤ A.consumption s ((assetFloor + θ * A.savingRoom s)) :=
       A.le_consumption_of_cutoff v hδspec hs ha hcut
     -- the two consumptions are close, so the second is positive too
-    have hgapc : |A.consumption s (θ * A.maxSaving s) - B.consumption s a'| ≤ |r - r'| * K₂ := by
+    have hgapc : |A.consumption s ((assetFloor + θ * A.savingRoom s)) - B.consumption s a'|
+        ≤ |r - r'| * K₂ := by
       have hclamp := abs_clamped_consumption_sub_le (P := A) (Q := B) rfl rfl hrlo hlo hlo' hθ s
-      have hA' : min A.maxConsumption (A.consumption s (θ * A.maxSaving s))
-          = A.consumption s (θ * A.maxSaving s) :=
-        min_eq_right (A.consumption_le_maxConsumption hs (mul_nonneg hθ.1 (A.maxSaving_nonneg s)))
+      have hA' : min A.maxConsumption (A.consumption s ((assetFloor + θ * A.savingRoom s)))
+          = A.consumption s ((assetFloor + θ * A.savingRoom s)) :=
+        min_eq_right (A.consumption_le_maxConsumption hs
+          (le_add_of_nonneg_right (mul_nonneg hθ.1 (A.savingRoom_nonneg s))))
       have hB' : min B.maxConsumption (B.consumption s a') = B.consumption s a' :=
-        min_eq_right (B.consumption_le_maxConsumption hs (mul_nonneg hθ.1 (B.maxSaving_nonneg s)))
-      rw [hA', hB', show A.maxIncome = P.maxIncome from rfl] at hclamp
+        min_eq_right (B.consumption_le_maxConsumption hs
+          (le_add_of_nonneg_right (mul_nonneg hθ.1 (B.savingRoom_nonneg s))))
+      rw [hA', hB'] at hclamp
+      rw [show A.stateBoundCross rlo = P.stateBoundCross rlo from rfl] at hclamp
       refine le_trans hclamp ?_
       have hint : |A.interest - B.interest| = |r - r'| := rfl
       rw [hint]
@@ -170,49 +171,57 @@ theorem exists_rate_modulus (hd : P.Unbounded) (v : (ℝ × Z) →ᵇ ℝ) {rlo 
     have hcB : δ / 2 ≤ B.consumption s a' := by
       rw [abs_le] at hgapc; linarith [hgapc.1, hgapc.2]
     -- utility moves little
-    have hupper : ∀ {X : IncomeFluctuation Z assetCap} {b : ℝ},
+    have hupper : ∀ {X : IncomeFluctuation Z assetFloor assetCap} {b : ℝ},
         X.consumption s b ≤ X.maxConsumption → X.maxIncome = P.maxIncome →
-        X.interest ≤ rhi → X.consumption s b ≤ P.maxIncome + (1 + rhi) * assetCap := by
+        X.interest ≤ rhi →
+        X.consumption s b ≤ P.maxIncome + (1 + rhi) * assetCap - assetFloor := by
       intro X b hb hmi hint
-      have : X.maxConsumption = X.maxIncome + (1 + X.interest) * assetCap := rfl
+      have : X.maxConsumption = X.maxIncome + (1 + X.interest) * assetCap - assetFloor := rfl
       rw [this, hmi] at hb
-      nlinarith
-    have hgu : |P.u (A.consumption s (θ * A.maxSaving s)) - P.u (B.consumption s a')| < ε / 2 := by
-      have hbA := A.consumption_le_maxConsumption hs (mul_nonneg hθ.1 (A.maxSaving_nonneg s))
-      have hbB := B.consumption_le_maxConsumption hs (mul_nonneg hθ.1 (B.maxSaving_nonneg s))
+      nlinarith [P.assetCap_nonneg]
+    have hgu : |P.u (A.consumption s ((assetFloor + θ * A.savingRoom s)))
+        - P.u (B.consumption s a')| < ε / 2 := by
+      have hbA := A.consumption_le_maxConsumption hs
+        (le_add_of_nonneg_right (mul_nonneg hθ.1 (A.savingRoom_nonneg s)))
+      have hbB := B.consumption_le_maxConsumption hs
+        (le_add_of_nonneg_right (mul_nonneg hθ.1 (B.savingRoom_nonneg s)))
       refine hmu _ ⟨by linarith, hupper hbA rfl hhi⟩ _ ⟨by linarith, hupper hbB rfl hhi'⟩ ?_
       have h := lt_of_lt_of_le (lt_of_lt_of_le hclose (min_le_left _ _)) (min_le_right _ _)
       rw [lt_div_iff₀ (by linarith)] at h
       rw [abs_le] at hgapc
       rw [abs_lt]; constructor <;> linarith [hgapc.1, hgapc.2]
     -- the continuation value moves little
-    have hgapa : |θ * A.maxSaving s - a'| < η₂ := by
-      have hms := abs_maxSaving_sub_le (P := A) (Q := B) rfl hrlo hlo hlo' s
+    have hgapa : |(assetFloor + θ * A.savingRoom s) - a'| < η₂ := by
+      have hms := abs_maxSaving_sub_le (P := A) (Q := B) rfl rfl hrlo hlo hlo' s
       have hint : |A.interest - B.interest| = |r - r'| := rfl
       rw [hint] at hms
       have h := lt_of_lt_of_le (lt_of_lt_of_le hclose (min_le_left _ _)) (min_le_left _ _)
       rw [lt_div_iff₀ (by linarith)] at h
-      rw [ha'def, ← mul_sub, abs_mul, abs_of_nonneg hθ.1]
-      calc θ * |A.maxSaving s - B.maxSaving s| ≤ 1 * (|r - r'| * (assetCap / (1 + rlo))) := by
+      rw [ha'def, show assetFloor + θ * A.savingRoom s - (assetFloor + θ * B.savingRoom s)
+        = θ * (A.maxSaving s - B.maxSaving s) by simp only [savingRoom]; ring,
+        abs_mul, abs_of_nonneg hθ.1]
+      calc θ * |A.maxSaving s - B.maxSaving s| ≤ 1 * (|r - r'| * P.stateBoundCross rlo) := by
             refine mul_le_mul hθ.2 hms (abs_nonneg _) (by norm_num)
         _ ≤ |r - r'| * K₁ := by rw [one_mul, hK₁def]; nlinarith [abs_nonneg (r - r')]
         _ < η₂ := h
-    have hgv : |A.toExtended.expect v (s, θ * A.maxSaving s)
+    have hgv : |A.toExtended.expect v (s, (assetFloor + θ * A.savingRoom s))
         - B.toExtended.expect v (s, a')| ≤ ε / 2 := by
-      have hmem : ∀ x : ℝ, x ∈ A.toExtended.feasible s → x ∈ Icc (0 : ℝ) assetCap := fun x hx =>
+      have hmem : ∀ x : ℝ, x ∈ A.toExtended.feasible s → x ∈ Icc assetFloor assetCap := fun x hx =>
         A.feasible_subset_region hx
-      have h1 : θ * A.maxSaving s ∈ Icc (0 : ℝ) assetCap := hmem _ ha
-      have h2 : a' ∈ Icc (0 : ℝ) assetCap := B.feasible_subset_region ha'
-      have hpA : ∀ z' : Z, A.toExtended.prob z' (s, θ * A.maxSaving s)
+      have h1 : (assetFloor + θ * A.savingRoom s) ∈ Icc assetFloor assetCap := hmem _ ha
+      have h2 : a' ∈ Icc assetFloor assetCap := B.feasible_subset_region ha'
+      have hpA : ∀ z' : Z, A.toExtended.prob z' (s, (assetFloor + θ * A.savingRoom s))
           = P.transitionMatrix s.2 z' := fun _ => rfl
       have hpB : ∀ z' : Z, B.toExtended.prob z' (s, a') = P.transitionMatrix s.2 z' := fun _ => rfl
-      have htA : ∀ z' : Z, A.toExtended.transition z' (s, θ * A.maxSaving s)
-          = (θ * A.maxSaving s, z') := fun _ => rfl
+      have htA : ∀ z' : Z, A.toExtended.transition z' (s, (assetFloor + θ * A.savingRoom s))
+          = ((assetFloor + θ * A.savingRoom s), z') := fun _ => rfl
       have htB : ∀ z' : Z, B.toExtended.transition z' (s, a') = (a', z') := fun _ => rfl
       simp only [ExtendedStochasticProgram.expect, hpA, hpB, htA, htB, ← Finset.sum_sub_distrib,
         ← mul_sub]
-      calc |∑ z' : Z, P.transitionMatrix s.2 z' * (v (θ * A.maxSaving s, z') - v (a', z'))|
-          ≤ ∑ z' : Z, |P.transitionMatrix s.2 z' * (v (θ * A.maxSaving s, z') - v (a', z'))| :=
+      calc |∑ z' : Z, P.transitionMatrix s.2 z'
+            * (v ((assetFloor + θ * A.savingRoom s), z') - v (a', z'))|
+          ≤ ∑ z' : Z, |P.transitionMatrix s.2 z'
+            * (v ((assetFloor + θ * A.savingRoom s), z') - v (a', z'))| :=
             Finset.abs_sum_le_sum_abs _ _
         _ ≤ ∑ z' : Z, P.transitionMatrix s.2 z' * (ε / 2) := by
             refine Finset.sum_le_sum fun z' _ => ?_
@@ -253,8 +262,8 @@ reference rate makes the continuation value a single fixed function, and continu
 point is continuity. -/
 theorem exists_valueFunction_modulus (hd : P.Unbounded) {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
     {r₀ : ℝ}
-    (hr₀ : 0 < 1 + r₀) (hlo₀ : rlo ≤ r₀) (hhi₀ : r₀ ≤ rhi) {ε : ℝ} (hε : 0 < ε) :
-    ∃ η > 0, ∀ (r : ℝ) (hr : 0 < 1 + r), rlo ≤ r → r ≤ rhi → |r - r₀| < η →
+    (hr₀ : P.RateOK r₀) (hlo₀ : rlo ≤ r₀) (hhi₀ : r₀ ≤ rhi) {ε : ℝ} (hε : 0 < ε) :
+    ∃ η > 0, ∀ (r : ℝ) (hr : P.RateOK r), rlo ≤ r → r ≤ rhi → |r - r₀| < η →
       ∀ s ∈ P.region,
         |(P.withRate r hr).toExtended.valueFunction s
           - (P.withRate r₀ hr₀).toExtended.valueFunction s| ≤ ε := by
@@ -300,7 +309,7 @@ STATES, which is where the policy enters. Combined with uniform continuity of `h
 compact state space, uniform convergence of the policy is exactly what is needed, and
 nothing more. -/
 
-theorem abs_markovFn_sub_le {A B : IncomeFluctuation Z assetCap}
+theorem abs_markovFn_sub_le {A B : IncomeFluctuation Z assetFloor assetCap}
     (hAB : A.transitionMatrix = B.transitionMatrix) (h : A.State →ᵇ ℝ) {ε : ℝ}
     (hclose : ∀ s : A.State, ∀ z' : Z, |h (A.nextState s z') - h (B.nextState s z')| ≤ ε)
     (s : A.State) : |A.markovFn h s - B.markovFn h s| ≤ ε := by

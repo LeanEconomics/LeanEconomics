@@ -45,7 +45,7 @@ open Set Filter Topology MeasureTheory
 namespace LeanEconomics
 
 /-- An impatient household with log utility and 100:1 income dispersion. -/
-noncomputable def dispersed : IncomeFluctuation (Fin 2) 1 where
+noncomputable def dispersed : IncomeFluctuation (Fin 2) 0 1 where
   income z := if z = 0 then 1 / 100 else 1
   transitionMatrix _ _ := 1 / 2
   interest := 0
@@ -59,7 +59,10 @@ noncomputable def dispersed : IncomeFluctuation (Fin 2) 1 where
   transitionMatrix_nonneg _ _ := by norm_num
   transitionMatrix_sum _ := by simp
   interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
   assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
   discount_lt_one := by norm_num
   dom := Ioi 0
   Ioi_subset_dom := subset_rfl
@@ -91,12 +94,15 @@ theorem dispersed_resources {a : ℝ} (ha : 0 ≤ a) (z : Fin 2) :
 
 /-! ### The size of the value function -/
 
+@[simp] theorem dispersed_minConsumption : dispersed.minConsumption = 1 / 100 := by
+  norm_num [IncomeFluctuation.minConsumption, dispersed]
+
 theorem dispersed_norm_le : ‖dispersed.toExtended.valueFunction‖ ≤ 8 / 7 * Real.log 100 := by
   have h := dispersed.toExtended.norm_valueFunction_le
-  have hmin : dispersed.toExtended.rewardMin = dispersed.u dispersed.minIncome := rfl
+  have hmin : dispersed.toExtended.rewardMin = dispersed.u dispersed.minConsumption := rfl
   have hmax : dispersed.toExtended.rewardMax = dispersed.u dispersed.maxConsumption := rfl
   have hdisc : (dispersed.toExtended.discount : ℝ) = (dispersed.discount : ℝ) := rfl
-  rw [hmin, hmax, hdisc, dispersed_maxConsumption, dispersed_u, dispersed_minIncome,
+  rw [hmin, hmax, hdisc, dispersed_maxConsumption, dispersed_u, dispersed_minConsumption,
     dispersed_discount] at h
   have h1 : |Real.log (1 / 100)| = Real.log 100 := by
     rw [show (1 : ℝ) / 100 = (100 : ℝ)⁻¹ by norm_num, Real.log_inv, abs_neg,
@@ -144,9 +150,8 @@ theorem dispersed_decline {a : ℝ} (ha : a ∈ Icc (1 / 30 : ℝ) 1) :
 /-! ### The corner half -/
 
 theorem dispersed_logLipschitz : dispersed.logLipschitz = 1600 * Real.log 2 / 7 := by
-  simp only [IncomeFluctuation.logLipschitz, dispersed_minIncome, dispersed_interest,
-    dispersed_discount]
-  norm_num
+  simp only [IncomeFluctuation.logLipschitz, dispersed_interest, dispersed_discount]
+  norm_num [IncomeFluctuation.minConsumption, dispersed]
   ring
 
 theorem dispersed_corner {a : ℝ} (ha : a ∈ Icc (0 : ℝ) (1 / 30)) :
@@ -174,7 +179,7 @@ theorem dispersed_existsUnique_isStationary :
 /-- **Strictly positive aggregate capital**, at the stationary distribution. -/
 theorem dispersed_aggregateCapital_pos {μ : ProbabilityMeasure dispersed.State}
     (hμ : dispersed.IsStationary μ) : 0 < dispersed.aggregateCapital μ := by
-  refine dispersed.aggregateCapital_pos_of_primitives
+  refine dispersed.aggregateCapital_pos_of_primitives rfl
     (dispersed.positiveConsumption_of_unbounded rfl) dispersed_u hμ
     (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (by norm_num) (fun z => by norm_num)
     (h := 1 / 16) (by norm_num) (by norm_num) (by norm_num) ?_
