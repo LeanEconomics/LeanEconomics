@@ -5,6 +5,7 @@ Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.CRRAConstants
 import LeanEconomics.Distribution.Uniqueness
+import LeanEconomics.Models.CESUniformRate
 
 /-!
 # One CES economy where everything holds at once
@@ -163,6 +164,29 @@ Below `1/128` the borrowing constraint binds in the bad income state. The Lipsch
 on `minIncome ^ (-1/2) = √5000`, where the log constant would run on `1 / minIncome = 5000`; that
 slower growth is why the corner is the condition CES finds easy. -/
 
+/-- The slope bound at the income floor: `4 √5000 (1 - 1/√2)`, which is under `84`. Compare the
+log constant `2 log 2 / minIncome = 10000 log 2`, larger by a factor of about eighty. -/
+theorem cesWitness_crraSlopeBound_le : crraSlopeBound (1 / 2) (1 / 5000) ≤ 84 := by
+  have h2 : Real.sqrt 2 ≤ 1415 / 1000 := sqrt_le_of_sq (by norm_num) (by norm_num)
+  have h2pos : (0 : ℝ) < Real.sqrt 2 := Real.sqrt_pos.mpr (by norm_num)
+  have hinv : (200 : ℝ) / 283 ≤ (Real.sqrt 2)⁻¹ := by
+    rw [inv_eq_one_div, le_div_iff₀ h2pos]
+    nlinarith [h2]
+  have hmpos : (0 : ℝ) < Real.sqrt (1 / 5000) := Real.sqrt_pos.mpr (by norm_num)
+  have hm : (1 : ℝ) / 71 ≤ Real.sqrt (1 / 5000) := by
+    rw [show (1 : ℝ) / 71 = Real.sqrt ((1 / 71) ^ 2) from (Real.sqrt_sq (by norm_num)).symm]
+    exact Real.sqrt_le_sqrt (by norm_num)
+  have hminv : (Real.sqrt (1 / 5000))⁻¹ ≤ 71 := by
+    rw [inv_eq_one_div, div_le_iff₀ hmpos]
+    nlinarith [hm]
+  have hinv1 : (Real.sqrt 2)⁻¹ ≤ 1 := by
+    rw [inv_eq_one_div, div_le_one h2pos]
+    nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 2 by norm_num), h2pos]
+  simp only [crraSlopeBound, show (1 : ℝ) - 1 / 2 = 1 / 2 from by norm_num,
+    rpow_neg_half (show (0:ℝ) ≤ 1 / 5000 by norm_num), ← Real.sqrt_eq_rpow]
+  rw [div_le_iff₀ (by norm_num)]
+  nlinarith [hminv, hinv, hinv1, inv_nonneg.mpr hmpos.le]
+
 theorem cesWitness_crraLipschitz_le : cesWitness.crraLipschitz (1 / 2) ≤ 377152 / 4245 := by
   have h2 : Real.sqrt 2 ≤ 1415 / 1000 := sqrt_le_of_sq (by norm_num) (by norm_num)
   have h2pos : (0 : ℝ) < Real.sqrt 2 := Real.sqrt_pos.mpr (by norm_num)
@@ -269,5 +293,171 @@ theorem cesWitness_unique_stationary_positive_capital :
       cesWitness.IsStationary μ ∧ 0 < cesWitness.aggregateCapital μ := by
   obtain ⟨μ, hμ, huniq⟩ := cesWitness_existsUnique_isStationary
   exact ⟨μ, ⟨hμ, cesWitness_aggregateCapital_pos hμ⟩, fun ν hν => huniq ν hν.1⟩
+
+/-! ### Uniformly over a rate interval
+
+Every condition is monotone in the interest rate, so one check at `r = 1/100` covers `[0, 1/100]`.
+The CES route needs no bound on `‖V‖` along the way: `oscGap` is a formula in the primitives, and
+its only rate dependence is through `maxConsumption`. -/
+
+theorem cesWitness_withRate_positiveConsumption {r : ℝ} (hrr : 0 < 1 + r) :
+    (cesWitness.withRate r hrr).PositiveConsumption :=
+  (cesWitness.withRate r hrr).positiveConsumption_of_bounded_crra (γ := 1 / 2) (by norm_num)
+    (by norm_num) rfl rfl
+
+theorem cesWitness_oscGap_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100)) (hrr : 0 < 1 + r) :
+    (cesWitness.withRate r hrr).oscGap ≤ 9 / 4 := by
+  have hmax : (cesWitness.withRate r hrr).maxConsumption ≤ 1101 / 1000 := by
+    simp only [IncomeFluctuation.maxConsumption, IncomeFluctuation.withRate_maxIncome,
+      IncomeFluctuation.withRate_interest, cesWitness_maxIncome]
+    linarith [hr.2]
+  have h1 : Real.sqrt ((cesWitness.withRate r hrr).maxConsumption) ≤ 1051 / 1000 :=
+    le_trans (Real.sqrt_le_sqrt hmax) (sqrt_le_of_sq (by norm_num) (by norm_num))
+  have h2 : (0 : ℝ) ≤ Real.sqrt (1 / 5000) := Real.sqrt_nonneg _
+  simp only [IncomeFluctuation.oscGap, IncomeFluctuation.withRate_u,
+    IncomeFluctuation.withRate_minIncome, IncomeFluctuation.withRate_discount,
+    cesWitness_u, cesWitness_minIncome, cesWitness_discount, crraUtility_half]
+  rw [div_le_iff₀ (by norm_num)]
+  nlinarith [h1, h2]
+
+theorem cesWitness_decline_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100)) (hrr : 0 < 1 + r)
+    {a : ℝ} (ha : a ∈ Icc (1 / 100 : ℝ) (1 / 10)) :
+    (cesWitness.withRate r hrr).policy (a, 0) < a := by
+  have hrhi : (0 : ℝ) < 1 + 1 / 100 := by norm_num
+  have hmem : a ∈ Icc (0 : ℝ) (1 / 10) := ⟨by linarith [ha.1], ha.2⟩
+  refine cesWitness.crra_policy_lt_self_uniform (γ := 1 / 2) (θ := 39 / 40) (by norm_num)
+    (by norm_num) (by norm_num) (by norm_num) rfl rfl hrr hrhi hr.2 (by linarith [hr.1])
+    (cesWitness_withRate_positiveConsumption hrr) hmem 0 ?_
+  have hosc := cesWitness_oscGap_le_uniform (r := 1 / 100) (by norm_num) hrhi
+  have hosc0 := (cesWitness.withRate (1 / 100) hrhi).oscGap_nonneg
+  have harg : cesWitness.income 0 + (1 + 1 / 100 - 39 / 40) * (1 / 10) = 37 / 10000 := by
+    simp only [cesWitness_income_zero]; norm_num
+  rw [harg, rpow_half]
+  have hs : Real.sqrt (37 / 10000) ≤ 61 / 1000 := sqrt_le_of_sq (by norm_num) (by norm_num)
+  have hs0 : (0 : ℝ) ≤ Real.sqrt (37 / 10000) := Real.sqrt_nonneg _
+  have hcoef : (((cesWitness.withRate (1 / 100) hrhi).discount : ℝ))
+      * (cesWitness.withRate (1 / 100) hrhi).oscGap / (39 / 40) ≤ 15 / 104 := by
+    rw [show (((cesWitness.withRate (1 / 100) hrhi).discount : ℝ)) = 1 / 16 from rfl,
+      div_le_iff₀ (by norm_num)]
+    linarith [hosc]
+  have hcoef0 : (0 : ℝ) ≤ (((cesWitness.withRate (1 / 100) hrhi).discount : ℝ))
+      * (cesWitness.withRate (1 / 100) hrhi).oscGap / (39 / 40) := by
+    rw [show (((cesWitness.withRate (1 / 100) hrhi).discount : ℝ)) = 1 / 16 from rfl]
+    positivity
+  calc (((cesWitness.withRate (1 / 100) hrhi).discount : ℝ))
+        * (cesWitness.withRate (1 / 100) hrhi).oscGap / (39 / 40) * Real.sqrt (37 / 10000)
+      ≤ (15 / 104) * (61 / 1000) := by nlinarith [hcoef, hs, hs0, hcoef0]
+    _ < 1 / 100 := by norm_num
+    _ ≤ a := ha.1
+
+theorem cesWitness_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100)) (hrr : 0 < 1 + r)
+    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) (1 / 100)) :
+    (cesWitness.withRate r hrr).policy (a, 0) = 0 := by
+  have hrhi : (0 : ℝ) < 1 + 1 / 100 := by norm_num
+  have hmem : a ∈ Icc (0 : ℝ) (1 / 10) := ⟨ha.1, by linarith [ha.2]⟩
+  refine cesWitness.crra_policy_eq_zero_uniform (γ := 1 / 2) (by norm_num) (by norm_num)
+    rfl rfl hrr hrhi hr.2 (by norm_num) hmem 0 ?_
+  have hslope := cesWitness_crraSlopeBound_le
+  have hlip : (cesWitness.withRate (1 / 100) hrhi).crraLipschitz (1 / 2) ≤ 96 := by
+    simp only [IncomeFluctuation.crraLipschitz, IncomeFluctuation.withRate_minIncome,
+      IncomeFluctuation.withRate_interest, IncomeFluctuation.withRate_discount,
+      cesWitness_minIncome, cesWitness_discount]
+    rw [div_le_iff₀ (by norm_num)]
+    linarith [hslope]
+  have hres : (cesWitness.withRate (1 / 100) hrhi).resources (a, 0)
+      = 1 / 5000 + (1 + 1 / 100) * a := by
+    simp only [IncomeFluctuation.resources, IncomeFluctuation.withRate_income,
+      IncomeFluctuation.withRate_interest, cesWitness_income_zero, max_eq_right ha.1]
+  have hres0 : (0 : ℝ) < 1 / 5000 + (1 + 1 / 100) * a := by nlinarith [ha.1]
+  rw [hres, rpow_neg_half hres0.le]
+  have hsq : Real.sqrt (1 / 5000 + (1 + 1 / 100) * a) ≤ 1 / 9 :=
+    sqrt_le_of_sq (by norm_num) (by nlinarith [ha.2, ha.1])
+  have hspos : (0 : ℝ) < Real.sqrt (1 / 5000 + (1 + 1 / 100) * a) := Real.sqrt_pos.mpr hres0
+  have hge : (9 : ℝ) ≤ (Real.sqrt (1 / 5000 + (1 + 1 / 100) * a))⁻¹ := by
+    rw [inv_eq_one_div, le_div_iff₀ hspos]
+    nlinarith [hsq]
+  rw [show (((cesWitness.withRate (1 / 100) hrhi).discount : ℝ)) = 1 / 16 from rfl]
+  nlinarith [hlip, hge]
+
+/-- **A unique stationary distribution at every rate in the interval.** -/
+theorem cesWitness_existsUnique_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 100))
+    (hrr : 0 < 1 + r) :
+    ∃! μ : ProbabilityMeasure cesWitness.State,
+      (cesWitness.withRate r hrr).IsStationary μ := by
+  obtain ⟨N, hN⟩ := (cesWitness.withRate r hrr).exists_exhaust_of_decline (z₀ := 0)
+    (a₀ := 1 / 100) (by norm_num) (by norm_num)
+    (fun a ha => cesWitness_corner_uniform hr hrr ha)
+    (fun a ha => cesWitness_decline_uniform hr hrr ha)
+  exact (cesWitness.withRate r hrr).existsUnique_isStationary (z₀ := 0) (N := N)
+    (fun z => by norm_num) hN
+
+/-! ### The supply floor at the top of the interval
+
+At `r = 1/100` every stationary distribution carries at least `1/400000` of capital. The whole
+condition is the integer inequality `40960000 · 2101 < 10201 · 99999`. -/
+
+theorem cesWitness_floor_top (hrhi : 0 < 1 + (1 / 100 : ℝ))
+    (μ : ProbabilityMeasure cesWitness.State)
+    (hμ : (cesWitness.withRate (1 / 100) hrhi).IsStationary μ) :
+    1 / 400000 ≤ cesWitness.aggregateCapital μ := by
+  have hkey := (cesWitness.withRate (1 / 100) hrhi).crra_le_aggregateCapital_of_gain
+    (γ := 1 / 2) (by norm_num) (by norm_num) rfl
+    (cesWitness_withRate_positiveConsumption hrhi) hμ
+    (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (h := 1 / 100000) (by norm_num) (by norm_num)
+    (by norm_num) (fun z => by norm_num) ?_
+  · have heq : (cesWitness.withRate (1 / 100) hrhi).aggregateCapital μ
+        = cesWitness.aggregateCapital μ := rfl
+    rw [heq] at hkey
+    linarith [hkey]
+  · simp only [IncomeFluctuation.withRate_income, IncomeFluctuation.withRate_interest,
+      IncomeFluctuation.withRate_discount, cesWitness_income_zero, cesWitness_income_one,
+      cesWitness_discount]
+    rw [show (cesWitness.withRate (1 / 100) hrhi).transitionMatrix 1 0 = 1 / 2 from rfl,
+      show (1 : ℝ) - 1 / 100000 = 99999 / 100000 from by norm_num,
+      show (1 : ℝ) / 5000 + (1 + 1 / 100) * (1 / 100000) = 2101 / 10000000 from by norm_num,
+      show (1 + (1 : ℝ) / 100) * (1 / 100000 / 2) = 101 / 20000000 from by norm_num,
+      rpow_neg_half (show (0:ℝ) ≤ 99999 / 100000 by norm_num),
+      rpow_neg_half (show (0:ℝ) ≤ 2101 / 10000000 by norm_num)]
+    have hA : (0 : ℝ) < Real.sqrt (99999 / 100000) := Real.sqrt_pos.mpr (by norm_num)
+    have hB : (0 : ℝ) < Real.sqrt (2101 / 10000000) := Real.sqrt_pos.mpr (by norm_num)
+    have hAsq : Real.sqrt (99999 / 100000) ^ 2 = 99999 / 100000 := Real.sq_sqrt (by norm_num)
+    have hBsq : Real.sqrt (2101 / 10000000) ^ 2 = 2101 / 10000000 := Real.sq_sqrt (by norm_num)
+    have hlt : 6400 * Real.sqrt (2101 / 10000000) < 101 * Real.sqrt (99999 / 100000) := by
+      nlinarith [hAsq, hBsq, hA, hB]
+    have hmain : 6400 * (Real.sqrt (99999 / 100000))⁻¹
+        < 101 * (Real.sqrt (2101 / 10000000))⁻¹ := by
+      rw [show (6400 : ℝ) * (Real.sqrt (99999 / 100000))⁻¹
+            = (Real.sqrt (99999 / 100000) / 6400)⁻¹ from by rw [inv_div]; ring,
+        show (101 : ℝ) * (Real.sqrt (2101 / 10000000))⁻¹
+            = (Real.sqrt (2101 / 10000000) / 101)⁻¹ from by rw [inv_div]; ring,
+        inv_lt_inv₀ (by positivity) (by positivity)]
+      linarith [hlt]
+    linarith [hmain]
+
+/-- **An Aiyagari equilibrium with CES utility bounded below.** Supply is unique at every rate in
+`[0, 1/100]` and bounded away from zero at the top, so some firm's demand crosses it. -/
+theorem cesWitness_exists_equilibrium :
+    ∃ A δ : ℝ, 0 < A ∧ 0 < 0 + δ ∧ ∃ r ∈ Icc (0 : ℝ) (1 / 100),
+      IsAiyagariEquilibrium
+        (cesWitness.rateFamily (by norm_num : (0:ℝ) < 1 + 0) (by norm_num : (0:ℝ) ≤ 1 / 100))
+        (capitalDemand A δ) r :=
+  cesWitness.exists_equilibrium_of_uniqueness_and_floor (by norm_num) (by norm_num)
+    (fun r hr hrr => cesWitness_existsUnique_uniform hr hrr) (by norm_num)
+    (fun hrr μ hμ => cesWitness_floor_top hrr μ hμ)
+
+/-- **The same equilibrium in implied-rate form.** -/
+theorem cesWitness_exists_equilibrium_impliedRate :
+    ∃ A δ : ℝ, 0 < A ∧ ∃ r ∈ Icc (0 : ℝ) (1 / 100),
+      ∃ μ : ProbabilityMeasure cesWitness.State,
+        ((cesWitness.rateFamily (by norm_num : (0:ℝ) < 1 + 0)
+          (by norm_num : (0:ℝ) ≤ 1 / 100)) r).IsStationary μ ∧
+        0 < ((cesWitness.rateFamily (by norm_num : (0:ℝ) < 1 + 0)
+          (by norm_num : (0:ℝ) ≤ 1 / 100)) r).aggregateCapital μ ∧
+        impliedRate A δ (((cesWitness.rateFamily (by norm_num : (0:ℝ) < 1 + 0)
+          (by norm_num : (0:ℝ) ≤ 1 / 100)) r).aggregateCapital μ) = r := by
+  obtain ⟨A, δ, hA, hrδ, r, hr, heq⟩ := cesWitness_exists_equilibrium
+  refine ⟨A, δ, hA, r, hr, ?_⟩
+  have hrpos : 0 < r + δ := by linarith [hr.1]
+  exact (isAiyagariEquilibrium_iff_impliedRate hA hrpos).mp heq
 
 end LeanEconomics
