@@ -61,10 +61,14 @@ noncomputable def dispersed : IncomeFluctuation (Fin 2) 1 where
   interest_gt_neg_one := by norm_num
   assetCap_nonneg := by norm_num
   discount_lt_one := by norm_num
-  continuousOn_u := continuousOn_crraUtility 1
-  monotoneOn_u := monotoneOn_crraUtility 1
-  tendsto_atBot_u := tendsto_atBot_crraUtility le_rfl
-  strictConcaveOn_u := strictConcaveOn_crraUtility one_pos
+  dom := Ioi 0
+  Ioi_subset_dom := subset_rfl
+  dom_subset_Ici := Ioi_subset_Ici_self
+  continuousOn_u_dom := continuousOn_crraUtility 1
+  monotoneOn_u_dom := monotoneOn_crraUtility 1
+  strictConcaveOn_u_dom := strictConcaveOn_crraUtility one_pos
+  continuousOn_extendDom :=
+    continuousOn_extendDom_Ioi (continuousOn_crraUtility 1) (tendsto_atBot_crraUtility le_rfl)
 
 @[simp] theorem dispersed_u : dispersed.u = Real.log := crraUtility_one
 @[simp] theorem dispersed_income_zero : dispersed.income 0 = 1 / 100 := rfl
@@ -130,7 +134,8 @@ theorem dispersed_eps_gt : 3 / 13 < Real.exp (-dispersed.deviationGap) := by
 theorem dispersed_decline {a : ℝ} (ha : a ∈ Icc (1 / 30 : ℝ) 1) :
     dispersed.policy (a, 0) < a := by
   have hmem : a ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ha.1], ha.2⟩
-  have hlb := dispersed.log_consumption_linear_lower_bound dispersed_u hmem 0
+  have hlb := dispersed.log_consumption_linear_lower_bound
+    (dispersed.positiveConsumption_of_unbounded rfl) dispersed_u hmem 0
   have heps := dispersed_eps_gt
   refine dispersed.policy_lt_self_of_consumption_lower_bound hmem hlb ?_
   simp only [dispersed_income_zero, dispersed_interest]
@@ -148,7 +153,7 @@ theorem dispersed_corner {a : ℝ} (ha : a ∈ Icc (0 : ℝ) (1 / 30)) :
     dispersed.policy (a, 0) = 0 := by
   have hmem : a ∈ Icc (0 : ℝ) 1 := ⟨ha.1, by linarith [ha.2]⟩
   have hlog2 : Real.log 2 < 21 / 26 := lt_trans Real.log_two_lt_d9 (by norm_num)
-  refine dispersed.log_policy_eq_zero_of_resources dispersed_u (by norm_num) hmem ?_
+  refine dispersed.log_policy_eq_zero_of_resources rfl dispersed_u (by norm_num) hmem ?_
   rw [dispersed_resources ha.1, dispersed_logLipschitz, dispersed_income_zero, dispersed_discount]
   rw [lt_div_iff₀ (by linarith [ha.1])]
   nlinarith [hlog2, ha.1, ha.2]
@@ -169,7 +174,8 @@ theorem dispersed_existsUnique_isStationary :
 /-- **Strictly positive aggregate capital**, at the stationary distribution. -/
 theorem dispersed_aggregateCapital_pos {μ : ProbabilityMeasure dispersed.State}
     (hμ : dispersed.IsStationary μ) : 0 < dispersed.aggregateCapital μ := by
-  refine dispersed.aggregateCapital_pos_of_primitives dispersed_u hμ
+  refine dispersed.aggregateCapital_pos_of_primitives
+    (dispersed.positiveConsumption_of_unbounded rfl) dispersed_u hμ
     (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (by norm_num) (fun z => by norm_num)
     (h := 1 / 16) (by norm_num) (by norm_num) (by norm_num) ?_
   have hkey : Real.log (16 / 15) < 1 / 16 * Real.log (29 / 4) := by

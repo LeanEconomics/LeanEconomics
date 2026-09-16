@@ -53,10 +53,14 @@ noncomputable def precautionary : IncomeFluctuation (Fin 2) 1 where
   interest_gt_neg_one := by norm_num
   assetCap_nonneg := by norm_num
   discount_lt_one := by norm_num
-  continuousOn_u := continuousOn_crraUtility 1
-  monotoneOn_u := monotoneOn_crraUtility 1
-  tendsto_atBot_u := tendsto_atBot_crraUtility le_rfl
-  strictConcaveOn_u := strictConcaveOn_crraUtility one_pos
+  dom := Ioi 0
+  Ioi_subset_dom := subset_rfl
+  dom_subset_Ici := Ioi_subset_Ici_self
+  continuousOn_u_dom := continuousOn_crraUtility 1
+  monotoneOn_u_dom := monotoneOn_crraUtility 1
+  strictConcaveOn_u_dom := strictConcaveOn_crraUtility one_pos
+  continuousOn_extendDom :=
+    continuousOn_extendDom_Ioi (continuousOn_crraUtility 1) (tendsto_atBot_crraUtility le_rfl)
 
 @[simp] theorem precautionary_u : precautionary.u = Real.log := crraUtility_one
 @[simp] theorem precautionary_income_zero : precautionary.income 0 = 1 / 100 := rfl
@@ -81,7 +85,8 @@ distribution. -/
 theorem precautionary_aggregateCapital_pos
     {μ : ProbabilityMeasure precautionary.State} (hμ : precautionary.IsStationary μ) :
     0 < precautionary.aggregateCapital μ := by
-  refine precautionary.aggregateCapital_pos_of_primitives precautionary_u hμ
+  refine precautionary.aggregateCapital_pos_of_primitives
+    (precautionary.positiveConsumption_of_unbounded rfl) precautionary_u hμ
     (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (by norm_num) (fun z => by norm_num)
     (h := 1 / 2) (by norm_num) (by norm_num) (by norm_num) ?_
   have hgain := precautionary_gain

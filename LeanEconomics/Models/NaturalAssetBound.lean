@@ -73,7 +73,7 @@ theorem utility_resources_sub_le {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
   have hmem0 : (0 : ℝ) ∈ P.toExtended.feasible (a, z) := ⟨le_rfl, le_max_left _ _⟩
   have hc0 : 0 < P.consumption (a, z) 0 := by
     simpa only [consumption, sub_zero] using P.resources_pos (a, z)
-  have hopt := P.objR_le_of_mem ha hmem0 hc0
+  have hopt := P.objR_le_of_mem ha hmem0 (P.mem_dom_of_pos hc0)
   simp only [objR, consumption, sub_zero] at hopt
   have hb1 := abs_le.mp (P.abs_cont_le z (P.policy (a, z)))
   have hb2 := abs_le.mp (P.abs_cont_le z 0)
@@ -86,11 +86,12 @@ theorem utility_resources_sub_le {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
 
 /-- **A linear lower bound on consumption, for log utility.** The one place the development gets
 a bound that scales with resources rather than being a constant. -/
-theorem log_consumption_linear_lower_bound (hu : P.u = Real.log) {a : ℝ}
+theorem log_consumption_linear_lower_bound (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
+    {a : ℝ}
     (ha : a ∈ Icc 0 assetCap) (z : Z) :
     Real.exp (-P.deviationGap) * P.resources (a, z) ≤ P.consumptionFn z a := by
   have hm : 0 < P.resources (a, z) := P.resources_pos (a, z)
-  have hc : 0 < P.consumptionFn z a := P.consumptionFn_pos ha z
+  have hc : 0 < P.consumptionFn z a := P.consumptionFn_pos hpc ha z
   have hkey := P.utility_resources_sub_le ha z
   rw [hu] at hkey
   have hdiv : Real.log (P.resources (a, z) / P.consumptionFn z a) ≤ P.deviationGap := by
@@ -109,11 +110,12 @@ imposed.
 
 The hypothesis on the interest rate is the price of the crude constant: the sharp argument would
 ask only for `β (1 + r) < 1`. -/
-theorem exists_natural_asset_bound_log (hu : P.u = Real.log) (z : Z)
+theorem exists_natural_asset_bound_log (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
+    (z : Z)
     (hr : (1 - Real.exp (-P.deviationGap)) * (1 + P.interest) < 1) :
     ∃ ā : ℝ, ∀ a ∈ Icc (0 : ℝ) assetCap, ā < a → P.policy (a, z) < a :=
   P.exists_decline_of_consumption_lower_bound hr
-    fun _ ha => P.log_consumption_linear_lower_bound hu ha z
+    fun _ ha => P.log_consumption_linear_lower_bound hpc hu ha z
 
 /-! ### A better constant, from a smaller deviation
 
@@ -151,12 +153,13 @@ theorem log_sub_log_ge {c d : ℝ} (hc : 0 < c) (hd : 0 ≤ d) :
 /-- **A polynomial linear lower bound on consumption.** Sharper than
 `log_consumption_linear_lower_bound` whenever the value function is large, and proved from a
 deviation to `θ` times the optimal saving rather than to zero. -/
-theorem log_consumption_linear_lower_bound' (hu : P.u = Real.log) {a : ℝ}
+theorem log_consumption_linear_lower_bound' (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
+    {a : ℝ}
     (ha : a ∈ Icc 0 assetCap) (z : Z) :
     P.resources (a, z) / (1 + 2 * P.deviationGap) ≤ P.consumptionFn z a := by
   have hres0 : P.resources (a, z) = P.consumptionFn z a + P.policy (a, z) := by
     simp only [consumptionFn, consumption]; ring
-  have hc0 : 0 < P.consumptionFn z a := P.consumptionFn_pos ha z
+  have hc0 : 0 < P.consumptionFn z a := P.consumptionFn_pos hpc ha z
   set G : ℝ := P.deviationGap with hGdef
   have hG : 0 ≤ G := P.deviationGap_nonneg
   set b : ℝ := P.policy (a, z) with hbdef
@@ -188,7 +191,7 @@ theorem log_consumption_linear_lower_bound' (hu : P.u = Real.log) {a : ℝ}
       ring
     have hdpos : (0 : ℝ) ≤ (1 - θ) * b := by positivity
     have hcpos : 0 < P.consumption (a, z) (θ * b) := by rw [hcons]; linarith
-    have hopt := P.objR_le_of_mem ha hfeas hcpos
+    have hopt := P.objR_le_of_mem ha hfeas (P.mem_dom_of_pos hcpos)
     simp only [objR, hcons, hu] at hopt
     rw [show P.consumption (a, z) (P.policy (a, z)) = c from rfl,
       show P.policy (a, z) = b from rfl] at hopt
@@ -288,13 +291,14 @@ theorem log_valueFunction_lipschitz (hu : P.u = Real.log)
 
 /-- **The borrowing constraint binds where resources are small**, with an explicit threshold in
 the primitives. -/
-theorem log_policy_eq_zero_of_resources (hu : P.u = Real.log)
+theorem log_policy_eq_zero_of_resources (hdom : P.Unbounded) (hu : P.u = Real.log)
     (hβR : P.discount * (1 + P.interest) < 1) {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap)
     (hlt : P.discount * P.logLipschitz < 1 / P.resources s) :
     P.policy s = 0 :=
   P.policy_eq_zero_of_corner_at (P.log_valueFunction_lipschitz hu hβR) hs
     (fun c d hd hdc hc => by
-      rw [hu]; exact log_marginal_bound (P.resources_pos s) hd hdc hc)
+      rw [hu]
+      exact log_marginal_bound (P.resources_pos s) (by rw [hdom] at hd; exact hd) hdc hc)
     hlt
 
 
@@ -305,7 +309,8 @@ end IncomeFluctuation
 since `exp` is positive, so the log witness has a natural asset bound outright. -/
 theorem logImpatient_natural_asset_bound (z : Fin 2) :
     ∃ ā : ℝ, ∀ a ∈ Icc (0 : ℝ) 1, ā < a → logImpatient.policy (a, z) < a := by
-  refine logImpatient.exists_natural_asset_bound_log logImpatient_u z ?_
+  refine logImpatient.exists_natural_asset_bound_log
+    (logImpatient.positiveConsumption_of_unbounded rfl) logImpatient_u z ?_
   have hpos := Real.exp_pos (-logImpatient.deviationGap)
   have hint : logImpatient.interest = 0 := rfl
   rw [hint]

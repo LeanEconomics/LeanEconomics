@@ -68,18 +68,18 @@ noncomputable def objR (s : ℝ × Z) (x : ℝ) : ℝ :=
   P.u (P.consumption s x) + P.discount * P.cont s.2 x
 
 theorem objectiveE_eq_coe {s : ℝ × Z} {x : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
-    (hx : x ∈ P.toExtended.feasible s) (hc : 0 < P.consumption s x) :
+    (hx : x ∈ P.toExtended.feasible s) (hc : P.consumption s x ∈ P.dom) :
     P.toExtended.objectiveE P.toExtended.valueFunction s x = ((P.objR s x : ℝ) : EReal) := by
-  rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe hs hx hc, ← EReal.coe_add]
+  rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe_dom hs hx hc, ← EReal.coe_add]
   rfl
 
 /-- Any feasible action with positive consumption is worth at most the optimum. -/
 theorem objR_le_of_mem {s : ℝ × Z} {x : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
-    (hx : x ∈ P.toExtended.feasible s) (hc : 0 < P.consumption s x) :
+    (hx : x ∈ P.toExtended.feasible s) (hc : P.consumption s x ∈ P.dom) :
     P.objR s x ≤ P.objR s (P.policy s) := by
   have hpol : ((P.objR s (P.policy s) : ℝ) : EReal)
       = ((P.toExtended.bellmanFn P.toExtended.valueFunction s : ℝ) : EReal) := by
-    rw [← P.objectiveE_eq_coe hs (P.policy_mem s) (P.consumption_policy_pos hs)]
+    rw [← P.objectiveE_eq_coe hs (P.policy_mem s) (P.consumption_policy_mem_dom hs)]
     exact P.policy_optimal s
   have h1 := P.toExtended.le_bellmanFn P.toExtended.valueFunction hx
   rw [P.objectiveE_eq_coe hs hx hc, ← hpol] at h1
@@ -104,23 +104,26 @@ theorem policy_mono {a a' : ℝ} {z : Z} (ha : a ∈ Icc 0 assetCap)
     rw [P.feasible_eq] at hy's'
     exact ⟨hy's'.1, le_trans hcon.le hys.2⟩
   -- all four consumptions are positive
-  have hcsy : 0 < P.consumption (a, z) (P.policy (a, z)) := P.consumption_policy_pos ha
-  have hcs'y' : 0 < P.consumption (a', z) (P.policy (a', z)) := P.consumption_policy_pos ha'
-  have hcsy' : 0 < P.consumption (a, z) (P.policy (a', z)) := by
-    simp only [consumption] at hcsy ⊢; linarith
-  have hcs'y : 0 < P.consumption (a', z) (P.policy (a, z)) := by
-    simp only [consumption] at hcsy ⊢; linarith
+  have hcsy : P.consumption (a, z) (P.policy (a, z)) ∈ P.dom := P.consumption_policy_mem_dom ha
+  have hcs'y' : P.consumption (a', z) (P.policy (a', z)) ∈ P.dom :=
+    P.consumption_policy_mem_dom ha'
+  have hcsy' : P.consumption (a, z) (P.policy (a', z)) ∈ P.dom := by
+    refine P.dom_upward hcsy ?_
+    simp only [consumption]; linarith
+  have hcs'y : P.consumption (a', z) (P.policy (a, z)) ∈ P.dom := by
+    refine P.dom_upward hcsy ?_
+    simp only [consumption]; linarith
   -- increasing differences, from concavity of u alone
-  have hshift := P.strictConcaveOn_u.concaveOn.sub_le_sub_of_shift
+  have hshift := P.strictConcaveOn_u_dom.concaveOn.sub_le_sub_of_shift
     (c₁ := P.resources (a, z) - P.policy (a, z))
     (c₂ := P.resources (a, z) - P.policy (a', z))
     (Δ := P.resources (a', z) - P.resources (a, z))
-    (by simpa only [consumption] using mem_Ioi.mpr hcsy)
+    (by simpa only [consumption] using hcsy)
     (by
       have : P.resources (a, z) - P.policy (a', z)
           + (P.resources (a', z) - P.resources (a, z))
           = P.consumption (a', z) (P.policy (a', z)) := by simp only [consumption]; ring
-      rw [this]; exact mem_Ioi.mpr hcs'y')
+      rw [this]; exact hcs'y')
     (by linarith) (by linarith)
   -- the poorer household's choice beats its rival at its own state
   have hopt_s := P.objR_le_of_mem ha hy's hcsy'

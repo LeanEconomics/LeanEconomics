@@ -17,7 +17,24 @@ pair `(a, z)` of assets and income state, and
   `V (a, z) = max { u c + β * ∑ z', P z z' * V (a', z') }`.
 
 Period utility may fall to `-∞` at zero consumption, so this covers log and CRRA with
-`σ ≥ 1`.
+`σ ≥ 1` -- and, since the utility DOMAIN is a field, CES with `γ < 1` as well.
+
+## The domain field
+
+`u` is required to behave on a set `dom` with `Ioi 0 ⊆ dom ⊆ Ici 0`, so there are exactly two
+choices: `Ioi 0`, where utility is unbounded below, and `Ici 0`, where it is bounded there. The
+old `tendsto_atBot_u` is replaced by `continuousOn_extendDom`, which says that `u` extended by
+`⊥` off `dom` is continuous where consumption lives. That is what Berge actually consumes, and
+it is exactly `tendsto_atBot_u` when `dom = Ioi 0` (see `continuousOn_extendDom_Ioi`) and merely
+continuity of `u` on `Ici 0` in the other case, where the `⊥` branch is unreachable.
+
+Nothing is lost by the swap: `tendsto_atBot_u` comes BACK as a theorem from `Unbounded`.
+
+The one real consequence is that positive consumption at the optimum is no longer free. With
+`dom = Ioi 0` the reward is `⊥` there and the value being real settles it; with `dom = Ici 0`
+it has to be earned from a MARGINAL Inada condition instead — see `ConsumptionFloor`. Results
+that need it take `PositiveConsumption` as a hypothesis, which both routes supply. Results that
+only need `u` to behave take membership in `dom`, and carry over untouched.
 
 ## Retrofitted onto extended-real rewards
 
@@ -46,6 +63,39 @@ open Set Filter Topology BoundedContinuousFunction
 
 namespace LeanEconomics
 
+/-- Utility extended by `⊥` outside the domain on which it is required to behave. With
+`D = Ioi 0` this is `extendBot`; with `D = Ici 0` the `⊥` branch is unreachable on `Ici 0`. -/
+noncomputable def extendDom (D : Set ℝ) (u : ℝ → ℝ) (c : ℝ) : EReal :=
+  open Classical in if c ∈ D then ((u c : ℝ) : EReal) else ⊥
+
+theorem extendDom_of_mem {D : Set ℝ} {u : ℝ → ℝ} {c : ℝ} (h : c ∈ D) :
+    extendDom D u c = ((u c : ℝ) : EReal) := by
+  simp only [extendDom, h, reduceIte]
+
+theorem extendDom_of_not_mem {D : Set ℝ} {u : ℝ → ℝ} {c : ℝ} (h : c ∉ D) :
+    extendDom D u c = ⊥ := by
+  simp only [extendDom, h, reduceIte]
+
+theorem extendDom_ne_bot_iff {D : Set ℝ} {u : ℝ → ℝ} {c : ℝ} :
+    extendDom D u c ≠ ⊥ ↔ c ∈ D := by
+  by_cases h : c ∈ D
+  · simp [extendDom_of_mem h, h]
+  · simp [extendDom_of_not_mem h, h]
+
+/-- With `D = Ioi 0` the extension is `extendBot`, so the divergence condition supplies the
+continuity requirement. -/
+theorem extendDom_Ioi (u : ℝ → ℝ) : extendDom (Ioi 0) u = extendBot u := by
+  funext c
+  rcases le_or_gt c 0 with h | h
+  · rw [extendDom_of_not_mem (by simpa using h), extendBot_of_nonpos h]
+  · rw [extendDom_of_mem (mem_Ioi.mpr h), extendBot_of_pos h]
+
+/-- The unbounded case: divergence at zero supplies the continuity requirement. -/
+theorem continuousOn_extendDom_Ioi {u : ℝ → ℝ} (hc : ContinuousOn u (Ioi 0))
+    (ht : Tendsto u (𝓝[>] 0) atBot) : ContinuousOn (extendDom (Ioi 0) u) (Ici 0) := by
+  rw [extendDom_Ioi]
+  exact (continuous_extendBot hc ht).continuousOn
+
 /-- The income fluctuation problem, with period utility unbounded below. -/
 structure IncomeFluctuation (Z : Type*) [Fintype Z] [Nonempty Z] [TopologicalSpace Z]
     [DiscreteTopology Z] (assetCap : ℝ) where
@@ -71,12 +121,20 @@ structure IncomeFluctuation (Z : Type*) [Fintype Z] [Nonempty Z] [TopologicalSpa
   interest_gt_neg_one : 0 < 1 + interest
   assetCap_nonneg : 0 ≤ assetCap
   discount_lt_one : discount < 1
-  continuousOn_u : ContinuousOn u (Ioi 0)
-  monotoneOn_u : MonotoneOn u (Ioi 0)
-  /-- Utility falls to `-∞` as consumption vanishes. -/
-  tendsto_atBot_u : Tendsto u (𝓝[>] 0) atBot
+  /-- The consumption levels at which utility is required to behave. `Ioi 0` when utility is
+  unbounded below, `Ici 0` when it is bounded there. -/
+  dom : Set ℝ
+  Ioi_subset_dom : Ioi 0 ⊆ dom
+  dom_subset_Ici : dom ⊆ Ici 0
+  continuousOn_u_dom : ContinuousOn u dom
+  monotoneOn_u_dom : MonotoneOn u dom
   /-- Diminishing marginal utility, which makes the optimal policy unique. -/
-  strictConcaveOn_u : StrictConcaveOn ℝ (Ioi 0) u
+  strictConcaveOn_u_dom : StrictConcaveOn ℝ dom u
+  /-- **What replaces the Inada condition.** Utility, extended by `⊥` off its domain, must be
+  continuous where consumption lives. For `dom = Ioi 0` this is exactly `Tendsto u (𝓝[>] 0) atBot`
+  via `continuous_extendBot`; for `dom = Ici 0` the `⊥` branch is never taken and it is just
+  continuity of `u` on `Ici 0`. -/
+  continuousOn_extendDom : ContinuousOn (extendDom dom u) (Ici 0)
 
 namespace IncomeFluctuation
 
@@ -96,10 +154,16 @@ noncomputable def maxSaving (s : ℝ × Z) : ℝ := max 0 (min assetCap (P.resou
 /-- Consumption on the budget line. -/
 noncomputable def consumption (s : ℝ × Z) (a' : ℝ) : ℝ := P.resources s - a'
 
-/-- The reward: utility of consumption clamped above, and `-∞` where consumption vanishes.
-No floor. -/
+/-- Consumption clamped into `[0, maxConsumption]`. On the feasible set the lower clamp is
+inactive, so this is consumption itself; off it, it keeps the reward's argument in `Ici 0`, which
+is where `continuousOn_extendDom` applies. -/
+noncomputable def clampedConsumption (p : (ℝ × Z) × ℝ) : ℝ :=
+  min P.maxConsumption (max 0 (P.consumption p.1 p.2))
+
+/-- The reward: utility of consumption clamped above, and `⊥` where consumption falls outside
+the domain on which utility behaves. No floor. -/
 noncomputable def rewardFn (p : (ℝ × Z) × ℝ) : EReal :=
-  extendBot P.u (min P.maxConsumption (P.consumption p.1 p.2))
+  extendDom P.dom P.u (P.clampedConsumption p)
 
 theorem minIncome_le_resources (s : ℝ × Z) : P.minIncome ≤ P.resources s := by
   have : 0 ≤ (1 + P.interest) * max 0 s.1 :=
@@ -121,6 +185,36 @@ theorem minIncome_le_maxConsumption : P.minIncome ≤ P.maxConsumption := by
 theorem maxConsumption_pos : 0 < P.maxConsumption :=
   lt_of_lt_of_le P.minIncome_pos P.minIncome_le_maxConsumption
 
+theorem mem_dom_of_pos {c : ℝ} (hc : 0 < c) : c ∈ P.dom := P.Ioi_subset_dom hc
+
+theorem nonneg_of_mem_dom {c : ℝ} (hc : c ∈ P.dom) : 0 ≤ c := P.dom_subset_Ici hc
+
+theorem maxConsumption_mem_dom : P.maxConsumption ∈ P.dom := P.mem_dom_of_pos P.maxConsumption_pos
+
+theorem convex_dom : Convex ℝ P.dom := P.strictConcaveOn_u_dom.1
+
+/-- The domain is an up-set: if utility behaves at `c` it behaves at anything larger. Both
+`Ioi 0` and `Ici 0` are, and it follows from the two bracketing inclusions alone. -/
+theorem dom_upward {c c' : ℝ} (hc : c ∈ P.dom) (h : c ≤ c') : c' ∈ P.dom := by
+  rcases lt_or_ge 0 c' with h' | h'
+  · exact P.mem_dom_of_pos h'
+  · rwa [le_antisymm h (h'.trans (P.nonneg_of_mem_dom hc))] at hc
+
+/-- Utility behaves on the positives whatever the domain is, so every existing argument that
+supplies `0 < c` keeps working. -/
+theorem continuousOn_u : ContinuousOn P.u (Ioi 0) := P.continuousOn_u_dom.mono P.Ioi_subset_dom
+
+theorem monotoneOn_u : MonotoneOn P.u (Ioi 0) := P.monotoneOn_u_dom.mono P.Ioi_subset_dom
+
+theorem strictConcaveOn_u : StrictConcaveOn ℝ (Ioi 0) P.u :=
+  P.strictConcaveOn_u_dom.subset P.Ioi_subset_dom (convex_Ioi 0)
+
+theorem clampedConsumption_nonneg (p : (ℝ × Z) × ℝ) : 0 ≤ P.clampedConsumption p :=
+  le_min P.maxConsumption_pos.le (le_max_left _ _)
+
+theorem clampedConsumption_le (p : (ℝ × Z) × ℝ) :
+    P.clampedConsumption p ≤ P.maxConsumption := min_le_left _ _
+
 /-- Discreteness of `Z` is what makes this continuous. -/
 theorem continuous_resources : Continuous P.resources :=
   (continuous_of_discreteTopology.comp continuous_snd).add
@@ -129,10 +223,13 @@ theorem continuous_resources : Continuous P.resources :=
 theorem continuous_maxSaving : Continuous P.maxSaving :=
   continuous_const.max (continuous_const.min P.continuous_resources)
 
-theorem continuous_rewardFn : Continuous P.rewardFn := by
-  refine (continuous_extendBot P.continuousOn_u P.tendsto_atBot_u).comp
-    (continuous_const.min ?_)
+theorem continuous_clampedConsumption : Continuous P.clampedConsumption := by
+  refine continuous_const.min (continuous_const.max ?_)
   exact (P.continuous_resources.comp continuous_fst).sub continuous_snd
+
+theorem continuous_rewardFn : Continuous P.rewardFn :=
+  P.continuousOn_extendDom.comp_continuous P.continuous_clampedConsumption
+    fun p => mem_Ici.mpr (P.clampedConsumption_nonneg p)
 
 /-- The problem as a stochastic dynamic program with an extended-real reward. -/
 noncomputable def toExtended : ExtendedStochasticProgram (ℝ × Z) ℝ Z where
@@ -147,23 +244,24 @@ noncomputable def toExtended : ExtendedStochasticProgram (ℝ × Z) ℝ Z where
   reward_le := by
     intro s a _
     simp only [ContinuousMap.coe_mk, rewardFn]
-    rcases le_or_gt (min P.maxConsumption (P.consumption s a)) 0 with h | h
-    · rw [extendBot_of_nonpos h]
+    by_cases h : P.clampedConsumption (s, a) ∈ P.dom
+    · rw [extendDom_of_mem h, EReal.coe_le_coe_iff]
+      exact P.monotoneOn_u_dom h P.maxConsumption_mem_dom (P.clampedConsumption_le _)
+    · rw [extendDom_of_not_mem h]
       exact bot_le
-    · rw [extendBot_of_pos h, EReal.coe_le_coe_iff]
-      exact P.monotoneOn_u h P.maxConsumption_pos (min_le_left _ _)
   select := ⟨fun _ => 0, continuous_const⟩
   select_mem := fun _ => ⟨le_rfl, le_max_left _ _⟩
   rewardMin := P.u P.minIncome
   le_reward_select := by
     intro s
     simp only [ContinuousMap.coe_mk, rewardFn]
-    have h : P.minIncome ≤ min P.maxConsumption (P.consumption s 0) := by
-      refine le_min P.minIncome_le_maxConsumption ?_
+    have h : P.minIncome ≤ P.clampedConsumption (s, 0) := by
+      refine le_min P.minIncome_le_maxConsumption (le_max_of_le_right ?_)
       simp only [consumption, sub_zero]
       exact P.minIncome_le_resources s
-    rw [extendBot_of_pos (lt_of_lt_of_le P.minIncome_pos h), EReal.coe_le_coe_iff]
-    exact P.monotoneOn_u P.minIncome_pos (lt_of_lt_of_le P.minIncome_pos h) h
+    have hpos : 0 < P.clampedConsumption (s, 0) := lt_of_lt_of_le P.minIncome_pos h
+    rw [extendDom_of_mem (P.mem_dom_of_pos hpos), EReal.coe_le_coe_iff]
+    exact P.monotoneOn_u_dom (P.mem_dom_of_pos P.minIncome_pos) (P.mem_dom_of_pos hpos) h
   transition z' := ⟨fun p => (p.2, z'), continuous_snd.prodMk continuous_const⟩
   prob z' := ⟨fun p => P.transitionMatrix p.1.2 z',
     (continuous_of_discreteTopology (f := fun z => P.transitionMatrix z z')).comp
@@ -176,6 +274,14 @@ noncomputable def toExtended : ExtendedStochasticProgram (ℝ × Z) ℝ Z where
 @[simp]
 theorem feasible_eq (s : ℝ × Z) : P.toExtended.feasible s = Icc 0 (P.maxSaving s) := rfl
 
+theorem maxSaving_le_resources (s : ℝ × Z) : P.maxSaving s ≤ P.resources s :=
+  max_le (P.resources_pos s).le (min_le_right _ _)
+
+theorem consumption_nonneg {s : ℝ × Z} {a : ℝ} (ha : a ∈ P.toExtended.feasible s) :
+    0 ≤ P.consumption s a := by
+  simp only [consumption]
+  linarith [le_trans ha.2 (P.maxSaving_le_resources s)]
+
 theorem consumption_le_maxConsumption {s : ℝ × Z} {a' : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
     (ha' : 0 ≤ a') : P.consumption s a' ≤ P.maxConsumption := by
   have hmax : max 0 s.1 = s.1 := max_eq_right hs.1
@@ -184,11 +290,57 @@ theorem consumption_le_maxConsumption {s : ℝ × Z} {a' : ℝ} (hs : s.1 ∈ Ic
   simp only [consumption, resources, maxConsumption, hmax]
   linarith [P.le_maxIncome s.2]
 
+/-- **Utility is unbounded below**: the domain is the open half-line, so the reward is `⊥` at
+zero consumption. This is the hypothesis under which positive consumption comes free. -/
+def Unbounded : Prop := P.dom = Ioi 0
+
+theorem clampedConsumption_mem_dom_of_ne_bot {s : ℝ × Z} {a : ℝ}
+    (h : P.toExtended.reward (s, a) ≠ ⊥) : P.clampedConsumption (s, a) ∈ P.dom :=
+  extendDom_ne_bot_iff.mp h
+
+theorem consumption_pos_of_ne_bot (hd : P.Unbounded) {s : ℝ × Z} {a : ℝ}
+    (h : P.toExtended.reward (s, a) ≠ ⊥) : 0 < P.consumption s a := by
+  have hmem := P.clampedConsumption_mem_dom_of_ne_bot h
+  rw [hd] at hmem
+  have : 0 < max 0 (P.consumption s a) := lt_of_lt_of_le hmem (min_le_right _ _)
+  rcases max_cases 0 (P.consumption s a) with ⟨he, _⟩ | ⟨he, _⟩
+  · rw [he] at this; exact absurd this (lt_irrefl 0)
+  · rwa [he] at this
+
+/-- On the feasible set the clamps are both inactive, so the reward's argument is consumption
+itself. -/
+theorem clampedConsumption_eq {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
+    (ha : a ∈ P.toExtended.feasible s) : P.clampedConsumption (s, a) = P.consumption s a := by
+  have h0 : 0 ≤ P.consumption s a := P.consumption_nonneg ha
+  simp only [clampedConsumption, max_eq_right h0,
+    min_eq_right (P.consumption_le_maxConsumption hs ha.1)]
+
+theorem consumption_mem_dom_of_ne_bot {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
+    (ha : a ∈ P.toExtended.feasible s) (h : P.toExtended.reward (s, a) ≠ ⊥) :
+    P.consumption s a ∈ P.dom := by
+  have := P.clampedConsumption_mem_dom_of_ne_bot h
+  rwa [P.clampedConsumption_eq hs ha] at this
+
+/-- **The reward is the utility of consumption**, wherever consumption lies in the domain on
+which utility is required to behave. -/
+theorem reward_eq_coe_dom {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
+    (ha : a ∈ P.toExtended.feasible s) (hc : P.consumption s a ∈ P.dom) :
+    P.toExtended.reward (s, a) = ((P.u (P.consumption s a) : ℝ) : EReal) :=
+  calc P.toExtended.reward (s, a)
+      = extendDom P.dom P.u (P.clampedConsumption (s, a)) := rfl
+    _ = extendDom P.dom P.u (P.consumption s a) := by rw [P.clampedConsumption_eq hs ha]
+    _ = _ := extendDom_of_mem hc
+
+theorem reward_eq_coe {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
+    (ha : a ∈ P.toExtended.feasible s) (hc : 0 < P.consumption s a) :
+    P.toExtended.reward (s, a) = ((P.u (P.consumption s a) : ℝ) : EReal) :=
+  P.reward_eq_coe_dom hs ha (P.mem_dom_of_pos hc)
+
 /-- **The stochastic Bellman equation, with honest utility and positive consumption.** That
 consumption is positive at the optimum is a consequence of the value being real, not a
 separate development. -/
 theorem exists_optimal_saving {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
-    ∃ a' ∈ Icc 0 (P.maxSaving s), 0 < P.consumption s a' ∧
+    ∃ a' ∈ Icc 0 (P.maxSaving s), P.consumption s a' ∈ P.dom ∧
       P.toExtended.valueFunction s
         = P.u (P.consumption s a')
           + P.discount * ∑ z', P.transitionMatrix s.2 z'
@@ -199,20 +351,9 @@ theorem exists_optimal_saving {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
     rw [show P.toExtended.reward (s, a') = P.rewardFn (s, a') from rfl, hb,
       EReal.bot_add _] at heq
     exact EReal.coe_ne_bot _ heq
-  have hpos : 0 < min P.maxConsumption (P.consumption s a') := by
-    by_contra hle
-    push Not at hle
-    exact hne (extendBot_of_nonpos hle)
-  have hc : 0 < P.consumption s a' := lt_of_lt_of_le hpos (min_le_right _ _)
-  have hclamp : min P.maxConsumption (P.consumption s a') = P.consumption s a' :=
-    min_eq_right (P.consumption_le_maxConsumption hs ha'.1)
+  have hc : P.consumption s a' ∈ P.dom := P.consumption_mem_dom_of_ne_bot hs ha' hne
   refine ⟨a', ha', hc, ?_⟩
-  have hrw : P.toExtended.reward (s, a') = ((P.u (P.consumption s a') : ℝ) : EReal) :=
-    calc P.toExtended.reward (s, a')
-        = extendBot P.u (min P.maxConsumption (P.consumption s a')) := rfl
-      _ = extendBot P.u (P.consumption s a') := by rw [hclamp]
-      _ = _ := extendBot_of_pos hc
-  rw [hrw, ← EReal.coe_add, EReal.coe_eq_coe_iff] at heq
+  rw [P.reward_eq_coe_dom hs ha' hc, ← EReal.coe_add, EReal.coe_eq_coe_iff] at heq
   exact heq
 
 /-! ### Concavity and the optimal policy
@@ -265,38 +406,20 @@ theorem feasible_convex {x y : ℝ} {z : Z} (hx : x ∈ Icc 0 assetCap)
     rw [P.resources_affine_comb hx.1 hy.1 hθ hφ hθφ]
     nlinarith
 
-theorem consumption_pos_of_ne_bot {s : ℝ × Z} {a : ℝ} (h : P.toExtended.reward (s, a) ≠ ⊥) :
-    0 < P.consumption s a := by
-  by_contra hle
-  push Not at hle
-  refine h ?_
-  calc P.toExtended.reward (s, a)
-      = extendBot P.u (min P.maxConsumption (P.consumption s a)) := rfl
-    _ = ⊥ := extendBot_of_nonpos ((min_le_right _ _).trans hle)
-
-theorem reward_eq_coe {s : ℝ × Z} {a : ℝ} (hs : s.1 ∈ Icc 0 assetCap)
-    (ha : a ∈ P.toExtended.feasible s) (hc : 0 < P.consumption s a) :
-    P.toExtended.reward (s, a) = ((P.u (P.consumption s a) : ℝ) : EReal) :=
-  calc P.toExtended.reward (s, a)
-      = extendBot P.u (min P.maxConsumption (P.consumption s a)) := rfl
-    _ = extendBot P.u (P.consumption s a) := by
-        rw [min_eq_right (P.consumption_le_maxConsumption hs ha.1)]
-    _ = _ := extendBot_of_pos hc
-
 theorem bellmanFn_eq_of_optimal {v : (ℝ × Z) →ᵇ ℝ} {s : ℝ × Z} {a : ℝ}
     (hs : s.1 ∈ Icc 0 assetCap) (ha : a ∈ P.toExtended.feasible s)
     (heq : P.toExtended.objectiveE v s a
       = ((P.toExtended.bellmanFn v s : ℝ) : EReal)) :
-    0 < P.consumption s a ∧
+    P.consumption s a ∈ P.dom ∧
       P.toExtended.bellmanFn v s
         = P.u (P.consumption s a) + P.discount * ∑ z', P.transitionMatrix s.2 z' * v (a, z') := by
   have hne : P.toExtended.reward (s, a) ≠ ⊥ := by
     intro hb
     rw [ExtendedStochasticProgram.objectiveE, hb, EReal.bot_add _] at heq
     exact EReal.coe_ne_bot _ heq.symm
-  have hc := P.consumption_pos_of_ne_bot hne
+  have hc := P.consumption_mem_dom_of_ne_bot hs ha hne
   refine ⟨hc, ?_⟩
-  rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe hs ha hc, ← EReal.coe_add,
+  rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe_dom hs ha hc, ← EReal.coe_add,
     EReal.coe_eq_coe_iff] at heq
   exact heq.symm
 
@@ -317,25 +440,21 @@ theorem concaveOn_bellman (v : (ℝ × Z) →ᵇ ℝ)
     simp only [consumption]
     rw [P.resources_affine_comb hx.1 hy.1 hθ hφ hθφ]
     ring
-  have hcm : 0 < P.consumption (θ * x + φ * y, z) (θ * ax + φ * ay) := by
+  have hcm : P.consumption (θ * x + φ * y, z) (θ * ax + φ * ay) ∈ P.dom := by
     rw [hcmix]
-    rcases lt_or_eq_of_le hθ with h | h
-    · exact add_pos_of_pos_of_nonneg (mul_pos h hcx) (mul_nonneg hφ hcy.le)
-    · have hφ1 : φ = 1 := by linarith
-      rw [← h, hφ1]
-      simpa using hcy
+    simpa only [smul_eq_mul] using P.convex_dom hcx hcy hθ hφ hθφ
   have hle := P.toExtended.le_bellmanFn v hmix
   have hobj : P.toExtended.objectiveE v (θ * x + φ * y, z) (θ * ax + φ * ay)
       = ((P.u (P.consumption (θ * x + φ * y, z) (θ * ax + φ * ay))
           + P.discount * ∑ z', P.transitionMatrix z z' * v (θ * ax + φ * ay, z') : ℝ) : EReal) := by
-    rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe hxy hmix hcm, ← EReal.coe_add]
+    rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe_dom hxy hmix hcm, ← EReal.coe_add]
     rfl
   rw [hobj] at hle
   have hle' : P.u (P.consumption (θ * x + φ * y, z) (θ * ax + φ * ay))
       + P.discount * ∑ z', P.transitionMatrix z z' * v (θ * ax + φ * ay, z')
       ≤ P.toExtended.bellmanFn v (θ * x + φ * y, z) := by exact_mod_cast hle
   -- utility is concave, and so is the expectation, termwise
-  have hu := P.strictConcaveOn_u.concaveOn.2 hcx hcy hθ hφ hθφ
+  have hu := P.strictConcaveOn_u_dom.concaveOn.2 hcx hcy hθ hφ hθφ
   have hexp : θ * (∑ z', P.transitionMatrix z z' * v (ax, z'))
       + φ * (∑ z', P.transitionMatrix z z' * v (ay, z'))
       ≤ ∑ z', P.transitionMatrix z z' * v (θ * ax + φ * ay, z') := by
@@ -377,13 +496,14 @@ theorem optimal_action_unique {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {a₀
   have hcmid : P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁)
       = (1 / 2 : ℝ) * P.consumption s a₀ + (1 / 2 : ℝ) * P.consumption s a₁ := by
     simp only [consumption]; ring
-  have hcm : 0 < P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁) := by
-    rw [hcmid]; linarith
+  have hcm : P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁) ∈ P.dom := by
+    rw [hcmid]
+    simpa only [smul_eq_mul] using P.convex_dom hc₀ hc₁ hhalf.le hhalf.le hsum
   have hcne : P.consumption s a₀ ≠ P.consumption s a₁ := by
     simp only [consumption]
     intro h
     exact hne (by linarith)
-  have hu := P.strictConcaveOn_u.2 hc₀ hc₁ hcne hhalf hhalf hsum
+  have hu := P.strictConcaveOn_u_dom.2 hc₀ hc₁ hcne hhalf hhalf hsum
   have hexp : (1 / 2 : ℝ) * (∑ z', P.transitionMatrix s.2 z' * P.toExtended.valueFunction (a₀, z'))
       + (1 / 2 : ℝ) * (∑ z', P.transitionMatrix s.2 z' * P.toExtended.valueFunction (a₁, z'))
       ≤ ∑ z', P.transitionMatrix s.2 z'
@@ -404,7 +524,7 @@ theorem optimal_action_unique {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {a₀
           + P.discount * ∑ z', P.transitionMatrix s.2 z'
               * P.toExtended.valueFunction ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁, z')
             : ℝ) : EReal) := by
-    rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe hs hmem hcm, ← EReal.coe_add]
+    rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe_dom hs hmem hcm, ← EReal.coe_add]
     rfl
   rw [hobj] at hle
   have hle' : P.u (P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁))
@@ -431,9 +551,39 @@ theorem policy_optimal (s : ℝ × Z) :
 theorem policy_mem_region (s : ℝ × Z) : P.policy s ∈ Icc 0 assetCap :=
   P.feasible_subset_region (P.policy_mem s)
 
-theorem consumption_policy_pos {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
-    0 < P.consumption s (P.policy s) :=
+theorem consumption_policy_mem_dom {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :
+    P.consumption s (P.policy s) ∈ P.dom :=
   (P.bellmanFn_eq_of_optimal hs (P.policy_mem s) (P.policy_optimal s)).1
+
+/-- **Consumption never vanishes at the optimum.** Automatic when utility is unbounded below
+(`positiveConsumption_of_unbounded`); when it is bounded, it has to be earned from a marginal
+Inada condition, which is what `ConsumptionFloor` does. -/
+def PositiveConsumption : Prop :=
+  ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → 0 < P.consumption s (P.policy s)
+
+/-- **Utility really does diverge when the domain is the open half-line.** The structure no
+longer carries `tendsto_atBot_u`, but it has not lost it: `continuousOn_extendDom` says the
+extension is continuous at zero consumption, and with `dom = Ioi 0` the value there is `⊥`. -/
+theorem tendsto_atBot_u (hd : P.Unbounded) : Tendsto P.u (𝓝[>] 0) atBot := by
+  have hcont : ContinuousWithinAt (extendDom P.dom P.u) (Ici 0) 0 :=
+    P.continuousOn_extendDom 0 (mem_Ici.mpr le_rfl)
+  have hbot : extendDom P.dom P.u 0 = ⊥ := extendDom_of_not_mem (by rw [hd]; simp)
+  rw [ContinuousWithinAt, hbot] at hcont
+  have h2 : Tendsto (extendDom P.dom P.u) (𝓝[>] (0 : ℝ)) (𝓝 ⊥) :=
+    hcont.mono_left (nhdsWithin_mono _ Ioi_subset_Ici_self)
+  refine tendsto_atBot.2 fun R => ?_
+  filter_upwards [h2 (Iio_mem_nhds (EReal.bot_lt_coe R)), self_mem_nhdsWithin] with c hc hcpos
+  simp only [mem_preimage, mem_Iio, extendDom_of_mem (P.mem_dom_of_pos hcpos),
+    EReal.coe_lt_coe_iff] at hc
+  exact hc.le
+
+theorem positiveConsumption_of_unbounded (hd : P.Unbounded) : P.PositiveConsumption := by
+  intro s hs
+  have := P.consumption_policy_mem_dom hs
+  rwa [hd] at this
+
+theorem consumption_policy_pos (hpc : P.PositiveConsumption) {s : ℝ × Z}
+    (hs : s.1 ∈ Icc 0 assetCap) : 0 < P.consumption s (P.policy s) := hpc s hs
 
 theorem eq_policy_of_optimal {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {a : ℝ}
     (ha : a ∈ P.toExtended.feasible s)
@@ -495,14 +645,19 @@ noncomputable def calibrated : IncomeFluctuation (Fin 2) 10 where
   interest_gt_neg_one := by norm_num
   assetCap_nonneg := by norm_num
   discount_lt_one := by norm_num
-  continuousOn_u := (continuousOn_id.inv₀ fun x hx => ne_of_gt hx).neg
-  monotoneOn_u := by
+  dom := Ioi 0
+  Ioi_subset_dom := subset_rfl
+  dom_subset_Ici := Ioi_subset_Ici_self
+  continuousOn_u_dom := (continuousOn_id.inv₀ fun x hx => ne_of_gt hx).neg
+  monotoneOn_u_dom := by
     intro x hx y _ hxy
     have : (0 : ℝ) < x := hx
     simp only [neg_le_neg_iff]
     gcongr
-  tendsto_atBot_u := tendsto_neg_atTop_atBot.comp tendsto_inv_nhdsGT_zero
-  strictConcaveOn_u := strictConcaveOn_neg_inv
+  strictConcaveOn_u_dom := strictConcaveOn_neg_inv
+  continuousOn_extendDom :=
+    continuousOn_extendDom_Ioi ((continuousOn_id.inv₀ fun x hx => ne_of_gt hx).neg)
+      (tendsto_neg_atTop_atBot.comp tendsto_inv_nhdsGT_zero)
 
 end IncomeFluctuation
 

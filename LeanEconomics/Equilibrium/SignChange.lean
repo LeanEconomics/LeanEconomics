@@ -146,7 +146,8 @@ theorem le_aggregateCapital {μ : ProbabilityMeasure P.State} (hμ : P.IsStation
 /-- **The supply floor, in primitives.** Combining the quantitative saving bound with the
 primitive bound on the continuation's gain: every stationary distribution carries at least
 `h/2 · p₀` of capital. -/
-theorem le_aggregateCapital_of_gain (hu : P.u = Real.log) {μ : ProbabilityMeasure P.State}
+theorem le_aggregateCapital_of_gain (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
+    {μ : ProbabilityMeasure P.State}
     (hμ : P.IsStationary μ) {z₁ z₀ : Z} {p₀ h : ℝ} (hh0 : 0 < h)
     (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
     (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
@@ -155,11 +156,11 @@ theorem le_aggregateCapital_of_gain (hu : P.u = Real.log) {μ : ProbabilityMeasu
           / (P.income z₀ + (1 + P.interest) * (h / 2))))) :
     h / 2 * p₀ ≤ P.aggregateCapital μ := by
   refine P.le_aggregateCapital hμ (by linarith) hp fun a ha => ?_
-  refine P.policy_ge_of_gain hu z₁ hh0 hhcap hhinc ?_ ha
+  refine P.policy_ge_of_gain hpc hu z₁ hh0 hhcap hhinc ?_ ha
   refine lt_of_lt_of_le hgain (mul_le_mul_of_nonneg_left ?_ P.discount.coe_nonneg)
   have hhalf : h / 2 ∈ Icc (0 : ℝ) assetCap := ⟨by linarith, by linarith⟩
   have hfull : h ∈ Icc (0 : ℝ) assetCap := ⟨hh0.le, hhcap⟩
-  have hgen := P.log_cont_sub_ge_gen hu z₁ z₀ hhalf hfull (by linarith)
+  have hgen := P.log_cont_sub_ge_gen hpc hu z₁ z₀ hhalf hfull (by linarith)
   rw [show h - h / 2 = h / 2 from by ring] at hgen
   exact hgen
 

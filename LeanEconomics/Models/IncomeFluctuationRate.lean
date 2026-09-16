@@ -105,7 +105,8 @@ constant is only to keep the divisions safe when the asset cap is zero:
 Actions below the cutoff need no comparison at all: they are already worth less than
 `loBound v`, which is itself below the other operator's value. -/
 
-theorem exists_rate_modulus (v : (ℝ × Z) →ᵇ ℝ) {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
+theorem exists_rate_modulus (hd : P.Unbounded) (v : (ℝ × Z) →ᵇ ℝ) {rlo rhi : ℝ}
+    (hrlo : 0 < 1 + rlo)
     {ε : ℝ} (hε : 0 < ε) :
     ∃ η > 0, ∀ (r r' : ℝ) (hr : 0 < 1 + r) (hr' : 0 < 1 + r'),
       rlo ≤ r → r ≤ rhi → rlo ≤ r' → r' ≤ rhi → |r - r'| < η →
@@ -115,7 +116,7 @@ theorem exists_rate_modulus (v : (ℝ × Z) →ᵇ ℝ) {rlo rhi : ℝ} (hrlo : 
   classical
   have hcap := P.assetCap_nonneg
   have hmaxI : 0 ≤ P.maxIncome := le_trans P.minIncome_pos.le P.minIncome_le_maxIncome
-  obtain ⟨δ, hδ, hδspec⟩ := P.exists_cutoff v
+  obtain ⟨δ, hδ, hδspec⟩ := P.exists_cutoff hd v
   set K₁ : ℝ := assetCap / (1 + rlo) + 1 with hK₁def
   set K₂ : ℝ := (P.maxIncome + assetCap) / (1 + rlo) + assetCap + assetCap / (1 + rlo) + 1
     with hK₂def
@@ -250,7 +251,8 @@ weakening -- it is what makes the argument work. The modulus produced by
 moving rates would need the family of value functions to be equicontinuous. Fixing the
 reference rate makes the continuation value a single fixed function, and continuity at every
 point is continuity. -/
-theorem exists_valueFunction_modulus {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo) {r₀ : ℝ}
+theorem exists_valueFunction_modulus (hd : P.Unbounded) {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
+    {r₀ : ℝ}
     (hr₀ : 0 < 1 + r₀) (hlo₀ : rlo ≤ r₀) (hhi₀ : r₀ ≤ rhi) {ε : ℝ} (hε : 0 < ε) :
     ∃ η > 0, ∀ (r : ℝ) (hr : 0 < 1 + r), rlo ≤ r → r ≤ rhi → |r - r₀| < η →
       ∀ s ∈ P.region,
@@ -259,7 +261,7 @@ theorem exists_valueFunction_modulus {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo) {r₀ 
   have hβ1 : (P.discount : ℝ) < 1 := by exact_mod_cast P.discount_lt_one
   set V₀ := (P.withRate r₀ hr₀).toExtended.valueFunction with hV₀
   obtain ⟨η, hη, hmod⟩ :=
-    P.exists_rate_modulus V₀ (rlo := rlo) (rhi := rhi) hrlo (ε := ε * (1 - P.discount))
+    P.exists_rate_modulus hd V₀ (rlo := rlo) (rhi := rhi) hrlo (ε := ε * (1 - P.discount))
       (by positivity)
   refine ⟨η, hη, fun r hr hlo hhi hclose s hs => ?_⟩
   -- the operator gap at the fixed continuation value, both directions

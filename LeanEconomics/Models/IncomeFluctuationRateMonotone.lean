@@ -90,7 +90,7 @@ save at least as much.
 This is the exchange argument of `policy_mono`, turned round — there one objective at two
 states, here two objectives at one state. -/
 theorem policy_le_of_cont_increasingDifferences
-    (hu : P.u = Q.u) (hβ : (P.discount : ℝ) = (Q.discount : ℝ))
+    (hu : P.u = Q.u) (hdom : P.dom = Q.dom) (hβ : (P.discount : ℝ) = (Q.discount : ℝ))
     (hid : ContIncreasingDifferences P Q)
     {a₁ a₂ : ℝ} {z : Z} (h₁ : a₁ ∈ Icc 0 assetCap) (h₂ : a₂ ∈ Icc 0 assetCap)
     (hres : P.resources (a₁, z) = Q.resources (a₂, z)) :
@@ -112,10 +112,10 @@ theorem policy_le_of_cont_increasingDifferences
   have hbQP : bQ ∈ P.toExtended.feasible (a₁, z) := by
     rw [P.feasible_eq, hms]; exact hbQm
   -- all four consumptions are positive
-  have hcP : 0 < P.consumption (a₁, z) bP := P.consumption_policy_pos h₁
-  have hcQ : 0 < Q.consumption (a₂, z) bQ := Q.consumption_policy_pos h₂
-  have hcPQ : 0 < P.consumption (a₁, z) bQ := by rw [hcons]; exact hcQ
-  have hcQP : 0 < Q.consumption (a₂, z) bP := by rw [← hcons]; exact hcP
+  have hcP : P.consumption (a₁, z) bP ∈ P.dom := P.consumption_policy_mem_dom h₁
+  have hcQ : Q.consumption (a₂, z) bQ ∈ Q.dom := Q.consumption_policy_mem_dom h₂
+  have hcPQ : P.consumption (a₁, z) bQ ∈ P.dom := by rw [hcons, hdom]; exact hcQ
+  have hcQP : Q.consumption (a₂, z) bP ∈ Q.dom := by rw [← hcons, ← hdom]; exact hcP
   -- optimality of each against the other's choice
   have hoptP := P.objR_le_of_mem h₁ hbQP hcPQ
   have hoptQ := Q.objR_le_of_mem h₂ hbPQ hcQP
@@ -172,13 +172,14 @@ at every asset level and every income state.
 The hypothesis `hid` is Light's step 5, and by the module docstring it is the same gap as the
 Carroll–Kimball hypothesis `hT`: propagating it needs the envelope condition together with
 concavity of the consumption function. Everything else is proved. -/
-theorem policy_mono_interest (hu : P.u = Q.u) (hβ : (P.discount : ℝ) = (Q.discount : ℝ))
+theorem policy_mono_interest (hu : P.u = Q.u) (hdom : P.dom = Q.dom)
+    (hβ : (P.discount : ℝ) = (Q.discount : ℝ))
     (hinc : P.income = Q.income) (hr : P.interest ≤ Q.interest)
     (hid : ContIncreasingDifferences P Q)
     {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
     P.policy (a, z) ≤ Q.policy (a, z) := by
   have hmem := rateScale_mem P Q hr ha
-  refine le_trans (policy_le_of_cont_increasingDifferences P Q hu hβ hid ha hmem
+  refine le_trans (policy_le_of_cont_increasingDifferences P Q hu hdom hβ hid ha hmem
     (resources_rateScale P Q hinc ha z)) ?_
   refine Q.policy_mono hmem ha ?_
   nlinarith [rateScale_le_one P Q hr, ha.1, rateScale_pos P Q]
@@ -189,7 +190,7 @@ theorem policy_mono_withRate {r₁ r₂ : ℝ} (h₁ : 0 < 1 + r₁) (h₂ : 0 <
     (hid : ContIncreasingDifferences (P.withRate r₁ h₁) (P.withRate r₂ h₂))
     {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
     (P.withRate r₁ h₁).policy (a, z) ≤ (P.withRate r₂ h₂).policy (a, z) :=
-  policy_mono_interest (P.withRate r₁ h₁) (P.withRate r₂ h₂) rfl rfl rfl hr hid ha z
+  policy_mono_interest (P.withRate r₁ h₁) (P.withRate r₂ h₂) rfl rfl rfl rfl hr hid ha z
 
 end IncomeFluctuation
 

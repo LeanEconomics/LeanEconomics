@@ -89,16 +89,17 @@ theorem le_utility_consumption_policy_of_bounds {s : ℝ × Z} (hs : s.1 ∈ Icc
 /-- **From a lower bound on utility to a lower bound on consumption.** The resulting `δ`
 depends only on `u` and on `L` — NOT on the state, and not on anything that moves with the
 interest rate. That is the property the parametric argument needs. -/
-theorem exists_lower_bound_of_utility_ge (L : ℝ)
+theorem exists_lower_bound_of_utility_ge (hd : P.Unbounded) (L : ℝ)
     (hL : ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → L ≤ P.u (P.consumption s (P.policy s))) :
     ∃ δ > 0, ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → δ ≤ P.consumption s (P.policy s) := by
   have hev : ∀ᶠ c in 𝓝[>] (0 : ℝ), P.u c < L - 1 :=
-    P.tendsto_atBot_u (eventually_lt_atBot (L - 1))
+    P.tendsto_atBot_u hd (eventually_lt_atBot (L - 1))
   obtain ⟨ε, hε, hsub⟩ := (nhdsGT_basis (0 : ℝ)).eventually_iff.mp hev
   refine ⟨ε, hε, fun s hs => ?_⟩
   by_contra hlt
   rw [not_le] at hlt
-  have hpos : 0 < P.consumption s (P.policy s) := P.consumption_policy_pos hs
+  have hpos : 0 < P.consumption s (P.policy s) :=
+    P.consumption_policy_pos (P.positiveConsumption_of_unbounded hd) hs
   have hbad : P.u (P.consumption s (P.policy s)) < L - 1 := hsub ⟨hpos, hlt⟩
   linarith [hL s hs]
 
@@ -107,9 +108,10 @@ theorem exists_lower_bound_of_utility_ge (L : ℝ)
 No compactness and no continuity of the policy are used, which is exactly what lets the same
 argument run uniformly in the interest rate: a compactness proof would need joint continuity
 in `(r, s)`, which is what such a bound is wanted to prove in the first place. -/
-theorem exists_consumption_policy_lower_bound :
+theorem exists_consumption_policy_lower_bound (hd : P.Unbounded) :
     ∃ δ > 0, ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → δ ≤ P.consumption s (P.policy s) :=
-  P.exists_lower_bound_of_utility_ge _ fun _ hs => P.le_utility_consumption_policy_of_bounds hs
+  P.exists_lower_bound_of_utility_ge hd _ fun _ hs =>
+    P.le_utility_consumption_policy_of_bounds hs
 
 /-! ### A choice set that does not move
 
@@ -123,9 +125,6 @@ dependence moves into the objective, where it can be estimated pointwise. `|sSup
 over a COMMON set is bounded by the pointwise gap; over two different sets it is not. -/
 
 theorem maxSaving_nonneg (s : ℝ × Z) : 0 ≤ P.maxSaving s := le_max_left _ _
-
-theorem maxSaving_le_resources (s : ℝ × Z) : P.maxSaving s ≤ P.resources s :=
-  max_le (P.resources_pos s).le (min_le_right _ _)
 
 /-- The feasible set is the image of the FIXED interval `[0,1]` under scaling by the maximum
 feasible saving. -/

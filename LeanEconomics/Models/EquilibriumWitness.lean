@@ -90,13 +90,23 @@ theorem dispersed_norm_le_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) 
 
 /-! ### The consumption floor, decline and corner, uniformly -/
 
+/-- Every rate variant of the witness still has log utility, hence the open domain, hence
+positive consumption at the optimum. -/
+theorem dispersed_withRate_unbounded {r : ℝ} (hrr : 0 < 1 + r) :
+    (dispersed.withRate r hrr).Unbounded := rfl
+
+theorem dispersed_withRate_positiveConsumption {r : ℝ} (hrr : 0 < 1 + r) :
+    (dispersed.withRate r hrr).PositiveConsumption :=
+  (dispersed.withRate r hrr).positiveConsumption_of_unbounded rfl
+
 /-- The linear consumption bound holds with a single constant across the interval. -/
 theorem dispersed_consumption_bound {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (hrr : 0 < 1 + r)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) (z : Fin 2) :
     1 / (1 + 4 / 7 * Real.log 100) * (dispersed.withRate r hrr).resources (a, z)
       ≤ (dispersed.withRate r hrr).consumptionFn z a := by
   have hbd := (dispersed.withRate r hrr).log_consumption_lower_bound_of_norm
-    (by simp) (dispersed_norm_le_uniform hr hrr) ha z
+    (dispersed_withRate_positiveConsumption hrr) (by simp)
+    (dispersed_norm_le_uniform hr hrr) ha z
   have he : (1 : ℝ) + 4 * ((dispersed.withRate r hrr).discount : ℝ) * (8 / 7 * Real.log 100)
       = 1 + 4 / 7 * Real.log 100 := by
     rw [IncomeFluctuation.withRate_discount, dispersed_discount]; ring
@@ -137,7 +147,7 @@ theorem dispersed_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 20)) (
   have hrhi : (0 : ℝ) < 1 + 1 / 20 := by norm_num
   have hβ : ((dispersed.discount : ℝ)) * (1 + 1 / 20) < 1 := by
     rw [dispersed_discount]; norm_num
-  refine dispersed.log_policy_eq_zero_uniform (by simp) hrr hrhi hr.2 hβ hmem 0 ?_
+  refine dispersed.log_policy_eq_zero_uniform rfl (by simp) hrr hrhi hr.2 hβ hmem 0 ?_
   have hres : (dispersed.withRate (1 / 20) hrhi).resources (a, 0)
       = 1 / 100 + (21 / 20) * a := by
     simp only [IncomeFluctuation.resources, IncomeFluctuation.withRate_income,
@@ -181,7 +191,8 @@ condition is easier at higher rates — raises the floor from `1/200` to `1/160`
 theorem dispersed_floor_top (hrr : 0 < 1 + 1 / 20) (μ : ProbabilityMeasure dispersed.State)
     (hμ : (dispersed.withRate (1 / 20) hrr).IsStationary μ) :
     1 / 160 ≤ dispersed.aggregateCapital μ := by
-  have hkey := (dispersed.withRate (1 / 20) hrr).le_aggregateCapital_of_gain (by simp) hμ
+  have hkey := (dispersed.withRate (1 / 20) hrr).le_aggregateCapital_of_gain
+    (dispersed_withRate_positiveConsumption hrr) (by simp) hμ
     (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (h := 1 / 40) (by norm_num) (by norm_num) (by norm_num)
     (fun z => by simp) ?_
   · have heq : (dispersed.withRate (1 / 20) hrr).aggregateCapital μ

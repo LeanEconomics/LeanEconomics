@@ -101,13 +101,14 @@ theorem optimal_action_unique_of_concaveSlices {v : (ℝ × Z) →ᵇ ℝ} (hv :
   have hcmid : P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁)
       = (1 / 2 : ℝ) * P.consumption s a₀ + (1 / 2 : ℝ) * P.consumption s a₁ := by
     simp only [consumption]; ring
-  have hcm : 0 < P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁) := by
-    rw [hcmid]; linarith
+  have hcm : P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁) ∈ P.dom := by
+    rw [hcmid]
+    simpa only [smul_eq_mul] using P.convex_dom hc₀ hc₁ hhalf.le hhalf.le hsum
   have hcne : P.consumption s a₀ ≠ P.consumption s a₁ := by
     simp only [consumption]
     intro h
     exact hne (by linarith)
-  have hu := P.strictConcaveOn_u.2 hc₀ hc₁ hcne hhalf hhalf hsum
+  have hu := P.strictConcaveOn_u_dom.2 hc₀ hc₁ hcne hhalf hhalf hsum
   have hexp : (1 / 2 : ℝ) * (∑ z', P.transitionMatrix s.2 z' * v (a₀, z'))
       + (1 / 2 : ℝ) * (∑ z', P.transitionMatrix s.2 z' * v (a₁, z'))
       ≤ ∑ z', P.transitionMatrix s.2 z' * v ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁, z') := by
@@ -125,7 +126,7 @@ theorem optimal_action_unique_of_concaveSlices {v : (ℝ × Z) →ᵇ ℝ} (hv :
       = ((P.u (P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁))
           + P.discount * ∑ z', P.transitionMatrix s.2 z'
               * v ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁, z') : ℝ) : EReal) := by
-    rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe hs hmem hcm, ← EReal.coe_add]
+    rw [ExtendedStochasticProgram.objectiveE, P.reward_eq_coe_dom hs hmem hcm, ← EReal.coe_add]
     rfl
   rw [hobj] at hle
   have hle' : P.u (P.consumption s ((1 / 2 : ℝ) * a₀ + (1 / 2 : ℝ) * a₁))
@@ -168,16 +169,15 @@ region, so the induction has a base. -/
 theorem reward_antitone {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) {x y : ℝ}
     (hx : x ∈ P.toExtended.feasible s) (hy : y ∈ P.toExtended.feasible s) (hxy : x ≤ y) :
     P.toExtended.reward (s, y) ≤ P.toExtended.reward (s, x) := by
-  rcases le_or_gt (P.consumption s y) 0 with h | h
+  by_cases h : P.consumption s y ∈ P.dom
+  · have hcx : P.consumption s x ∈ P.dom :=
+      P.dom_upward h (by simp only [consumption]; linarith)
+    rw [P.reward_eq_coe_dom hs hx hcx, P.reward_eq_coe_dom hs hy h, EReal.coe_le_coe_iff]
+    exact P.monotoneOn_u_dom h hcx (by simp only [consumption]; linarith)
   · have hb : P.toExtended.reward (s, y) = ⊥ := by
       by_contra hne
-      exact absurd (P.consumption_pos_of_ne_bot hne) (not_lt.mpr h)
+      exact h (P.consumption_mem_dom_of_ne_bot hs hy hne)
     rw [hb]; exact bot_le
-  · have hcx : 0 < P.consumption s x := by
-      simp only [consumption] at h ⊢; linarith
-    rw [P.reward_eq_coe hs hx hcx, P.reward_eq_coe hs hy h, EReal.coe_le_coe_iff]
-    exact P.monotoneOn_u (mem_Ioi.mpr h) (mem_Ioi.mpr hcx)
-      (by simp only [consumption]; linarith)
 
 /-- **With nothing to gain from saving, the household saves nothing.** -/
 theorem policyOf_zero {s : ℝ × Z} (hs : s.1 ∈ Icc 0 assetCap) :

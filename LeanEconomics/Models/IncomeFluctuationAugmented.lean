@@ -69,8 +69,11 @@ noncomputable def augMaxConsumption (s : P.AugState) : ℝ :=
 noncomputable def augMaxSaving (s : P.AugState) : ℝ :=
   max 0 (min assetCap (P.augResources rlo rhi s))
 
+noncomputable def augClampedConsumption (p : P.AugState × ℝ) : ℝ :=
+  min (P.augMaxConsumption rlo rhi p.1) (max 0 (P.augResources rlo rhi p.1 - p.2))
+
 noncomputable def augRewardFn (p : P.AugState × ℝ) : EReal :=
-  extendBot P.u (min (P.augMaxConsumption rlo rhi p.1) (P.augResources rlo rhi p.1 - p.2))
+  extendDom P.dom P.u (P.augClampedConsumption rlo rhi p)
 
 variable {rlo rhi}
 
@@ -125,10 +128,22 @@ theorem continuous_augMaxConsumption : Continuous (P.augMaxConsumption rlo rhi) 
 theorem continuous_augMaxSaving : Continuous (P.augMaxSaving rlo rhi) :=
   continuous_const.max (continuous_const.min (P.continuous_augResources rlo rhi))
 
-theorem continuous_augRewardFn : Continuous (P.augRewardFn rlo rhi) := by
-  refine (continuous_extendBot P.continuousOn_u P.tendsto_atBot_u).comp ?_
-  exact ((P.continuous_augMaxConsumption rlo rhi).comp continuous_fst).min
-    (((P.continuous_augResources rlo rhi).comp continuous_fst).sub continuous_snd)
+theorem augClampedConsumption_nonneg (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi)
+    (p : P.AugState × ℝ) : 0 ≤ P.augClampedConsumption rlo rhi p :=
+  le_min (P.augMaxConsumption_pos hrlo hle p.1).le (le_max_left _ _)
+
+theorem augClampedConsumption_le (p : P.AugState × ℝ) :
+    P.augClampedConsumption rlo rhi p ≤ P.augMaxConsumption rlo rhi p.1 := min_le_left _ _
+
+theorem continuous_augClampedConsumption : Continuous (P.augClampedConsumption rlo rhi) :=
+  ((P.continuous_augMaxConsumption rlo rhi).comp continuous_fst).min
+    (continuous_const.max
+      (((P.continuous_augResources rlo rhi).comp continuous_fst).sub continuous_snd))
+
+theorem continuous_augRewardFn (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) :
+    Continuous (P.augRewardFn rlo rhi) :=
+  P.continuousOn_extendDom.comp_continuous (P.continuous_augClampedConsumption rlo rhi)
+    fun p => mem_Ici.mpr (P.augClampedConsumption_nonneg rlo rhi hrlo hle p)
 
 variable {rlo rhi}
 
@@ -144,29 +159,31 @@ noncomputable def toAugmented (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) :
   lowerHemicontinuous_feasible :=
     lowerHemicontinuous_Icc continuous_const (P.continuous_augMaxSaving rlo rhi)
       fun _ => le_max_left _ _
-  reward := ⟨P.augRewardFn rlo rhi, P.continuous_augRewardFn rlo rhi⟩
+  reward := ⟨P.augRewardFn rlo rhi, P.continuous_augRewardFn rlo rhi hrlo hle⟩
   rewardMax := P.u (P.maxIncome + (1 + rhi) * assetCap)
   reward_le := by
     intro s a _
     simp only [ContinuousMap.coe_mk, augRewardFn]
-    rcases le_or_gt (min (P.augMaxConsumption rlo rhi s) (P.augResources rlo rhi s - a)) 0
-      with h | h
-    · rw [extendBot_of_nonpos h]; exact bot_le
-    · rw [extendBot_of_pos h, EReal.coe_le_coe_iff]
-      refine P.monotoneOn_u h ?_ (le_trans (min_le_left _ _) (P.augMaxConsumption_le hle s))
-      exact lt_of_lt_of_le (P.augMaxConsumption_pos hrlo hle s) (P.augMaxConsumption_le hle s)
+    have hcap : 0 < P.maxIncome + (1 + rhi) * assetCap :=
+      lt_of_lt_of_le (P.augMaxConsumption_pos hrlo hle s) (P.augMaxConsumption_le hle s)
+    by_cases h : P.augClampedConsumption rlo rhi (s, a) ∈ P.dom
+    · rw [extendDom_of_mem h, EReal.coe_le_coe_iff]
+      exact P.monotoneOn_u_dom h (P.mem_dom_of_pos hcap)
+        (le_trans (P.augClampedConsumption_le rlo rhi (s, a)) (P.augMaxConsumption_le hle s))
+    · rw [extendDom_of_not_mem h]; exact bot_le
   select := ⟨fun _ => 0, continuous_const⟩
   select_mem := fun _ => ⟨le_rfl, le_max_left _ _⟩
   rewardMin := P.u P.minIncome
   le_reward_select := by
     intro s
     simp only [ContinuousMap.coe_mk, augRewardFn]
-    have h : P.minIncome
-        ≤ min (P.augMaxConsumption rlo rhi s) (P.augResources rlo rhi s - 0) := by
-      refine le_min (P.minIncome_le_augMaxConsumption hrlo hle s) ?_
+    have h : P.minIncome ≤ P.augClampedConsumption rlo rhi (s, 0) := by
+      refine le_min (P.minIncome_le_augMaxConsumption hrlo hle s) (le_max_of_le_right ?_)
       rw [sub_zero]; exact P.minIncome_le_augResources hrlo hle s
-    rw [extendBot_of_pos (lt_of_lt_of_le P.minIncome_pos h), EReal.coe_le_coe_iff]
-    exact P.monotoneOn_u P.minIncome_pos (lt_of_lt_of_le P.minIncome_pos h) h
+    have hpos : 0 < P.augClampedConsumption rlo rhi (s, 0) :=
+      lt_of_lt_of_le P.minIncome_pos h
+    rw [extendDom_of_mem (P.mem_dom_of_pos hpos), EReal.coe_le_coe_iff]
+    exact P.monotoneOn_u_dom (P.mem_dom_of_pos P.minIncome_pos) (P.mem_dom_of_pos hpos) h
   transition z' := ⟨fun p => ((p.2, p.1.1.2), z'),
     (continuous_snd.prodMk ((continuous_snd.comp continuous_fst).comp continuous_fst)).prodMk
       continuous_const⟩
@@ -224,11 +241,13 @@ theorem objectiveE_aug_eq (hrlo : 0 < 1 + rlo) (hle : rlo ≤ rhi) (hr : r ∈ I
       = (P.toAugmented hrlo hle).objectiveE W ((t.1, r), t.2) a := by
   have hrew : (P.withRate r hrr).toExtended.reward (t, a)
       = (P.toAugmented hrlo hle).reward (((t.1, r), t.2), a) := by
-    change extendBot P.u (min ((P.withRate r hrr).maxConsumption)
-          ((P.withRate r hrr).resources t - a))
-      = extendBot P.u (min (P.augMaxConsumption rlo rhi ((t.1, r), t.2))
-          (P.augResources rlo rhi ((t.1, r), t.2) - a))
+    change extendDom (P.withRate r hrr).dom P.u
+          (min ((P.withRate r hrr).maxConsumption)
+            (max 0 ((P.withRate r hrr).resources t - a)))
+      = extendDom P.dom P.u (min (P.augMaxConsumption rlo rhi ((t.1, r), t.2))
+          (max 0 (P.augResources rlo rhi ((t.1, r), t.2) - a)))
     rw [P.augMaxConsumption_slice hr hrr t, P.augResources_slice hr hrr t]
+    rfl
   have hexp : (P.withRate r hrr).toExtended.expect (P.sliceAt W r) (t, a)
       = (P.toAugmented hrlo hle).expect W (((t.1, r), t.2), a) := by
     simp only [ExtendedStochasticProgram.expect]

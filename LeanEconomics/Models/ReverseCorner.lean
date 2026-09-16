@@ -61,7 +61,8 @@ variable {assetCap : ℝ} (P : IncomeFluctuation Z assetCap)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **The asset cap binds where resources are large.** The household saves the maximum. -/
-theorem policy_eq_assetCap_of_corner (hu : P.u = Real.log) {s : ℝ × Z}
+theorem policy_eq_assetCap_of_corner (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
+    {s : ℝ × Z}
     (hs : s.1 ∈ Icc 0 assetCap) (hcap : 0 < assetCap) (hres : assetCap < P.resources s) (z₀ : Z)
     (hcond : 1 / (P.resources s - assetCap)
       ≤ P.discount * (P.transitionMatrix s.2 z₀ * (P.income z₀
@@ -106,7 +107,7 @@ theorem policy_eq_assetCap_of_corner (hu : P.u = Real.log) {s : ℝ × Z}
         (by positivity)
       linarith
     -- the continuation gain, bounded below by its chord
-    have hgen := P.log_cont_sub_ge_gen hu s.2 z₀ hxmem hcapmem hlt.le
+    have hgen := P.log_cont_sub_ge_gen hpc hu s.2 z₀ hxmem hcapmem hlt.le
     set t : ℝ := (1 + P.interest) * (assetCap - x) / (P.income z₀ + (1 + P.interest) * x)
       with htdef
     have hden : 0 < P.income z₀ + (1 + P.interest) * x := by nlinarith [hx.1]
@@ -158,13 +159,13 @@ theorem policy_eq_assetCap_of_corner (hu : P.u = Real.log) {s : ℝ × Z}
     have hxle : x ≤ assetCap := by
       have := hx; rw [P.feasible_eq, hmc] at this; exact this.2
     have hcx : 0 < P.consumption s x := by simp only [consumption]; linarith
-    rw [P.objectiveE_eq_coe hs hx hcx, EReal.coe_le_coe_iff]
+    rw [P.objectiveE_eq_coe hs hx (P.mem_dom_of_pos hcx), EReal.coe_le_coe_iff]
     exact hmain x hx
   have hble := P.toExtended.bellmanFn_le P.toExtended.valueFunction hbound
   have hge := P.toExtended.le_bellmanFn P.toExtended.valueFunction hmem
-  rw [P.objectiveE_eq_coe hs hmem hcpos, EReal.coe_le_coe_iff] at hge
+  rw [P.objectiveE_eq_coe hs hmem (P.mem_dom_of_pos hcpos), EReal.coe_le_coe_iff] at hge
   refine (P.eq_policy_of_optimal hs hmem ?_).symm
-  rw [P.objectiveE_eq_coe hs hmem hcpos, le_antisymm hge hble]
+  rw [P.objectiveE_eq_coe hs hmem (P.mem_dom_of_pos hcpos), le_antisymm hge hble]
 
 end IncomeFluctuation
 

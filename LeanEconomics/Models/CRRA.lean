@@ -211,10 +211,14 @@ noncomputable def logImpatient : IncomeFluctuation (Fin 2) 1 where
   interest_gt_neg_one := by norm_num
   assetCap_nonneg := by norm_num
   discount_lt_one := by norm_num
-  continuousOn_u := continuousOn_crraUtility 1
-  monotoneOn_u := monotoneOn_crraUtility 1
-  tendsto_atBot_u := tendsto_atBot_crraUtility le_rfl
-  strictConcaveOn_u := strictConcaveOn_crraUtility one_pos
+  dom := Ioi 0
+  Ioi_subset_dom := subset_rfl
+  dom_subset_Ici := Ioi_subset_Ici_self
+  continuousOn_u_dom := continuousOn_crraUtility 1
+  monotoneOn_u_dom := monotoneOn_crraUtility 1
+  strictConcaveOn_u_dom := strictConcaveOn_crraUtility one_pos
+  continuousOn_extendDom :=
+    continuousOn_extendDom_Ioi (continuousOn_crraUtility 1) (tendsto_atBot_crraUtility le_rfl)
 
 @[simp] theorem logImpatient_u : logImpatient.u = Real.log := crraUtility_one
 

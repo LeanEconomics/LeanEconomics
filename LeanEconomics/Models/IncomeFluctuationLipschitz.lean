@@ -89,7 +89,7 @@ theorem bellmanFn_sub_le_of_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL 
   rcases eq_or_ne (P.toExtended.reward ((x, z), a)) ⊥ with hbot | hne
   · rw [ExtendedStochasticProgram.objectiveE, hbot, EReal.bot_add]; exact bot_le
   -- consumption is positive at the richer state, so the objective is real there
-  have hc : 0 < P.consumption (x, z) a := P.consumption_pos_of_ne_bot hne
+  have hc : P.consumption (x, z) a ∈ P.dom := P.consumption_mem_dom_of_ne_bot hx ha hne
   have ha0 : 0 ≤ a := ha.1
   have hacap : a ≤ assetCap := le_trans ha.2 (P.maxSaving_le_assetCap _)
   have haR : a ≤ P.resources (x, z) := le_trans ha.2 (P.maxSaving_le_resources _)
@@ -103,15 +103,17 @@ theorem bellmanFn_sub_le_of_lipschitz {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL 
     exact max_le (P.resources_pos _).le (by linarith [hres])
   -- consumption at the poorer state under the swapped action
   have hcy : P.consumption (y, z) b = P.resources (y, z) - b := rfl
-  have hcypos : 0 < P.consumption (y, z) b := by
-    rw [hcy, hbdef]
+  have hcymem : P.consumption (y, z) b ∈ P.dom := by
     rcases le_total a Δ with h | h
-    · rw [max_eq_left (by linarith)]; simpa using P.resources_pos (y, z)
-    · rw [max_eq_right (by linarith)]
-      simp only [consumption] at hc; linarith [hres]
+    · refine P.mem_dom_of_pos ?_
+      rw [hcy, hbdef, max_eq_left (by linarith)]
+      simpa using P.resources_pos (y, z)
+    · refine P.dom_upward hc (le_of_eq ?_)
+      rw [hcy, hbdef, max_eq_right (by linarith)]
+      simp only [consumption]; linarith [hres]
   -- both objectives are real; compare them
-  have hrx := P.reward_eq_coe hx ha hc
-  have hry := P.reward_eq_coe hy hbmem hcypos
+  have hrx := P.reward_eq_coe_dom hx ha hc
+  have hry := P.reward_eq_coe_dom hy hbmem hcymem
   have hexp := P.abs_expect_sub_le_lipschitz hv z (a := a) (b := b)
     ⟨ha0, hacap⟩ ⟨hb0, le_trans hba hacap⟩ x y
   have hgapa : |a - b| ≤ Δ := by
@@ -186,7 +188,7 @@ theorem bellmanFn_sub_le_of_lipschitz' {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL
   refine P.toExtended.bellmanFn_le v fun b hb => ?_
   rcases eq_or_ne (P.toExtended.reward ((y, z), b)) ⊥ with hbot | hne
   · rw [ExtendedStochasticProgram.objectiveE, hbot, EReal.bot_add]; exact bot_le
-  have hcy : 0 < P.consumption (y, z) b := P.consumption_pos_of_ne_bot hne
+  have hcy : P.consumption (y, z) b ∈ P.dom := P.consumption_mem_dom_of_ne_bot hy hb hne
   have hb0 : 0 ≤ b := hb.1
   have hbcap : b ≤ assetCap := le_trans hb.2 (P.maxSaving_le_assetCap _)
   have hbR : b ≤ P.resources (y, z) := le_trans hb.2 (P.maxSaving_le_resources _)
@@ -207,7 +209,7 @@ theorem bellmanFn_sub_le_of_lipschitz' {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL
         linarith [hres]
       · rw [hms, min_eq_left hcap] at h ⊢
         linarith [hres]
-  have hcxpos : 0 < P.consumption (x, z) a := lt_of_lt_of_le hcy hcx
+  have hcxmem : P.consumption (x, z) a ∈ P.dom := P.dom_upward hcy hcx
   have hgapa : |b - a| ≤ Δ := by
     have hlow : b - Δ ≤ a := by
       rw [hadef]
@@ -219,8 +221,8 @@ theorem bellmanFn_sub_le_of_lipschitz' {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL
     have hhigh : a ≤ b + Δ := min_le_left _ _
     rw [abs_le]
     constructor <;> linarith
-  have hrx := P.reward_eq_coe hx hamem hcxpos
-  have hry := P.reward_eq_coe hy hb hcy
+  have hrx := P.reward_eq_coe_dom hx hamem hcxmem
+  have hry := P.reward_eq_coe_dom hy hb hcy
   have hexp := P.abs_expect_sub_le_lipschitz hv z (a := b) (b := a)
     ⟨hb0, hbcap⟩ ⟨ha0, hacap⟩ y x
   have hdx : (P.toExtended.discount : ℝ) = (P.discount : ℝ) := rfl
@@ -230,7 +232,7 @@ theorem bellmanFn_sub_le_of_lipschitz' {v : (ℝ × Z) →ᵇ ℝ} {L : ℝ} (hL
     rw [← EReal.coe_add, add_assoc, ← EReal.coe_add, ← EReal.coe_add, EReal.coe_le_coe_iff]
     rw [abs_le] at hexp
     have hu' : P.u (P.consumption (y, z) b) ≤ P.u (P.consumption (x, z) a) :=
-      P.monotoneOn_u hcy hcxpos hcx
+      P.monotoneOn_u_dom hcy hcxmem hcx
     have h1 : (P.discount : ℝ)
         * (P.toExtended.expect v ((y, z), b) - P.toExtended.expect v ((x, z), a))
         ≤ P.discount * (L * |b - a|) := mul_le_mul_of_nonneg_left hexp.2 hβ
@@ -298,7 +300,7 @@ theorem policy_eq_zero_of_corner_at {L m : ℝ}
     (hlip : ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
       |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)| ≤ L * |x - y|)
     {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap)
-    (hmarg : ∀ c d : ℝ, 0 < d → d ≤ c → c ≤ P.resources s → m * (c - d) ≤ P.u c - P.u d)
+    (hmarg : ∀ c d : ℝ, d ∈ P.dom → d ≤ c → c ≤ P.resources s → m * (c - d) ≤ P.u c - P.u d)
     (hcond : P.discount * L < m) :
     P.policy s = 0 := by
   have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
@@ -316,10 +318,10 @@ theorem policy_eq_zero_of_corner_at {L m : ℝ}
     intro a ha
     rcases eq_or_ne (P.toExtended.reward (s, a)) ⊥ with hbot | hne
     · rw [ExtendedStochasticProgram.objectiveE, hbot, EReal.bot_add]; exact bot_le
-    have hca : 0 < P.consumption s a := P.consumption_pos_of_ne_bot hne
+    have hca : P.consumption s a ∈ P.dom := P.consumption_mem_dom_of_ne_bot hs ha hne
     have ha0 : 0 ≤ a := ha.1
     have hacap : a ≤ assetCap := le_trans ha.2 (P.maxSaving_le_assetCap _)
-    have hrwa := P.reward_eq_coe hs ha hca
+    have hrwa := P.reward_eq_coe_dom hs ha hca
     have hdx : (P.toExtended.discount : ℝ) = (P.discount : ℝ) := rfl
     -- the utility gain from consuming instead of saving
     have hu : m * a ≤ P.u (P.consumption s 0) - P.u (P.consumption s a) := by
@@ -366,7 +368,7 @@ theorem policy_eq_zero_of_corner_at {L m : ℝ}
 theorem policy_eq_zero_of_corner {L m : ℝ}
     (hlip : ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
       |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)| ≤ L * |x - y|)
-    (hmarg : ∀ c d : ℝ, 0 < d → d ≤ c → c ≤ P.maxConsumption → m * (c - d) ≤ P.u c - P.u d)
+    (hmarg : ∀ c d : ℝ, d ∈ P.dom → d ≤ c → c ≤ P.maxConsumption → m * (c - d) ≤ P.u c - P.u d)
     (hcond : P.discount * L < m) {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap) :
     P.policy s = 0 :=
   P.policy_eq_zero_of_corner_at hlip hs

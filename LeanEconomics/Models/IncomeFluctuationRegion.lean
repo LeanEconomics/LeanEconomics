@@ -184,7 +184,7 @@ Separating the choice of `δ` from its use is what makes the bound uniform acros
 rates: the hypothesis on `δ` mentions only `u`, `loBound v` and the discount factor, none of
 which move with the rate, so a single `δ` serves every rate. -/
 theorem le_consumption_of_cutoff (v : (ℝ × Z) →ᵇ ℝ) {δ : ℝ}
-    (hspec : ∀ c : ℝ, 0 < c → c < δ → P.u c < P.toExtended.loBound v - P.discount * ‖v‖)
+    (hspec : ∀ c ∈ P.dom, c < δ → P.u c < P.toExtended.loBound v - P.discount * ‖v‖)
     {s : ℝ × Z} (hs : s ∈ P.region) {a : ℝ} (ha : a ∈ P.toExtended.feasible s)
     (hL : ((P.toExtended.loBound v : ℝ) : EReal) ≤ P.toExtended.objectiveE v s a) :
     δ ≤ P.consumption s a := by
@@ -196,9 +196,9 @@ theorem le_consumption_of_cutoff (v : (ℝ × Z) →ᵇ ℝ) {δ : ℝ}
     intro hbot
     rw [ExtendedStochasticProgram.objectiveE, hbot, EReal.bot_add] at hL
     exact EReal.coe_ne_bot _ (le_bot_iff.mp hL)
-  have hc : 0 < P.consumption s a := P.consumption_pos_of_ne_bot hne
+  have hc : P.consumption s a ∈ P.dom := P.consumption_mem_dom_of_ne_bot hs ha hne
   -- so the reward is real, and the objective is a real inequality
-  have hrw := P.reward_eq_coe hs ha hc
+  have hrw := P.reward_eq_coe_dom hs ha hc
   rw [ExtendedStochasticProgram.objectiveE, hrw, ← EReal.coe_add, EReal.coe_le_coe_iff] at hL
   have hexp := P.abs_expect_le v (s, a)
   rw [abs_le] at hexp
@@ -212,20 +212,22 @@ theorem le_consumption_of_cutoff (v : (ℝ × Z) →ᵇ ℝ) {δ : ℝ}
 
 /-- A cutoff exists, and its defining property mentions only data that does not move with
 the interest rate. -/
-theorem exists_cutoff (v : (ℝ × Z) →ᵇ ℝ) :
-    ∃ δ > 0, ∀ c : ℝ, 0 < c → c < δ →
+theorem exists_cutoff (hd : P.Unbounded) (v : (ℝ × Z) →ᵇ ℝ) :
+    ∃ δ > 0, ∀ c ∈ P.dom, c < δ →
       P.u c < P.toExtended.loBound v - P.discount * ‖v‖ := by
   set R : ℝ := P.toExtended.loBound v - P.discount * ‖v‖ with hR
-  have hev : ∀ᶠ c in 𝓝[>] (0 : ℝ), P.u c < R := P.tendsto_atBot_u (eventually_lt_atBot R)
+  have hev : ∀ᶠ c in 𝓝[>] (0 : ℝ), P.u c < R := P.tendsto_atBot_u hd (eventually_lt_atBot R)
   obtain ⟨δ, hδ, hsub⟩ := (nhdsGT_basis (0 : ℝ)).eventually_iff.mp hev
-  exact ⟨δ, hδ, fun c hc hcδ => hsub ⟨hc, hcδ⟩⟩
+  refine ⟨δ, hδ, fun c hc hcδ => hsub ⟨?_, hcδ⟩⟩
+  rw [hd] at hc
+  exact hc
 
 /-- **Actions worth keeping consume a bounded amount.** -/
-theorem exists_cutoff_consumption (v : (ℝ × Z) →ᵇ ℝ) :
+theorem exists_cutoff_consumption (hd : P.Unbounded) (v : (ℝ × Z) →ᵇ ℝ) :
     ∃ δ > 0, ∀ s : ℝ × Z, s ∈ P.region → ∀ a ∈ P.toExtended.feasible s,
       ((P.toExtended.loBound v : ℝ) : EReal) ≤ P.toExtended.objectiveE v s a →
       δ ≤ P.consumption s a := by
-  obtain ⟨δ, hδ, hspec⟩ := P.exists_cutoff v
+  obtain ⟨δ, hδ, hspec⟩ := P.exists_cutoff hd v
   exact ⟨δ, hδ, fun s hs a ha hL => P.le_consumption_of_cutoff v hspec hs ha hL⟩
 
 /-! ### Uniform continuity

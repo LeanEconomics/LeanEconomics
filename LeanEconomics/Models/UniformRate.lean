@@ -47,7 +47,8 @@ variable (P : IncomeFluctuation Z assetCap)
 
 /-- The linear consumption bound stated against an arbitrary upper bound `N` on the value
 function, so that one `N` covering a rate interval gives one `ε` covering it. -/
-theorem log_consumption_lower_bound_of_norm (hu : P.u = Real.log) {N : ℝ}
+theorem log_consumption_lower_bound_of_norm (hpc : P.PositiveConsumption) (hu : P.u = Real.log)
+    {N : ℝ}
     (hN : ‖P.toExtended.valueFunction‖ ≤ N) {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
     P.resources (a, z) / (1 + 4 * P.discount * N) ≤ P.consumptionFn z a := by
   have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
@@ -55,7 +56,7 @@ theorem log_consumption_lower_bound_of_norm (hu : P.u = Real.log) {N : ℝ}
     simp only [IncomeFluctuation.deviationGap]
     nlinarith [hN, hβ]
   have hG : 0 ≤ P.deviationGap := P.deviationGap_nonneg
-  refine le_trans ?_ (P.log_consumption_linear_lower_bound' hu ha z)
+  refine le_trans ?_ (P.log_consumption_linear_lower_bound' hpc hu ha z)
   refine div_le_div_of_nonneg_left (P.resources_pos (a, z)).le (by linarith) ?_
   linarith
 
@@ -81,7 +82,8 @@ theorem resources_le_of_le {r₀ r₁ : ℝ} (h₀ : 0 < 1 + r₀) (h₁ : 0 < 1
   nlinarith
 
 /-- **The corner condition, checked once at the top of the interval.** -/
-theorem log_policy_eq_zero_uniform (hu : P.u = Real.log) {r₀ r₁ : ℝ} (h₀ : 0 < 1 + r₀)
+theorem log_policy_eq_zero_uniform (hdom : P.Unbounded) (hu : P.u = Real.log) {r₀ r₁ : ℝ}
+    (h₀ : 0 < 1 + r₀)
     (h₁ : 0 < 1 + r₁) (hle : r₀ ≤ r₁) (hβ₁ : (P.discount : ℝ) * (1 + r₁) < 1)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z)
     (hlt : (P.withRate r₁ h₁).discount * (P.withRate r₁ h₁).logLipschitz
@@ -89,8 +91,8 @@ theorem log_policy_eq_zero_uniform (hu : P.u = Real.log) {r₀ r₁ : ℝ} (h₀
     (P.withRate r₀ h₀).policy (a, z) = 0 := by
   have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
   have hβ₀ : (P.discount : ℝ) * (1 + r₀) < 1 := by nlinarith
-  refine (P.withRate r₀ h₀).log_policy_eq_zero_of_resources (by simpa using hu) (by simpa using hβ₀)
-    ha ?_
+  refine (P.withRate r₀ h₀).log_policy_eq_zero_of_resources hdom (by simpa using hu)
+    (by simpa using hβ₀) ha ?_
   have hlip := P.logLipschitz_le_of_le h₀ h₁ hle hβ₁
   have hres := P.resources_le_of_le h₀ h₁ hle ha.1 z
   have hpos₀ : 0 < (P.withRate r₀ h₀).resources (a, z) := (P.withRate r₀ h₀).resources_pos _

@@ -96,7 +96,8 @@ work is the neighbourhood: the frozen saving is feasible at the state it came fr
 poorer states it need not be, so the lower bound is only local. Continuity of the feasible
 boundary gives an interval on which it survives, provided the saving is interior there. -/
 
-theorem hasDerivAt_valueFunction {z : Z} {a du : ℝ} (ha : 0 < a) (hacap : a < assetCap)
+theorem hasDerivAt_valueFunction (hpc : P.PositiveConsumption) {z : Z} {a du : ℝ}
+    (ha : 0 < a) (hacap : a < assetCap)
     (hconc : ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
       fun x => P.toExtended.valueFunction (x, z))
     (hint : P.policy (a, z) < P.maxSaving (a, z))
@@ -105,7 +106,7 @@ theorem hasDerivAt_valueFunction {z : Z} {a du : ℝ} (ha : 0 < a) (hacap : a < 
   set V := P.toExtended.valueFunction with hV
   set a' := P.policy (a, z) with ha'
   have hamem : ((a, z) : ℝ × Z).1 ∈ Icc (0 : ℝ) assetCap := ⟨ha.le, hacap.le⟩
-  have hc : 0 < P.consumption (a, z) a' := P.consumption_policy_pos hamem
+  have hc : 0 < P.consumption (a, z) a' := P.consumption_policy_pos hpc hamem
   have ha'0 : 0 ≤ a' := (P.policy_mem (a, z)).1
   -- the frozen saving stays feasible, and consumption stays positive, near `a`
   have hcms : ContinuousAt (fun x => P.maxSaving (x, z)) a :=

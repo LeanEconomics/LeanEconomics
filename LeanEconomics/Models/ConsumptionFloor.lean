@@ -60,8 +60,11 @@ namespace LeanEconomics
 /-- **Marginal Inada.** Consumption near zero has unboundedly large marginal value, measured by
 secant slopes so that no derivative is needed. CRRA satisfies this for every `γ > 0`, including
 the `γ < 1` range where utility itself stays bounded. -/
-def MarginalInada (u : ℝ → ℝ) : Prop :=
-  ∀ M : ℝ, ∃ δ > 0, ∀ c c' : ℝ, 0 < c → c < c' → c' ≤ δ → M * (c' - c) ≤ u c' - u c
+def MarginalInadaOn (D : Set ℝ) (u : ℝ → ℝ) : Prop :=
+  ∀ M : ℝ, ∃ δ > 0, ∀ c c' : ℝ, c ∈ D → c < c' → c' ≤ δ → M * (c' - c) ≤ u c' - u c
+
+/-- The classical form, on the positives. -/
+abbrev MarginalInada (u : ℝ → ℝ) : Prop := MarginalInadaOn (Ioi 0) u
 
 /-- Marginal utility explodes at zero. -/
 theorem tendsto_rpow_neg_atTop {γ : ℝ} (hγ : 0 < γ) :
@@ -143,7 +146,7 @@ theorem cont_sub_le (z : Z) {x y : ℝ} (hx : P.minIncome / 2 ≤ x) (hxy : x < 
 /-- **A consumption floor from the margin.** No use is made of `tendsto_atBot_u`: the argument
 runs on concavity and boundedness of the continuation, a positive income floor, and unbounded
 marginal value at zero consumption. -/
-theorem exists_consumption_floor_of_marginalInada (hu : MarginalInada P.u) :
+theorem exists_consumption_floor_of_marginalInada (hu : MarginalInadaOn P.dom P.u) :
     ∃ δ > 0, ∀ s : ℝ × Z, s.1 ∈ Icc 0 assetCap → δ ≤ P.consumption s (P.policy s) := by
   have hmin := P.minIncome_pos
   have hβ : (0 : ℝ) ≤ P.discount := P.discount.coe_nonneg
@@ -156,7 +159,8 @@ theorem exists_consumption_floor_of_marginalInada (hu : MarginalInada P.u) :
   set c : ℝ := P.consumption s a with hcdef
   have hdδ : d ≤ δ₀ := min_le_left _ _
   have hd4 : d ≤ P.minIncome / 4 := min_le_right _ _
-  have hc0 : 0 < c := P.consumption_policy_pos hs
+  have hcmem : c ∈ P.dom := P.consumption_policy_mem_dom hs
+  have hc0 : 0 ≤ c := P.nonneg_of_mem_dom hcmem
   have hres : P.minIncome ≤ P.resources s := P.minIncome_le_resources s
   have hca : c = P.resources s - a := rfl
   -- consumption small forces saving large, which is what bounds the continuation's slope
@@ -174,7 +178,7 @@ theorem exists_consumption_floor_of_marginalInada (hu : MarginalInada P.u) :
     simp only [consumption] at hca ⊢; linarith
   have hdpos : 0 < P.consumption s (a - h) := by rw [hcd]; linarith
   -- optimality of `a` against the deviation
-  have hopt := P.objR_le_of_mem hs hfeas hdpos
+  have hopt := P.objR_le_of_mem hs hfeas (P.mem_dom_of_pos hdpos)
   simp only [objR, hcd] at hopt
   -- the continuation cannot repay more than `L * h`
   have hslope := P.cont_sub_le s.2 hlow (by linarith) hamem
@@ -185,11 +189,20 @@ theorem exists_consumption_floor_of_marginalInada (hu : MarginalInada P.u) :
         = (P.discount * P.contSlopeConst) * (d - c) := by rw [hhdef]; ring
     linarith [hopt, hscaled, e.le, e.ge]
   -- but the marginal condition says it must repay strictly more
-  have hmarg := hδ c d hc0 (by linarith) hdδ
+  have hmarg := hδ c d hcmem (by linarith) hdδ
   rw [show ((P.discount : ℝ) * P.contSlopeConst + 1) * (d - c)
       = (P.discount * P.contSlopeConst) * (d - c) + (d - c) from by ring] at hmarg
   rw [hhdef] at hh0
   linarith [hmarg, hutil, hh0]
+
+/-- **The second route to positive consumption.** When utility is unbounded below the reward is
+`⊥` at zero consumption and positivity is free; when it is bounded — CES with `γ < 1` — it has to
+be earned, and this is where. The condition is on MARGINS, which is why it survives the loss of
+the level condition. -/
+theorem positiveConsumption_of_marginalInada (hu : MarginalInadaOn P.dom P.u) :
+    P.PositiveConsumption := by
+  obtain ⟨δ, hδ, hspec⟩ := P.exists_consumption_floor_of_marginalInada hu
+  exact fun s hs => lt_of_lt_of_le hδ (hspec s hs)
 
 end IncomeFluctuation
 

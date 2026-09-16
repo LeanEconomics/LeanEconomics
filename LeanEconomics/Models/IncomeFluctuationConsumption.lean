@@ -72,9 +72,10 @@ theorem concaveOn_cont (z : Z) : ConcaveOn ℝ (Icc 0 assetCap) (P.cont z) := by
 noncomputable def consumptionFn (z : Z) (a : ℝ) : ℝ :=
   P.consumption (a, z) (P.policy (a, z))
 
-theorem consumptionFn_pos {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
+theorem consumptionFn_pos (hpc : P.PositiveConsumption) {a : ℝ} (ha : a ∈ Icc 0 assetCap)
+    (z : Z) :
     0 < P.consumptionFn z a :=
-  P.consumption_policy_pos (s := (a, z)) ha
+  P.consumption_policy_pos hpc (s := (a, z)) ha
 
 /-- The saving cap cannot grow by more than resources do. -/
 theorem maxSaving_le_add_sub {a a' : ℝ} {z : Z} (hle : a ≤ a') :
@@ -96,7 +97,8 @@ theorem maxSaving_le_add_sub {a a' : ℝ} {z : Z} (hle : a ≤ a') :
 resource gap, which leaves consumption alone and moves only the continuation — so the
 comparison is increasing differences of the continuation, exactly as `policy_mono` is
 increasing differences of `u`. -/
-theorem consumptionFn_mono {a a' : ℝ} {z : Z} (ha : a ∈ Icc 0 assetCap)
+theorem consumptionFn_mono {a a' : ℝ} {z : Z}
+    (ha : a ∈ Icc 0 assetCap)
     (ha' : a' ∈ Icc 0 assetCap) (hle : a ≤ a') :
     P.consumptionFn z a ≤ P.consumptionFn z a' := by
   set Δ : ℝ := P.resources (a', z) - P.resources (a, z) with hΔdef
@@ -124,8 +126,9 @@ theorem consumptionFn_mono {a a' : ℝ} {z : Z} (ha : a ∈ Icc 0 assetCap)
     rw [← hΔdef] at this
     linarith [hb'mem.2]
   -- the shift is consumption-neutral, so only two consumption levels appear
-  have hc1 : 0 < P.consumption (a, z) b := P.consumption_policy_pos (s := (a, z)) ha
-  have hc2 : 0 < P.consumption (a', z) b' := P.consumption_policy_pos (s := (a', z)) ha'
+  have hc1 : P.consumption (a, z) b ∈ P.dom := P.consumption_policy_mem_dom (s := (a, z)) ha
+  have hc2 : P.consumption (a', z) b' ∈ P.dom :=
+    P.consumption_policy_mem_dom (s := (a', z)) ha'
   have he1 : P.consumption (a', z) (b + Δ) = P.consumption (a, z) b := by
     simp only [consumption, hΔdef]; ring
   have he2 : P.consumption (a, z) (b' - Δ) = P.consumption (a', z) b' := by
@@ -156,7 +159,8 @@ theorem consumptionFn_mono {a a' : ℝ} {z : Z} (ha : a ∈ Icc 0 assetCap)
 
 /-- **The marginal propensities are both non-negative.** Consumption rises with assets, and by
 no more than resources do — the second half is `policy_mono`. -/
-theorem sub_le_sub_of_le_resources {a a' : ℝ} {z : Z} (ha : a ∈ Icc 0 assetCap)
+theorem sub_le_sub_of_le_resources {a a' : ℝ} {z : Z}
+    (ha : a ∈ Icc 0 assetCap)
     (ha' : a' ∈ Icc 0 assetCap) (hle : a ≤ a') :
     0 ≤ P.consumptionFn z a' - P.consumptionFn z a ∧
       P.consumptionFn z a' - P.consumptionFn z a

@@ -69,14 +69,15 @@ theorem myopic_policy_eq_zero {s : ℝ × Fin 2} (hs : s.1 ∈ Icc (0 : ℝ) 10)
         ≤ ((myopic.u (myopic.consumption s 0) : ℝ) : EReal) := by
     intro a ha
     rw [myopic_objectiveE]
-    change extendBot myopic.u (min myopic.maxConsumption (myopic.consumption s a)) ≤ _
-    rcases le_or_gt (min myopic.maxConsumption (myopic.consumption s a)) 0 with h | h
-    · rw [extendBot_of_nonpos h]; exact bot_le
-    · rw [extendBot_of_pos h, EReal.coe_le_coe_iff]
-      refine myopic.monotoneOn_u h hc0 ?_
-      refine le_trans (min_le_right _ _) ?_
-      simp only [consumption, sub_zero]
-      linarith [ha.1]
+    change extendDom myopic.dom myopic.u (myopic.clampedConsumption (s, a)) ≤ _
+    by_cases h : myopic.clampedConsumption (s, a) ∈ myopic.dom
+    · rw [extendDom_of_mem h, EReal.coe_le_coe_iff]
+      refine myopic.monotoneOn_u_dom h (myopic.mem_dom_of_pos hc0) ?_
+      refine le_trans (min_le_right _ _) (max_le ?_ ?_)
+      · simpa only [consumption, sub_zero] using (myopic.resources_pos s).le
+      · simp only [consumption, sub_zero]
+        linarith [ha.1]
+    · rw [extendDom_of_not_mem h]; exact bot_le
   have hle : myopic.toExtended.bellmanFn V s ≤ myopic.u (myopic.consumption s 0) :=
     myopic.toExtended.bellmanFn_le V hdom
   have hge : ((myopic.u (myopic.consumption s 0) : ℝ) : EReal)
@@ -139,14 +140,19 @@ noncomputable def impatient : IncomeFluctuation (Fin 2) 1 where
   interest_gt_neg_one := by norm_num
   assetCap_nonneg := by norm_num
   discount_lt_one := by norm_num
-  continuousOn_u := (continuousOn_id.inv₀ fun x hx => ne_of_gt hx).neg
-  monotoneOn_u := by
+  dom := Ioi 0
+  Ioi_subset_dom := subset_rfl
+  dom_subset_Ici := Ioi_subset_Ici_self
+  continuousOn_u_dom := (continuousOn_id.inv₀ fun x hx => ne_of_gt hx).neg
+  monotoneOn_u_dom := by
     intro x hx y _ hxy
     have : (0 : ℝ) < x := hx
     simp only [neg_le_neg_iff]
     gcongr
-  tendsto_atBot_u := tendsto_neg_atTop_atBot.comp tendsto_inv_nhdsGT_zero
-  strictConcaveOn_u := strictConcaveOn_neg_inv
+  strictConcaveOn_u_dom := strictConcaveOn_neg_inv
+  continuousOn_extendDom :=
+    continuousOn_extendDom_Ioi ((continuousOn_id.inv₀ fun x hx => ne_of_gt hx).neg)
+      (tendsto_neg_atTop_atBot.comp tendsto_inv_nhdsGT_zero)
 
 @[simp] theorem impatient_u (c : ℝ) : impatient.u c = -c⁻¹ := rfl
 @[simp] theorem impatient_minIncome : impatient.minIncome = 1 := rfl
