@@ -559,7 +559,14 @@ The point of doing it this way is that the bound does not degrade as the cap gro
 right-hand side rises with `assetCap` while the left rises only through `oscGap` -- so raising
 the cap always eventually works. A cruder estimate that keeps `maxConsumption ^ γ` on the left
 grows on both sides and closes the window for `γ` near one, which is an artefact of the
-estimate. -/
+estimate.
+
+This is Marcet, Obiols-Homs and Weil (2007), Remark R4: "the upper bound on capital that was
+introduced to obtain existence and uniqueness of the value function is, in fact, not binding".
+Their route is different -- with endogenous labour supply, savings have an absorbing point `k̄`
+below the bound, so the bound is slack for any initial condition below it -- but the purpose is
+identical, and it is reassuring that the standard treatment regards the cap as an artefact to be
+discharged rather than a modelling choice to be defended. -/
 
 /-- **Saving never reaches the asset cap.** -/
 theorem crra_policy_lt_assetCap {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hθ0 : 0 < θ)
