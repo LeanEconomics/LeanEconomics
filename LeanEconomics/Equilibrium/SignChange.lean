@@ -142,7 +142,46 @@ theorem le_aggregateCapital {μ : ProbabilityMeasure P.State} (hμ : P.IsStation
         integral_mono (((P.incomeIndicator z₁).integrable _).const_mul ε)
           (P.policyCoord.integrable _) hbound
 
+/-- **The supply floor, in primitives.** Combining the quantitative saving bound with the
+primitive bound on the continuation's gain: every stationary distribution carries at least
+`h/2 · p₀` of capital. -/
+theorem le_aggregateCapital_of_gain (hu : P.u = Real.log) {μ : ProbabilityMeasure P.State}
+    (hμ : P.IsStationary μ) {z₁ z₀ : Z} {p₀ h : ℝ} (hh0 : 0 < h)
+    (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
+    (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
+    (hgain : Real.log (P.income z₁ / (P.income z₁ - h))
+      < P.discount * (P.transitionMatrix z₁ z₀ * Real.log (1 + (1 + P.interest) * (h / 2)
+          / (P.income z₀ + (1 + P.interest) * (h / 2))))) :
+    h / 2 * p₀ ≤ P.aggregateCapital μ := by
+  refine P.le_aggregateCapital hμ (by linarith) hp fun a ha => ?_
+  refine P.policy_ge_of_gain hu z₁ hh0 hhcap hhinc ?_ ha
+  refine lt_of_lt_of_le hgain (mul_le_mul_of_nonneg_left ?_ P.discount.coe_nonneg)
+  have hhalf : h / 2 ∈ Icc (0 : ℝ) assetCap := ⟨by linarith, by linarith⟩
+  have hfull : h ∈ Icc (0 : ℝ) assetCap := ⟨hh0.le, hhcap⟩
+  have hgen := P.log_cont_sub_ge_gen hu z₁ z₀ hhalf hfull (by linarith)
+  rw [show h - h / 2 = h / 2 from by ring] at hgen
+  exact hgen
+
 end IncomeFluctuation
+
+/-! ### Uniformity in the interest rate
+
+The supply floor has to hold at every rate in the interval, and the gain condition is MONOTONE in
+the rate: raising `r` raises `(1+r) t / (y₀ + (1+r) t)` towards one, so the right-hand side grows
+while the left does not move. Checking the condition at the LOW end of the interval therefore
+covers all of it. -/
+
+theorem gain_term_mono {y₀ t : ℝ} (hy₀ : 0 < y₀) (ht : 0 < t) {s₀ s₁ : ℝ}
+    (hs₀ : 0 < s₀) (hs : s₀ ≤ s₁) :
+    Real.log (1 + s₀ * t / (y₀ + s₀ * t)) ≤ Real.log (1 + s₁ * t / (y₀ + s₁ * t)) := by
+  have h0 : 0 < y₀ + s₀ * t := by positivity
+  have h1 : 0 < y₀ + s₁ * t := by nlinarith
+  refine Real.log_le_log (by positivity) ?_
+  have hfrac : s₀ * t / (y₀ + s₀ * t) ≤ s₁ * t / (y₀ + s₁ * t) := by
+    rw [div_le_div_iff₀ h0 h1]
+    nlinarith [mul_le_mul_of_nonneg_right hs (mul_nonneg ht.le hy₀.le)]
+  linarith
+
 
 /-- **An Aiyagari equilibrium with the Cobb–Douglas firm**, from two-sided bounds on capital
 supply. Both ends of the sign change are now theorems; what is assumed is a positive floor under
