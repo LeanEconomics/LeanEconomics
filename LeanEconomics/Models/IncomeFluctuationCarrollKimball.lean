@@ -46,18 +46,17 @@ usually done by differentiating an inverse function. `concaveOn_of_egm` does it 
 identity alone: write the choice against end-of-period assets, and the two concavities are the
 same statement.
 
-**What is left is the Euler equation**, `hEuler` in
-`concaveOn_consumptionFnOf_bellman_of_euler`. It is the first-order condition of the
-maximisation, and two things stand between it and a proof.
+**The Euler equation** `hEuler` is proved in `IncomeFluctuationEuler`: `hasDerivAt_bellman`
+runs the Clausen and Strub sandwich along the ITERATES rather than at the fixed point,
+`euler_of_interior` reads the first-order condition off it, and
+`concaveOn_consumptionFnOf_bellman_of_interior` is this theorem with `hEuler` discharged.
 
-* It needs the envelope condition for each ITERATE, not just for the fixed point.
-  `IncomeFluctuationEnvelope.hasDerivAt_valueFunction` is Clausen and Strub's argument and gives
-  `V'(a) = (1+r) u'(c)` at interior states; the same lazy-agent sandwich works for
-  `bellman v`, but it is stated only for the value function and would have to be generalised.
-* It needs the choice to be INTERIOR, and at the borrowing limit it is not —
-  `policy_eq_zero_of_corner_at` shows the constraint binds where resources are small. Carroll
-  and Kimball's conclusion survives the kink (the constrained branch is affine with slope one,
-  and it lies to the left, which is the direction concavity allows) but the gluing is real work.
+**What is left is INTERIORITY.** The first-order condition needs the household to save strictly
+inside the asset region and strictly below its feasible maximum, this period and next, and at
+the borrowing limit it does not: `policy_eq_zero_of_corner_at` shows the constraint binds where
+resources are small. Carroll and Kimball's conclusion survives the kink (the constrained branch
+is affine with slope one, and it lies to the left, which is the direction concavity allows) but
+the gluing is real work.
 
 **Toda (2021) still bounds what can be hoped for.** Under regularity conditions HARA is
 NECESSARY for the consumption function to be concave, and the structure assumes of `u` only
@@ -66,21 +65,21 @@ the step above is stated for CRRA, which is what Light's published version (2020
 
 ## OWED: this is deferred, not abandoned
 
-The obstruction has moved three times.
+The obstruction has moved four times.
 
 * HARA was the first answer: Toda (2021) makes it NECESSARY, and `Analysis/HARA.lean` supplies
   it. The utility class is no longer the blocker.
 * The asset cap was the second, and worse, because it made the conclusion outright FALSE --
   `not_concaveOn_consumptionFn_of_cap_binds` below. `crra_policy_lt_assetCap` removes it by
   calibration, and `nearLog` is recalibrated so that saving provably never reaches the cap.
-* Differentiability was the third, and it is now GONE: `hasDerivAt_valueFunction` is the
-  Clausen–Strub sandwich, and `PowerMean` removes the need for second derivatives altogether.
+* Differentiability was the third, and it is now GONE: `hasDerivAt_bellman` is the Clausen and
+  Strub sandwich run along the iteration, and `PowerMean` removes second derivatives altogether.
+* The Euler equation was the fourth, and it is proved: `euler_of_interior`.
 
-What remains is the Euler equation for the iterates and the borrowing-constraint kink, in that
-order.
+What remains is the borrowing-constraint kink, and nothing else.
 
 So this file does not claim Carroll and Kimball. It claims the analysis behind it, and the
-reduction of the remaining gap to a first-order condition.
+reduction of the remaining gap to interiority of the saving choice.
 -/
 
 open Set Filter Topology BoundedContinuousFunction
