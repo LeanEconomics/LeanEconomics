@@ -46,6 +46,24 @@ HARA — in practice to CRRA, which is what Light's published version (2020) ass
 theorem below is therefore conditional in the strong sense, and the hypothesis is where the
 parametric commitment of the whole uniqueness argument is concentrated.
 
+## OWED: this is deferred, not abandoned
+
+The obstruction has moved twice and is now down to one thing.
+
+* HARA was the first answer: Toda (2021) makes it NECESSARY, and `Analysis/HARA.lean` supplies
+  it. The utility class is no longer the blocker.
+* The asset cap was the second, and worse, because it made the conclusion outright FALSE --
+  `not_concaveOn_consumptionFn_of_cap_binds` below. `crra_policy_lt_assetCap` removes it by
+  calibration, and `nearLog` is recalibrated so that saving provably never reaches the cap. The
+  hypothesis is now CONSISTENT with a concrete economy; it is merely unproved.
+* What is left is DIFFERENTIABILITY. Carroll and Kimball's argument needs the value function
+  twice differentiable, and we have one-sided first derivatives only, conditionally. Attacking it
+  means building that theory first -- local to the interior region, since it is genuinely false
+  at the kinks the constraints create -- and then Kimball's risk-tolerance aggregation across the
+  income expectation, which is a body of theory in its own right.
+
+The envelope step should use Clausen and Strub (2020), not Benveniste and Scheinkman.
+
 So this file does not claim Carroll and Kimball. It claims that everything AROUND it is done:
 the single step `hT` is now the only thing standing between the development and Light (2018)
 Theorem 1, whose remaining ingredients — `mul_marginal_le_of_scale`, `consumptionFn_mono`,

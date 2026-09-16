@@ -165,6 +165,36 @@ theorem affine (f : S →ᵇ ℝ) (β : ℝ≥0) :
 
 end Blackwell
 
+/-- **A dominated operator has a dominated fixed point.** If one Bellman operator never returns
+more than another, its value function never does either.
+
+This is the workhorse of comparative statics: to compare two economies one only has to compare
+their operators at a COMMON continuation value, which is a one-period calculation, and the
+comparison of the infinite-horizon values follows. The two need not share a discount factor.
+No policy comparison, no differentiability,
+nothing about argmaxes -- the whole content is that value function iteration started from the
+same place stays ordered. -/
+theorem Blackwell.valueFunction_le {β₁ β₂ : ℝ≥0} {T₁ T₂ : (S →ᵇ ℝ) → (S →ᵇ ℝ)}
+    (h₁ : Blackwell β₁ T₁) (h₂ : Blackwell β₂ T₂) (hβ₁ : β₁ < 1) (hβ₂ : β₂ < 1)
+    (hle : ∀ v : S →ᵇ ℝ, ⇑(T₁ v) ≤ ⇑(T₂ v)) (s : S) :
+    h₁.valueFunction hβ₁ s ≤ h₂.valueFunction hβ₂ s := by
+  have hiter : ∀ n : ℕ, ⇑(T₁^[n] (0 : S →ᵇ ℝ)) ≤ ⇑(T₂^[n] (0 : S →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ k ih =>
+        rw [Function.iterate_succ_apply', Function.iterate_succ_apply']
+        exact le_trans (hle _) (h₂.monotone ih)
+  have hl₁ := h₁.tendsto_iterate_valueFunction hβ₁ (0 : S →ᵇ ℝ)
+  have hl₂ := h₂.tendsto_iterate_valueFunction hβ₂ (0 : S →ᵇ ℝ)
+  have hp₁ : Filter.Tendsto (fun n => T₁^[n] (0 : S →ᵇ ℝ) s) Filter.atTop
+      (𝓝 (h₁.valueFunction hβ₁ s)) :=
+    ((BoundedContinuousFunction.evalCLM ℝ s).continuous.tendsto _).comp hl₁
+  have hp₂ : Filter.Tendsto (fun n => T₂^[n] (0 : S →ᵇ ℝ) s) Filter.atTop
+      (𝓝 (h₂.valueFunction hβ₂ s)) :=
+    ((BoundedContinuousFunction.evalCLM ℝ s).continuous.tendsto _).comp hl₂
+  exact le_of_tendsto_of_tendsto hp₁ hp₂ (Filter.Eventually.of_forall fun n => hiter n s)
+
 /-! ### Monotonicity of the value function
 
 If the operator preserves monotone functions then so does its fixed point, because the

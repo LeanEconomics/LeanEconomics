@@ -368,6 +368,15 @@ theorem const_le_valueFunction {c : ℝ} (hc : c ≤ D.rewardMin + D.discount * 
     ((BoundedContinuousFunction.evalCLM ℝ s).continuous.tendsto _).comp hlim
   exact ge_of_tendsto' hpt fun n => hiter n s
 
+/-- **A dominated operator has a dominated value function.** The comparative-statics workhorse,
+at the level the models use: comparing two economies reduces to comparing their Bellman operators
+at a common continuation value. -/
+theorem valueFunction_le_of_bellman_le (D₁ D₂ : ExtendedStochasticProgram S A Z)
+    (hle : ∀ v : S →ᵇ ℝ, ⇑(D₁.bellman v) ≤ ⇑(D₂.bellman v)) (s : S) :
+    D₁.valueFunction s ≤ D₂.valueFunction s :=
+  Blackwell.valueFunction_le D₁.blackwell D₂.blackwell D₁.discount_lt_one D₂.discount_lt_one
+    hle s
+
 /-- **The stochastic Bellman equation**, with the reward an extended real and no floor. -/
 theorem exists_optimal_policy (s : S) :
     ∃ a ∈ D.feasible s, ((D.valueFunction s : ℝ) : EReal)
