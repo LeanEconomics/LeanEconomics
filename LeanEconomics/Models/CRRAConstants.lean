@@ -35,7 +35,7 @@ uniform version too, with `m = 1 / maxConsumption`.
 -/
 
 open scoped NNReal
-open Set Filter Topology
+open Set Filter Topology MeasureTheory
 
 namespace LeanEconomics
 
@@ -91,6 +91,33 @@ theorem crra_sub_ge {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) {c d : ℝ} (hc :
   have := crra_marginal_bound_Ici hγ0 hγ1 (mem_Ici.mpr hc) (le_add_of_nonneg_right hd)
     (le_refl (c + d))
   simpa using this
+
+/-- **The secant slope of CRRA on `[d, c]` is at most `d ^ (-γ)`.** The mirror image of
+`crra_marginal_bound`, and what caps the COST of saving. -/
+theorem crra_marginal_bound_above {γ : ℝ} (hγ : 0 < γ) {c d : ℝ} (hd : 0 < d) (hdc : d ≤ c) :
+    crraUtility γ c - crraUtility γ d ≤ d ^ (-γ) * (c - d) := by
+  rcases eq_or_lt_of_le hdc with rfl | hlt
+  · simp
+  obtain ⟨ξ, hξ, hslope⟩ := exists_hasDerivAt_eq_slope (crraUtility γ)
+    (fun x => x ^ (-γ)) hlt
+    ((continuousOn_crraUtility γ).mono fun x hx => lt_of_lt_of_le hd hx.1)
+    (fun x hx => hasDerivAt_crraUtility γ (hd.trans hx.1))
+  have hmono : ξ ^ (-γ) ≤ d ^ (-γ) := rpow_neg_antitone hγ hd hξ.1.le
+  rw [hslope, div_le_iff₀ (by linarith)] at hmono
+  linarith
+
+/-- **The cost of saving `h`, capped uniformly in resources.** Resources are at least `m`, so what
+is left after saving is at least `m - h`, and marginal utility there is the largest that can
+apply. The log form of the same bound is `log (m / (m - h))`. -/
+theorem crra_cost_of_saving {γ : ℝ} (hγ : 0 < γ) {m h R b : ℝ} (hh0 : 0 < h) (hhm : h < m)
+    (hmR : m ≤ R) (hb0 : 0 ≤ b) (hbh : b ≤ h) :
+    crraUtility γ (R - b) - crraUtility γ (R - h) ≤ (m - h) ^ (-γ) * h := by
+  have hRh : 0 < R - h := by linarith
+  have hstep := crra_marginal_bound_above hγ hRh (show R - h ≤ R - b by linarith)
+  have hanti : (R - h) ^ (-γ) ≤ (m - h) ^ (-γ) :=
+    rpow_neg_antitone hγ (by linarith) (by linarith)
+  have hpos : (0 : ℝ) < (R - h) ^ (-γ) := Real.rpow_pos_of_pos hRh _
+  nlinarith [hstep, hanti, hb0]
 
 /-! ### Secant slopes of CRRA, bounded above -/
 
@@ -245,13 +272,13 @@ above it, assets fall. No linear consumption bound and no `exp` in sight. -/
 theorem crra_exists_decline {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hb : P.Bounded)
     (hu : P.u = crraUtility γ) (hpc : P.PositiveConsumption) (z : Z) :
     ∃ ā : ℝ, ∀ a ∈ Icc (0 : ℝ) assetCap, ā < a → P.policy (a, z) < a :=
-  ⟨2 * P.deviationGap * P.maxConsumption ^ γ, fun a ha hlt =>
-    lt_of_le_of_lt (P.crra_policy_le hγ0 hγ1 hb hu hpc ha z) hlt⟩
+  ⟨2 * P.deviationGap * P.maxConsumption ^ γ, fun _ ha hlt =>
+    lt_of_le_of_lt (P.crra_policy_le hγ0 hγ1 hb hu hpc ha _) hlt⟩
 
 /-- **The continuation's gain between two saving levels, CES version.** Where the log form carries
 `log (1 + R·(y-x) / (income + R·x))`, this carries `(income + R·y) ^ (-γ) · R·(y-x)`: the extra
 resources, valued at the marginal utility of the largest consumption they could buy. -/
-theorem crra_cont_sub_ge_gen {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hb : P.Bounded)
+theorem crra_cont_sub_ge_gen {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1)
     (hu : P.u = crraUtility γ) (hpc : P.PositiveConsumption) (z z₀ : Z) {x y : ℝ}
     (hx : x ∈ Icc (0 : ℝ) assetCap) (hy : y ∈ Icc (0 : ℝ) assetCap) (hxy : x ≤ y) :
     P.transitionMatrix z z₀ * ((P.income z₀ + (1 + P.interest) * y) ^ (-γ)
@@ -293,15 +320,52 @@ theorem crra_cont_sub_ge_gen {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hb : P.
     (P.transitionMatrix_nonneg z z₀)) hterm
 
 /-- **The continuation's gain from zero, CES version.** -/
-theorem crra_cont_sub_ge {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hb : P.Bounded)
+theorem crra_cont_sub_ge {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1)
     (hu : P.u = crraUtility γ) (hpc : P.PositiveConsumption) (z z₀ : Z) {h : ℝ}
     (hh : h ∈ Icc (0 : ℝ) assetCap) :
     P.transitionMatrix z z₀ * ((P.income z₀ + (1 + P.interest) * h) ^ (-γ)
         * ((1 + P.interest) * h))
       ≤ P.cont z h - P.cont z 0 := by
   have h0 : (0 : ℝ) ∈ Icc (0 : ℝ) assetCap := ⟨le_rfl, P.assetCap_nonneg⟩
-  have := P.crra_cont_sub_ge_gen hγ0 hγ1 hb hu hpc z z₀ h0 hh hh.1
+  have := P.crra_cont_sub_ge_gen hγ0 hγ1 hu hpc z z₀ h0 hh hh.1
   simpa using this
+
+/-- **A quantitative CES saving floor**, the form the sign-change argument consumes. -/
+theorem crra_policy_ge_of_gain {γ : ℝ} (hγ : 0 < γ) (hu : P.u = crraUtility γ)
+    (hpc : P.PositiveConsumption) (z₁ : Z) {h : ℝ} (hh0 : 0 < h) (hhcap : h ≤ assetCap)
+    (hhinc : h < P.income z₁)
+    (hgain : (P.income z₁ - h) ^ (-γ) * h < P.discount * (P.cont z₁ h - P.cont z₁ (h / 2)))
+    {a : ℝ} (ha : a ∈ Icc 0 assetCap) :
+    h / 2 ≤ P.policy (a, z₁) := by
+  refine P.policy_ge_of_cost hpc z₁ hh0 hhcap hhinc (fun R b hm hb0 hbh => ?_) hgain ha
+  rw [hu]
+  exact crra_cost_of_saving hγ hh0 hhinc hm hb0 hbh
+
+section Measure
+
+variable [MeasurableSpace Z] [BorelSpace Z]
+
+/-- **Positive aggregate capital for CES, from primitives alone.** The log condition
+`log (m / (m - h)) < β · P z₁ z₀ · log (1 + R h / income z₀)` becomes
+`(m - h) ^ (-γ) · h  <  β · P z₁ z₀ · (income z₀ + R h) ^ (-γ) · R h`: the saved unit priced at
+the margin where consumption is lowest, against its return in the bad state. -/
+theorem crra_aggregateCapital_pos_of_primitives {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1)
+    (hu : P.u = crraUtility γ) (hpc : P.PositiveConsumption)
+    {μ : ProbabilityMeasure P.State} (hμ : P.IsStationary μ) {z₁ z₀ : Z} {p₀ : ℝ} (hp0 : 0 < p₀)
+    (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
+    {h : ℝ} (hh0 : 0 < h) (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
+    (hgain : (P.income z₁ - h) ^ (-γ) * h
+      < P.discount * (P.transitionMatrix z₁ z₀
+          * ((P.income z₀ + (1 + P.interest) * h) ^ (-γ) * ((1 + P.interest) * h)))) :
+    0 < P.aggregateCapital μ := by
+  refine P.aggregateCapital_pos_of_cost hμ hp0 hp hh0 hhcap hhinc (fun R hm => ?_)
+    (lt_of_lt_of_le hgain ?_)
+  · rw [hu]
+    simpa using crra_cost_of_saving hγ0 hh0 hhinc hm (le_refl (0 : ℝ)) hh0.le
+  · exact mul_le_mul_of_nonneg_left (P.crra_cont_sub_ge hγ0 hγ1 hu hpc z₁ z₀ ⟨hh0.le, hhcap⟩)
+      P.discount.coe_nonneg
+
+end Measure
 
 end IncomeFluctuation
 
