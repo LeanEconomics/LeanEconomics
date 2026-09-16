@@ -47,3 +47,4 @@ import LeanEconomics.Models.NaturalAssetBound
 import LeanEconomics.Equilibrium.PositiveCapital
 import LeanEconomics.Models.PrecautionaryWitness
 import LeanEconomics.Models.DispersedWitness
+import LeanEconomics.Equilibrium.SignChange
