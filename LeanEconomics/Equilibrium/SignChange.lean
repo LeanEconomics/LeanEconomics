@@ -40,10 +40,10 @@ namespace LeanEconomics
 
 /-- **Capital demand vanishes at high rates.** The mirror of `exists_capitalDemand_ge`, and what
 makes the high end of the sign change a theorem. -/
-theorem exists_capitalDemand_le (δ : ℝ) {m : ℝ} (hm : 0 < m) (r₀ : ℝ) :
-    ∃ rhi : ℝ, r₀ ≤ rhi ∧ 0 < rhi + δ ∧ capitalDemand δ rhi ≤ m := by
+theorem exists_capitalDemand_le (A δ : ℝ) {m : ℝ} (hm : 0 < m) (r₀ : ℝ) :
+    ∃ rhi : ℝ, r₀ ≤ rhi ∧ 0 < rhi + δ ∧ capitalDemand A δ rhi ≤ m := by
   have hsq : 0 < Real.sqrt m := Real.sqrt_pos.mpr hm
-  set t : ℝ := 1 / (2 * Real.sqrt m) with ht
+  set t : ℝ := (|A| + 1) / (2 * Real.sqrt m) with ht
   have ht0 : 0 < t := by rw [ht]; positivity
   refine ⟨max r₀ (t - δ), le_max_left _ _, ?_, ?_⟩
   · have := le_max_right r₀ (t - δ)
@@ -51,25 +51,63 @@ theorem exists_capitalDemand_le (δ : ℝ) {m : ℝ} (hm : 0 < m) (r₀ : ℝ) :
   · have hge : t ≤ max r₀ (t - δ) + δ := by
       have := le_max_right r₀ (t - δ); linarith
     have hpos : 0 < max r₀ (t - δ) + δ := lt_of_lt_of_le ht0 hge
-    have hts : t ^ 2 * (4 * m) = 1 := by
+    have hts : t ^ 2 * (4 * m) = (|A| + 1) ^ 2 := by
       rw [ht]
       field_simp
       rw [Real.sq_sqrt hm.le]
       ring
     have hsqle : t ^ 2 ≤ (max r₀ (t - δ) + δ) ^ 2 := by nlinarith [hge, ht0.le]
+    have hA : A ^ 2 ≤ (|A| + 1) ^ 2 := by nlinarith [abs_nonneg A, sq_abs A]
     simp only [capitalDemand]
     rw [div_le_iff₀ (by positivity)]
-    nlinarith [hsqle, hm, hts]
+    nlinarith [hsqle, hm, hts, hA]
 
 /-- **The sign change, from two-sided bounds on capital supply.** -/
 theorem exists_sign_change (δ : ℝ) {S : ℝ → ℝ} {m M : ℝ} (hm : 0 < m)
     (hlb : ∀ r, m ≤ S r) (hub : ∀ r, S r ≤ M) :
-    ∃ rlo rhi : ℝ, 0 < rlo + δ ∧ rlo ≤ rhi ∧ S rlo ≤ capitalDemand δ rlo
-      ∧ capitalDemand δ rhi ≤ S rhi := by
+    ∃ rlo rhi : ℝ, 0 < rlo + δ ∧ rlo ≤ rhi ∧ S rlo ≤ capitalDemand 1 δ rlo
+      ∧ capitalDemand 1 δ rhi ≤ S rhi := by
   have hM : 0 ≤ M := le_trans hm.le (le_trans (hlb 0) (hub 0))
   obtain ⟨rlo, hrlo, hD⟩ := exists_capitalDemand_ge δ hM
-  obtain ⟨rhi, hge, _, hD'⟩ := exists_capitalDemand_le δ hm rlo
+  obtain ⟨rhi, hge, _, hD'⟩ := exists_capitalDemand_le 1 δ hm rlo
   exact ⟨rlo, rhi, hrlo, hge, le_trans (hub rlo) hD, le_trans hD' (hlb rhi)⟩
+
+/-- **The firm can be calibrated to the households**, rather than the other way round. Given any
+rate interval and any two-sided bound on capital supply, some productivity and depreciation put
+capital demand above supply at the low end and below it at the high end.
+
+This is what the productivity parameter buys. With `A` fixed at one the demand schedule carries a
+scale of its own, and the household economy has to be stretched — in practice to absurd
+depreciation rates — for the curves to meet. Here `A` sets the scale and `δ` the curvature, and
+the construction is explicit: `η = d √m / (√M + √m)` with `d = rhi - rlo`, then `δ = η - rlo` and
+`A = 2 η √M`, at which the low end holds with EQUALITY. -/
+theorem exists_firm_of_bounds {rlo rhi m M : ℝ} (hlt : rlo < rhi) (hm : 0 < m) (hmM : m ≤ M) :
+    ∃ A δ : ℝ, 0 < A ∧ 0 < rlo + δ ∧ M ≤ capitalDemand A δ rlo ∧ capitalDemand A δ rhi ≤ m := by
+  have hM : 0 < M := lt_of_lt_of_le hm hmM
+  set sm : ℝ := Real.sqrt m with hsmdef
+  set sM : ℝ := Real.sqrt M with hsMdef
+  have hsm0 : 0 < sm := Real.sqrt_pos.mpr hm
+  have hsM0 : 0 < sM := Real.sqrt_pos.mpr hM
+  have hsm2 : sm ^ 2 = m := Real.sq_sqrt hm.le
+  have hsM2 : sM ^ 2 = M := Real.sq_sqrt hM.le
+  set d : ℝ := rhi - rlo with hddef
+  have hd0 : 0 < d := by rw [hddef]; linarith
+  set η : ℝ := d * sm / (sM + sm) with hηdef
+  have hη0 : 0 < η := by rw [hηdef]; positivity
+  have hηkey : η * (sM + sm) = d * sm := by rw [hηdef]; field_simp
+  refine ⟨2 * η * sM, η - rlo, by positivity, by linarith, ?_, ?_⟩
+  · have hr : rlo + (η - rlo) = η := by ring
+    simp only [capitalDemand, hr]
+    rw [le_div_iff₀ (by positivity)]
+    nlinarith [hsM2, hη0]
+  · have hr : rhi + (η - rlo) = d + η := by rw [hddef]; ring
+    have hkey : η * sM ≤ sm * (d + η) := by nlinarith [hηkey, hη0, hsm0]
+    have hsq : (η * sM) ^ 2 ≤ (sm * (d + η)) ^ 2 := by
+      nlinarith [hkey, mul_pos hη0 hsM0, mul_pos hsm0 (by linarith : (0 : ℝ) < d + η)]
+    simp only [capitalDemand, hr]
+    rw [div_le_iff₀ (by positivity)]
+    nlinarith [hsq, hsM2, hsm2]
+
 
 namespace IncomeFluctuation
 
@@ -117,7 +155,7 @@ theorem exists_equilibrium_of_bounds {Z : Type*} [Fintype Z] [Nonempty Z] [Topol
       (Pf r).IsStationary μ ∧ (Pf r).aggregateCapital μ = S r)
     (hScont : ∀ rlo rhi : ℝ, ContinuousOn S (Icc rlo rhi)) :
     ∃ rlo rhi : ℝ, rlo ≤ rhi ∧ ∃ r ∈ Icc rlo rhi,
-      IsAiyagariEquilibrium Pf (capitalDemand δ) r := by
+      IsAiyagariEquilibrium Pf (capitalDemand 1 δ) r := by
   obtain ⟨rlo, rhi, hrlo, hle, hloS, hhiS⟩ := exists_sign_change δ hm hlb hub
   refine ⟨rlo, rhi, hle, exists_aiyagari_equilibrium hle hS (hScont rlo rhi)
     (continuousOn_capitalDemand hrlo) hloS hhiS⟩

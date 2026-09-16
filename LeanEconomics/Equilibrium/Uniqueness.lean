@@ -64,13 +64,16 @@ theorem eq_of_monotoneOn_of_strictAntiOn {S D : ℝ → ℝ} {s : Set ℝ}
 
 /-- Capital demand falls STRICTLY in the interest rate, which is the half of single crossing
 that is a theorem about the technology rather than about the households. -/
-theorem capitalDemand_strictAntiOn {δ rlo rhi : ℝ} (h : 0 < rlo + δ) :
-    StrictAntiOn (capitalDemand δ) (Icc rlo rhi) := by
+theorem capitalDemand_strictAntiOn {A δ rlo rhi : ℝ} (hA : A ≠ 0) (h : 0 < rlo + δ) :
+    StrictAntiOn (capitalDemand A δ) (Icc rlo rhi) := by
   intro a ha b hb hab
   have ha' : 0 < a + δ := lt_of_lt_of_le h (by linarith [ha.1])
   have hb' : 0 < b + δ := by linarith
+  have hA2 : 0 < A ^ 2 := by positivity
   simp only [capitalDemand]
-  exact one_div_lt_one_div_of_lt (by positivity) (by nlinarith)
+  rw [div_lt_div_iff₀ (by positivity) (by positivity)]
+  have hsq : (a + δ) ^ 2 < (b + δ) ^ 2 := by nlinarith [ha', hb']
+  nlinarith [hA2, hsq]
 
 /-- **Conditional uniqueness of the equilibrium interest rate.** Given that capital supply is
 non-decreasing in the rate, the equilibrium rate is unique.
@@ -78,9 +81,9 @@ non-decreasing in the rate, the equilibrium rate is unique.
 The hypothesis `hS` is the entire economic content, and it is restrictive: it holds for CRRA
 with `γ ≤ 1` (Light 2018) and fails for the calibrations of Açıkgöz (2018) and Walsh and
 Young (2025). See the module docstring. -/
-theorem equilibriumRate_unique {δ rlo rhi : ℝ} (hδ : 0 < rlo + δ) {S : ℝ → ℝ}
+theorem equilibriumRate_unique {A δ rlo rhi : ℝ} (hA : A ≠ 0) (hδ : 0 < rlo + δ) {S : ℝ → ℝ}
     (hS : MonotoneOn S (Icc rlo rhi)) {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc rlo rhi) (h₂ : r₂ ∈ Icc rlo rhi)
-    (he₁ : S r₁ = capitalDemand δ r₁) (he₂ : S r₂ = capitalDemand δ r₂) : r₁ = r₂ :=
-  eq_of_monotoneOn_of_strictAntiOn hS (capitalDemand_strictAntiOn hδ) h₁ h₂ he₁ he₂
+    (he₁ : S r₁ = capitalDemand A δ r₁) (he₂ : S r₂ = capitalDemand A δ r₂) : r₁ = r₂ :=
+  eq_of_monotoneOn_of_strictAntiOn hS (capitalDemand_strictAntiOn hA hδ) h₁ h₂ he₁ he₂
 
 end LeanEconomics

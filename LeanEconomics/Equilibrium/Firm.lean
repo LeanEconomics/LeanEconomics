@@ -13,14 +13,19 @@ one that is DERIVED from a production function rather than posited, so the equil
 becomes a statement about a model rather than about a schedule.
 
 The technology is Cobb–Douglas with `α = 1/2`, one unit of labour and total factor
-productivity one, so output is `√K` and the marginal product of capital is `1 / (2√K)`.
+productivity `A`, so output is `A √K` and the marginal product of capital is `A / (2√K)`.
 Setting the net marginal product equal to the interest rate,
 
-  1 / (2√K) - δ = r,
+  A / (2√K) - δ = r,
 
-and solving gives `K = 1 / (4(r+δ)²)`. `capitalDemand_marginalProduct` checks that the
+and solving gives `K = A² / (4(r+δ)²)`. `capitalDemand_marginalProduct` checks that the
 solution really does satisfy the first-order condition, which is what stops the formula from
 being an arbitrary decreasing function with a suggestive name.
+
+Productivity is a PARAMETER rather than fixed at one because the demand schedule otherwise
+carries a scale the household side has to be stretched to meet. `exists_firm_of_bounds` is what
+that buys: given any rate interval and any two-sided bound on capital supply, some firm meets it
+there. The firm can be calibrated to the households rather than the other way round.
 
 `α = 1/2` is chosen so the inversion is algebraic. A general exponent would need `rpow` and
 would change nothing conceptually.
@@ -48,30 +53,31 @@ namespace LeanEconomics
 
 /-- Capital demand from a Cobb–Douglas firm with `α = 1/2`, unit labour and unit productivity:
 the capital stock at which the net marginal product equals `r`. -/
-noncomputable def capitalDemand (δ r : ℝ) : ℝ := 1 / (4 * (r + δ) ^ 2)
+noncomputable def capitalDemand (A δ r : ℝ) : ℝ := A ^ 2 / (4 * (r + δ) ^ 2)
 
 /-- **The demand schedule solves the firm's first-order condition.** -/
-theorem capitalDemand_marginalProduct {δ r : ℝ} (h : 0 < r + δ) :
-    1 / (2 * Real.sqrt (capitalDemand δ r)) - δ = r := by
-  have hsq : capitalDemand δ r = (1 / (2 * (r + δ))) ^ 2 := by
+theorem capitalDemand_marginalProduct {A δ r : ℝ} (hA : 0 < A) (h : 0 < r + δ) :
+    A / (2 * Real.sqrt (capitalDemand A δ r)) - δ = r := by
+  have hsq : capitalDemand A δ r = (A / (2 * (r + δ))) ^ 2 := by
     simp only [capitalDemand]; field_simp; ring
   rw [hsq, Real.sqrt_sq (by positivity)]
   field_simp
   ring
 
-theorem capitalDemand_pos {δ r : ℝ} (h : 0 < r + δ) : 0 < capitalDemand δ r := by
+theorem capitalDemand_pos {A δ r : ℝ} (hA : 0 < A) (h : 0 < r + δ) :
+    0 < capitalDemand A δ r := by
   simp only [capitalDemand]; positivity
 
-theorem continuousOn_capitalDemand {δ rlo rhi : ℝ} (h : 0 < rlo + δ) :
-    ContinuousOn (capitalDemand δ) (Icc rlo rhi) := by
+theorem continuousOn_capitalDemand {A δ rlo rhi : ℝ} (h : 0 < rlo + δ) :
+    ContinuousOn (capitalDemand A δ) (Icc rlo rhi) := by
   refine ContinuousOn.div continuousOn_const ?_ fun r hr => ?_
   · exact (continuous_const.mul ((continuous_id.add continuous_const).pow 2)).continuousOn
   · have : 0 < r + δ := lt_of_lt_of_le h (by linarith [hr.1])
     positivity
 
 /-- Capital demand falls as the interest rate rises. -/
-theorem capitalDemand_antitoneOn {δ : ℝ} {rlo rhi : ℝ} (h : 0 < rlo + δ) :
-    AntitoneOn (capitalDemand δ) (Icc rlo rhi) := by
+theorem capitalDemand_antitoneOn {A δ : ℝ} {rlo rhi : ℝ} (h : 0 < rlo + δ) :
+    AntitoneOn (capitalDemand A δ) (Icc rlo rhi) := by
   intro a ha b hb hab
   have ha' : 0 < a + δ := lt_of_lt_of_le h (by linarith [ha.1])
   have hb' : 0 < b + δ := lt_of_lt_of_le h (by linarith [hb.1])
@@ -81,11 +87,11 @@ theorem capitalDemand_antitoneOn {δ : ℝ} {rlo rhi : ℝ} (h : 0 < rlo + δ) :
 /-- **Capital demand diverges as the rate approaches `-δ`.** Given any bound -- in particular
 the asset cap, which capital supply can never exceed -- some admissible rate demands more. -/
 theorem exists_capitalDemand_ge (δ : ℝ) {M : ℝ} (hM : 0 ≤ M) :
-    ∃ rlo : ℝ, 0 < rlo + δ ∧ M ≤ capitalDemand δ rlo := by
+    ∃ rlo : ℝ, 0 < rlo + δ ∧ M ≤ capitalDemand 1 δ rlo := by
   have hM1 : (0 : ℝ) < M + 1 := by linarith
   refine ⟨(1 / (2 * (M + 1))) - δ, by simp only [sub_add_cancel]; positivity, ?_⟩
   have hrw : (1 / (2 * (M + 1)) - δ) + δ = 1 / (2 * (M + 1)) := by ring
-  simp only [capitalDemand, hrw]
+  simp only [capitalDemand, hrw, one_pow]
   rw [le_div_iff₀ (by positivity)]
   have hexp : 4 * (1 / (2 * (M + 1))) ^ 2 = 1 / (M + 1) ^ 2 := by field_simp; ring
   rw [hexp, mul_one_div, div_le_one (by positivity)]
@@ -116,7 +122,7 @@ theorem aggregateCapital_nonneg (μ : ProbabilityMeasure P.State) :
 
 /-- **The low end of the sign change is a theorem.** -/
 theorem exists_rate_capitalDemand_ge (δ : ℝ) (μ : ProbabilityMeasure P.State) :
-    ∃ rlo : ℝ, 0 < rlo + δ ∧ P.aggregateCapital μ ≤ capitalDemand δ rlo := by
+    ∃ rlo : ℝ, 0 < rlo + δ ∧ P.aggregateCapital μ ≤ capitalDemand 1 δ rlo := by
   obtain ⟨rlo, hrlo, hge⟩ := exists_capitalDemand_ge δ P.assetCap_nonneg
   exact ⟨rlo, hrlo, le_trans (P.aggregateCapital_le μ) hge⟩
 
