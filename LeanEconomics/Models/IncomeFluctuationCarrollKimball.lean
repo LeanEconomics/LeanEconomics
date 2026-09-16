@@ -53,13 +53,15 @@ constrained state the saving is `assetFloor`, which lies below any average of sa
 the only thing `concaveOn_of_egm` ever needed. `concaveOn_of_egm_corner` and
 `concaveOn_consumptionFnOf_bellman` are the results.
 
-**What is left is the INDUCTION's bookkeeping.** The step now needs the continuation's
-consumption function to be positive, concave AND nondecreasing, and needs the asset cap to be
-slack at every iterate. `hT` as stated below carries only concavity, so closing Carroll and
-Kimball means strengthening the induction to carry the other three -- monotonicity in the style
-of `consumptionFn_mono`, positivity in the style of `positiveConsumption_of_unbounded`, and cap
-slackness in the style of `crra_policy_lt_assetCap`, each currently stated for the fixed point
-rather than for an iterate. That is routine work, not a new obstruction.
+**The induction's bookkeeping** is done in `IncomeFluctuationIterate`: positivity and
+monotonicity of the consumption function, proved at the fixed point in this development, restated
+for an arbitrary continuation, and a uniform bound on saving that covers every iterate at once.
+
+**So Carroll and Kimball is proved** -- `concaveOn_consumptionFn_of_marginal` -- for CRRA, with
+two inputs left explicit. One is `PositiveConsumptionAll`: consumption is positive at the optimum
+against every continuation, automatic when utility is unbounded below and still owed for the
+bounded CES family, where it has to be earned from a marginal Inada condition. The other is one
+calibration inequality putting the asset cap above the uniform bound on saving.
 
 **Toda (2021) still bounds what can be hoped for.** Under regularity conditions HARA is
 NECESSARY for the consumption function to be concave, and the structure assumes of `u` only
@@ -80,12 +82,12 @@ The obstruction has moved four times.
 * The Euler equation was the fourth, and it is proved -- `euler_eq`, and without the envelope
   theorem at that.
 * The borrowing-constraint kink was the fifth, and `concaveOn_of_egm_corner` absorbs it.
+* The induction's bookkeeping was the sixth, and `IncomeFluctuationIterate` does it.
 
-What remains is carrying positivity, monotonicity and cap slackness along the induction, all of
-which exist for the fixed point and need restating for an iterate.
+What remains is `PositiveConsumptionAll` for the bounded CES family, and the cap calibration.
 
-So this file does not claim Carroll and Kimball. It claims the analysis behind it, the step
-itself, and the reduction of what is left to bookkeeping along the induction.
+This file holds the analysis and the closure step; `IncomeFluctuationEuler` the first-order
+condition and the corner; `IncomeFluctuationIterate` the bookkeeping and the theorem.
 -/
 
 open Set Filter Topology BoundedContinuousFunction

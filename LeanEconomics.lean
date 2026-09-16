@@ -66,3 +66,4 @@ import LeanEconomics.Equilibrium.ComparativeStatics
 import LeanEconomics.Equilibrium.Homothetic
 import LeanEconomics.Models.Impatience
 import LeanEconomics.Models.IncomeFluctuationEuler
+import LeanEconomics.Models.IncomeFluctuationIterate
