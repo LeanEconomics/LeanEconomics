@@ -571,7 +571,11 @@ introduced to obtain existence and uniqueness of the value function is, in fact,
 Their route is different -- with endogenous labour supply, savings have an absorbing point `k̄`
 below the bound, so the bound is slack for any initial condition below it -- but the purpose is
 identical, and it is reassuring that the standard treatment regards the cap as an artefact to be
-discharged rather than a modelling choice to be defended. -/
+discharged rather than a modelling choice to be defended.
+
+The converse is `policy_assetCap_of_patient` (their Proposition 3, in `Impatience`): without
+impatience the cap BINDS. So the cap is an artefact precisely when `β (1 + r) < 1`, and the
+hypothesis this file carries everywhere is exactly the one that makes it one. -/
 
 /-- **Saving never reaches the asset cap.** -/
 theorem crra_policy_lt_assetCap {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hθ0 : 0 < θ)
