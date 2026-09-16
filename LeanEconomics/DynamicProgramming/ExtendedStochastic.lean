@@ -300,6 +300,74 @@ theorem tendsto_iterate_valueFunction (v : S →ᵇ ℝ) :
     Tendsto (fun n => D.bellman^[n] v) atTop (𝓝 D.valueFunction) :=
   D.blackwell.tendsto_iterate_valueFunction D.discount_lt_one v
 
+/-- The constant plan is not improved on by the operator, so value function iteration
+started there stays below it. -/
+theorem bellman_const_le {c : ℝ} (hc : D.rewardMax + D.discount * c ≤ c) :
+    D.bellman (const S c) ≤ const S c := by
+  intro s
+  refine D.bellmanFn_le (const S c) fun a ha => ?_
+  have hexp : D.expect (const S c) (s, a) = c := by
+    have := D.expect_add_const (0 : S →ᵇ ℝ) c (s, a)
+    simpa [expect] using this
+  simp only [objectiveE, hexp]
+  calc D.reward (s, a) + ((D.discount * c : ℝ) : EReal)
+      ≤ ((D.rewardMax : ℝ) : EReal) + ((D.discount * c : ℝ) : EReal) :=
+        add_le_add (D.reward_le s a ha) (le_refl _)
+    _ = ((D.rewardMax + D.discount * c : ℝ) : EReal) := (EReal.coe_add _ _).symm
+    _ ≤ ((c : ℝ) : EReal) := EReal.coe_le_coe_iff.mpr hc
+
+theorem le_bellman_const {c : ℝ} (hc : c ≤ D.rewardMin + D.discount * c) :
+    const S c ≤ D.bellman (const S c) := by
+  intro s
+  have hexp : D.expect (const S c) (s, D.select s) = c := by
+    have := D.expect_add_const (0 : S →ᵇ ℝ) c (s, D.select s)
+    simpa [expect] using this
+  have hle : ((c : ℝ) : EReal) ≤ D.objectiveE (const S c) s (D.select s) := by
+    simp only [objectiveE, hexp]
+    calc ((c : ℝ) : EReal) ≤ ((D.rewardMin + D.discount * c : ℝ) : EReal) :=
+          EReal.coe_le_coe_iff.mpr hc
+      _ = ((D.rewardMin : ℝ) : EReal) + ((D.discount * c : ℝ) : EReal) := EReal.coe_add _ _
+      _ ≤ D.reward (s, D.select s) + ((D.discount * c : ℝ) : EReal) :=
+          add_le_add (D.le_reward_select s) (le_refl _)
+  have := le_trans hle (D.le_bellmanFn (const S c) (D.select_mem s))
+  simpa using EReal.coe_le_coe_iff.mp this
+
+/-- **The value function never exceeds the best constant plan.** Unlike `norm_valueFunction_le`
+this is one-sided, and the pair of bounds caps the OSCILLATION of the value function by
+`(rewardMax - rewardMin) / (1 - β)` -- a quantity that does not move when a constant is added to
+the reward, which the sup norm does. That matters for CES: `c ^ (1-γ) / (1-γ)` differs from `log`
+by the constant `1 / (1-γ)`, so any bound built from `‖V‖` blows up as `γ → 1` while the model it
+describes does not. -/
+theorem valueFunction_le_const {c : ℝ} (hc : D.rewardMax + D.discount * c ≤ c) (s : S) :
+    D.valueFunction s ≤ c := by
+  have hiter : ∀ n : ℕ, D.bellman^[n] (const S c) ≤ const S c := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ k ih =>
+        rw [Function.iterate_succ_apply']
+        exact le_trans (D.blackwell.monotone ih) (D.bellman_const_le hc)
+  have hlim := D.tendsto_iterate_valueFunction (const S c)
+  have hpt : Filter.Tendsto (fun n => D.bellman^[n] (const S c) s) Filter.atTop
+      (𝓝 (D.valueFunction s)) :=
+    ((BoundedContinuousFunction.evalCLM ℝ s).continuous.tendsto _).comp hlim
+  exact le_of_tendsto' hpt fun n => hiter n s
+
+theorem const_le_valueFunction {c : ℝ} (hc : c ≤ D.rewardMin + D.discount * c) (s : S) :
+    c ≤ D.valueFunction s := by
+  have hiter : ∀ n : ℕ, (const S c : S →ᵇ ℝ) ≤ D.bellman^[n] (const S c) := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ k ih =>
+        rw [Function.iterate_succ_apply']
+        exact le_trans (D.le_bellman_const hc) (D.blackwell.monotone ih)
+  have hlim := D.tendsto_iterate_valueFunction (const S c)
+  have hpt : Filter.Tendsto (fun n => D.bellman^[n] (const S c) s) Filter.atTop
+      (𝓝 (D.valueFunction s)) :=
+    ((BoundedContinuousFunction.evalCLM ℝ s).continuous.tendsto _).comp hlim
+  exact ge_of_tendsto' hpt fun n => hiter n s
+
 /-- **The stochastic Bellman equation**, with the reward an extended real and no floor. -/
 theorem exists_optimal_policy (s : S) :
     ∃ a ∈ D.feasible s, ((D.valueFunction s : ℝ) : EReal)

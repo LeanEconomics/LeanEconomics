@@ -215,6 +215,64 @@ theorem policy_le_of_marginal_bound {m : ℝ} (hm : 0 < m)
   rw [le_div_iff₀ hm]
   nlinarith [hopt, hscaled, hmg]
 
+/-! ### The oscillation gap
+
+`deviationGap = 2 β ‖V‖` is what the log development compares against, and it is not
+translation-invariant. That is fatal for CES: `c ^ (1-γ) / (1-γ)` differs from `log` by the
+constant `1 / (1-γ)`, so `‖V‖` blows up as `γ → 1` while the model it describes does not. Every
+use of it is against a DIFFERENCE of continuation values, so what is really needed is the
+oscillation, and that is `(u maxConsumption - u minIncome) / (1 - β)`. -/
+
+/-- The spread of the value function, from the two constant plans. -/
+noncomputable def oscGap : ℝ := (P.u P.maxConsumption - P.u P.minIncome) / (1 - P.discount)
+
+theorem valueFunction_le_oscBound (s : ℝ × Z) :
+    P.toExtended.valueFunction s ≤ P.u P.maxConsumption / (1 - P.discount) := by
+  have hβ : (P.discount : ℝ) < 1 := by exact_mod_cast P.discount_lt_one
+  refine P.toExtended.valueFunction_le_const ?_ s
+  have hne : (1 : ℝ) - P.discount ≠ 0 := by linarith
+  have key : P.u P.maxConsumption
+      + (P.discount : ℝ) * (P.u P.maxConsumption / (1 - P.discount))
+      = P.u P.maxConsumption / (1 - P.discount) := by field_simp; ring
+  rw [show P.toExtended.rewardMax = P.u P.maxConsumption from rfl,
+    show ((P.toExtended.discount : ℝ)) = (P.discount : ℝ) from rfl]
+  exact le_of_eq key
+
+theorem oscBound_le_valueFunction (s : ℝ × Z) :
+    P.u P.minIncome / (1 - P.discount) ≤ P.toExtended.valueFunction s := by
+  have hβ : (P.discount : ℝ) < 1 := by exact_mod_cast P.discount_lt_one
+  refine P.toExtended.const_le_valueFunction ?_ s
+  have hne : (1 : ℝ) - P.discount ≠ 0 := by linarith
+  have key : P.u P.minIncome / (1 - P.discount)
+      = P.u P.minIncome + (P.discount : ℝ) * (P.u P.minIncome / (1 - P.discount)) := by
+    field_simp; ring
+  rw [show P.toExtended.rewardMin = P.u P.minIncome from rfl,
+    show ((P.toExtended.discount : ℝ)) = (P.discount : ℝ) from rfl]
+  exact le_of_eq key
+
+theorem oscGap_nonneg : 0 ≤ P.oscGap := by
+  have hβ : (P.discount : ℝ) < 1 := by exact_mod_cast P.discount_lt_one
+  refine div_nonneg (sub_nonneg.mpr ?_) (by linarith)
+  exact P.monotoneOn_u_dom (P.mem_dom_of_pos P.minIncome_pos)
+    (P.mem_dom_of_pos P.maxConsumption_pos) P.minIncome_le_maxConsumption
+
+/-- **The continuation value moves by at most the oscillation gap**, whatever the two saving
+levels. This is what replaces `2 ‖V‖` in every comparison. -/
+theorem cont_sub_le_oscGap (z : Z) (x y : ℝ) : P.cont z x - P.cont z y ≤ P.oscGap := by
+  have hsub : P.cont z x - P.cont z y
+      = ∑ z' : Z, P.transitionMatrix z z' *
+          (P.toExtended.valueFunction (x, z') - P.toExtended.valueFunction (y, z')) := by
+    simp only [cont, ← Finset.sum_sub_distrib, ← mul_sub]
+  rw [hsub]
+  calc ∑ z' : Z, P.transitionMatrix z z' *
+        (P.toExtended.valueFunction (x, z') - P.toExtended.valueFunction (y, z'))
+      ≤ ∑ z' : Z, P.transitionMatrix z z' * P.oscGap := by
+        refine Finset.sum_le_sum fun z' _ => ?_
+        refine mul_le_mul_of_nonneg_left ?_ (P.transitionMatrix_nonneg _ _)
+        simp only [oscGap, sub_div]
+        linarith [P.valueFunction_le_oscBound (x, z'), P.oscBound_le_valueFunction (y, z')]
+    _ = P.oscGap := by rw [← Finset.sum_mul, P.transitionMatrix_sum, one_mul]
+
 /-- The Lipschitz constant of the value function under CES, mirroring `logLipschitz`. -/
 noncomputable def crraLipschitz (γ : ℝ) : ℝ :=
   crraSlopeBound γ P.minIncome * (1 + P.interest) / (1 - P.discount * (1 + P.interest))
@@ -329,6 +387,135 @@ theorem crra_cont_sub_ge {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1)
   have h0 : (0 : ℝ) ∈ Icc (0 : ℝ) assetCap := ⟨le_rfl, P.assetCap_nonneg⟩
   have := P.crra_cont_sub_ge_gen hγ0 hγ1 hu hpc z z₀ h0 hh hh.1
   simpa using this
+
+/-! ### The sharp decline constant
+
+`crra_policy_le` bounds saving by a constant, which is enough for a natural asset bound but far
+too weak for the corner condition to meet it: the corner needs the threshold to be comparable to
+the LOW income, and an absolute bound does not shrink with it. The log development gets a
+PROPORTIONAL bound instead, `c ≥ R / (1 + 2G)`, whose decline threshold is proportional to income.
+
+The CES analogue deviates to `θ` times the optimal saving rather than to half of it, and prices
+the extra consumption at the margin where it lands: `b ≤ (β · oscGap / θ) · (c + (1-θ) b) ^ γ`.
+Taking `θ` near 1 makes the right-hand side nearly `(β · oscGap) c ^ γ`, proportional to
+consumption, which is the shape the decline condition needs. -/
+
+/-- **The proportional CES bound on saving.** -/
+theorem crra_policy_le_mul {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hθ0 : 0 < θ) (hθ1 : θ < 1)
+    (_hb : P.Bounded) (hu : P.u = crraUtility γ) (hpc : P.PositiveConsumption)
+    {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z) :
+    P.policy (a, z)
+      ≤ (P.discount * P.oscGap / θ)
+        * (P.consumption (a, z) (P.policy (a, z)) + (1 - θ) * P.policy (a, z)) ^ γ := by
+  have hosc := P.oscGap_nonneg
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  set b : ℝ := P.policy (a, z) with hbdef
+  set c : ℝ := P.consumption (a, z) b with hcdef
+  have hcpos : 0 < c := by
+    rw [hcdef, hbdef]; exact P.consumption_policy_pos hpc ha
+  have hbase : (0 : ℝ) < c + (1 - θ) * b := by
+    have : 0 ≤ (1 - θ) * b := mul_nonneg (by linarith) (P.policy_mem_region (a, z)).1
+    linarith
+  have hrpow : (0 : ℝ) < (c + (1 - θ) * b) ^ γ := Real.rpow_pos_of_pos hbase _
+  rcases eq_or_lt_of_le (P.policy_mem_region (a, z)).1 with hzero | hbpos
+  · rw [← hbdef] at hzero
+    rw [← hzero]
+    positivity
+  rw [← hbdef] at hbpos
+  -- the deviation: save `θ` times as much
+  have hθb0 : 0 < θ * b := mul_pos hθ0 hbpos
+  have hθbb : θ * b < b := by nlinarith
+  have hbreg : b ∈ Icc (0 : ℝ) assetCap := P.policy_mem_region _
+  have hmem0 : (0 : ℝ) ∈ Icc (0 : ℝ) assetCap := ⟨le_rfl, P.assetCap_nonneg⟩
+  have hfeas : θ * b ∈ P.toExtended.feasible (a, z) := by
+    rw [P.feasible_eq]
+    exact ⟨hθb0.le, by linarith [(P.policy_mem (a, z)).2]⟩
+  have hcons : P.consumption (a, z) (θ * b) = c + (1 - θ) * b := by
+    simp only [hcdef, consumption]; ring
+  have hdev : 0 < P.consumption (a, z) (θ * b) := by rw [hcons]; linarith
+  have hopt := P.objR_le_of_mem ha hfeas (P.mem_dom_of_pos hdev)
+  simp only [objR, hcons] at hopt
+  rw [show P.consumption (a, z) (P.policy (a, z)) = c from rfl,
+    show P.policy (a, z) = b from rfl] at hopt
+  -- concavity of the continuation caps what the forgone saving could have repaid
+  have hslope := (P.concaveOn_cont z).slope_anti_adjacent hmem0 hbreg hθb0 hθbb
+  have hloss : P.cont z b - P.cont z (θ * b) ≤ (1 - θ) / θ * P.oscGap := by
+    have hgap := P.cont_sub_le_oscGap z (θ * b) 0
+    rw [div_le_div_iff₀ (show (0:ℝ) < b - θ * b by nlinarith)
+      (show (0:ℝ) < θ * b - 0 by linarith)] at hslope
+    have h2 : (P.cont z b - P.cont z (θ * b)) * (θ * b) ≤ P.oscGap * ((1 - θ) * b) := by
+      nlinarith [hslope, hgap, hbpos, hθ0]
+    rw [div_mul_eq_mul_div, le_div_iff₀ hθ0]
+    nlinarith [h2, hbpos]
+  -- the marginal gain from the extra consumption, priced where it lands
+  have hmg : (c + (1 - θ) * b) ^ (-γ) * ((1 - θ) * b)
+      ≤ P.u (c + (1 - θ) * b) - P.u c := by
+    rw [hu]
+    have := crra_marginal_bound_Ici hγ0 hγ1 (mem_Ici.mpr hcpos.le)
+      (le_add_of_nonneg_right (mul_nonneg (by linarith) hbpos.le)) (le_refl (c + (1 - θ) * b))
+    simpa using this
+  have hmid : P.u (c + (1 - θ) * b) - P.u c
+      ≤ (P.discount : ℝ) * (P.cont z b - P.cont z (θ * b)) := by
+    have hd : (P.discount : ℝ) * (P.cont z b - P.cont z (θ * b))
+        = (P.discount : ℝ) * P.cont z b - (P.discount : ℝ) * P.cont z (θ * b) := by ring
+    linarith [hopt, hd.le, hd.ge]
+  have hkey : (c + (1 - θ) * b) ^ (-γ) * ((1 - θ) * b)
+      ≤ (P.discount : ℝ) * ((1 - θ) / θ * P.oscGap) :=
+    le_trans hmg (le_trans hmid (mul_le_mul_of_nonneg_left hloss hβ))
+  -- divide out `1 - θ` and clear the negative power
+  have hinv : (c + (1 - θ) * b) ^ (-γ) = ((c + (1 - θ) * b) ^ γ)⁻¹ :=
+    Real.rpow_neg hbase.le γ
+  rw [hinv] at hkey
+  have h1θ : (0 : ℝ) < 1 - θ := by linarith
+  have hexp : ((c + (1 - θ) * b) ^ γ)⁻¹ * ((1 - θ) * b)
+      = (1 - θ) * (b / (c + (1 - θ) * b) ^ γ) := by field_simp
+  rw [hexp, show (P.discount : ℝ) * ((1 - θ) / θ * P.oscGap)
+      = (1 - θ) * (P.discount * P.oscGap / θ) from by ring] at hkey
+  have hdiv : b / (c + (1 - θ) * b) ^ γ ≤ P.discount * P.oscGap / θ :=
+    le_of_mul_le_mul_left hkey h1θ
+  rw [div_le_iff₀ hrpow] at hdiv
+  linarith
+
+/-- **Assets fall above an explicit threshold**, in the income state that matters. The threshold
+is `(β · oscGap / θ) · (income z + (1 + r - θ) · assetCap) ^ γ`; with `θ` near one the second
+factor is close to `income z ^ γ`, so the threshold shrinks with the income of the state -- which
+is exactly what lets the corner condition reach it. -/
+theorem crra_policy_lt_self {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hθ0 : 0 < θ) (hθ1 : θ < 1)
+    (hθr : θ ≤ 1 + P.interest) (hb : P.Bounded) (hu : P.u = crraUtility γ)
+    (hpc : P.PositiveConsumption) {a : ℝ} (ha : a ∈ Icc 0 assetCap) (z : Z)
+    (hlt : (P.discount * P.oscGap / θ)
+        * (P.income z + (1 + P.interest - θ) * assetCap) ^ γ < a) :
+    P.policy (a, z) < a := by
+  by_contra hcon
+  rw [not_lt] at hcon
+  have hosc := P.oscGap_nonneg
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  set b : ℝ := P.policy (a, z) with hbdef
+  set c : ℝ := P.consumption (a, z) b with hcdef
+  have hkey := P.crra_policy_le_mul hγ0 hγ1 hθ0 hθ1 hb hu hpc ha z
+  rw [← hbdef, ← hcdef] at hkey
+  have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a := by
+    simp only [resources, max_eq_right ha.1]
+  have hsum : c + (1 - θ) * b = P.income z + (1 + P.interest) * a - θ * b := by
+    simp only [hcdef, consumption, hres]; ring
+  have hle : c + (1 - θ) * b ≤ P.income z + (1 + P.interest - θ) * assetCap := by
+    rw [hsum]
+    have h1 : θ * a ≤ θ * b := mul_le_mul_of_nonneg_left hcon hθ0.le
+    have h2 : (1 + P.interest - θ) * a ≤ (1 + P.interest - θ) * assetCap :=
+      mul_le_mul_of_nonneg_left ha.2 (by linarith)
+    nlinarith [h1, h2]
+  have hnn : (0 : ℝ) ≤ c + (1 - θ) * b := by
+    have hc0 : 0 < c := by rw [hcdef, hbdef]; exact P.consumption_policy_pos hpc ha
+    have : 0 ≤ (1 - θ) * b := mul_nonneg (by linarith) (P.policy_mem_region (a, z)).1
+    linarith
+  have hmono : (c + (1 - θ) * b) ^ γ
+      ≤ (P.income z + (1 + P.interest - θ) * assetCap) ^ γ :=
+    Real.rpow_le_rpow hnn hle hγ0.le
+  have hscale : (P.discount * P.oscGap / θ) * (c + (1 - θ) * b) ^ γ
+      ≤ (P.discount * P.oscGap / θ)
+        * (P.income z + (1 + P.interest - θ) * assetCap) ^ γ :=
+    mul_le_mul_of_nonneg_left hmono (by positivity)
+  linarith
 
 /-- **A quantitative CES saving floor**, the form the sign-change argument consumes. -/
 theorem crra_policy_ge_of_gain {γ : ℝ} (hγ : 0 < γ) (hu : P.u = crraUtility γ)
