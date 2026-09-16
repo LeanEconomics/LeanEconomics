@@ -45,3 +45,4 @@ import LeanEconomics.Models.ConsumptionFloor
 import LeanEconomics.Models.IncomeFluctuationRateMonotone
 import LeanEconomics.Models.NaturalAssetBound
 import LeanEconomics.Equilibrium.PositiveCapital
+import LeanEconomics.Models.PrecautionaryWitness
