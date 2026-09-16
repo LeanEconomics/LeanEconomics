@@ -53,3 +53,4 @@ import LeanEconomics.Models.EquilibriumWitness
 import LeanEconomics.Distribution.UniquenessTop
 import LeanEconomics.Models.ReverseCorner
 import LeanEconomics.Equilibrium.MeanField
+import LeanEconomics.Models.BoundedIncomeFluctuation
