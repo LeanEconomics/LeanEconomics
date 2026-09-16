@@ -39,3 +39,4 @@ import LeanEconomics.Models.IncomeFluctuationEnvelope
 import LeanEconomics.Analysis.RelativeRiskAversion
 import LeanEconomics.Models.IncomeFluctuationConsumption
 import LeanEconomics.Models.IncomeFluctuationCarrollKimball
+import LeanEconomics.Equilibrium.CapitalSupplyMonotone
