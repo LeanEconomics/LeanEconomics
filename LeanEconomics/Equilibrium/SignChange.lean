@@ -162,6 +162,73 @@ theorem le_aggregateCapital_of_gain (hu : P.u = Real.log) {μ : ProbabilityMeasu
   rw [show h - h / 2 = h / 2 from by ring] at hgen
   exact hgen
 
+/-! ### The equilibrium, from uniqueness and a floor
+
+Everything the equilibrium theorem wants is now available on the household side: uniqueness of the
+stationary distribution at each rate (from the uniform corner and decline conditions) and a
+positive floor under capital supply (from the gain condition, checked at the low end). This
+assembles them.
+
+The selection `ν` is built by choosing the unique stationary distribution at the CLAMPED rate, so
+it is defined at every real number while agreeing with the intended one on the interval — the same
+device `rateFamily` uses, and for the same reason. Uniqueness then gives both halves of what
+`exists_equilibrium_of_selection` asks: that `ν r` is stationary, and that nothing else is.
+
+The firm is chosen last, by `exists_firm_of_bounds`, from the supply floor `m` and the asset cap.
+-/
+
+omit [MeasurableSpace Z] [BorelSpace Z] in
+theorem withRate_congr {a b : ℝ} (hab : a = b) (h₁ : 0 < 1 + a) (h₂ : 0 < 1 + b) :
+    P.withRate a h₁ = P.withRate b h₂ := by
+  subst hab; rfl
+
+/-- **An Aiyagari equilibrium from household-side hypotheses alone.** Uniqueness of the stationary
+distribution at each rate, and a positive floor under capital supply, suffice: the firm is then
+calibrated to meet them. -/
+theorem exists_equilibrium_of_uniqueness_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
+    (hlt : rlo < rhi)
+    (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r,
+      ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ)
+    {m : ℝ} (hm : 0 < m)
+    (hfloor : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r, ∀ μ : ProbabilityMeasure P.State,
+      (P.withRate r hrr).IsStationary μ → m ≤ P.aggregateCapital μ) :
+    ∃ A δ : ℝ, 0 < A ∧ ∃ r ∈ Icc rlo rhi,
+      IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) (capitalDemand A δ) r := by
+  classical
+  have hle : rlo ≤ rhi := hlt.le
+  have hclamp : ∀ r : ℝ, clampRate rlo rhi r ∈ Icc rlo rhi := clampRate_mem hle
+  have hpos : ∀ r : ℝ, 0 < 1 + clampRate rlo rhi r := one_add_clampRate_pos hrlo hle
+  have hE : ∀ r : ℝ, ∃! μ : ProbabilityMeasure P.State,
+      (P.withRate (clampRate rlo rhi r) (hpos r)).IsStationary μ :=
+    fun r => huniq _ (hclamp r) (hpos r)
+  set ν : ℝ → ProbabilityMeasure P.State := fun r => (hE r).choose with hνdef
+  have hν : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r, (P.withRate r hrr).IsStationary (ν r) := by
+    intro r hr hrr
+    have hc : clampRate rlo rhi r = r := clampRate_eq hr
+    rw [← P.withRate_congr hc (hpos r) hrr]
+    exact (hE r).choose_spec.1
+  have hunique : ∀ r ∈ Icc rlo rhi, ∀ hrr : 0 < 1 + r, ∀ μ : ProbabilityMeasure P.State,
+      (P.withRate r hrr).IsStationary μ → μ = ν r := by
+    intro r hr hrr μ hμ
+    have hc : clampRate rlo rhi r = r := clampRate_eq hr
+    refine (hE r).choose_spec.2 μ ?_
+    rw [P.withRate_congr hc (hpos r) hrr]
+    exact hμ
+  -- the two bounds on capital supply
+  have hlo' : rlo ∈ Icc rlo rhi := ⟨le_rfl, hle⟩
+  have hhi' : rhi ∈ Icc rlo rhi := ⟨hle, le_rfl⟩
+  have hrhi : 0 < 1 + rhi := by linarith
+  have hub : P.aggregateCapital (ν rlo) ≤ assetCap := P.aggregateCapital_le _
+  have hlbhi : m ≤ P.aggregateCapital (ν rhi) := hfloor rhi hhi' hrhi _ (hν rhi hhi' hrhi)
+  have hmM : m ≤ assetCap := le_trans hlbhi (P.aggregateCapital_le _)
+  -- and the firm that meets them
+  obtain ⟨A, δ, hA, hrδ, hDlo, hDhi⟩ := exists_firm_of_bounds hlt hm hmM
+  refine ⟨A, δ, hA, P.exists_equilibrium_of_selection hrlo hle ν hν hunique (capitalDemand A δ)
+    (continuousOn_capitalDemand hrδ) ?_ ?_⟩
+  · exact le_trans hub hDlo
+  · exact le_trans hDhi hlbhi
+
+
 end IncomeFluctuation
 
 /-! ### Uniformity in the interest rate
