@@ -42,3 +42,4 @@ import LeanEconomics.Models.IncomeFluctuationCarrollKimball
 import LeanEconomics.Equilibrium.CapitalSupplyMonotone
 import LeanEconomics.Models.CRRA
 import LeanEconomics.Models.ConsumptionFloor
+import LeanEconomics.Models.IncomeFluctuationRateMonotone
