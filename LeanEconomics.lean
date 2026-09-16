@@ -54,3 +54,4 @@ import LeanEconomics.Distribution.UniquenessTop
 import LeanEconomics.Models.ReverseCorner
 import LeanEconomics.Equilibrium.MeanField
 import LeanEconomics.Models.BoundedIncomeFluctuation
+import LeanEconomics.Models.CRRAConstants
