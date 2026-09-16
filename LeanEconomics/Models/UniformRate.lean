@@ -106,7 +106,8 @@ theorem log_policy_eq_zero_uniform (hu : P.u = Real.log) {r₀ r₁ : ℝ} (h₀
 /-! ### The decline condition falls with the rate -/
 
 /-- **The decline condition, checked once at the top of the interval.** -/
-theorem policy_lt_self_of_rate_le {r₀ r₁ : ℝ} (h₀ : 0 < 1 + r₀) (hle : r₀ ≤ r₁) {z : Z} {ε a : ℝ} (hε : ε ≤ 1) (ha : a ∈ Icc (0 : ℝ) assetCap)
+theorem policy_lt_self_of_rate_le {r₀ r₁ : ℝ} (h₀ : 0 < 1 + r₀) (hle : r₀ ≤ r₁)
+    {z : Z} {ε a : ℝ} (hε : ε ≤ 1) (ha : a ∈ Icc (0 : ℝ) assetCap)
     (hlb : ε * (P.withRate r₀ h₀).resources (a, z) ≤ (P.withRate r₀ h₀).consumptionFn z a)
     (hgt : (1 - ε) * P.income z < (1 - (1 - ε) * (1 + r₁)) * a) :
     (P.withRate r₀ h₀).policy (a, z) < a := by
