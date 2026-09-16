@@ -46,17 +46,20 @@ usually done by differentiating an inverse function. `concaveOn_of_egm` does it 
 identity alone: write the choice against end-of-period assets, and the two concavities are the
 same statement.
 
-**The Euler equation** `hEuler` is proved in `IncomeFluctuationEuler`: `hasDerivAt_bellman`
-runs the Clausen and Strub sandwich along the ITERATES rather than at the fixed point,
-`euler_of_interior` reads the first-order condition off it, and
-`concaveOn_consumptionFnOf_bellman_of_interior` is this theorem with `hEuler` discharged.
+**The Euler equation** `hEuler` is proved in `IncomeFluctuationEuler`, and so is the step with
+the BORROWING LIMIT allowed to bind. Saving more is feasible unless the household already saves
+the maximum, so the inequality half of the first-order condition survives the corner; and at a
+constrained state the saving is `assetFloor`, which lies below any average of savings, which is
+the only thing `concaveOn_of_egm` ever needed. `concaveOn_of_egm_corner` and
+`concaveOn_consumptionFnOf_bellman` are the results.
 
-**What is left is INTERIORITY.** The first-order condition needs the household to save strictly
-inside the asset region and strictly below its feasible maximum, this period and next, and at
-the borrowing limit it does not: `policy_eq_zero_of_corner_at` shows the constraint binds where
-resources are small. Carroll and Kimball's conclusion survives the kink (the constrained branch
-is affine with slope one, and it lies to the left, which is the direction concavity allows) but
-the gluing is real work.
+**What is left is the INDUCTION's bookkeeping.** The step now needs the continuation's
+consumption function to be positive, concave AND nondecreasing, and needs the asset cap to be
+slack at every iterate. `hT` as stated below carries only concavity, so closing Carroll and
+Kimball means strengthening the induction to carry the other three -- monotonicity in the style
+of `consumptionFn_mono`, positivity in the style of `positiveConsumption_of_unbounded`, and cap
+slackness in the style of `crra_policy_lt_assetCap`, each currently stated for the fixed point
+rather than for an iterate. That is routine work, not a new obstruction.
 
 **Toda (2021) still bounds what can be hoped for.** Under regularity conditions HARA is
 NECESSARY for the consumption function to be concave, and the structure assumes of `u` only
@@ -74,12 +77,15 @@ The obstruction has moved four times.
   calibration, and `nearLog` is recalibrated so that saving provably never reaches the cap.
 * Differentiability was the third, and it is now GONE: `hasDerivAt_bellman` is the Clausen and
   Strub sandwich run along the iteration, and `PowerMean` removes second derivatives altogether.
-* The Euler equation was the fourth, and it is proved: `euler_of_interior`.
+* The Euler equation was the fourth, and it is proved -- `euler_eq`, and without the envelope
+  theorem at that.
+* The borrowing-constraint kink was the fifth, and `concaveOn_of_egm_corner` absorbs it.
 
-What remains is the borrowing-constraint kink, and nothing else.
+What remains is carrying positivity, monotonicity and cap slackness along the induction, all of
+which exist for the fixed point and need restating for an iterate.
 
-So this file does not claim Carroll and Kimball. It claims the analysis behind it, and the
-reduction of the remaining gap to interiority of the saving choice.
+So this file does not claim Carroll and Kimball. It claims the analysis behind it, the step
+itself, and the reduction of what is left to bookkeeping along the induction.
 -/
 
 open Set Filter Topology BoundedContinuousFunction
