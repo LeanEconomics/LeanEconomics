@@ -205,14 +205,12 @@ theorem one_sub_mpc_mul_of_asymptotic {β R γ : ℝ} (hβ : 0 ≤ β) (hR : 0 <
 /-- **A household that consumes a fixed share of cash on hand runs its assets down**, once
 assets pass an explicit threshold. The share `ε` has to be large enough that `(1 - ε)(1 + r) < 1`
 — with Ma and Toda's asymptotic MPC that is exactly `β(1 + r) < 1`. -/
-theorem policy_lt_self_of_consumption_lower_bound {z : Z} {ε a : ℝ} (hε1 : ε ≤ 1)
+theorem policy_lt_self_of_consumption_lower_bound {z : Z} {ε a : ℝ}
     (ha : a ∈ Icc (0 : ℝ) assetCap) (hlb : ε * P.resources (a, z) ≤ P.consumptionFn z a)
-    (hgt : (1 - ε) * P.maxIncome < (1 - (1 - ε) * (1 + P.interest)) * a) :
+    (hgt : (1 - ε) * P.income z < (1 - (1 - ε) * (1 + P.interest)) * a) :
     P.policy (a, z) < a := by
   have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a := by
     simp only [resources, max_eq_right ha.1]
-  have hinc : (1 - ε) * P.income z ≤ (1 - ε) * P.maxIncome :=
-    mul_le_mul_of_nonneg_left (P.le_maxIncome z) (by linarith)
   have hpol : P.policy (a, z)
       = P.income z + (1 + P.interest) * a - P.consumptionFn z a := by
     simp only [consumptionFn, consumption, hres]; ring
@@ -226,12 +224,12 @@ theorem policy_lt_self_of_consumption_lower_bound {z : Z} {ε a : ℝ} (hε1 : �
 
 /-- **Every asset level above an explicit threshold declines**, given a linear lower bound on
 consumption. This is the hypothesis `hdecl` of `exists_exhaust_of_decline`. -/
-theorem exists_decline_of_consumption_lower_bound {z : Z} {ε : ℝ} (hε1 : ε ≤ 1)
+theorem exists_decline_of_consumption_lower_bound {z : Z} {ε : ℝ}
     (hε : (1 - ε) * (1 + P.interest) < 1)
     (hlb : ∀ a ∈ Icc (0 : ℝ) assetCap, ε * P.resources (a, z) ≤ P.consumptionFn z a) :
     ∃ ā : ℝ, ∀ a ∈ Icc (0 : ℝ) assetCap, ā < a → P.policy (a, z) < a := by
-  refine ⟨(1 - ε) * P.maxIncome / (1 - (1 - ε) * (1 + P.interest)), fun a ha hā => ?_⟩
-  refine P.policy_lt_self_of_consumption_lower_bound hε1 ha (hlb a ha) ?_
+  refine ⟨(1 - ε) * P.income z / (1 - (1 - ε) * (1 + P.interest)), fun a ha hā => ?_⟩
+  refine P.policy_lt_self_of_consumption_lower_bound ha (hlb a ha) ?_
   rw [div_lt_iff₀ (by linarith)] at hā
   linarith
 

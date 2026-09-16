@@ -111,8 +111,7 @@ ask only for `β (1 + r) < 1`. -/
 theorem exists_natural_asset_bound_log (hu : P.u = Real.log) (z : Z)
     (hr : (1 - Real.exp (-P.deviationGap)) * (1 + P.interest) < 1) :
     ∃ ā : ℝ, ∀ a ∈ Icc (0 : ℝ) assetCap, ā < a → P.policy (a, z) < a :=
-  P.exists_decline_of_consumption_lower_bound
-    (Real.exp_le_one_iff.mpr (neg_nonpos.mpr P.deviationGap_nonneg)) hr
+  P.exists_decline_of_consumption_lower_bound hr
     fun _ ha => P.log_consumption_linear_lower_bound hu ha z
 
 end IncomeFluctuation
