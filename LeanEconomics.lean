@@ -44,3 +44,4 @@ import LeanEconomics.Models.CRRA
 import LeanEconomics.Models.ConsumptionFloor
 import LeanEconomics.Models.IncomeFluctuationRateMonotone
 import LeanEconomics.Models.NaturalAssetBound
+import LeanEconomics.Equilibrium.PositiveCapital
