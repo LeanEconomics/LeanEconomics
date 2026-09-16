@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.ConsumptionFloor
+import LeanEconomics.Models.IncomeFluctuationLipschitz
 
 /-!
 # A natural asset bound for log utility
@@ -114,6 +115,83 @@ theorem exists_natural_asset_bound_log (hu : P.u = Real.log) (z : Z)
   P.exists_decline_of_consumption_lower_bound hr
     fun _ ha => P.log_consumption_linear_lower_bound hu ha z
 
+/-! ### The other half of exhaustion: the corner, for log
+
+`exists_decline_of_consumption_lower_bound` gives assets falling above a threshold. The ergodic
+argument also needs the constraint to BIND below one — `policy = 0` on `[0, a₀]` at the bad income
+state — and `policy_eq_zero_of_corner_at` supplies that from two explicit constants: a Lipschitz
+bound `L` on the value function and a lower bound `m` on the secant slope of `u`, with `β L < m`.
+
+Both are computable for log. The secant slope of `log` on `(0, R]` is at least `1/R`, from
+`log x ≤ x - 1`. The Lipschitz constant is the fixed point of the operator's own estimate,
+`L = K (1+r) / (1 - β(1+r))` with `K = slopeBound log minIncome = 2 log 2 / minIncome`, so `β L < m`
+reads
+
+  `resources · β · 2 log 2 (1+r) / (minIncome (1 - β(1+r)))  <  1`,
+
+a condition on the state's resources alone. Since resources at the bad state are
+`minIncome + (1+r) a`, it cuts out an interval of low assets — exactly what the ergodic argument
+wants, and exactly why the condition has to be state-dependent rather than global. -/
+
+/-- The secant slope of `log` on `(0, R]` is at least `1 / R`. -/
+theorem log_marginal_bound {R : ℝ} (hR : 0 < R) {c d : ℝ} (hd : 0 < d) (hdc : d ≤ c)
+    (hcR : c ≤ R) : 1 / R * (c - d) ≤ Real.log c - Real.log d := by
+  have hc : 0 < c := lt_of_lt_of_le hd hdc
+  have hkey : Real.log (d / c) ≤ d / c - 1 :=
+    Real.log_le_sub_one_of_pos (div_pos hd hc)
+  rw [Real.log_div hd.ne' hc.ne'] at hkey
+  have hstep : (c - d) / c ≤ Real.log c - Real.log d := by
+    rw [sub_div, div_self hc.ne']
+    linarith
+  refine le_trans ?_ hstep
+  rw [div_mul_eq_mul_div, one_mul, div_le_div_iff₀ hR hc]
+  nlinarith [sub_nonneg.mpr hdc]
+
+/-- The slope bound of `log` at the income floor, in closed form. -/
+theorem log_slopeBoundU (hu : P.u = Real.log) :
+    P.slopeBoundU = 2 * Real.log 2 / P.minIncome := by
+  have hm := P.minIncome_pos
+  simp only [slopeBoundU, slopeBound, hu]
+  rw [← Real.log_div hm.ne' (by positivity), show P.minIncome / (P.minIncome / 2) = 2 by
+    field_simp]
+  field_simp
+
+/-- The Lipschitz constant the operator's own estimate is a fixed point of. -/
+noncomputable def logLipschitz : ℝ :=
+  2 * Real.log 2 / P.minIncome * (1 + P.interest) / (1 - P.discount * (1 + P.interest))
+
+theorem logLipschitz_nonneg (hβR : P.discount * (1 + P.interest) < 1) :
+    0 ≤ P.logLipschitz := by
+  have hm := P.minIncome_pos
+  have hr := P.interest_gt_neg_one
+  have hlog : (0 : ℝ) ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  refine div_nonneg (by positivity) (by linarith)
+
+/-- **The value function is Lipschitz with the explicit log constant.** -/
+theorem log_valueFunction_lipschitz (hu : P.u = Real.log)
+    (hβR : P.discount * (1 + P.interest) < 1) :
+    ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ y ∈ Icc (0 : ℝ) assetCap,
+      |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)|
+        ≤ P.logLipschitz * |x - y| := by
+  refine P.valueFunction_lipschitz (P.logLipschitz_nonneg hβR) (le_of_eq ?_)
+  have hne : (1 : ℝ) - P.discount * (1 + P.interest) ≠ 0 := by linarith
+  simp only [logLipschitz, P.log_slopeBoundU hu]
+  field_simp
+  ring
+
+/-- **The borrowing constraint binds where resources are small**, with an explicit threshold in
+the primitives. -/
+theorem log_policy_eq_zero_of_resources (hu : P.u = Real.log)
+    (hβR : P.discount * (1 + P.interest) < 1) {s : ℝ × Z} (hs : s.1 ∈ Icc (0 : ℝ) assetCap)
+    (hlt : P.discount * P.logLipschitz < 1 / P.resources s) :
+    P.policy s = 0 :=
+  P.policy_eq_zero_of_corner_at (P.log_valueFunction_lipschitz hu hβR) hs
+    (fun c d hd hdc hc => by
+      rw [hu]; exact log_marginal_bound (P.resources_pos s) hd hdc hc)
+    hlt
+
+
+
 end IncomeFluctuation
 
 /-- **The bound is not vacuous.** At `r = 0` the interest-rate hypothesis holds automatically,
@@ -125,5 +203,6 @@ theorem logImpatient_natural_asset_bound (z : Fin 2) :
   have hint : logImpatient.interest = 0 := rfl
   rw [hint]
   linarith
+
 
 end LeanEconomics
