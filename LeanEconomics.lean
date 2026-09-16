@@ -59,3 +59,5 @@ import LeanEconomics.Models.CRRAConstants
 import LeanEconomics.Models.CESUniformRate
 import LeanEconomics.Models.CESWitness
 import LeanEconomics.Models.CESNearLogWitness
+import LeanEconomics.Analysis.HARA
+import LeanEconomics.Equilibrium.UniquenessHARA
