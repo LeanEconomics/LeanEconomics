@@ -38,6 +38,14 @@ known to be twice differentiable (we have one-sided first derivatives, condition
 `IncomeFluctuationEnvelope`), and the propagation through the expectation over income states is
 Kimball's risk-tolerance aggregation theorem, which is a body of theory in its own right.
 
+**`hT` is not merely unproved: it is FALSE at this generality.** Toda (2021) shows that under
+regularity conditions HARA is NECESSARY for the consumption function to be concave, and the
+structure here assumes of `u` only that it is strictly concave. So no proof of `hT` can exist
+against `IncomeFluctuation` as it stands; the structure would first have to be specialised to
+HARA — in practice to CRRA, which is what Light's published version (2020) assumes anyway. The
+theorem below is therefore conditional in the strong sense, and the hypothesis is where the
+parametric commitment of the whole uniqueness argument is concentrated.
+
 So this file does not claim Carroll and Kimball. It claims that everything AROUND it is done:
 the single step `hT` is now the only thing standing between the development and Light (2018)
 Theorem 1, whose remaining ingredients — `mul_marginal_le_of_scale`, `consumptionFn_mono`,

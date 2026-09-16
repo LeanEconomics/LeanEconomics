@@ -170,6 +170,71 @@ theorem monotoneOn_consumptionFn (z : Z) :
     MonotoneOn (P.consumptionFn z) (Icc 0 assetCap) :=
   fun _ ha _ ha' h => P.consumptionFn_mono ha ha' h
 
+/-! ### A linear lower bound on consumption makes assets decline
+
+Ma and Toda (2022) prove that the consumption function is asymptotically LINEAR whenever
+marginal utility is regularly varying, and characterise the slope. Their Corollary 2.10 covers
+this model — constant discount factor and return, bounded relative risk aversion, `R ≥ 1` — and
+gives the asymptotic marginal propensity to consume in closed form,
+
+  `c̄ = 1 - (β R^(1-γ))^(1/γ)`.
+
+That result is about the UNCAPPED problem and is not proved here. What is proved here is the
+consequence, which is what this development actually wants: a linear lower bound on consumption
+forces assets to fall, above an explicit threshold. That is precisely the hypothesis `hdecl` of
+`exists_exhaust_of_decline`, on which the whole Doeblin uniqueness and convergence argument
+rests, and which has been a raw assumption until now.
+
+The two fit together exactly. With Ma and Toda's slope the asymptotic growth factor of assets is
+`(1 - c̄) R = (β R)^(1/γ)` — `one_sub_mpc_mul_of_asymptotic`, below — so the condition
+`(1 - ε) (1 + r) < 1` demanded by `policy_lt_self_of_consumption_lower_bound` is exactly `β R < 1`.
+Impatience, and nothing else, is what bounds assets. -/
+
+/-- **The asymptotic growth factor of assets is `(β R)^(1/γ)`.** With Ma and Toda's asymptotic
+MPC `c̄ = 1 - (β R^(1-γ))^(1/γ)`, the factor `(1 - c̄) R` by which assets grow collapses to
+`(β R)^(1/γ)`, so assets are eventually contracted exactly when `β R < 1`. -/
+theorem one_sub_mpc_mul_of_asymptotic {β R γ : ℝ} (hβ : 0 ≤ β) (hR : 0 < R) (hγ : 0 < γ) :
+    (β * R ^ (1 - γ)) ^ (1 / γ) * R = (β * R) ^ (1 / γ) := by
+  have h1 : (R ^ (1 - γ)) ^ (1 / γ) * R = R ^ (1 / γ) := by
+    have hadd : R ^ ((1 - γ) * (1 / γ)) * R ^ (1 : ℝ) = R ^ ((1 - γ) * (1 / γ) + 1) :=
+      (Real.rpow_add hR _ _).symm
+    rw [Real.rpow_one] at hadd
+    rw [← Real.rpow_mul hR.le, hadd, show (1 - γ) * (1 / γ) + 1 = 1 / γ by field_simp; ring]
+  rw [Real.mul_rpow hβ (Real.rpow_nonneg hR.le _), mul_assoc, h1, ← Real.mul_rpow hβ hR.le]
+
+/-- **A household that consumes a fixed share of cash on hand runs its assets down**, once
+assets pass an explicit threshold. The share `ε` has to be large enough that `(1 - ε)(1 + r) < 1`
+— with Ma and Toda's asymptotic MPC that is exactly `β(1 + r) < 1`. -/
+theorem policy_lt_self_of_consumption_lower_bound {z : Z} {ε a : ℝ} (hε1 : ε ≤ 1)
+    (ha : a ∈ Icc (0 : ℝ) assetCap) (hlb : ε * P.resources (a, z) ≤ P.consumptionFn z a)
+    (hgt : (1 - ε) * P.maxIncome < (1 - (1 - ε) * (1 + P.interest)) * a) :
+    P.policy (a, z) < a := by
+  have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a := by
+    simp only [resources, max_eq_right ha.1]
+  have hinc : (1 - ε) * P.income z ≤ (1 - ε) * P.maxIncome :=
+    mul_le_mul_of_nonneg_left (P.le_maxIncome z) (by linarith)
+  have hpol : P.policy (a, z)
+      = P.income z + (1 + P.interest) * a - P.consumptionFn z a := by
+    simp only [consumptionFn, consumption, hres]; ring
+  rw [hres] at hlb
+  rw [hpol]
+  have e1 : P.income z + (1 + P.interest) * a - P.consumptionFn z a
+      ≤ (1 - ε) * P.income z + (1 - ε) * ((1 + P.interest) * a) := by nlinarith [hlb]
+  rw [show (1 - (1 - ε) * (1 + P.interest)) * a
+      = a - (1 - ε) * ((1 + P.interest) * a) by ring] at hgt
+  linarith
+
+/-- **Every asset level above an explicit threshold declines**, given a linear lower bound on
+consumption. This is the hypothesis `hdecl` of `exists_exhaust_of_decline`. -/
+theorem exists_decline_of_consumption_lower_bound {z : Z} {ε : ℝ} (hε1 : ε ≤ 1)
+    (hε : (1 - ε) * (1 + P.interest) < 1)
+    (hlb : ∀ a ∈ Icc (0 : ℝ) assetCap, ε * P.resources (a, z) ≤ P.consumptionFn z a) :
+    ∃ ā : ℝ, ∀ a ∈ Icc (0 : ℝ) assetCap, ā < a → P.policy (a, z) < a := by
+  refine ⟨(1 - ε) * P.maxIncome / (1 - (1 - ε) * (1 + P.interest)), fun a ha hā => ?_⟩
+  refine P.policy_lt_self_of_consumption_lower_bound hε1 ha (hlb a ha) ?_
+  rw [div_lt_iff₀ (by linarith)] at hā
+  linarith
+
 end IncomeFluctuation
 
 end LeanEconomics
