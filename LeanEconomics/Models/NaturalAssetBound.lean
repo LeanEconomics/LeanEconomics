@@ -115,6 +115,113 @@ theorem exists_natural_asset_bound_log (hu : P.u = Real.log) (z : Z)
   P.exists_decline_of_consumption_lower_bound hr
     fun _ ha => P.log_consumption_linear_lower_bound hu ha z
 
+/-! ### A better constant, from a smaller deviation
+
+`log_consumption_linear_lower_bound` compares the optimum with saving NOTHING, which is a huge
+deviation and costs an exponential: `ε = exp (-2 β ‖V‖)`. Comparing instead with saving a
+FRACTION `θ` of the optimum costs only a ratio, and letting `θ` approach one turns the bound
+polynomial:
+
+  `consumption ≥ resources / (1 + 2 · 2 β ‖V‖)`.
+
+No derivative is taken. The reason a near-zero deviation is affordable is that BOTH sides shrink
+with `1 - θ`: the utility gain is `log (1 + (1-θ) b / c)`, and the continuation loss is bounded by
+`2‖V‖ (1-θ) / θ` because concavity makes the slope of `cont` on `[θb, b]` no larger than its slope
+on `[0, θb]`. The factor `(1-θ)` cancels, and what survives is the comparison of the two
+constants.
+
+`θ = (G + 1/2) / (1 + G)` is chosen so that `θ (1 + G) - G = 1/2` exactly, which is what makes the
+final inequality `b ≤ 2 G c`.
+
+The gain is small when `‖V‖` is small and large when it is not: at `G = 1.3` the two constants are
+`0.27` and `0.28`, at `G = 5` they are `0.007` and `0.09`. Since `‖V‖` grows like `|log minIncome|`,
+it is the dispersed calibrations — the ones the precautionary motive needs — where this matters.
+-/
+
+/-- `log (c + d) - log c ≥ d / (c + d)`, the elementary inequality behind the bound. -/
+theorem log_sub_log_ge {c d : ℝ} (hc : 0 < c) (hd : 0 ≤ d) :
+    d / (c + d) ≤ Real.log (c + d) - Real.log c := by
+  have hcd : 0 < c + d := by linarith
+  have h := Real.log_le_sub_one_of_pos (x := c / (c + d)) (by positivity)
+  rw [Real.log_div hc.ne' hcd.ne'] at h
+  have he : c / (c + d) - 1 = -(d / (c + d)) := by field_simp; ring
+  rw [he] at h
+  linarith
+
+/-- **A polynomial linear lower bound on consumption.** Sharper than
+`log_consumption_linear_lower_bound` whenever the value function is large, and proved from a
+deviation to `θ` times the optimal saving rather than to zero. -/
+theorem log_consumption_linear_lower_bound' (hu : P.u = Real.log) {a : ℝ}
+    (ha : a ∈ Icc 0 assetCap) (z : Z) :
+    P.resources (a, z) / (1 + 2 * P.deviationGap) ≤ P.consumptionFn z a := by
+  have hres0 : P.resources (a, z) = P.consumptionFn z a + P.policy (a, z) := by
+    simp only [consumptionFn, consumption]; ring
+  have hc0 : 0 < P.consumptionFn z a := P.consumptionFn_pos ha z
+  set G : ℝ := P.deviationGap with hGdef
+  have hG : 0 ≤ G := P.deviationGap_nonneg
+  set b : ℝ := P.policy (a, z) with hbdef
+  set c : ℝ := P.consumptionFn z a with hcdef
+  have hc : 0 < c := hc0
+  have hres : P.resources (a, z) = c + b := hres0
+  have hb2 : b ≤ 2 * G * c := by
+    rcases eq_or_lt_of_le (P.policy_mem_region (a, z)).1 with hzero | hbpos
+    · rw [← hbdef] at hzero
+      rw [← hzero]
+      positivity
+    rw [← hbdef] at hbpos
+    set θ : ℝ := (G + 1 / 2) / (1 + G) with hθdef
+    have hden : (0 : ℝ) < 1 + G := by linarith
+    have hθ0 : 0 < θ := by rw [hθdef]; positivity
+    have hθ1 : θ < 1 := by rw [hθdef, div_lt_one hden]; linarith
+    have h1θ : (0 : ℝ) < 1 - θ := by linarith
+    have hθkey : θ * (1 + G) - G = 1 / 2 := by rw [hθdef]; field_simp; ring
+    have hbreg : b ∈ Icc (0 : ℝ) assetCap := P.policy_mem_region _
+    have hmem0 : (0 : ℝ) ∈ Icc (0 : ℝ) assetCap := ⟨le_rfl, P.assetCap_nonneg⟩
+    have hθb0 : 0 < θ * b := mul_pos hθ0 hbpos
+    have hθbb : θ * b < b := by nlinarith
+    have hfeas : θ * b ∈ P.toExtended.feasible (a, z) := by
+      rw [P.feasible_eq]
+      exact ⟨hθb0.le, by linarith [(P.policy_mem (a, z)).2]⟩
+    have hcons : P.consumption (a, z) (θ * b) = c + (1 - θ) * b := by
+      simp only [consumption]
+      rw [hres]
+      ring
+    have hdpos : (0 : ℝ) ≤ (1 - θ) * b := by positivity
+    have hcpos : 0 < P.consumption (a, z) (θ * b) := by rw [hcons]; linarith
+    have hopt := P.objR_le_of_mem ha hfeas hcpos
+    simp only [objR, hcons, hu] at hopt
+    rw [show P.consumption (a, z) (P.policy (a, z)) = c from rfl,
+      show P.policy (a, z) = b from rfl] at hopt
+    -- concavity bounds the continuation loss
+    have hslope := (P.concaveOn_cont z).slope_anti_adjacent hmem0 hbreg hθb0 hθbb
+    have hb1 := abs_le.mp (P.abs_cont_le z (θ * b))
+    have hb0 := abs_le.mp (P.abs_cont_le z 0)
+    have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+    have hloss : P.cont z b - P.cont z (θ * b)
+        ≤ 2 * ‖P.toExtended.valueFunction‖ * (1 - θ) / θ := by
+      rw [div_le_div_iff₀ (by linarith) (by linarith)] at hslope
+      rw [le_div_iff₀ hθ0]
+      nlinarith [hslope, hb1.2, hb0.1, hθb0, hbpos]
+    have heq : (P.discount : ℝ) * (2 * ‖P.toExtended.valueFunction‖ * (1 - θ) / θ)
+        = G * (1 - θ) / θ := by
+      rw [hGdef, IncomeFluctuation.deviationGap]; ring
+    have hβloss : (P.discount : ℝ) * (P.cont z b - P.cont z (θ * b)) ≤ G * (1 - θ) / θ := by
+      have hmul := mul_le_mul_of_nonneg_left hloss hβ
+      linarith [hmul, heq.le, heq.ge]
+    -- the utility gain
+    have hgain := log_sub_log_ge hc hdpos
+    have hdist : (P.discount : ℝ) * (P.cont z b - P.cont z (θ * b))
+        = (P.discount : ℝ) * P.cont z b - (P.discount : ℝ) * P.cont z (θ * b) := by ring
+    have hchain : (1 - θ) * b / (c + (1 - θ) * b) ≤ G * (1 - θ) / θ := by
+      linarith [hopt, hβloss, hgain, hdist.le, hdist.ge]
+    rw [div_le_div_iff₀ (by linarith) hθ0] at hchain
+    have hcancel : θ * b ≤ G * (c + (1 - θ) * b) := by
+      refine le_of_mul_le_mul_left ?_ h1θ
+      nlinarith [hchain]
+    nlinarith [hcancel, hθkey, hc, hbpos, hG]
+  rw [hres, div_le_iff₀ (by linarith)]
+  nlinarith [hb2, hc]
+
 /-! ### The other half of exhaustion: the corner, for log
 
 `exists_decline_of_consumption_lower_bound` gives assets falling above a threshold. The ergodic
