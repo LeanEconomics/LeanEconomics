@@ -5,6 +5,7 @@ Authors: Robert Kirkby
 -/
 import LeanEconomics.Equilibrium.MeanField
 import LeanEconomics.Models.IncomeFluctuationRate
+import LeanEconomics.Models.CRRA
 
 /-!
 # Comparative statics
@@ -47,46 +48,37 @@ namespace IncomeFluctuation
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
 variable {assetCap : ℝ} (P Q : IncomeFluctuation Z assetCap)
 
-/-! ### More income is better
+/-! ### A wider budget set is better
 
-The only unconditional comparative static in the file, and the pattern for any other: bound the
-two operators against each other at a common continuation value. -/
+Three comparisons share one proof. Whatever moves -- income, the interest rate -- the content is
+that the second economy's budget set contains the first's and its consumption at each action is
+at least as large. `BudgetDominates` isolates that, and the two economic hypotheses reduce to it.
+-/
 
-/-- Two economies differing only in income, the second weakly richer in every state. -/
-structure RicherThan : Prop where
-  income_le : ∀ z, P.income z ≤ Q.income z
+/-- The second economy offers weakly more resources at every state, everything else equal. -/
+structure BudgetDominates : Prop where
+  resources_le : ∀ s : ℝ × Z, P.resources s ≤ Q.resources s
+  maxConsumption_le : P.maxConsumption ≤ Q.maxConsumption
   same_transition : ∀ z z', P.transitionMatrix z z' = Q.transitionMatrix z z'
-  same_interest : P.interest = Q.interest
   same_discount : (P.discount : ℝ) = (Q.discount : ℝ)
   same_u : P.u = Q.u
   same_dom : P.dom = Q.dom
-  maxIncome_le : P.maxIncome ≤ Q.maxIncome
 
 variable {P Q}
 
-theorem RicherThan.resources_le (h : P.RicherThan Q) (s : ℝ × Z) :
-    P.resources s ≤ Q.resources s := by
-  simp only [resources, h.same_interest]
-  linarith [h.income_le s.2]
-
-theorem RicherThan.maxSaving_le (h : P.RicherThan Q) (s : ℝ × Z) :
+theorem BudgetDominates.maxSaving_le (h : P.BudgetDominates Q) (s : ℝ × Z) :
     P.maxSaving s ≤ Q.maxSaving s := by
   simp only [maxSaving]
   exact max_le_max le_rfl (min_le_min le_rfl (h.resources_le s))
 
-theorem RicherThan.maxConsumption_le (h : P.RicherThan Q) :
-    P.maxConsumption ≤ Q.maxConsumption := by
-  simp only [maxConsumption, h.same_interest]
-  linarith [h.maxIncome_le]
-
-theorem RicherThan.clampedConsumption_le (h : P.RicherThan Q) (p : (ℝ × Z) × ℝ) :
+theorem BudgetDominates.clampedConsumption_le (h : P.BudgetDominates Q) (p : (ℝ × Z) × ℝ) :
     P.clampedConsumption p ≤ Q.clampedConsumption p := by
   simp only [clampedConsumption, consumption]
   refine min_le_min h.maxConsumption_le (max_le_max le_rfl ?_)
   linarith [h.resources_le p.1]
 
-/-- The richer economy's one-period reward is never smaller. -/
-theorem RicherThan.reward_le (h : P.RicherThan Q) (p : (ℝ × Z) × ℝ) :
+/-- The wider economy's one-period reward is never smaller. -/
+theorem BudgetDominates.reward_le (h : P.BudgetDominates Q) (p : (ℝ × Z) × ℝ) :
     P.toExtended.reward p ≤ Q.toExtended.reward p := by
   by_cases hmem : P.clampedConsumption p ∈ P.dom
   · have hmemQ : Q.clampedConsumption p ∈ Q.dom := by
@@ -100,8 +92,16 @@ theorem RicherThan.reward_le (h : P.RicherThan Q) (p : (ℝ × Z) × ℝ) :
     rw [extendDom_of_not_mem hmem]
     exact bot_le
 
-/-- The richer economy's Bellman operator dominates, at every continuation value. -/
-theorem RicherThan.bellman_le (h : P.RicherThan Q) (v : (ℝ × Z) →ᵇ ℝ) :
+theorem BudgetDominates.expect_eq (h : P.BudgetDominates Q) (v : (ℝ × Z) →ᵇ ℝ)
+    (p : (ℝ × Z) × ℝ) : P.toExtended.expect v p = Q.toExtended.expect v p := by
+  simp only [ExtendedStochasticProgram.expect]
+  exact Finset.sum_congr rfl fun z' _ => by
+    rw [show P.toExtended.prob z' p = P.transitionMatrix p.1.2 z' from rfl,
+      show Q.toExtended.prob z' p = Q.transitionMatrix p.1.2 z' from rfl, h.same_transition]
+    rfl
+
+/-- The wider economy's Bellman operator dominates, at every continuation value. -/
+theorem BudgetDominates.bellman_le (h : P.BudgetDominates Q) (v : (ℝ × Z) →ᵇ ℝ) :
     ⇑(P.toExtended.bellman v) ≤ ⇑(Q.toExtended.bellman v) := by
   intro s
   refine P.toExtended.bellmanFn_le v fun a ha => ?_
@@ -109,22 +109,152 @@ theorem RicherThan.bellman_le (h : P.RicherThan Q) (v : (ℝ × Z) →ᵇ ℝ) :
   refine le_trans ?_ (Q.toExtended.le_bellmanFn v haQ)
   simp only [ExtendedStochasticProgram.objectiveE]
   refine add_le_add (h.reward_le (s, a)) (le_of_eq ?_)
-  have hexp : P.toExtended.expect v (s, a) = Q.toExtended.expect v (s, a) := by
-    simp only [ExtendedStochasticProgram.expect]
-    exact Finset.sum_congr rfl fun z' _ => by
-      rw [show P.toExtended.prob z' (s, a) = P.transitionMatrix s.2 z' from rfl,
-        show Q.toExtended.prob z' (s, a) = Q.transitionMatrix s.2 z' from rfl,
-        h.same_transition]
-      rfl
-  rw [hexp, show ((P.toExtended.discount : ℝ)) = (P.discount : ℝ) from rfl,
+  rw [h.expect_eq v (s, a), show ((P.toExtended.discount : ℝ)) = (P.discount : ℝ) from rfl,
     show ((Q.toExtended.discount : ℝ)) = (Q.discount : ℝ) from rfl, h.same_discount]
 
-/-- **More income is better.** Unconditional: no comparison of policies is needed, only of the
-operators at a common continuation value. -/
-theorem RicherThan.valueFunction_le (h : P.RicherThan Q) (s : ℝ × Z) :
+/-- **A wider budget set is better.** Unconditional: no comparison of policies is needed, only
+of the operators at a common continuation value. -/
+theorem BudgetDominates.valueFunction_le (h : P.BudgetDominates Q) (s : ℝ × Z) :
     P.toExtended.valueFunction s ≤ Q.toExtended.valueFunction s :=
   ExtendedStochasticProgram.valueFunction_le_of_bellman_le P.toExtended Q.toExtended
     h.bellman_le s
+
+variable (P Q)
+
+/-- Two economies differing only in income, the second weakly richer in every state. -/
+structure RicherThan : Prop where
+  income_le : ∀ z, P.income z ≤ Q.income z
+  maxIncome_le : P.maxIncome ≤ Q.maxIncome
+  same_interest : P.interest = Q.interest
+  same_transition : ∀ z z', P.transitionMatrix z z' = Q.transitionMatrix z z'
+  same_discount : (P.discount : ℝ) = (Q.discount : ℝ)
+  same_u : P.u = Q.u
+  same_dom : P.dom = Q.dom
+
+/-- Two economies differing only in the interest rate, the second paying weakly more. Assets are
+nonnegative, so a higher rate can only widen the budget set -- there is no wealth effect of the
+wrong sign to worry about here, which is why the comparison is unconditional. -/
+structure HigherRateThan : Prop where
+  interest_le : P.interest ≤ Q.interest
+  same_income : ∀ z, P.income z = Q.income z
+  same_maxIncome : P.maxIncome = Q.maxIncome
+  same_transition : ∀ z z', P.transitionMatrix z z' = Q.transitionMatrix z z'
+  same_discount : (P.discount : ℝ) = (Q.discount : ℝ)
+  same_u : P.u = Q.u
+  same_dom : P.dom = Q.dom
+
+variable {P Q}
+
+theorem RicherThan.budgetDominates (h : P.RicherThan Q) : P.BudgetDominates Q where
+  resources_le s := by
+    simp only [resources, h.same_interest]
+    linarith [h.income_le s.2]
+  maxConsumption_le := by
+    simp only [maxConsumption, h.same_interest]
+    linarith [h.maxIncome_le]
+  same_transition := h.same_transition
+  same_discount := h.same_discount
+  same_u := h.same_u
+  same_dom := h.same_dom
+
+theorem HigherRateThan.budgetDominates (h : P.HigherRateThan Q) : P.BudgetDominates Q where
+  resources_le s := by
+    simp only [resources, h.same_income s.2]
+    have hnn : (0 : ℝ) ≤ max 0 s.1 := le_max_left _ _
+    nlinarith [h.interest_le, hnn]
+  maxConsumption_le := by
+    simp only [maxConsumption, h.same_maxIncome]
+    nlinarith [h.interest_le, P.assetCap_nonneg]
+  same_transition := h.same_transition
+  same_discount := h.same_discount
+  same_u := h.same_u
+  same_dom := h.same_dom
+
+/-- **More income is better.** -/
+theorem RicherThan.valueFunction_le (h : P.RicherThan Q) (s : ℝ × Z) :
+    P.toExtended.valueFunction s ≤ Q.toExtended.valueFunction s :=
+  h.budgetDominates.valueFunction_le s
+
+/-- **A higher interest rate is better**, with no restriction on preferences. -/
+theorem HigherRateThan.valueFunction_le (h : P.HigherRateThan Q) (s : ℝ × Z) :
+    P.toExtended.valueFunction s ≤ Q.toExtended.valueFunction s :=
+  h.budgetDominates.valueFunction_le s
+
+/-! ### Patience
+
+The one comparison where the class of continuation values matters. A more patient agent's
+operator does NOT dominate at every continuation value -- with a continuation worth less than
+nothing, weighting it more is worse. It dominates on NONNEGATIVE continuations, and when utility
+is bounded below by zero -- CES with `γ < 1`, where `u 0 = 0` -- that is the class value function
+iteration from `0` stays in. So this is a comparative static that the unbounded structure could
+not have stated, never mind proved. -/
+
+variable (P Q)
+
+/-- Two economies differing only in the discount factor, the second more patient. -/
+structure MorePatientThan : Prop where
+  discount_le : (P.discount : ℝ) ≤ (Q.discount : ℝ)
+  same_income : ∀ z, P.income z = Q.income z
+  same_maxIncome : P.maxIncome = Q.maxIncome
+  same_minIncome : P.minIncome = Q.minIncome
+  same_interest : P.interest = Q.interest
+  same_transition : ∀ z z', P.transitionMatrix z z' = Q.transitionMatrix z z'
+  same_u : P.u = Q.u
+  same_dom : P.dom = Q.dom
+
+variable {P Q}
+
+theorem MorePatientThan.feasible_eq (h : P.MorePatientThan Q) (s : ℝ × Z) :
+    P.toExtended.feasible s = Q.toExtended.feasible s := by
+  have hres : P.resources s = Q.resources s := by
+    simp only [resources, h.same_income s.2, h.same_interest]
+  simp only [P.feasible_eq, Q.feasible_eq, maxSaving, hres]
+
+theorem MorePatientThan.reward_eq (h : P.MorePatientThan Q) (p : (ℝ × Z) × ℝ) :
+    P.toExtended.reward p = Q.toExtended.reward p := by
+  have hres : P.resources p.1 = Q.resources p.1 := by
+    simp only [resources, h.same_income p.1.2, h.same_interest]
+  have hmax : P.maxConsumption = Q.maxConsumption := by
+    simp only [maxConsumption, h.same_maxIncome, h.same_interest]
+  change extendDom P.dom P.u (P.clampedConsumption p) = extendDom Q.dom Q.u _
+  simp only [clampedConsumption, consumption, hres, hmax, h.same_u, h.same_dom]
+
+/-- **More patience is better**, when utility is bounded below by zero. -/
+theorem MorePatientThan.valueFunction_le (h : P.MorePatientThan Q) (hmin : 0 ≤ P.u P.minIncome)
+    (s : ℝ × Z) : P.toExtended.valueFunction s ≤ Q.toExtended.valueFunction s := by
+  refine ExtendedStochasticProgram.valueFunction_le_of_bellman_le_on P.toExtended Q.toExtended
+    (fun v => 0 ≤ ⇑v) (by intro _; simp) ?_ ?_ s
+  · exact fun v hv => P.toExtended.zero_le_bellman hmin hv
+  · intro v hv t
+    refine P.toExtended.bellmanFn_le v fun a ha => ?_
+    have haQ : a ∈ Q.toExtended.feasible t := (h.feasible_eq t) ▸ ha
+    refine le_trans ?_ (Q.toExtended.le_bellmanFn v haQ)
+    simp only [ExtendedStochasticProgram.objectiveE]
+    refine add_le_add (le_of_eq (h.reward_eq (t, a))) ?_
+    have hexp : P.toExtended.expect v (t, a) = Q.toExtended.expect v (t, a) := by
+      simp only [ExtendedStochasticProgram.expect]
+      exact Finset.sum_congr rfl fun z' _ => by
+        rw [show P.toExtended.prob z' (t, a) = P.transitionMatrix t.2 z' from rfl,
+          show Q.toExtended.prob z' (t, a) = Q.transitionMatrix t.2 z' from rfl,
+          h.same_transition]
+        rfl
+    have hexp0 : 0 ≤ P.toExtended.expect v (t, a) := by
+      refine Finset.sum_nonneg fun z _ => ?_
+      exact mul_nonneg (P.toExtended.prob_nonneg z _) (hv _)
+    rw [EReal.coe_le_coe_iff, hexp]
+    rw [show ((P.toExtended.discount : ℝ)) = (P.discount : ℝ) from rfl,
+      show ((Q.toExtended.discount : ℝ)) = (Q.discount : ℝ) from rfl]
+    rw [hexp] at hexp0
+    nlinarith [h.discount_le, hexp0]
+
+/-- CES with `γ < 1` has nonnegative utility, so `MorePatientThan.valueFunction_le` applies to
+exactly the family the bounded structure was built for -- `sqrtCES`, `cesWitness`, `nearLog`. For
+log and CRRA with `γ ≥ 1` utility is unbounded below and the comparison is unavailable by this
+route. -/
+theorem crraUtility_nonneg {γ : ℝ} (hγ1 : γ < 1) {c : ℝ} (hc : 0 ≤ c) :
+    0 ≤ crraUtility γ c := by
+  rw [crraUtility_of_ne (by linarith)]
+  exact div_nonneg (Real.rpow_nonneg hc _) (by linarith)
 
 end IncomeFluctuation
 

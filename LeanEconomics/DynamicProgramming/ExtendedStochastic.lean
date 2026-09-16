@@ -368,6 +368,56 @@ theorem const_le_valueFunction {c : ℝ} (hc : c ≤ D.rewardMin + D.discount * 
     ((BoundedContinuousFunction.evalCLM ℝ s).continuous.tendsto _).comp hlim
   exact ge_of_tendsto' hpt fun n => hiter n s
 
+/-- **A dominated operator has a dominated value function, on an invariant class.** The
+domination need only hold on a class of continuation values that contains `0` and that the
+dominated operator preserves, since value function iteration from `0` never leaves it. That is
+what lets the discount factor be compared: a more patient agent's operator dominates only on
+NONNEGATIVE continuation values, which is exactly the class the iteration stays in when the
+reward is nonnegative. -/
+theorem valueFunction_le_of_bellman_le_on (D₁ D₂ : ExtendedStochasticProgram S A Z)
+    (C : (S →ᵇ ℝ) → Prop) (hC0 : C 0) (hC : ∀ v, C v → C (D₁.bellman v))
+    (hle : ∀ v : S →ᵇ ℝ, C v → ⇑(D₁.bellman v) ≤ ⇑(D₂.bellman v)) (s : S) :
+    D₁.valueFunction s ≤ D₂.valueFunction s := by
+  have hmemC : ∀ n : ℕ, C (D₁.bellman^[n] (0 : S →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => simpa using hC0
+    | succ k ih => rw [Function.iterate_succ_apply']; exact hC _ ih
+  have hiter : ∀ n : ℕ,
+      ⇑(D₁.bellman^[n] (0 : S →ᵇ ℝ)) ≤ ⇑(D₂.bellman^[n] (0 : S →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ k ih =>
+        rw [Function.iterate_succ_apply', Function.iterate_succ_apply']
+        exact le_trans (hle _ (hmemC k)) (D₂.blackwell.monotone ih)
+  have hp₁ : Filter.Tendsto (fun n => D₁.bellman^[n] (0 : S →ᵇ ℝ) s) Filter.atTop
+      (𝓝 (D₁.valueFunction s)) :=
+    ((BoundedContinuousFunction.evalCLM ℝ s).continuous.tendsto _).comp
+      (D₁.tendsto_iterate_valueFunction 0)
+  have hp₂ : Filter.Tendsto (fun n => D₂.bellman^[n] (0 : S →ᵇ ℝ) s) Filter.atTop
+      (𝓝 (D₂.valueFunction s)) :=
+    ((BoundedContinuousFunction.evalCLM ℝ s).continuous.tendsto _).comp
+      (D₂.tendsto_iterate_valueFunction 0)
+  exact le_of_tendsto_of_tendsto hp₁ hp₂ (Filter.Eventually.of_forall fun n => hiter n s)
+
+/-- **Nonnegative rewards give a nonnegative value.** -/
+theorem zero_le_bellman (D : ExtendedStochasticProgram S A Z) (hmin : 0 ≤ D.rewardMin)
+    {v : S →ᵇ ℝ} (hv : 0 ≤ ⇑v) : 0 ≤ ⇑(D.bellman v) := by
+  intro s
+  have hexp : 0 ≤ D.expect v (s, D.select s) := by
+    refine Finset.sum_nonneg fun z _ => ?_
+    exact mul_nonneg (D.prob_nonneg z _) (hv _)
+  have hobj : ((D.rewardMin + D.discount * D.expect v (s, D.select s) : ℝ) : EReal)
+      ≤ D.objectiveE v s (D.select s) := by
+    rw [EReal.coe_add]
+    exact add_le_add (D.le_reward_select s) (le_refl _)
+  have := le_trans hobj (D.le_bellmanFn v (D.select_mem s))
+  rw [EReal.coe_le_coe_iff] at this
+  have hβ : (0 : ℝ) ≤ (D.discount : ℝ) := D.discount.coe_nonneg
+  have : 0 ≤ D.bellmanFn v s := by nlinarith [hmin, hexp, hβ]
+  exact this
+
 /-- **A dominated operator has a dominated value function.** The comparative-statics workhorse,
 at the level the models use: comparing two economies reduces to comparing their Bellman operators
 at a common continuation value. -/
