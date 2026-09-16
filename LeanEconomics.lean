@@ -57,3 +57,4 @@ import LeanEconomics.Models.BoundedIncomeFluctuation
 import LeanEconomics.Models.CRRAConstants
 import LeanEconomics.Models.CESUniformRate
 import LeanEconomics.Models.CESWitness
+import LeanEconomics.Models.CESNearLogWitness

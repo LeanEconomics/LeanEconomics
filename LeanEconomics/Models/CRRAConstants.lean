@@ -39,6 +39,35 @@ open Set Filter Topology MeasureTheory
 
 namespace LeanEconomics
 
+/-! ### Rational exponents reduce to integer powers
+
+At `γ = 1 - 1/n` every exponent the CES constants produce is `m/n` for integers `m, n`, and a
+comparison of `x ^ (m/n)` against a rational is equivalent to one of `x ^ m` against `c ^ n`.
+These two lemmas are the whole bridge, and they are what keeps `γ` near 1 arithmetically
+tractable: `norm_num` settles the integer form. -/
+
+theorem rpow_le_of_pow_le {x c p : ℝ} {m n : ℕ} (hn : n ≠ 0) (hx : 0 ≤ x) (hc : 0 ≤ c)
+    (hp : p = (m : ℝ) / n) (h : x ^ m ≤ c ^ n) : x ^ p ≤ c := by
+  have hn' : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)
+  have h1 : x ^ p = (x ^ m) ^ ((n : ℝ)⁻¹) := by
+    rw [hp, div_eq_mul_inv, Real.rpow_mul hx, Real.rpow_natCast]
+  have h2 : c = (c ^ n) ^ ((n : ℝ)⁻¹) := by
+    rw [← Real.rpow_natCast c n, ← Real.rpow_mul hc, mul_inv_cancel₀ hn'.ne', Real.rpow_one]
+  calc x ^ p = (x ^ m) ^ ((n : ℝ)⁻¹) := h1
+    _ ≤ (c ^ n) ^ ((n : ℝ)⁻¹) := Real.rpow_le_rpow (by positivity) h (by positivity)
+    _ = c := h2.symm
+
+theorem le_rpow_of_pow_le {x c p : ℝ} {m n : ℕ} (hn : n ≠ 0) (hx : 0 ≤ x) (hc : 0 ≤ c)
+    (hp : p = (m : ℝ) / n) (h : c ^ n ≤ x ^ m) : c ≤ x ^ p := by
+  have hn' : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)
+  have h1 : x ^ p = (x ^ m) ^ ((n : ℝ)⁻¹) := by
+    rw [hp, div_eq_mul_inv, Real.rpow_mul hx, Real.rpow_natCast]
+  have h2 : c = (c ^ n) ^ ((n : ℝ)⁻¹) := by
+    rw [← Real.rpow_natCast c n, ← Real.rpow_mul hc, mul_inv_cancel₀ hn'.ne', Real.rpow_one]
+  calc c = (c ^ n) ^ ((n : ℝ)⁻¹) := h2
+    _ ≤ (x ^ m) ^ ((n : ℝ)⁻¹) := Real.rpow_le_rpow (by positivity) h (by positivity)
+    _ = x ^ p := h1.symm
+
 /-! ### Secant slopes of CRRA, bounded below -/
 
 /-- **The secant slope of CRRA on `(0, R]` is at least `R ^ (-γ)`.** This is
