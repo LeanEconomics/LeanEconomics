@@ -51,3 +51,4 @@ import LeanEconomics.Equilibrium.SignChange
 import LeanEconomics.Models.UniformRate
 import LeanEconomics.Models.EquilibriumWitness
 import LeanEconomics.Distribution.UniquenessTop
+import LeanEconomics.Models.ReverseCorner
