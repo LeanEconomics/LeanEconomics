@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuationConsumption
+import LeanEconomics.Analysis.PowerMean
 
 /-!
 # Concavity of the consumption function as a closed class
@@ -27,47 +28,59 @@ consumption function to a concave consumption function, the fixed point's consum
 is concave. The iteration starts from `0`, whose consumption function is `resources`, affine on
 the asset region — `policyOf_zero`, an agent with no future eats everything.
 
-## What is left, and what it costs
+## What is proved, and what is left
 
-The hypothesis `hT` is the whole of Carroll and Kimball. It is not proved here and it is not
-cheap. On paper the argument runs through second derivatives: risk tolerances ADD across the
-optimisation, `T_V(m) = T_u(c) + T_W(m - c)`, and the consumption function is concave exactly
-when `T_V' ≥ T_u'`, which propagates from continuation to value provided `u` is HARA so that
-`T_u' `is constant. Two of those steps are out of reach at present — the value function is not
-known to be twice differentiable (we have one-sided first derivatives, conditionally, from
-`IncomeFluctuationEnvelope`), and the propagation through the expectation over income states is
-Kimball's risk-tolerance aggregation theorem, which is a body of theory in its own right.
+The hypothesis `hT` is the whole of Carroll and Kimball. Two thirds of it are now discharged.
 
-**`hT` is not merely unproved: it is FALSE at this generality.** Toda (2021) shows that under
-regularity conditions HARA is NECESSARY for the consumption function to be concave, and the
-structure here assumes of `u` only that it is strictly concave. So no proof of `hT` can exist
-against `IncomeFluctuation` as it stands; the structure would first have to be specialised to
-HARA — in practice to CRRA, which is what Light's published version (2020) assumes anyway. The
-theorem below is therefore conditional in the strong sense, and the hypothesis is where the
-parametric commitment of the whole uniqueness argument is concentrated.
+**The analysis.** On paper the argument runs through second derivatives: risk tolerances ADD
+across the optimisation, `T_V(m) = T_u(c) + T_W(m - c)`, and Kimball's risk-tolerance
+aggregation theorem propagates `T_V' ≥ T_u'` from the continuation to the value. `PowerMean`
+supplies the integrated form of exactly that, with no derivative: for CRRA marginal utility the
+consumption paired with a given stock of end-of-period assets is a positive multiple of the
+weighted power mean, exponent `-γ`, of next period's consumptions, and a power mean with a
+NEGATIVE exponent is concave and nondecreasing. Homogeneity turns that into the convexity of a
+sublevel set, which is elementary.
+
+**The transfer.** Turning concavity of that map into concavity of the consumption function is
+usually done by differentiating an inverse function. `concaveOn_of_egm` does it from the budget
+identity alone: write the choice against end-of-period assets, and the two concavities are the
+same statement.
+
+**What is left is the Euler equation**, `hEuler` in
+`concaveOn_consumptionFnOf_bellman_of_euler`. It is the first-order condition of the
+maximisation, and two things stand between it and a proof.
+
+* It needs the envelope condition for each ITERATE, not just for the fixed point.
+  `IncomeFluctuationEnvelope.hasDerivAt_valueFunction` is Clausen and Strub's argument and gives
+  `V'(a) = (1+r) u'(c)` at interior states; the same lazy-agent sandwich works for
+  `bellman v`, but it is stated only for the value function and would have to be generalised.
+* It needs the choice to be INTERIOR, and at the borrowing limit it is not —
+  `policy_eq_zero_of_corner_at` shows the constraint binds where resources are small. Carroll
+  and Kimball's conclusion survives the kink (the constrained branch is affine with slope one,
+  and it lies to the left, which is the direction concavity allows) but the gluing is real work.
+
+**Toda (2021) still bounds what can be hoped for.** Under regularity conditions HARA is
+NECESSARY for the consumption function to be concave, and the structure assumes of `u` only
+strict concavity, so `hT` at that generality is FALSE and no proof of it can exist. That is why
+the step above is stated for CRRA, which is what Light's published version (2020) assumes.
 
 ## OWED: this is deferred, not abandoned
 
-The obstruction has moved twice and is now down to one thing.
+The obstruction has moved three times.
 
 * HARA was the first answer: Toda (2021) makes it NECESSARY, and `Analysis/HARA.lean` supplies
   it. The utility class is no longer the blocker.
 * The asset cap was the second, and worse, because it made the conclusion outright FALSE --
   `not_concaveOn_consumptionFn_of_cap_binds` below. `crra_policy_lt_assetCap` removes it by
-  calibration, and `nearLog` is recalibrated so that saving provably never reaches the cap. The
-  hypothesis is now CONSISTENT with a concrete economy; it is merely unproved.
-* What is left is DIFFERENTIABILITY. Carroll and Kimball's argument needs the value function
-  twice differentiable, and we have one-sided first derivatives only, conditionally. Attacking it
-  means building that theory first -- local to the interior region, since it is genuinely false
-  at the kinks the constraints create -- and then Kimball's risk-tolerance aggregation across the
-  income expectation, which is a body of theory in its own right.
+  calibration, and `nearLog` is recalibrated so that saving provably never reaches the cap.
+* Differentiability was the third, and it is now GONE: `hasDerivAt_valueFunction` is the
+  Clausen–Strub sandwich, and `PowerMean` removes the need for second derivatives altogether.
 
-The envelope step should use Clausen and Strub (2020), not Benveniste and Scheinkman.
+What remains is the Euler equation for the iterates and the borrowing-constraint kink, in that
+order.
 
-So this file does not claim Carroll and Kimball. It claims that everything AROUND it is done:
-the single step `hT` is now the only thing standing between the development and Light (2018)
-Theorem 1, whose remaining ingredients — `mul_marginal_le_of_scale`, `consumptionFn_mono`,
-`RelativeRiskAversionLeOne` — are all in place.
+So this file does not claim Carroll and Kimball. It claims the analysis behind it, and the
+reduction of the remaining gap to a first-order condition.
 -/
 
 open Set Filter Topology BoundedContinuousFunction
@@ -357,6 +370,133 @@ theorem concaveOn_consumptionFn_of_preserves
   refine le_of_tendsto_of_tendsto
     (((hpt x hx).const_smul θ).add ((hpt y hy).const_smul φ)) (hpt _ hm)
     (Eventually.of_forall fun n => (hcons n z).2 hx hy hθ hφ hθφ)
+
+/-! ### The endogenous-gridpoint transfer
+
+The step that carries concavity forward is not about the Bellman operator at all. Write the
+household's choice against END-OF-PERIOD assets rather than against cash on hand: let `C A` be
+the consumption it pairs with saving `A`, so that the budget reads `y + R a = A + C A`. The
+graph of the consumption function is then the curve `A ↦ (A + C A, C A)`, and concavity of the
+consumption function is exactly concavity of `C`.
+
+That equivalence is elementary — it is proved below with no derivative and no inverse function,
+from the budget identity and the fact that `A + C A` is strictly increasing. What it buys is
+that the hard step moves to `C`, where the first-order condition makes it a POWER MEAN of next
+period's consumptions, and `Analysis/PowerMean` settles those. -/
+
+/-- If `C` is nondecreasing then cash on hand is strictly increasing in end-of-period assets. -/
+theorem strictMonoOn_add_egm {S : Set ℝ} {C : ℝ → ℝ} (hC : MonotoneOn C S) :
+    StrictMonoOn (fun A => A + C A) S := fun _ ha _ hb hab => by
+  have := hC ha hb hab.le
+  simp only
+  linarith
+
+/-- **The endogenous-gridpoint transfer.** With the budget written against end-of-period assets,
+concavity of the consumption function is concavity of `C`. Derivative-free. -/
+theorem concaveOn_of_egm {z : Z} {g C h : ℝ → ℝ}
+    (hC : ConcaveOn ℝ (Icc assetFloor assetCap) C)
+    (hM : StrictMonoOn (fun A => A + C A) (Icc assetFloor assetCap))
+    (hg : ∀ a ∈ Icc assetFloor assetCap, g a ∈ Icc assetFloor assetCap)
+    (hbud : ∀ a ∈ Icc assetFloor assetCap,
+      P.income z + (1 + P.interest) * a = g a + C (g a))
+    (hh : ∀ a ∈ Icc assetFloor assetCap, h a = C (g a)) :
+    ConcaveOn ℝ (Icc assetFloor assetCap) h := by
+  refine ⟨convex_Icc _ _, fun a ha b hb θ φ hθ hφ hθφ => ?_⟩
+  simp only [smul_eq_mul]
+  have hm : θ * a + φ * b ∈ Icc assetFloor assetCap := by
+    simpa only [smul_eq_mul] using convex_Icc assetFloor assetCap ha hb hθ hφ hθφ
+  have hA₁ := hg a ha
+  have hA₂ := hg b hb
+  have hAθ := hg _ hm
+  have hAm : θ * g a + φ * g b ∈ Icc assetFloor assetCap := by
+    simpa only [smul_eq_mul] using convex_Icc assetFloor assetCap hA₁ hA₂ hθ hφ hθφ
+  have h1 := hbud a ha
+  have h2 := hbud b hb
+  have h3 := hbud _ hm
+  -- the budget at the midpoint, split two ways
+  have hcomb : P.income z + (1 + P.interest) * (θ * a + φ * b)
+      = (θ * g a + φ * g b) + (θ * C (g a) + φ * C (g b)) := by
+    linear_combination θ * h1 + φ * h2 - P.income z * hθφ
+  -- concavity of `C` puts the midpoint's saving below the average
+  have hCc : θ * C (g a) + φ * C (g b) ≤ C (θ * g a + φ * g b) := by
+    simpa only [smul_eq_mul] using hC.2 hA₁ hA₂ hθ hφ hθφ
+  have hle : g (θ * a + φ * b) + C (g (θ * a + φ * b))
+      ≤ (θ * g a + φ * g b) + C (θ * g a + φ * g b) := by
+    rw [← h3, hcomb]; linarith
+  have hAle : g (θ * a + φ * b) ≤ θ * g a + φ * g b := by
+    by_contra hcon
+    exact absurd (hM hAm hAθ (not_le.mp hcon)) (not_lt.mpr hle)
+  -- and the budget converts that into the concavity of the consumption function
+  rw [hh a ha, hh b hb, hh _ hm]
+  have hval : C (g (θ * a + φ * b))
+      = (θ * g a + φ * g b) + (θ * C (g a) + φ * C (g b)) - g (θ * a + φ * b) := by
+    rw [← hcomb, h3]; ring
+  rw [hval]
+  linarith
+
+/-! ### Carroll and Kimball for CRRA, from the first-order condition
+
+With CRRA marginal utility `u' c = c ^ (-γ)` the first-order condition says exactly that the
+consumption paired with saving `A` is a positive multiple of the weighted power mean, exponent
+`-γ`, of next period's consumptions at `A`. `Analysis/PowerMean` makes that map concave and
+nondecreasing, and the transfer above does the rest. -/
+
+/-- **The endogenous-gridpoint map for CRRA.** The consumption a household with continuation `v`
+pairs with end-of-period assets `A`, read off the Euler equation. -/
+noncomputable def egmMap (v : (ℝ × Z) →ᵇ ℝ) (γ : ℝ) (z : Z) (A : ℝ) : ℝ :=
+  ((P.discount : ℝ) * (1 + P.interest)) ^ (-(1 / γ))
+    * powerMean (P.transitionMatrix z) (-γ) fun z' => P.consumptionFnOf v z' A
+
+theorem concaveOn_egmMap {γ : ℝ} (hγ : 0 < γ) {v : (ℝ × Z) →ᵇ ℝ} (z : Z)
+    (hpos : ∀ z', ∀ A ∈ Icc assetFloor assetCap, 0 < P.consumptionFnOf v z' A)
+    (hconc : ∀ z', ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFnOf v z')) :
+    ConcaveOn ℝ (Icc assetFloor assetCap) (P.egmMap v γ z) := by
+  have hmean := concaveOn_powerMean_comp (convex_Icc assetFloor assetCap)
+    (neg_neg_of_pos hγ) (P.transitionMatrix_nonneg z) (P.transitionMatrix_sum z) hpos hconc
+  have hk : (0 : ℝ) ≤ ((P.discount : ℝ) * (1 + P.interest)) ^ (-(1 / γ)) :=
+    Real.rpow_nonneg (mul_nonneg P.discount.coe_nonneg P.interest_gt_neg_one.le) _
+  refine ⟨convex_Icc _ _, fun x hx y hy θ φ hθ hφ hθφ => ?_⟩
+  have hstep := hmean.2 hx hy hθ hφ hθφ
+  simp only [smul_eq_mul] at hstep ⊢
+  simp only [egmMap]
+  linarith [mul_le_mul_of_nonneg_left hstep hk]
+
+theorem monotoneOn_egmMap {γ : ℝ} (hγ : 0 < γ) {v : (ℝ × Z) →ᵇ ℝ} (z : Z)
+    (hpos : ∀ z', ∀ A ∈ Icc assetFloor assetCap, 0 < P.consumptionFnOf v z' A)
+    (hmono : ∀ z', MonotoneOn (P.consumptionFnOf v z') (Icc assetFloor assetCap)) :
+    MonotoneOn (P.egmMap v γ z) (Icc assetFloor assetCap) := by
+  have hmean := monotoneOn_powerMean_comp (D := Icc assetFloor assetCap)
+    (neg_neg_of_pos hγ) (P.transitionMatrix_nonneg z) (P.transitionMatrix_sum z) hpos hmono
+  intro x hx y hy hxy
+  exact mul_le_mul_of_nonneg_left (hmean hx hy hxy)
+    (Real.rpow_nonneg (mul_nonneg P.discount.coe_nonneg P.interest_gt_neg_one.le) _)
+
+/-- **Carroll and Kimball (1996), the induction step, for CRRA.** Given the Euler equation, the
+Bellman operator carries a concave consumption function to a concave consumption function.
+
+Everything except `hEuler` is now proved: the power-mean concavity that Carroll and Kimball
+obtain from Kimball's risk-tolerance aggregation, and the endogenous-gridpoint transfer that
+turns it into concavity of the consumption function. `hEuler` is the first-order condition of
+the maximisation, which holds wherever the choice is interior — see the module docstring. -/
+theorem concaveOn_consumptionFnOf_bellman_of_euler {γ : ℝ} (hγ : 0 < γ) {v : (ℝ × Z) →ᵇ ℝ}
+    (hpos : ∀ z', ∀ A ∈ Icc assetFloor assetCap, 0 < P.consumptionFnOf v z' A)
+    (hconc : ∀ z', ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFnOf v z'))
+    (hmono : ∀ z', MonotoneOn (P.consumptionFnOf v z') (Icc assetFloor assetCap)) (z : Z)
+    (hEuler : ∀ a ∈ Icc assetFloor assetCap,
+      P.consumptionFnOf (P.toExtended.bellman v) z a
+        = P.egmMap v γ z (P.policyOf (P.toExtended.bellman v) (a, z))) :
+    ConcaveOn ℝ (Icc assetFloor assetCap)
+      (P.consumptionFnOf (P.toExtended.bellman v) z) := by
+  refine P.concaveOn_of_egm (z := z) (g := fun a => P.policyOf (P.toExtended.bellman v) (a, z))
+    (C := P.egmMap v γ z) (P.concaveOn_egmMap hγ z hpos hconc)
+    (strictMonoOn_add_egm (P.monotoneOn_egmMap hγ z hpos hmono))
+    (fun a _ => P.feasible_subset_region (P.policyOf_mem _ (a, z))) (fun a ha => ?_)
+    (fun a ha => hEuler a ha)
+  rw [← hEuler a ha]
+  have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a := by
+    simp only [resources, max_eq_right ha.1]
+  simp only [consumptionFnOf, consumption, hres]
+  ring
 
 /-! ### The asset cap obstructs concavity, and `hT` is stated too strongly
 
