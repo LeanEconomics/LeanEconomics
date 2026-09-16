@@ -37,3 +37,4 @@ import LeanEconomics.Equilibrium.Uniqueness
 import LeanEconomics.Analysis.DifferentiableSandwich
 import LeanEconomics.Models.IncomeFluctuationEnvelope
 import LeanEconomics.Analysis.RelativeRiskAversion
+import LeanEconomics.Models.IncomeFluctuationConsumption

@@ -192,4 +192,44 @@ theorem not_relativeRiskAversionLeOne_crra {γ : ℝ} (hγ : 1 < γ) :
   simp only [smul_eq_mul] at h1 h2
   linarith
 
+/-! ### The step of Light's Theorem 1 that all of this serves
+
+Light's Theorem 1 compares a household facing gross return `α₁` with one facing `α₂ ≥ α₁`, and
+its pivotal inequality is that the marginal value of wealth, `α · u'(c)`, is larger at the
+higher return. Written out, `α u'(c) = (α / c) · (u'(c) · c)`, and the two factors are exactly
+the two conditions: `α / c(α x)` rises with `α` because the consumption function is CONCAVE
+(Lemma 3, `ConcaveOn.div_le_div_of_scale`), and `u'(c) c` rises with `c` because relative risk
+aversion is at most one. Neither factor alone signs the product; splitting it this way is the
+whole trick.
+
+Note what the consumption function has to supply: concavity, positivity at zero assets, and
+monotonicity. The first is Light's Lemma 4 and is the deep one — he cites Jensen (2017), and it
+is a Carroll–Kimball result that needs more than concavity of `u` and of the value function.
+-/
+
+/-- **The pivotal inequality of Light (2018) Theorem 1.** For a concave, positive, increasing
+consumption function `c` and marginal utility `du` with relative risk aversion at most one, the
+marginal value of wealth `α · u'(c(α x))` is non-decreasing in the gross return `α`. -/
+theorem mul_marginal_le_of_scale {c du : ℝ → ℝ} {s : Set ℝ}
+    (hc : ConcaveOn ℝ s c) (h0 : (0 : ℝ) ∈ s) (hc0 : 0 < c 0) (hmono : MonotoneOn c s)
+    (hrra : MonotoneOn (fun y => y * du y) (Ioi 0)) (hdu : ∀ y ∈ Ioi (0 : ℝ), 0 ≤ du y)
+    {α₁ α₂ x : ℝ} (h1 : 0 < α₁) (h12 : α₁ ≤ α₂) (hx : 0 < x)
+    (hm1 : α₁ * x ∈ s) (hm2 : α₂ * x ∈ s) :
+    α₁ * du (c (α₁ * x)) ≤ α₂ * du (c (α₂ * x)) := by
+  have h2 : 0 < α₂ := lt_of_lt_of_le h1 h12
+  have hp1 : 0 < c (α₁ * x) := lt_of_lt_of_le hc0 (hmono h0 hm1 (by positivity))
+  have hp2 : 0 < c (α₂ * x) := lt_of_lt_of_le hc0 (hmono h0 hm2 (by positivity))
+  have hcle : c (α₁ * x) ≤ c (α₂ * x) :=
+    hmono hm1 hm2 (mul_le_mul_of_nonneg_right h12 hx.le)
+  -- the two factors, each signed by one of the two hypotheses
+  have hdiv := hc.div_le_div_of_scale h0 hc0 h1 h12 hx hm2 hp2
+  have hprod := hrra (mem_Ioi.mpr hp1) (mem_Ioi.mpr hp2) hcle
+  have hnn : 0 ≤ c (α₁ * x) * du (c (α₁ * x)) := mul_nonneg hp1.le (hdu _ (mem_Ioi.mpr hp1))
+  have hmul := mul_le_mul hdiv hprod hnn (div_pos h2 hp2).le
+  have e1 : α₁ / c (α₁ * x) * (c (α₁ * x) * du (c (α₁ * x))) = α₁ * du (c (α₁ * x)) := by
+    field_simp
+  have e2 : α₂ / c (α₂ * x) * (c (α₂ * x) * du (c (α₂ * x))) = α₂ * du (c (α₂ * x)) := by
+    field_simp
+  rwa [e1, e2] at hmul
+
 end LeanEconomics
