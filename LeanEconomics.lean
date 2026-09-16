@@ -4,6 +4,7 @@ import LeanEconomics.Topology.IccCorrespondence
 import LeanEconomics.Topology.BergeEReal
 import LeanEconomics.DynamicProgramming.Blackwell
 import LeanEconomics.DynamicProgramming.Bellman
+import LeanEconomics.DynamicProgramming.Optimality
 import LeanEconomics.DynamicProgramming.Stochastic
 import LeanEconomics.DynamicProgramming.Weighted
 import LeanEconomics.DynamicProgramming.Extended
