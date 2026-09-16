@@ -55,3 +55,4 @@ import LeanEconomics.Models.ReverseCorner
 import LeanEconomics.Equilibrium.MeanField
 import LeanEconomics.Models.BoundedIncomeFluctuation
 import LeanEconomics.Models.CRRAConstants
+import LeanEconomics.Models.CESWitness
