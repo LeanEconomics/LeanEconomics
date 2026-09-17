@@ -307,8 +307,10 @@ theorem incDiffSlices_bellman_withRate (h₁ : P.RateOK r₁) (h₂ : P.RateOK r
     (hdunn : ∀ y ∈ Ioi (0 : ℝ), 0 ≤ du y)
     (hvc : ConcaveSlices (0 : ℝ) assetCap v) (hwc : ConcaveSlices (0 : ℝ) assetCap w)
     (hpc : (P.withRate r₂ h₂).PositiveConsumptionAll)
-    (hslack : ∀ u : (ℝ × Z) →ᵇ ℝ, ConcaveSlices (0 : ℝ) assetCap u → ∀ a ∈ Icc (0 : ℝ) assetCap,
-      ∀ z : Z, (P.withRate r₂ h₂).policyOf u (a, z) < assetCap)
+    (hslackv : ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
+      (P.withRate r₂ h₂).policyOf v (a, z) < assetCap)
+    (hslackw : ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
+      (P.withRate r₂ h₂).policyOf w (a, z) < assetCap)
     (hcw : ∀ z : Z, ConcaveOn ℝ (Icc (0 : ℝ) assetCap) ((P.withRate r₂ h₂).consumptionFnOf w z))
     (hid : IncDiffSlices (0 : ℝ) assetCap v w) :
     IncDiffSlices (0 : ℝ) assetCap ((P.withRate r₁ h₁).toExtended.bellman v)
@@ -322,8 +324,8 @@ theorem incDiffSlices_bellman_withRate (h₁ : P.RateOK r₁) (h₂ : P.RateOK r
     ((P.withRate r₂ h₂).contOfIncreasingDifferences_of_slices hid)
     ((P.withRate r₂ h₂).concaveSlices_bellman hvc z)
     ((P.withRate r₂ h₂).concaveSlices_bellman hwc z)
-    (fun a ha => (P.withRate r₂ h₂).policyOf_lt_maxSaving hpc hvc ha (hslack v hvc a ha z))
-    (fun a ha => (P.withRate r₂ h₂).policyOf_lt_maxSaving hpc hwc ha (hslack w hwc a ha z))
+    (fun a ha => (P.withRate r₂ h₂).policyOf_lt_maxSaving hpc hvc ha (hslackv a ha z))
+    (fun a ha => (P.withRate r₂ h₂).policyOf_lt_maxSaving hpc hwc ha (hslackw a ha z))
     (fun a ha => hpc v hvc z a ha) (fun a ha => hpc w hwc z a ha) (hcw z)
     (fun a ha a' ha' hle => (P.withRate r₂ h₂).consumptionFnOf_mono hwc ha ha' hle)
   have hkey := hmono hx hy hxy
@@ -351,8 +353,10 @@ theorem contIncreasingDifferences_withRate (h₁ : P.RateOK r₁) (h₂ : P.Rate
     (hanti : AntitoneOn du (Ioi (0 : ℝ))) (hrra : MonotoneOn (fun y => y * du y) (Ioi (0 : ℝ)))
     (hdunn : ∀ y ∈ Ioi (0 : ℝ), 0 ≤ du y)
     (hpc : (P.withRate r₂ h₂).PositiveConsumptionAll)
-    (hslack : ∀ u : (ℝ × Z) →ᵇ ℝ, ConcaveSlices (0 : ℝ) assetCap u → ∀ a ∈ Icc (0 : ℝ) assetCap,
-      ∀ z : Z, (P.withRate r₂ h₂).policyOf u (a, z) < assetCap)
+    (hslackv : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
+      (((P.withRate r₁ h₁).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
+    (hslackw : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
+      (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
     (hcons : ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
       ((P.withRate r₂ h₂).consumptionFnOf
         (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z)) :
@@ -383,7 +387,7 @@ theorem contIncreasingDifferences_withRate (h₁ : P.RateOK r₁) (h₂ : P.Rate
     | succ k ih =>
       rw [Function.iterate_succ_apply', Function.iterate_succ_apply']
       exact P.incDiffSlices_bellman_withRate h₁ h₂ hr hderiv hanti hrra hdunn (hvs k) (hws k)
-        hpc hslack (hcons k) ih
+        hpc (hslackv k) (hslackw k) (hcons k) ih
   -- and the limit
   refine contIncreasingDifferences_of_valueFunction _ _ rfl ?_
   intro z x y hx hy hxy
@@ -409,15 +413,18 @@ theorem policy_mono_withRate' (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (hr 
     (hanti : AntitoneOn du (Ioi (0 : ℝ))) (hrra : MonotoneOn (fun y => y * du y) (Ioi (0 : ℝ)))
     (hdunn : ∀ y ∈ Ioi (0 : ℝ), 0 ≤ du y)
     (hpc : (P.withRate r₂ h₂).PositiveConsumptionAll)
-    (hslack : ∀ u : (ℝ × Z) →ᵇ ℝ, ConcaveSlices (0 : ℝ) assetCap u → ∀ a ∈ Icc (0 : ℝ) assetCap,
-      ∀ z : Z, (P.withRate r₂ h₂).policyOf u (a, z) < assetCap)
+    (hslackv : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
+      (((P.withRate r₁ h₁).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
+    (hslackw : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
+      (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
     (hcons : ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
       ((P.withRate r₂ h₂).consumptionFnOf
         (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z))
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
     (P.withRate r₁ h₁).policy (a, z) ≤ (P.withRate r₂ h₂).policy (a, z) :=
   P.policy_mono_withRate h₁ h₂ hr
-    (P.contIncreasingDifferences_withRate h₁ h₂ hr hderiv hanti hrra hdunn hpc hslack hcons) ha z
+    (P.contIncreasingDifferences_withRate h₁ h₂ hr hderiv hanti hrra hdunn hpc hslackv hslackw
+      hcons) ha z
 
 end IncomeFluctuation
 

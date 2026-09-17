@@ -505,20 +505,19 @@ Everything is now proved except the asset cap: `hslack` says the household never
 all the way to the imposed ceiling, at any stage of the iteration. That is the artefact the cap
 always was — `crra_policy_lt_assetCap` discharges it at the fixed point by calibration, and
 `policy_assetCap_of_patient` shows it is exactly `β (1 + r) < 1` that makes it true. -/
-theorem concaveOn_consumptionFn_of_crra {γ : ℝ} (hpc : P.PositiveConsumptionAll) (hγ0 : 0 < γ)
-    (hβ : 0 < (P.discount : ℝ)) (hu : P.u = crraUtility γ)
+theorem concaveOn_consumptionFnOf_iterates_of_crra {γ : ℝ} (hpc : P.PositiveConsumptionAll)
+    (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (hu : P.u = crraUtility γ)
     (hslack : ∀ n : ℕ, ∀ a ∈ Icc assetFloor assetCap, ∀ z : Z,
-      P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
-    (z : Z) : ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFn z) := by
+      P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap) :
+    ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc assetFloor assetCap)
+      (P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z) := by
   set T := P.toExtended.bellman with hTdef
   have hslices : ∀ n : ℕ, ConcaveSlices assetFloor assetCap (T^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
     intro n
     induction n with
     | zero => exact concaveSlices_zero
     | succ k ih => rw [Function.iterate_succ_apply']; exact P.concaveSlices_bellman ih
-  have hcons : ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc assetFloor assetCap)
-      (P.consumptionFnOf (T^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z) := by
-    intro n
+  · intro n
     induction n with
     | zero => exact P.concaveOn_consumptionFnOf_zero
     | succ k ih =>
@@ -535,7 +534,15 @@ theorem concaveOn_consumptionFn_of_crra {γ : ℝ} (hpc : P.PositiveConsumptionA
           (fun z' x hx y hy hxy => P.consumptionFnOf_mono (hslices k) hx hy hxy)
           (fun a ha => hpc _ (P.concaveSlices_bellman (hslices k)) z a ha) hnext
           fun A hA z' => P.policyOf_lt_maxSaving hpc (hslices k) hA (hslack k A hA z')
-  exact P.concaveOn_consumptionFn_of_iterates hcons z
+
+/-- **Carroll and Kimball for CRRA**, at the fixed point. -/
+theorem concaveOn_consumptionFn_of_crra {γ : ℝ} (hpc : P.PositiveConsumptionAll) (hγ0 : 0 < γ)
+    (hβ : 0 < (P.discount : ℝ)) (hu : P.u = crraUtility γ)
+    (hslack : ∀ n : ℕ, ∀ a ∈ Icc assetFloor assetCap, ∀ z : Z,
+      P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
+    (z : Z) : ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFn z) :=
+  P.concaveOn_consumptionFn_of_iterates
+    (P.concaveOn_consumptionFnOf_iterates_of_crra hpc hγ0 hβ hu hslack) z
 
 
 /-- **Carroll and Kimball (1996) for CRRA, from a calibration.** Beyond CRRA utility and
@@ -833,9 +840,10 @@ theorem concaveOn_consumptionFn_of_oscSpread {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1
     induction n with
     | zero => exact concaveSlices_zero
     | succ k ih => rw [Function.iterate_succ_apply']; exact P.concaveSlices_bellman ih
-  exact P.concaveOn_consumptionFn_of_crra hpc hγ0 hβ hu
-    (fun n a ha z' => P.crra_policyOf_lt_assetCap hγ0 hγ1 hθ0 hθ1 hu hpc (hslices n)
-      P.oscSpread_nonneg (P.oscOn_iterate n) hlt ha z') z
+  exact P.concaveOn_consumptionFn_of_iterates
+    (P.concaveOn_consumptionFnOf_iterates_of_crra hpc hγ0 hβ hu
+      (fun n a ha z' => P.crra_policyOf_lt_assetCap hγ0 hγ1 hθ0 hθ1 hu hpc (hslices n)
+        P.oscSpread_nonneg (P.oscOn_iterate n) hlt ha z')) z
 
 
 /-! ### Single crossing in the continuation
