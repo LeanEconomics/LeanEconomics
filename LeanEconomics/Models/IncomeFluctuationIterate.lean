@@ -837,6 +837,70 @@ theorem concaveOn_consumptionFn_of_oscSpread {γ θ : ℝ} (hγ0 : 0 < γ) (hγ1
     (fun n a ha z' => P.crra_policyOf_lt_assetCap hγ0 hγ1 hθ0 hθ1 hu hpc (hslices n)
       P.oscSpread_nonneg (P.oscOn_iterate n) hlt ha z') z
 
+
+/-! ### Single crossing in the continuation
+
+Two continuations at the SAME state, ordered by increasing differences. This is
+`policy_le_of_cont_increasingDifferences` of `IncomeFluctuationRateMonotone` read against
+arbitrary continuations rather than at the fixed point, and it is what carries Light's step 5
+along the iteration: the induction hypothesis is exactly increasing differences of the two
+iterates. -/
+
+/-- **Increasing differences between two continuations**, in the same economy. -/
+def ContOfIncreasingDifferences (v w : (ℝ × Z) →ᵇ ℝ) : Prop :=
+  ∀ (z : Z) (x y : ℝ), x ∈ Icc assetFloor assetCap → y ∈ Icc assetFloor assetCap → x ≤ y →
+    P.contOf v z y - P.contOf v z x ≤ P.contOf w z y - P.contOf w z x
+
+/-- It suffices to have increasing differences slice by slice in the continuations themselves. -/
+theorem contOfIncreasingDifferences_of_slices {v w : (ℝ × Z) →ᵇ ℝ}
+    (h : ∀ (z : Z) (x y : ℝ), x ∈ Icc assetFloor assetCap → y ∈ Icc assetFloor assetCap → x ≤ y →
+      v (y, z) - v (x, z) ≤ w (y, z) - w (x, z)) :
+    P.ContOfIncreasingDifferences v w := by
+  intro z x y hx hy hxy
+  simp only [contOf, ← Finset.sum_sub_distrib, ← mul_sub]
+  exact Finset.sum_le_sum fun z' _ =>
+    mul_le_mul_of_nonneg_left (h z' x y hx hy hxy) (P.transitionMatrix_nonneg z z')
+
+/-- **Single crossing in the continuation.** A household whose continuation has increasing
+differences over another's saves at least as much, at every state. No derivative: the exchange
+argument turns the two optimality comparisons into a sandwich that increasing differences
+closes. -/
+theorem policyOf_le_of_contOf_increasingDifferences {v w : (ℝ × Z) →ᵇ ℝ}
+    (hw : ConcaveSlices assetFloor assetCap w) (hid : P.ContOfIncreasingDifferences v w)
+    {a : ℝ} {z : Z} (ha : a ∈ Icc assetFloor assetCap) :
+    P.policyOf v (a, z) ≤ P.policyOf w (a, z) := by
+  by_contra hcon
+  rw [not_le] at hcon
+  set bV : ℝ := P.policyOf v (a, z) with hbV
+  set bW : ℝ := P.policyOf w (a, z) with hbW
+  have hbVm : bV ∈ P.toExtended.feasible (a, z) := P.policyOf_mem v (a, z)
+  have hbWm : bW ∈ P.toExtended.feasible (a, z) := P.policyOf_mem w (a, z)
+  have hcV : P.consumption (a, z) bV ∈ P.dom := P.consumption_policyOf_mem_dom v ha
+  have hcW : P.consumption (a, z) bW ∈ P.dom := P.consumption_policyOf_mem_dom w ha
+  have hoptV := P.objROf_le_of_mem v ha hbWm hcW
+  have hoptW := P.objROf_le_of_mem w ha hbVm hcV
+  have hidd := hid z bW bV (P.feasible_subset_region hbWm) (P.feasible_subset_region hbVm) hcon.le
+  have hβ0 : (0 : ℝ) ≤ P.discount := P.discount.coe_nonneg
+  simp only [objROf, ← hbV, ← hbW] at hoptV hoptW
+  have hWeq : P.objROf w (a, z) bV = P.objROf w (a, z) bW := by
+    simp only [objROf, ← hbV, ← hbW]
+    nlinarith [hoptV, hoptW, mul_le_mul_of_nonneg_left hidd hβ0]
+  have hbell : P.toExtended.objectiveE w (a, z) bV
+      = ((P.toExtended.bellmanFn w (a, z) : ℝ) : EReal) := by
+    rw [P.objectiveE_eq_coe_of w ha hbVm hcV, hWeq, ← P.objectiveE_eq_coe_of w ha hbWm hcW]
+    exact P.policyOf_optimal w (a, z)
+  exact absurd (P.optimal_action_unique_of_concaveSlices hw ha hbVm hbWm hbell
+    (P.policyOf_optimal w (a, z))) (by intro h; rw [h] at hcon; exact lt_irrefl _ hcon)
+
+/-- Consumption is correspondingly ordered the other way. -/
+theorem consumptionFnOf_le_of_contOf_increasingDifferences {v w : (ℝ × Z) →ᵇ ℝ}
+    (hw : ConcaveSlices assetFloor assetCap w) (hid : P.ContOfIncreasingDifferences v w)
+    {a : ℝ} {z : Z} (ha : a ∈ Icc assetFloor assetCap) :
+    P.consumptionFnOf w z a ≤ P.consumptionFnOf v z a := by
+  simp only [consumptionFnOf, consumption]
+  have := P.policyOf_le_of_contOf_increasingDifferences hw hid (z := z) ha
+  linarith
+
 end IncomeFluctuation
 
 end LeanEconomics
