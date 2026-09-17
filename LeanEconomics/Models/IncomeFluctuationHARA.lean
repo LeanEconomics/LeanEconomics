@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuationEuler
+import LeanEconomics.Models.IncomeFluctuationIterate
 import LeanEconomics.Analysis.HARA
 
 /-!
@@ -37,9 +38,9 @@ The induction STEP is here, for the whole `b ≠ 0` HARA branch. What is not is 
 statement: the iteration also needs positive consumption and the asset cap slack. Those are no
 longer CRRA-specific — `consumptionFnOf_pos_of_marginal` gets positivity from a FINITE marginal
 bound, which is what a shifted CRRA has at zero (`(η + c) ^ (-γ)` at `c = 0` is `η ^ (-γ)`), and
-`policyOf_le_of_marginal_bound` was always general. `IncomeFluctuationCARA` carries that
-assembly through for CARA; the same two inequalities would do it here, and are not checked at
-any shifted-CRRA calibration yet. The CARA branch `b = 0`, where marginal utility is `exp (-α c)`, needs a
+`policyOf_le_of_marginal_bound` was always general. Both branches now carry the assembly
+through to a witness: `IncomeFluctuationCARA.caraCal` for CARA, and `StoneGearyWitness.stoneGeary`
+for this one. The CARA branch `b = 0`, where marginal utility is `exp (-α c)`, needs a
 different aggregator — the soft minimum `-(1/α) log Σ π exp (-α c)` — and is in
 `IncomeFluctuationCARA`, on top of `Analysis.SoftMin`.
 -/
@@ -210,6 +211,197 @@ theorem concaveOn_consumptionFnOf_bellman_of_crra_via_hara {γ : ℝ} (hγ : 0 <
       (P.consumptionFnOf (P.toExtended.bellman v) z) :=
   P.concaveOn_consumptionFnOf_bellman_of_hara hγ le_rfl hβ
     (by rw [hu, haraUtility_zero_shift]) z hpos hconc hmono hcpos hint
+
+
+/-! ### Marginal bounds
+
+A shifted CRRA has FINITE marginal utility at zero, `η ^ (-γ)`, so like CARA it satisfies no
+Inada condition and its consumption floor is an inequality rather than a limit. Both bounds are
+the CRRA ones read at `η + c`. -/
+
+theorem haraUtility_marginal_bound {γ η R : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
+    {c d : ℝ} (hd : 0 ≤ d) (hdc : d ≤ c) (hcR : c ≤ R) :
+    (η + R) ^ (-γ) * (c - d) ≤ haraUtility γ η c - haraUtility γ η d := by
+  have hstep := crra_marginal_bound_Ici (γ := γ) (R := η + R) hγ0 hγ1
+    (d := η + d) (c := η + c) (mem_Ici.mpr (by linarith)) (by linarith) (by linarith)
+  simp only [haraUtility]
+  have he : η + c - (η + d) = c - d := by ring
+  rwa [he] at hstep
+
+theorem marginalBoundOn_haraUtility {γ η δ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
+    (hδ : 0 < δ) : MarginalBoundOn (Ici (0 : ℝ)) (haraUtility γ η) ((η + δ) ^ (-γ)) :=
+  ⟨δ, hδ, fun c c' hc hcc' hc'δ =>
+    haraUtility_marginal_bound hγ0 hγ1 hη (mem_Ici.mp hc) hcc'.le hc'δ⟩
+
+/-! ### The Euler inequality, and the corner -/
+
+theorem haraEgmMap_eq_rpow {γ η : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (hη : 0 ≤ η)
+    {v : (ℝ × Z) →ᵇ ℝ} {z : Z} {A : ℝ} (hc' : ∀ z' : Z, 0 < P.consumptionFnOf v z' A) :
+    P.haraEgmMap v γ η z A = ((P.discount : ℝ) * (1 + P.interest)
+      * ∑ z' : Z, P.transitionMatrix z z'
+          * (η + P.consumptionFnOf v z' A) ^ (-γ)) ^ (-(1 / γ)) - η := by
+  have hγn : γ ≠ 0 := ne_of_gt hγ0
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hK : (0 : ℝ) < (P.discount : ℝ) * (1 + P.interest) := mul_pos hβ hR
+  have hpos : ∀ z' : Z, 0 < η + P.consumptionFnOf v z' A := fun z' => by linarith [hc' z']
+  have hS : (0 : ℝ) < ∑ z' : Z, P.transitionMatrix z z'
+      * (η + P.consumptionFnOf v z' A) ^ (-γ) :=
+    sum_rpow_pos (P.transitionMatrix_nonneg z) (P.transitionMatrix_sum z) hpos
+  rw [Real.mul_rpow hK.le hS.le]
+  simp only [haraEgmMap, powerMean]
+  congr 2
+  rw [show -(1 / γ) = 1 / (-γ) by field_simp]
+
+/-- **The Euler INEQUALITY in endogenous-gridpoint form**, for shifted CRRA: it holds AT the
+borrowing limit, where the equality fails. -/
+theorem hara_egmMap_ge {γ η : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (hη : 0 ≤ η)
+    (hu : P.u = haraUtility γ η) {v : (ℝ × Z) →ᵇ ℝ} {z : Z} {a A : ℝ}
+    (ha : a ∈ Icc assetFloor assetCap)
+    (hA : P.policyOf (P.toExtended.bellman v) (a, z) = A)
+    (hAmax : A < P.maxSaving (a, z))
+    (hc : 0 < P.consumptionFnOf (P.toExtended.bellman v) z a)
+    (hc' : ∀ z' : Z, 0 < P.consumptionFnOf v z' A) :
+    P.consumptionFnOf (P.toExtended.bellman v) z a ≤ P.haraEgmMap v γ η z A := by
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hK : (0 : ℝ) < (P.discount : ℝ) * (1 + P.interest) := mul_pos hβ hR
+  have hcη : 0 < η + P.consumptionFnOf (P.toExtended.bellman v) z a := by linarith
+  have hcη' : ∀ z' : Z, 0 < η + P.consumptionFnOf v z' A := fun z' => by linarith [hc' z']
+  have hS : (0 : ℝ) < ∑ z' : Z, P.transitionMatrix z z'
+      * (η + P.consumptionFnOf v z' A) ^ (-γ) :=
+    sum_rpow_pos (P.transitionMatrix_nonneg z) (P.transitionMatrix_sum z) hcη'
+  have hd : HasDerivAt P.u ((η + P.consumptionFnOf (P.toExtended.bellman v) z a) ^ (-γ))
+      (P.consumptionFnOf (P.toExtended.bellman v) z a) := by
+    rw [hu]; exact hasDerivAt_haraUtility γ hcη
+  have hd' : ∀ z' : Z, HasDerivAt P.u ((η + P.consumptionFnOf v z' A) ^ (-γ))
+      (P.consumptionFnOf v z' A) := fun z' => by
+    rw [hu]; exact hasDerivAt_haraUtility γ (hcη' z')
+  have heuler := P.euler_le ha hA hAmax hc hd hc' hd'
+  rw [P.haraEgmMap_eq_rpow hγ0 hβ hη hc']
+  have hKS : (0 : ℝ) < (P.discount : ℝ) * (1 + P.interest)
+      * ∑ z' : Z, P.transitionMatrix z z' * (η + P.consumptionFnOf v z' A) ^ (-γ) :=
+    mul_pos hK hS
+  have hstep := Real.rpow_le_rpow_of_nonpos hKS (by linarith [heuler])
+    (show -(1 / γ) ≤ 0 by rw [neg_nonpos]; positivity)
+  have hexp : (-γ) * (-(1 / γ)) = 1 := by field_simp
+  rw [← Real.rpow_mul hcη.le, hexp, Real.rpow_one] at hstep
+  linarith
+
+/-- **Carroll and Kimball for shifted CRRA, across the borrowing-limit kink.** -/
+theorem concaveOn_consumptionFnOf_bellman_of_hara_corner {γ η : ℝ} (hγ : 0 < γ) (hη : 0 ≤ η)
+    (hβ : 0 < (P.discount : ℝ)) (hu : P.u = haraUtility γ η) {v : (ℝ × Z) →ᵇ ℝ} (z : Z)
+    (hpos : ∀ z' : Z, ∀ A ∈ Icc assetFloor assetCap, 0 < P.consumptionFnOf v z' A)
+    (hconc : ∀ z' : Z, ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFnOf v z'))
+    (hmono : ∀ z' : Z, MonotoneOn (P.consumptionFnOf v z') (Icc assetFloor assetCap))
+    (hcW : ∀ a ∈ Icc assetFloor assetCap, 0 < P.consumptionFnOf (P.toExtended.bellman v) z a)
+    (hslackW : ∀ a ∈ Icc assetFloor assetCap,
+      P.policyOf (P.toExtended.bellman v) (a, z) < P.maxSaving (a, z))
+    (hslackv : ∀ A ∈ Icc assetFloor assetCap, ∀ z' : Z,
+      P.policyOf v (A, z') < P.maxSaving (A, z')) :
+    ConcaveOn ℝ (Icc assetFloor assetCap)
+      (P.consumptionFnOf (P.toExtended.bellman v) z) := by
+  refine P.concaveOn_of_egm_corner (z := z)
+    (g := fun a => P.policyOf (P.toExtended.bellman v) (a, z)) (C := P.haraEgmMap v γ η z)
+    (P.concaveOn_haraEgmMap hγ hη z hpos hconc)
+    (strictMonoOn_add_egm (P.monotoneOn_haraEgmMap hγ hη z hpos hmono))
+    (fun a _ => P.feasible_subset_region (P.policyOf_mem _ (a, z))) (fun a ha => ?_)
+    (fun a ha => ?_) fun a ha hfloor => ?_
+  · have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a := by
+      simp only [resources, max_eq_right ha.1]
+    simp only [consumptionFnOf, consumption, hres]; ring
+  · exact P.hara_egmMap_ge hγ hβ hη hu ha rfl (hslackW a ha) (hcW a ha)
+      fun z' => hpos z' _ (P.feasible_subset_region (P.policyOf_mem _ (a, z)))
+  · exact P.hara_egmMap_consumptionFnOf hγ hβ hu hη ha rfl hfloor (hslackW a ha) (hcW a ha)
+      (hslackv _ (P.feasible_subset_region (P.policyOf_mem _ (a, z))))
+      fun z' => hpos z' _ (P.feasible_subset_region (P.policyOf_mem _ (a, z)))
+
+/-! ### The assembly -/
+
+theorem concaveOn_consumptionFnOf_iterates_of_hara {γ η : ℝ} (hγ : 0 < γ) (hη : 0 ≤ η)
+    (hβ : 0 < (P.discount : ℝ)) (hu : P.u = haraUtility γ η)
+    (hpos : ∀ n : ℕ, ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap,
+      0 < P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a)
+    (hslack : ∀ n : ℕ, ∀ a ∈ Icc assetFloor assetCap, ∀ z : Z,
+      P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < P.maxSaving (a, z)) :
+    ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc assetFloor assetCap)
+      (P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z) := by
+  have hslices : ∀ n : ℕ, ConcaveSlices assetFloor assetCap
+      ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => exact concaveSlices_zero
+    | succ k ih =>
+      rw [Function.iterate_succ_apply']
+      exact P.concaveSlices_bellman ih
+  intro n
+  induction n with
+  | zero => exact P.concaveOn_consumptionFnOf_zero
+  | succ k ih =>
+    intro z
+    have hnext : ∀ a ∈ Icc assetFloor assetCap, 0 < P.consumptionFnOf
+        (P.toExtended.bellman ((P.toExtended.bellman)^[k] (0 : (ℝ × Z) →ᵇ ℝ))) z a := by
+      intro a ha
+      have := hpos (k + 1) z a ha
+      rwa [Function.iterate_succ_apply'] at this
+    have hnextslack : ∀ a ∈ Icc assetFloor assetCap, P.policyOf
+        (P.toExtended.bellman ((P.toExtended.bellman)^[k] (0 : (ℝ × Z) →ᵇ ℝ))) (a, z)
+          < P.maxSaving (a, z) := by
+      intro a ha
+      have := hslack (k + 1) a ha z
+      rwa [Function.iterate_succ_apply'] at this
+    rw [Function.iterate_succ_apply']
+    exact P.concaveOn_consumptionFnOf_bellman_of_hara_corner hγ hη hβ hu z
+      (fun z' A hA => hpos k z' A hA) ih
+      (fun z' x hx y hy hxy => P.consumptionFnOf_mono (hslices k) hx hy hxy)
+      hnext hnextslack (fun A hA z' => hslack k A hA z')
+
+/-- **Carroll and Kimball for shifted CRRA, from two inequalities.** The same two the CARA
+assembly needs, and for the same reasons: marginal utility at zero is finite, so the consumption
+floor has to be earned, and the cap has to sit above the saving the marginal bound allows. -/
+theorem concaveOn_consumptionFn_of_hara {γ η δ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
+    (hδ : 0 < δ) (hβ : 0 < (P.discount : ℝ)) (hb : P.Bounded) (hu : P.u = haraUtility γ η)
+    (hfloor : (P.discount : ℝ) * P.oscSlopeConst P.oscSpread < (η + δ) ^ (-γ))
+    (hcap : assetFloor + 4 * (P.discount : ℝ)
+        * (max |P.toExtended.rewardMin| |P.toExtended.rewardMax| / (1 - P.discount))
+        / (η + P.maxConsumption) ^ (-γ) < assetCap)
+    (z : Z) : ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFn z) := by
+  have hslices : ∀ n : ℕ, ConcaveSlices assetFloor assetCap
+      ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => exact concaveSlices_zero
+    | succ k ih =>
+      rw [Function.iterate_succ_apply']
+      exact P.concaveSlices_bellman ih
+  have hM : MarginalBoundOn P.dom P.u ((η + δ) ^ (-γ)) := by
+    rw [hb, hu]
+    exact marginalBoundOn_haraUtility hγ0 hγ1 hη hδ
+  have hpos : ∀ n : ℕ, ∀ z' : Z, ∀ a ∈ Icc assetFloor assetCap,
+      0 < P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z' a :=
+    fun n z' a ha => P.consumptionFnOf_pos_of_marginal hM P.oscSpread_nonneg (hslices n)
+      (P.oscOn_iterate n) hfloor z' ha
+  have hmpos : (0 : ℝ) < (η + P.maxConsumption) ^ (-γ) :=
+    Real.rpow_pos_of_pos (by linarith [P.maxConsumption_pos]) _
+  have hslack : ∀ n : ℕ, ∀ a ∈ Icc assetFloor assetCap, ∀ z' : Z,
+      P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z') < P.maxSaving (a, z') := by
+    intro n a ha z'
+    refine P.policyOf_lt_maxSaving_of_pos (hpos n z' a ha) ?_
+    have hbound := P.policyOf_le_of_marginal_bound (hslices n) hmpos ?_ ha z'
+    · have hn := P.norm_iterate_le n
+      have h4 : (0 : ℝ) ≤ 4 * (P.discount : ℝ) := by positivity
+      have hstep := mul_le_mul_of_nonneg_left hn h4
+      have hdiv : 4 * (P.discount : ℝ) * ‖(P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)‖
+            / (η + P.maxConsumption) ^ (-γ)
+          ≤ 4 * (P.discount : ℝ)
+            * (max |P.toExtended.rewardMin| |P.toExtended.rewardMax| / (1 - P.discount))
+            / (η + P.maxConsumption) ^ (-γ) := by
+        rw [div_le_div_iff_of_pos_right hmpos]
+        linarith
+      linarith
+    · intro c d hd hdc hcmax
+      rw [hu]
+      exact haraUtility_marginal_bound hγ0 hγ1 hη (P.nonneg_of_mem_dom hd) hdc hcmax
+  exact P.concaveOn_consumptionFn_of_iterates
+    (P.concaveOn_consumptionFnOf_iterates_of_hara hγ0 hη hβ hu hpos hslack) z
 
 end IncomeFluctuation
 
