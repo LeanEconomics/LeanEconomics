@@ -79,3 +79,4 @@ import LeanEconomics.Models.IncomeFluctuationSequence
 import LeanEconomics.Analysis.SoftMin
 import LeanEconomics.Models.CARA
 import LeanEconomics.Models.IncomeFluctuationCARA
+import LeanEconomics.Models.IncomeFluctuationPatience

@@ -197,6 +197,22 @@ theorem monotoneOn_capitalSupply_of_policy_mono {rlo rhi : ℝ}
   dominates_of_policy_le (Pf r) (Pf r') (hprob r r') (hpol r hr r' hr' hrr)
     (hconv r hr) (hconv r' hr') P.assetCoord (monoAsset_assetCoord P)
 
+/-- **Capital supply is ordered when the policies are**, across two FAMILIES of economies rather
+than across two rates of one. The patience comparative static consumes this: a more patient
+population saves more at every rate, so its supply schedule lies above. -/
+theorem capitalSupply_le_of_policy_le {rlo rhi : ℝ}
+    (Pf Qf : ℝ → IncomeFluctuation Z assetFloor assetCap)
+    (hprob : ∀ r : ℝ, ∀ z z' : Z, (Pf r).transitionMatrix z z' = (Qf r).transitionMatrix z z')
+    (hpol : ∀ r ∈ Icc rlo rhi, ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap →
+      (Pf r).policy s ≤ (Qf r).policy s)
+    (μ₀ : ProbabilityMeasure P.State) (ν ρ : ℝ → ProbabilityMeasure P.State)
+    (hconvP : ∀ r ∈ Icc rlo rhi, Tendsto (fun m => (Pf r).pushProb^[m] μ₀) atTop (𝓝 (ν r)))
+    (hconvQ : ∀ r ∈ Icc rlo rhi, Tendsto (fun m => (Qf r).pushProb^[m] μ₀) atTop (𝓝 (ρ r)))
+    {r : ℝ} (hr : r ∈ Icc rlo rhi) :
+    P.aggregateCapital (ν r) ≤ P.aggregateCapital (ρ r) :=
+  dominates_of_policy_le (Pf r) (Qf r) (hprob r) (hpol r hr) (hconvP r hr) (hconvQ r hr)
+    P.assetCoord (monoAsset_assetCoord P)
+
 end IncomeFluctuation
 
 end LeanEconomics

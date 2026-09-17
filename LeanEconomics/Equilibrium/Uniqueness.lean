@@ -86,4 +86,24 @@ theorem equilibriumRate_unique {A δ rlo rhi : ℝ} (hA : A ≠ 0) (hδ : 0 < rl
     (he₁ : S r₁ = capitalDemand A δ r₁) (he₂ : S r₂ = capitalDemand A δ r₂) : r₁ = r₂ :=
   eq_of_monotoneOn_of_strictAntiOn hS (capitalDemand_strictAntiOn hA hδ) h₁ h₂ he₁ he₂
 
+/-- **A larger capital supply means a lower equilibrium rate.** With demand strictly decreasing,
+two economies whose supply schedules are ordered have their equilibrium rates ordered the other
+way. This is what uniqueness buys: without it "the" equilibrium rate is not a number to compare.
+
+The hypothesis is only needed at `r₂`, and only monotonicity of the SMALLER supply is used. -/
+theorem equilibriumRate_le_of_supply_le {A δ rlo rhi : ℝ} (hA : A ≠ 0) (hδ : 0 < rlo + δ)
+    {S T : ℝ → ℝ} (hS : MonotoneOn S (Icc rlo rhi)) (hle : ∀ r ∈ Icc rlo rhi, S r ≤ T r)
+    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc rlo rhi) (h₂ : r₂ ∈ Icc rlo rhi)
+    (he₁ : S r₁ = capitalDemand A δ r₁) (he₂ : T r₂ = capitalDemand A δ r₂) : r₂ ≤ r₁ := by
+  by_contra hcon
+  rw [not_le] at hcon
+  have hD : capitalDemand A δ r₂ < capitalDemand A δ r₁ :=
+    capitalDemand_strictAntiOn hA hδ h₁ h₂ hcon
+  have hchain : capitalDemand A δ r₁ ≤ capitalDemand A δ r₂ := by
+    calc capitalDemand A δ r₁ = S r₁ := he₁.symm
+      _ ≤ S r₂ := hS h₁ h₂ hcon.le
+      _ ≤ T r₂ := hle r₂ h₂
+      _ = capitalDemand A δ r₂ := he₂
+  linarith
+
 end LeanEconomics
