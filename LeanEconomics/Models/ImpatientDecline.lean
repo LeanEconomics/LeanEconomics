@@ -67,7 +67,8 @@ theorem policy_lt_self_of_impatient
   -- the Euler inequality from saving less
   have hE := P.euler_ge (v := P.toExtended.valueFunction) (z := z) (a := a) (A := A)
     (du := du (P.consumptionFn z a)) (du' := fun z' => du (P.consumptionFn z' A))
-    ha (by rw [hbv, hA]; exact congrFun P.policyOf_valueFunction (a, z)) hA0 (fun z' => hslack z' A hAmem) (by rw [hbv]; exact hc)
+    ha (by rw [hbv, hA]; exact congrFun P.policyOf_valueFunction (a, z)) hA0
+    (fun z' => hslack z' A hAmem) (by rw [hbv]; exact hc)
     (by rw [hbv]; exact hderiv _ hc) (fun z' => hpos z' A hAmem)
     (fun z' => hderiv _ (hpos z' A hAmem))
   -- every next-period marginal utility is at most today's
@@ -211,7 +212,7 @@ theorem exists_exhaust_of_impatient
     {a₀ : ℝ} (ha₀ : assetFloor < a₀) (hle : a₀ ≤ assetCap)
     (hzero : ∀ a ∈ Icc assetFloor a₀, P.policy (a, z₀) = assetFloor) :
     ∃ N : ℕ, (P.gBad z₀)^[N] P.topState = P.botState :=
-  P.exists_exhaust_of_decline ha₀ hle hzero fun a ha =>
+  P.exists_exhaust_of_decline ha₀ hle hzero fun _a ha =>
     P.policy_lt_self_of_impatient_iid hβR hiid hderiv hanti hdupos hpos hslack hz₀
       ⟨le_trans ha₀.le ha.1, ha.2⟩ (lt_of_lt_of_le ha₀ ha.1)
 

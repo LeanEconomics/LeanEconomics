@@ -73,3 +73,6 @@ import LeanEconomics.Models.CESRateMonotone
 import LeanEconomics.Equilibrium.CESUniqueness
 import LeanEconomics.Models.ImpatientDecline
 import LeanEconomics.Models.IncomeFluctuationHARA
+import LeanEconomics.DynamicProgramming.StochasticOptimality
+import LeanEconomics.DynamicProgramming.ExtendedStochasticOptimality
+import LeanEconomics.Models.IncomeFluctuationSequence
