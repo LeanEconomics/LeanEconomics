@@ -55,7 +55,9 @@ structure Calibrated (P : IncomeFluctuation Z 0 assetCap) (γ η G a₀ : ℝ) (
     (rlo rhi : ℝ) : Prop where
   /-- Shifted CRRA, the `b ≠ 0` branch of HARA. `η = 0` is CRRA itself. -/
   gamma_pos : 0 < γ
-  gamma_lt_one : γ < 1
+  /-- Light's condition. Strictness is not needed: with a strictly positive subsistence level
+  `γ = 1` — log Stone–Geary — is admissible, since `η + c` stays away from zero. -/
+  gamma_le_one : γ ≤ 1
   eta_nonneg : 0 ≤ η
   utility : P.u = haraUtility γ η
   discount_pos : 0 < (P.discount : ℝ)
@@ -172,7 +174,7 @@ theorem policy_lt_maxSaving {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r
 theorem policy_mono {r r' : ℝ} (hr : r ∈ Icc rlo rhi) (hr' : r' ∈ Icc rlo rhi) (hle : r ≤ r')
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
     (P.withRate r (h.rateOK hr)).policy (a, z) ≤ (P.withRate r' (h.rateOK hr')).policy (a, z) :=
-  P.policy_mono_withRate_hara h.gamma_pos (le_of_lt h.gamma_lt_one) h.eta_nonneg h.utility
+  P.policy_mono_withRate_hara h.gamma_pos h.gamma_le_one h.eta_nonneg h.utility
     (h.rateOK hr) (h.rateOK hr') hle
     (fun n b hb z' => h.positive_iterate hr (h.rateOK hr) hr' (h.rateOK hr') n hb z')
     (fun n b hb z' => h.positive_iterate hr' (h.rateOK hr') hr' (h.rateOK hr') n hb z')
@@ -299,7 +301,7 @@ the check that nothing specific to the calibration leaked into it. -/
 theorem nearLog_calibrated :
     nearLog.Calibrated (15 / 16) 0 (27 / 5) (1 / 50) 0 0 (1 / 200) where
   gamma_pos := by norm_num
-  gamma_lt_one := by norm_num
+  gamma_le_one := by norm_num
   eta_nonneg := le_rfl
   utility := by rw [haraUtility_zero_shift]; rfl
   discount_pos := by rw [nearLog_discount]; norm_num

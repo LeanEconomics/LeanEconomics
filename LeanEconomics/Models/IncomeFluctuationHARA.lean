@@ -232,6 +232,24 @@ theorem haraUtility_marginal_bound {γ η R : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 
   have he : η + c - (η + d) = c - d := by ring
   rwa [he] at hstep
 
+/-- The same with the restriction moved from `γ` to the ARGUMENT: a strictly positive
+subsistence level keeps `η + c` away from zero, so `γ ≥ 1` — log Stone–Geary included — is
+admissible. -/
+theorem haraUtility_marginal_bound_pos {γ η R : ℝ} (hγ0 : 0 < γ) {c d : ℝ} (hd : 0 < η + d)
+    (hdc : d ≤ c) (hcR : c ≤ R) :
+    (η + R) ^ (-γ) * (c - d) ≤ haraUtility γ η c - haraUtility γ η d := by
+  have hstep := crra_marginal_bound (γ := γ) (R := η + R) (c := η + c) (d := η + d) hγ0 hd
+    (by linarith) (by linarith)
+  simp only [haraUtility]
+  have he : η + c - (η + d) = c - d := by ring
+  rwa [he] at hstep
+
+/-- **A marginal bound near zero for a strictly positive subsistence level.** -/
+theorem marginalBoundOn_haraUtility_pos {γ η δ : ℝ} (hγ0 : 0 < γ) (hη : 0 < η) (hδ : 0 < δ) :
+    MarginalBoundOn (Ici (0 : ℝ)) (haraUtility γ η) ((η + δ) ^ (-γ)) :=
+  ⟨δ, hδ, fun c c' hc hcc' hc'δ =>
+    haraUtility_marginal_bound_pos hγ0 (by linarith [mem_Ici.mp hc]) hcc'.le hc'δ⟩
+
 theorem marginalBoundOn_haraUtility {γ η δ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
     (hδ : 0 < δ) : MarginalBoundOn (Ici (0 : ℝ)) (haraUtility γ η) ((η + δ) ^ (-γ)) :=
   ⟨δ, hδ, fun c c' hc hcc' hc'δ =>
@@ -330,10 +348,11 @@ The shifted-CRRA version is that argument with the marginal step read at `η + c
 else — the deviation, the concavity of the continuation, the oscillation — knows nothing about
 preferences. -/
 
-theorem hara_policyOf_le_mul {γ η θ G : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
-    (hθ0 : 0 < θ) (hθ1 : θ < 1) (hu : P.u = haraUtility γ η) (hpc : P.PositiveConsumptionAll)
+theorem hara_policyOf_le_mul {γ η θ G : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η)
+    (hθ0 : 0 < θ) (hθ1 : θ < 1) (hu : P.u = haraUtility γ η)
     {v : (ℝ × Z) →ᵇ ℝ} (hv : ConcaveSlices assetFloor assetCap v) (hG : 0 ≤ G)
-    (hosc : P.OscOn v G) {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) (z : Z) :
+    (hosc : P.OscOn v G) {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) (z : Z)
+    (hcpos : 0 < P.consumptionFnOf v z a) :
     P.policyOf v (a, z) - assetFloor
       ≤ ((P.discount : ℝ) * G / θ)
         * (η + P.consumptionFnOf v z a
@@ -343,7 +362,6 @@ theorem hara_policyOf_le_mul {γ η θ G : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) 
   set c : ℝ := P.consumptionFnOf v z a with hcdef
   have hbreg : b ∈ Icc assetFloor assetCap :=
     P.feasible_subset_region (P.policyOf_mem v (a, z))
-  have hcpos : 0 < c := hpc v hv z a ha
   have hbase : (0 : ℝ) < η + c + (1 - θ) * (b - assetFloor) := by
     have h := mul_nonneg (show (0 : ℝ) ≤ 1 - θ by linarith)
       (show (0 : ℝ) ≤ b - assetFloor by linarith [hbreg.1])
@@ -386,9 +404,10 @@ theorem hara_policyOf_le_mul {γ η θ G : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) 
   have hmg : (η + c + (1 - θ) * (b - assetFloor)) ^ (-γ) * ((1 - θ) * (b - assetFloor))
       ≤ P.u (c + (1 - θ) * (b - assetFloor)) - P.u c := by
     rw [hu]
-    have hbound := haraUtility_marginal_bound (γ := γ) (η := η)
-      (R := c + (1 - θ) * (b - assetFloor)) hγ0 hγ1 hη (d := c) (c := c + (1 - θ) * (b - assetFloor))
-      hcpos.le (le_add_of_nonneg_right (mul_nonneg (by linarith) hbf.le)) le_rfl
+    have hbound := haraUtility_marginal_bound_pos (γ := γ) (η := η)
+      (R := c + (1 - θ) * (b - assetFloor)) hγ0 (d := c)
+      (c := c + (1 - θ) * (b - assetFloor)) (by linarith)
+      (le_add_of_nonneg_right (mul_nonneg (by linarith) hbf.le)) le_rfl
     have he : η + (c + (1 - θ) * (b - assetFloor)) = η + c + (1 - θ) * (b - assetFloor) := by ring
     rw [he] at hbound
     have he2 : c + (1 - θ) * (b - assetFloor) - c = (1 - θ) * (b - assetFloor) := by ring
@@ -411,10 +430,11 @@ theorem hara_policyOf_le_mul {γ η θ G : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) 
   linarith
 
 /-- **Saving never reaches the asset cap**, for shifted CRRA. -/
-theorem hara_policyOf_lt_assetCap {γ η θ G : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
-    (hθ0 : 0 < θ) (hθ1 : θ < 1) (hu : P.u = haraUtility γ η) (hpc : P.PositiveConsumptionAll)
+theorem hara_policyOf_lt_assetCap {γ η θ G : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η)
+    (hθ0 : 0 < θ) (hθ1 : θ < 1) (hu : P.u = haraUtility γ η)
     {v : (ℝ × Z) →ᵇ ℝ} (hv : ConcaveSlices assetFloor assetCap v) (hG : 0 ≤ G)
-    (hosc : P.OscOn v G)
+    (hosc : P.OscOn v G) (hcpos : ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap,
+      0 < P.consumptionFnOf v z a)
     (hlt : ((P.discount : ℝ) * G / θ)
         * (η + P.maxIncome + (1 + P.interest - θ) * assetCap - (1 - θ) * assetFloor) ^ γ
       < assetCap - assetFloor)
@@ -427,9 +447,9 @@ theorem hara_policyOf_lt_assetCap {γ η θ G : ℝ} (hγ0 : 0 < γ) (hγ1 : γ 
   set c : ℝ := P.consumptionFnOf v z a with hcdef
   have hbreg : b ∈ Icc assetFloor assetCap :=
     P.feasible_subset_region (P.policyOf_mem v (a, z))
-  have hkey := P.hara_policyOf_le_mul hγ0 hγ1 hη hθ0 hθ1 hu hpc hv hG hosc ha z
+  have hkey := P.hara_policyOf_le_mul hγ0 hη hθ0 hθ1 hu hv hG hosc ha z (hcpos z a ha)
   rw [← hbdef, ← hcdef] at hkey
-  have hcpos : 0 < c := hpc v hv z a ha
+  have hcpos' : 0 < c := hcpos z a ha
   have hres : P.resources (a, z) - assetFloor ≤ P.maxConsumption :=
     P.consumption_le_maxConsumption (s := (a, z)) ha le_rfl
   have hsum : c + (1 - θ) * (b - assetFloor)
@@ -444,7 +464,7 @@ theorem hara_policyOf_lt_assetCap {γ η θ G : ℝ} (hγ0 : 0 < γ) (hγ1 : γ 
   have hnn : (0 : ℝ) ≤ η + c + (1 - θ) * (b - assetFloor) := by
     have h := mul_nonneg (show (0 : ℝ) ≤ 1 - θ by linarith)
       (show (0 : ℝ) ≤ b - assetFloor by linarith [hbreg.1])
-    linarith
+    linarith [hcpos']
   have hmono : (η + c + (1 - θ) * (b - assetFloor)) ^ γ
       ≤ (η + P.maxIncome + (1 + P.interest - θ) * assetCap - (1 - θ) * assetFloor) ^ γ :=
     Real.rpow_le_rpow hnn hle hγ0.le
@@ -620,7 +640,7 @@ theorem hara_cost_of_saving {γ η : ℝ} (hγ : 0 < γ) (hη : 0 ≤ η) {m h R
   simpa only [haraUtility] using hstep
 
 /-- **The continuation's gain, for shifted CRRA.** -/
-theorem hara_cont_sub_ge_gen {γ η : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
+theorem hara_cont_sub_ge_gen {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η)
     (hu : P.u = haraUtility γ η) (hfl : assetFloor = 0) (hpc : P.PositiveConsumption)
     (z z₀ : Z) {x y : ℝ}
     (hx : x ∈ Icc assetFloor assetCap) (hy : y ∈ Icc assetFloor assetCap) (hxy : x ≤ y) :
@@ -656,8 +676,8 @@ theorem hara_cont_sub_ge_gen {γ η : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη 
         - haraUtility γ η (P.consumption (x, z₀) (P.policy (x, z₀))) := by
     have hR : P.consumption (x, z₀) (P.policy (x, z₀)) + (1 + P.interest) * (y - x)
         ≤ P.income z₀ + (1 + P.interest) * y := by nlinarith [hcle]
-    have hstep := haraUtility_marginal_bound (γ := γ) (η := η)
-      (R := P.income z₀ + (1 + P.interest) * y) hγ0 hγ1 hη hc0.le
+    have hstep := haraUtility_marginal_bound_pos (γ := γ) (η := η)
+      (R := P.income z₀ + (1 + P.interest) * y) hγ0 (by linarith)
       (le_add_of_nonneg_right hRh) hR
     have he : η + (P.income z₀ + (1 + P.interest) * y)
         = η + P.income z₀ + (1 + P.interest) * y := by ring
@@ -687,7 +707,7 @@ section Measure
 variable [MeasurableSpace Z] [BorelSpace Z]
 
 /-- **Positive aggregate capital for shifted CRRA, from primitives.** -/
-theorem hara_le_aggregateCapital_of_gain {γ η : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
+theorem hara_le_aggregateCapital_of_gain {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η)
     (hu : P.u = haraUtility γ η) (hfl : assetFloor = 0) (hpc : P.PositiveConsumption)
     {μ : ProbabilityMeasure P.State} (hμ : P.IsStationary μ) {z₁ z₀ : Z} {p₀ h : ℝ}
     (hh0 : 0 < h) (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
@@ -702,7 +722,7 @@ theorem hara_le_aggregateCapital_of_gain {γ η : ℝ} (hγ0 : 0 < γ) (hγ1 : �
   refine lt_of_lt_of_le hgain (mul_le_mul_of_nonneg_left ?_ P.discount.coe_nonneg)
   have hhalf : h / 2 ∈ Icc (0 : ℝ) assetCap := ⟨by linarith, by linarith⟩
   have hfull : h ∈ Icc (0 : ℝ) assetCap := ⟨hh0.le, hhcap⟩
-  have hgen := P.hara_cont_sub_ge_gen hγ0 hγ1 hη hu rfl hpc z₁ z₀ hhalf hfull (by linarith)
+  have hgen := P.hara_cont_sub_ge_gen hγ0 hη hu rfl hpc z₁ z₀ hhalf hfull (by linarith)
   rw [show h - h / 2 = h / 2 from by ring] at hgen
   exact hgen
 
