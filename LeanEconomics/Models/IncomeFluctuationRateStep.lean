@@ -177,6 +177,102 @@ theorem consumptionFnOf_withRate (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (
   simp only [consumptionFnOf]
   rw [P.policyOf_withRate h₁ h₂ hr hv z ha, P.consumption_withRate h₁ h₂ z _ ha.1]
 
+
+/-! ### The derivative assembly
+
+With the budget coincidence in hand the whole comparison lives in ONE economy: the difference to
+be signed is
+
+  `F a = (T w)(a) - (T v)(t a)`,     `t = R₁ / R₂ ≤ 1`.
+
+`hasDerivAt_bellman` — the Clausen–Strub lazy-agent envelope — differentiates both terms, giving
+
+  `F' a = R₂ u'(c_w(a)) - t R₂ u'(c_v(t a)) = R₂ u'(c_w(a)) - R₁ u'(c_v(t a))`.
+
+The second term is bounded by `mul_marginal_le_of_scale`, Light's pivotal inequality, which needs
+the consumption function to be CONCAVE — that is the Carroll–Kimball input, and the reason step 5
+had to wait for it. The first is then reached by single crossing in the continuation, which puts
+`c_w(a) ≤ c_v(a)` and so `u'(c_v(a)) ≤ u'(c_w(a))`.
+
+Note what the envelope is asked for: the state interior and the CHOICE strictly below the saving
+cap. Nothing is asked at the borrowing constraint, so the argument survives where it binds. -/
+
+/-- **The monotone difference, in one economy.** If `t ≤ 1` and the continuations `v` and `w` have
+increasing differences, then `a ↦ (T w)(a) - (T v)(t a)` is nondecreasing. -/
+theorem monotoneOn_bellman_sub_scaled {assetCap : ℝ} (Q : IncomeFluctuation Z 0 assetCap)
+    {t : ℝ} (ht0 : 0 < t) (ht1 : t ≤ 1) {v w : (ℝ × Z) →ᵇ ℝ} {z : Z} {du : ℝ → ℝ}
+    (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt Q.u (du c) c)
+    (hanti : AntitoneOn du (Ioi (0 : ℝ))) (hrra : MonotoneOn (fun y => y * du y) (Ioi (0 : ℝ)))
+    (hdunn : ∀ y ∈ Ioi (0 : ℝ), 0 ≤ du y)
+    (hwc : ConcaveSlices (0 : ℝ) assetCap w) (hid : Q.ContOfIncreasingDifferences v w)
+    (hbv : ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
+      fun x => (Q.toExtended.bellman v) (x, z))
+    (hbw : ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
+      fun x => (Q.toExtended.bellman w) (x, z))
+    (hintv : ∀ x ∈ Icc (0 : ℝ) assetCap, Q.policyOf v (x, z) < Q.maxSaving (x, z))
+    (hintw : ∀ x ∈ Icc (0 : ℝ) assetCap, Q.policyOf w (x, z) < Q.maxSaving (x, z))
+    (hposv : ∀ x ∈ Icc (0 : ℝ) assetCap, 0 < Q.consumptionFnOf v z x)
+    (hposw : ∀ x ∈ Icc (0 : ℝ) assetCap, 0 < Q.consumptionFnOf w z x)
+    (hcv : ConcaveOn ℝ (Icc (0 : ℝ) assetCap) (Q.consumptionFnOf v z))
+    (hmv : MonotoneOn (Q.consumptionFnOf v z) (Icc (0 : ℝ) assetCap)) :
+    MonotoneOn (fun a => (Q.toExtended.bellman w) (a, z) - (Q.toExtended.bellman v) (t * a, z))
+      (Icc (0 : ℝ) assetCap) := by
+  have hR : (0 : ℝ) < 1 + Q.interest := Q.interest_gt_neg_one
+  have hcap : (0 : ℝ) ≤ assetCap := Q.assetFloor_le_assetCap
+  have hzero : (0 : ℝ) ∈ Icc (0 : ℝ) assetCap := ⟨le_rfl, hcap⟩
+  -- the derivative, and its sign, at every interior point
+  have key : ∀ a ∈ Ioo (0 : ℝ) assetCap, ∃ D : ℝ, 0 ≤ D ∧
+      HasDerivAt (fun x => (Q.toExtended.bellman w) (x, z) - (Q.toExtended.bellman v) (t * x, z))
+        D a := by
+    intro a ha
+    have ha0 : (0 : ℝ) < a := ha.1
+    have hamem : a ∈ Icc (0 : ℝ) assetCap := ⟨ha.1.le, ha.2.le⟩
+    have hta0 : (0 : ℝ) < t * a := mul_pos ht0 ha0
+    have htale : t * a ≤ a := by nlinarith
+    have htamem : t * a ∈ Icc (0 : ℝ) assetCap := ⟨hta0.le, le_trans htale hamem.2⟩
+    -- the two envelope derivatives
+    have hd1 : HasDerivAt (fun x => (Q.toExtended.bellman w) (x, z))
+        ((1 + Q.interest) * du (Q.consumptionFnOf w z a)) a :=
+      Q.hasDerivAt_bellman ha0 ha.2 hbw (hintw a hamem) (hposw a hamem)
+        (hderiv _ (hposw a hamem))
+    have hbase : HasDerivAt (fun x => (Q.toExtended.bellman v) (x, z))
+        ((1 + Q.interest) * du (Q.consumptionFnOf v z (t * a))) (t * a) :=
+      Q.hasDerivAt_bellman hta0 (lt_of_le_of_lt htale ha.2) hbv (hintv _ htamem)
+        (hposv _ htamem) (hderiv _ (hposv _ htamem))
+    have hlin : HasDerivAt (fun x : ℝ => t * x) t a := by
+      simpa using (hasDerivAt_id a).const_mul t
+    have hd2 : HasDerivAt (fun x : ℝ => (Q.toExtended.bellman v) (t * x, z))
+        ((1 + Q.interest) * du (Q.consumptionFnOf v z (t * a)) * t) a := hbase.comp a hlin
+    refine ⟨_, ?_, hd1.sub hd2⟩
+    -- Light's pivotal inequality, at `α₁ = t R`, `α₂ = R`, `x = a / R`
+    have e1 : t * (1 + Q.interest) * (a / (1 + Q.interest)) = t * a := by field_simp
+    have e2 : (1 + Q.interest) * (a / (1 + Q.interest)) = a := by field_simp
+    have hpiv := mul_marginal_le_of_scale (c := Q.consumptionFnOf v z) (du := du) hcv hzero
+      (hposv 0 hzero) hmv hrra hdunn (α₁ := t * (1 + Q.interest)) (α₂ := 1 + Q.interest)
+      (x := a / (1 + Q.interest)) (by positivity) (by nlinarith) (by positivity)
+      (by rw [e1]; exact htamem) (by rw [e2]; exact hamem)
+    rw [e1, e2] at hpiv
+    -- single crossing in the continuation
+    have hcross : Q.consumptionFnOf w z a ≤ Q.consumptionFnOf v z a :=
+      Q.consumptionFnOf_le_of_contOf_increasingDifferences hwc hid hamem
+    have hdu := hanti (mem_Ioi.mpr (hposw a hamem)) (mem_Ioi.mpr (hposv a hamem)) hcross
+    nlinarith [hpiv, hdu, hR]
+  refine monotoneOn_of_deriv_nonneg (convex_Icc _ _) ?_ ?_ ?_
+  · refine ContinuousOn.sub ?_ ?_
+    · exact ((Q.toExtended.bellman w).continuous.comp
+        (continuous_id.prodMk continuous_const)).continuousOn
+    · exact ((Q.toExtended.bellman v).continuous.comp
+        ((continuous_const.mul continuous_id).prodMk continuous_const)).continuousOn
+  · rw [interior_Icc]
+    intro x hx
+    obtain ⟨D, _, hD⟩ := key x hx
+    exact hD.differentiableAt.differentiableWithinAt
+  · rw [interior_Icc]
+    intro x hx
+    obtain ⟨D, hD0, hD⟩ := key x hx
+    rw [hD.deriv]
+    exact hD0
+
 end IncomeFluctuation
 
 end LeanEconomics
