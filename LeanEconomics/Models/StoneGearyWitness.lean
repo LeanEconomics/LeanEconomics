@@ -211,60 +211,39 @@ theorem stoneGeary_slack {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : s
     rw [hβ, hinc, hint, Real.rpow_one]
     nlinarith [hr.1, hr.2]
 
-/-! ### The corner -/
+/-! ### The corner
 
-theorem stoneGeary_slopeBoundU_le {r : ℝ} (hrr : stoneGeary.RateOK r) :
-    (stoneGeary.withRate r hrr).slopeBoundU ≤ 139 := by
-  have hu : (stoneGeary.withRate r hrr).u = stoneGeary.u := rfl
-  have hm : (stoneGeary.withRate r hrr).minConsumption = 1 / 100 := stoneGeary_minConsumption
-  have h2 : Real.log 2 < 0.6931471808 := Real.log_two_lt_d9
-  simp only [IncomeFluctuation.slopeBoundU, slopeBound, hu, hm]
-  rw [stoneGeary_u_eq, stoneGeary_u_eq]
-  have hdiv : Real.log ((1 : ℝ) / 1000 + 1 / 100) - Real.log ((1 : ℝ) / 1000 + 1 / 100 / 2)
-      = Real.log (11 / 6 : ℝ) := by
-    rw [← Real.log_div (by norm_num) (by norm_num)]
-    norm_num
-  rw [hdiv]
-  have hle : Real.log (11 / 6 : ℝ) ≤ Real.log 2 := Real.log_le_log (by norm_num) (by norm_num)
-  rw [div_le_iff₀ (by norm_num)]
-  linarith
+One inequality in the primitives, and `hara_policy_eq_zero_of_primitives` does the rest: the
+Lipschitz constant and the marginal bound both have closed forms, so nothing has to be assembled
+by hand. At these numbers it reads `β L ≈ 24` against a marginal value of about `27.7`. -/
 
-theorem stoneGeary_lipschitz {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
-    (hrr : stoneGeary.RateOK r) :
-    ∀ z : Fin 2, ∀ x ∈ Icc (0 : ℝ) 1, ∀ y ∈ Icc (0 : ℝ) 1,
-      |(stoneGeary.withRate r hrr).toExtended.valueFunction (x, z)
-        - (stoneGeary.withRate r hrr).toExtended.valueFunction (y, z)| ≤ 170 * |x - y| := by
-  refine (stoneGeary.withRate r hrr).valueFunction_lipschitz (by norm_num) ?_
-  have hslope := stoneGeary_slopeBoundU_le hrr
-  have hslope0 : (0 : ℝ) ≤ (stoneGeary.withRate r hrr).slopeBoundU :=
-    (stoneGeary.withRate r hrr).slopeBoundU_nonneg
-  have hβ : ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 := rfl
-  have hint : (stoneGeary.withRate r hrr).interest = r := rfl
-  rw [hβ, hint]
-  nlinarith [hr.1, hr.2, hslope, hslope0]
-
-/-- **The corner condition**: below `1/40` the household saves nothing. -/
-theorem stoneGeary_corner {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : stoneGeary.RateOK r)
-    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) (1 / 40)) :
-    (stoneGeary.withRate r hrr).policy (a, 0) = 0 := by
-  have hres : (stoneGeary.withRate r hrr).resources (a, 0) ≤ 39 / 1000 := by
-    simp only [IncomeFluctuation.resources, IncomeFluctuation.withRate_income,
-      IncomeFluctuation.withRate_interest, max_eq_right ha.1, stoneGeary_income_zero]
-    nlinarith [ha.1, ha.2, hr.1, hr.2]
-  refine (stoneGeary.withRate r hrr).policy_eq_zero_of_corner_at (L := 170) (m := 25)
-    (stoneGeary_lipschitz hr hrr) (s := (a, 0)) ⟨ha.1, by linarith [ha.2]⟩ ?_ (by norm_num)
-  intro c d hd hdc hc
-  have hd0 : (0 : ℝ) ≤ d := (stoneGeary.withRate r hrr).nonneg_of_mem_dom hd
-  have hbound := haraUtility_marginal_bound_pos (γ := 1) (η := 1 / 1000)
-    (R := (stoneGeary.withRate r hrr).resources (a, 0) - 0) (by norm_num)
-    (show (0 : ℝ) < 1 / 1000 + d by linarith) hdc hc
-  have hu : (stoneGeary.withRate r hrr).u = haraUtility 1 (1 / 1000) := rfl
-  rw [hu]
-  refine le_trans (mul_le_mul_of_nonneg_right ?_ (by linarith)) hbound
-  have hR0 : (0 : ℝ) < 1 / 1000 + ((stoneGeary.withRate r hrr).resources (a, 0) - 0) := by
-    have := (stoneGeary.withRate r hrr).assetFloor_lt_resources (a, 0)
-    linarith
-  rw [Real.rpow_neg_one, le_inv_comm₀ (by norm_num) hR0]
+/-- **The corner condition**: below `1/40` the household saves nothing. One inequality, checked
+rate by rate; `corner_of_primitives` supplies the Lipschitz bound and the marginal bound. -/
+theorem stoneGeary_corner :
+    ∀ r ∈ Icc (0 : ℝ) (1 / 200), ∀ hrr : stoneGeary.RateOK r, ∀ a ∈ Icc (0 : ℝ) (1 / 40),
+      (stoneGeary.withRate r hrr).policy (a, 0) = 0 := by
+  refine IncomeFluctuation.corner_of_primitives (γ := 1) (η := 1 / 1000) (by norm_num)
+    (by norm_num) rfl (by norm_num) (by norm_num)
+    (fun r hr => by rw [stoneGeary_discount]; nlinarith [hr.1, hr.2]) ?_
+  intro r hr hrr
+  have hmin : (stoneGeary.withRate r hrr).minConsumption = 1 / 100 := stoneGeary_minConsumption
+  simp only [IncomeFluctuation.haraLipschitz, stoneGeary_discount, stoneGeary_income_zero, hmin,
+    show (stoneGeary.withRate r hrr).interest = r from rfl,
+    show ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]
+  have hd : (0 : ℝ) < 1 - 1 / 8 * (1 + r) := by nlinarith [hr.1, hr.2]
+  have h1 : ((1 : ℝ) / 1000 + 1 / 100 / 2) ^ (-(1 : ℝ)) = 500 / 3 := by
+    rw [Real.rpow_neg_one]; norm_num
+  have h2 : ((1 : ℝ) / 1000 + 1 / 100 + (1 + r) * (1 / 40)) ^ (-(1 : ℝ))
+      = ((11 : ℝ) / 1000 + (1 + r) / 40)⁻¹ := by
+    rw [Real.rpow_neg_one]
+    ring_nf
+  rw [h1, h2]
+  have hA : (1 : ℝ) / 8 * (500 / 3 * (1 + r) / (1 - 1 / 8 * (1 + r))) ≤ 24 := by
+    rw [mul_div_assoc', div_le_iff₀ hd]
+    nlinarith [hr.1, hr.2]
+  have hB : (25 : ℝ) ≤ ((11 : ℝ) / 1000 + (1 + r) / 40)⁻¹ := by
+    rw [le_inv_comm₀ (by norm_num) (by nlinarith [hr.1, hr.2])]
+    nlinarith [hr.1, hr.2]
   linarith
 
 /-! ### The economy is calibrated -/
@@ -290,7 +269,7 @@ theorem stoneGeary_calibrated :
   slack := fun r hr hrr v hv hosc a ha z => stoneGeary_slack hr hrr hv hosc ha z
   a₀_pos := by norm_num
   a₀_le := by norm_num
-  corner := fun r hr hrr a ha => stoneGeary_corner hr hrr ha
+  corner := fun r hr hrr a ha => stoneGeary_corner r hr hrr a ha
 
 /-- **Carroll and Kimball for this economy**, at every rate in the interval. -/
 theorem stoneGeary_concaveOn_consumptionFn {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))

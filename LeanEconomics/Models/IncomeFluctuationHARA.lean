@@ -702,6 +702,108 @@ theorem hara_policy_ge_of_gain {γ η : ℝ} (hγ : 0 < γ) (hη : 0 ≤ η)
   rw [hu]
   exact hara_cost_of_saving hγ hη hh0 hhinc hm hb0 hbh
 
+
+/-! ### The corner condition, in primitives
+
+The corner test of `policy_eq_zero_of_corner_at` is `β L < m`: the discounted slope of the value
+function against the marginal value of consumption. Both sides have closed forms for shifted
+CRRA, so the test becomes one inequality among the primitives.
+
+* The value function's slope is bounded by `slopeBoundU`, amplified by the return and the
+  discounting. Concavity prices `slopeBoundU` at the margin halfway down the minimum
+  consumption: `(η + minConsumption / 2) ^ (-γ)`.
+* The marginal value at `(a, z₀)` for `a ≤ a₀` is at least `(η + income z₀ + R a₀) ^ (-γ)`.
+
+So the corner holds below `a₀` exactly when
+
+  `β · (η + minConsumption/2) ^ (-γ) · R / (1 - β R)  <  (η + income z₀ + R a₀) ^ (-γ)`,
+
+which is checkable by `norm_num` at any calibration. -/
+
+/-- The secant slope is at most the marginal utility at the left end. -/
+theorem haraUtility_marginal_bound_above {γ η : ℝ} (hγ0 : 0 < γ) {c d : ℝ} (hd : 0 < η + d)
+    (hdc : d ≤ c) :
+    haraUtility γ η c - haraUtility γ η d ≤ (η + d) ^ (-γ) * (c - d) := by
+  have hstep := crra_marginal_bound_above (γ := γ) (c := η + c) (d := η + d) hγ0 hd
+    (by linarith)
+  have he : η + c - (η + d) = c - d := by ring
+  rw [he] at hstep
+  simpa only [haraUtility] using hstep
+
+/-- **The slope constant in closed form.** -/
+theorem slopeBoundU_le_hara {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η) (hu : P.u = haraUtility γ η) :
+    P.slopeBoundU ≤ (η + P.minConsumption / 2) ^ (-γ) := by
+  have hmin := P.minConsumption_pos
+  simp only [IncomeFluctuation.slopeBoundU, slopeBound, hu]
+  rw [div_le_iff₀ (by linarith)]
+  have hstep := haraUtility_marginal_bound_above (γ := γ) (η := η) (c := P.minConsumption)
+    (d := P.minConsumption / 2) hγ0 (by linarith) (by linarith)
+  have he : P.minConsumption - P.minConsumption / 2 = P.minConsumption / 2 := by ring
+  rw [he] at hstep
+  exact hstep
+
+/-- The Lipschitz constant of the value function, in primitives. -/
+noncomputable def haraLipschitz (γ η : ℝ) : ℝ :=
+  (η + P.minConsumption / 2) ^ (-γ) * (1 + P.interest)
+    / (1 - P.discount * (1 + P.interest))
+
+theorem haraLipschitz_nonneg {γ η : ℝ} (hη : 0 ≤ η)
+    (hβR : P.discount * (1 + P.interest) < 1) : 0 ≤ P.haraLipschitz γ η := by
+  have hR := P.interest_gt_neg_one
+  have hmin := P.minConsumption_pos
+  exact div_nonneg (mul_nonneg (Real.rpow_nonneg (by linarith) _) hR.le) (by linarith)
+
+/-- **The value function is Lipschitz**, with the constant read off the primitives. -/
+theorem hara_valueFunction_lipschitz {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η)
+    (hu : P.u = haraUtility γ η) (hβR : P.discount * (1 + P.interest) < 1) :
+    ∀ z : Z, ∀ x ∈ Icc assetFloor assetCap, ∀ y ∈ Icc assetFloor assetCap,
+      |P.toExtended.valueFunction (x, z) - P.toExtended.valueFunction (y, z)|
+        ≤ P.haraLipschitz γ η * |x - y| := by
+  have hR := P.interest_gt_neg_one
+  have hne : (0 : ℝ) < 1 - P.discount * (1 + P.interest) := by linarith
+  refine P.valueFunction_lipschitz (P.haraLipschitz_nonneg hη hβR) ?_
+  have hslope := P.slopeBoundU_le_hara hγ0 hη hu
+  have hkey : ((η + P.minConsumption / 2) ^ (-γ)
+      + P.discount * P.haraLipschitz γ η) * (1 + P.interest) = P.haraLipschitz γ η := by
+    simp only [haraLipschitz]
+    field_simp
+    ring
+  have hmul : (P.slopeBoundU + P.discount * P.haraLipschitz γ η) * (1 + P.interest)
+      ≤ ((η + P.minConsumption / 2) ^ (-γ) + P.discount * P.haraLipschitz γ η)
+        * (1 + P.interest) :=
+    mul_le_mul_of_nonneg_right (by linarith) hR.le
+  rw [hkey] at hmul
+  exact hmul
+
+/-- **The corner condition from primitives.** One inequality, `norm_num`-checkable. -/
+theorem hara_policy_eq_zero_of_primitives {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 < η)
+    (hu : P.u = haraUtility γ η) (hfl : assetFloor = 0)
+    (hβR : P.discount * (1 + P.interest) < 1) (z₀ : Z) {a₀ : ℝ} (ha₀ : 0 ≤ a₀)
+    (ha₀cap : a₀ ≤ assetCap)
+    (hcond : P.discount * P.haraLipschitz γ η
+      < (η + P.income z₀ + (1 + P.interest) * a₀) ^ (-γ))
+    {a : ℝ} (ha : a ∈ Icc assetFloor a₀) : P.policy (a, z₀) = assetFloor := by
+  subst hfl
+  have hR := P.interest_gt_neg_one
+  have hmem : a ∈ Icc (0 : ℝ) assetCap := ⟨ha.1, le_trans ha.2 ha₀cap⟩
+  have hres : P.resources (a, z₀) - 0 ≤ P.income z₀ + (1 + P.interest) * a₀ := by
+    simp only [IncomeFluctuation.resources, max_eq_right ha.1, sub_zero]
+    have := mul_le_mul_of_nonneg_left ha.2 hR.le
+    linarith
+  have hres0 : (0 : ℝ) < P.resources (a, z₀) - 0 := by
+    have := P.assetFloor_lt_resources (a, z₀)
+    linarith
+  refine P.policy_eq_zero_of_corner_at (L := P.haraLipschitz γ η)
+    (m := (η + P.income z₀ + (1 + P.interest) * a₀) ^ (-γ))
+    (P.hara_valueFunction_lipschitz hγ0 hη.le hu hβR) hmem ?_ hcond
+  intro c d hd hdc hc
+  have hd0 : (0 : ℝ) ≤ d := P.nonneg_of_mem_dom hd
+  have hbound := haraUtility_marginal_bound_pos (γ := γ) (η := η)
+    (R := P.resources (a, z₀) - 0) hγ0 (show (0 : ℝ) < η + d by linarith) hdc hc
+  rw [hu]
+  refine le_trans (mul_le_mul_of_nonneg_right ?_ (by linarith)) hbound
+  exact rpow_neg_antitone hγ0 (by linarith) (by linarith)
+
 section Measure
 
 variable [MeasurableSpace Z] [BorelSpace Z]

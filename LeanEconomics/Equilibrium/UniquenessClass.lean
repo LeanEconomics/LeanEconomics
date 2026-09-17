@@ -91,6 +91,35 @@ structure Calibrated (P : IncomeFluctuation Z 0 assetCap) (γ η G a₀ : ℝ) (
   corner : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ a ∈ Icc (0 : ℝ) a₀,
     (P.withRate r hrr).policy (a, z₀) = 0
 
+/-! ### Building the corner field from primitives
+
+The `corner` field is the one hypothesis of the class that a witness used to assemble by hand:
+a Lipschitz bound for the value function, a marginal bound over the reachable consumption range,
+and the comparison between them. For shifted CRRA both bounds have closed forms
+(`hara_policy_eq_zero_of_primitives`), so the field reduces to ONE inequality among the
+primitives, rate by rate. CRRA already had this (`crra_policy_eq_zero_uniform`); this is the
+`η > 0` counterpart. -/
+
+theorem corner_of_primitives {P : IncomeFluctuation Z 0 assetCap} {γ η a₀ : ℝ} {z₀ : Z}
+    {rlo rhi : ℝ} (hγ0 : 0 < γ) (hη : 0 < η) (hu : P.u = haraUtility γ η)
+    (ha₀ : 0 ≤ a₀) (ha₀cap : a₀ ≤ assetCap)
+    (himp : ∀ r ∈ Icc rlo rhi, (P.discount : ℝ) * (1 + r) < 1)
+    (hcond : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r,
+      (P.discount : ℝ) * (P.withRate r hrr).haraLipschitz γ η
+        < (η + P.income z₀ + (1 + r) * a₀) ^ (-γ)) :
+    ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ a ∈ Icc (0 : ℝ) a₀,
+      (P.withRate r hrr).policy (a, z₀) = 0 := by
+  intro r hr hrr a ha
+  refine (P.withRate r hrr).hara_policy_eq_zero_of_primitives hγ0 hη (show (P.withRate r hrr).u = haraUtility γ η from hu) rfl ?_ z₀
+    ha₀ ha₀cap ?_ ha
+  · rw [show ((P.withRate r hrr).discount : ℝ) = (P.discount : ℝ) from rfl,
+      show (P.withRate r hrr).interest = r from rfl]
+    exact himp r hr
+  · rw [show ((P.withRate r hrr).discount : ℝ) = (P.discount : ℝ) from rfl,
+      show (P.withRate r hrr).income z₀ = P.income z₀ from rfl,
+      show (P.withRate r hrr).interest = r from rfl]
+    exact hcond r hr hrr
+
 namespace Calibrated
 
 variable {P : IncomeFluctuation Z 0 assetCap} {γ η G a₀ : ℝ} {z₀ : Z} {rlo rhi : ℝ}
