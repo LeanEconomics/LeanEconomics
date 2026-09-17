@@ -288,16 +288,40 @@ theorem nearLog_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (h
     show (((nearLog.withRate (1 / 200) hrhi).discount : ℝ)) = 1 / 8 from rfl]
   nlinarith [hlip, hge]
 
+/-- **The exhaustion data**: `N` consecutive draws of the low income state carry the richest
+household to the borrowing constraint, at every rate in `[0, 1/200]`. Kept as a statement of its
+own because CONVERGENCE needs the data, not only the uniqueness it implies. -/
+theorem nearLog_exhausts_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) :
+    ∃ N : ℕ, ((nearLog.withRate r hrr).gBad 0)^[N] (nearLog.withRate r hrr).topState
+      = (nearLog.withRate r hrr).botState :=
+  (nearLog.withRate r hrr).exists_exhaust_of_decline (z₀ := 0)
+    (a₀ := 1 / 50) (by norm_num) (by norm_num)
+    (fun a ha => nearLog_corner_uniform hr hrr ha)
+    (fun a ha => nearLog_decline_uniform hr hrr ha)
+
 /-- **A unique stationary distribution at every rate in `[0, 1/200]`.** -/
 theorem nearLog_existsUnique_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
     (hrr : nearLog.RateOK r) :
     ∃! μ : ProbabilityMeasure nearLog.State, (nearLog.withRate r hrr).IsStationary μ := by
-  obtain ⟨N, hN⟩ := (nearLog.withRate r hrr).exists_exhaust_of_decline (z₀ := 0)
-    (a₀ := 1 / 50) (by norm_num) (by norm_num)
-    (fun a ha => nearLog_corner_uniform hr hrr ha)
-    (fun a ha => nearLog_decline_uniform hr hrr ha)
+  obtain ⟨N, hN⟩ := nearLog_exhausts_uniform hr hrr
   exact (nearLog.withRate r hrr).existsUnique_isStationary (z₀ := 0) (N := N)
     (fun z => by norm_num) hN
+
+/-- **Convergence to the stationary distribution**, at every rate in `[0, 1/200]`: the forward
+iterates of ANY initial distribution converge weakly to it. Doeblin, with the atom at the
+borrowing constraint — the same minorisation that gives uniqueness. -/
+theorem nearLog_tendsto_pushProb_iterate {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) (μ₀ : ProbabilityMeasure nearLog.State)
+    {μ : ProbabilityMeasure nearLog.State} (hμ : (nearLog.withRate r hrr).IsStationary μ) :
+    Tendsto (fun m => (nearLog.withRate r hrr).pushProb^[m] μ₀) atTop (𝓝 μ) := by
+  obtain ⟨N, hN⟩ := nearLog_exhausts_uniform hr hrr
+  exact (nearLog.withRate r hrr).tendsto_pushProb_iterate (z₀ := 0) (p₀ := 1 / 2) (N := N + 1)
+    (by norm_num) (fun s => by
+      simp only [IncomeFluctuation.prob, IncomeFluctuation.withRate_transitionMatrix,
+        nearLog_transitionMatrix]
+      norm_num)
+    ((nearLog.withRate r hrr).badStep_iterate_eq hN) μ₀ hμ
 
 /-! ### The supply floor, and the equilibrium
 
