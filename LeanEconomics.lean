@@ -71,3 +71,4 @@ import LeanEconomics.Models.CESConcaveConsumption
 import LeanEconomics.Models.IncomeFluctuationRateStep
 import LeanEconomics.Models.CESRateMonotone
 import LeanEconomics.Equilibrium.CESUniqueness
+import LeanEconomics.Models.ImpatientDecline

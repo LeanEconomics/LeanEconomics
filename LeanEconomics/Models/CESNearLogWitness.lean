@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.CESWitness
+import LeanEconomics.Models.ImpatientDecline
 
 /-!
 # Pushing `γ` toward 1: the CES witness at the log calibration
@@ -288,17 +289,46 @@ theorem nearLog_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (h
     show (((nearLog.withRate (1 / 200) hrhi).discount : ℝ)) = 1 / 8 from rfl]
   nlinarith [hlip, hge]
 
+/-- Positive consumption against EVERY continuation with concave slices, not just at the fixed
+point: what the Carroll–Kimball induction sees. -/
+theorem nearLog_withRate_positiveConsumptionAll {r : ℝ} (hrr : nearLog.RateOK r) :
+    (nearLog.withRate r hrr).PositiveConsumptionAll := by
+  refine (nearLog.withRate r hrr).positiveConsumptionAll_of_marginalInada ?_
+  rw [show (nearLog.withRate r hrr).dom = Ici 0 from nearLog_bounded,
+    show (nearLog.withRate r hrr).u = crraUtility (15 / 16) from rfl]
+  exact marginalInadaOn_Ici_crraUtility (by norm_num) (by norm_num)
+
+/-- The saving is strictly below its cap at every state — the interiority the Euler inequality
+needs, from the cap being slack. -/
+theorem nearLog_policy_lt_maxSaving {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) (z : Fin 2) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) :
+    (nearLog.withRate r hrr).policy (a, z) < (nearLog.withRate r hrr).maxSaving (a, z) :=
+  (nearLog.withRate r hrr).policyOf_lt_maxSaving (nearLog_withRate_positiveConsumptionAll hrr)
+    (nearLog.withRate r hrr).concaveSlices_valueFunction ha (nearLog_policy_lt_cap hr hrr ha z)
+
 /-- **The exhaustion data**: `N` consecutive draws of the low income state carry the richest
-household to the borrowing constraint, at every rate in `[0, 1/200]`. Kept as a statement of its
-own because CONVERGENCE needs the data, not only the uniqueness it implies. -/
+household to the borrowing constraint, at every rate in `[0, 1/200]`.
+
+The DECLINE half is no longer a calibration: by `crra_exists_exhaust_of_impatient` it is
+`β(1+r) < 1`, which at `β = 1/8` is not close. Only the corner condition
+`nearLog_corner_uniform` is still numerical, as it must be — decline gives a falling sequence,
+and the Doeblin argument needs the constraint reached exactly. -/
 theorem nearLog_exhausts_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
     (hrr : nearLog.RateOK r) :
     ∃ N : ℕ, ((nearLog.withRate r hrr).gBad 0)^[N] (nearLog.withRate r hrr).topState
       = (nearLog.withRate r hrr).botState :=
-  (nearLog.withRate r hrr).exists_exhaust_of_decline (z₀ := 0)
+  (nearLog.withRate r hrr).crra_exists_exhaust_of_impatient (γ := 15 / 16) (by norm_num) rfl
+    (by
+      rw [show (((nearLog.withRate r hrr).discount : ℝ)) = 1 / 8 from rfl,
+        show (nearLog.withRate r hrr).interest = r from rfl]
+      linarith [hr.2])
+    (fun _ _ _ => rfl)
+    (fun z x hx => (nearLog.withRate r hrr).consumptionFn_pos
+      (nearLog_withRate_positiveConsumption hrr) hx z)
+    (fun z x hx => nearLog_policy_lt_maxSaving hr hrr z hx)
+    (z₀ := 0) (fun z => by fin_cases z <;> norm_num)
     (a₀ := 1 / 50) (by norm_num) (by norm_num)
     (fun a ha => nearLog_corner_uniform hr hrr ha)
-    (fun a ha => nearLog_decline_uniform hr hrr ha)
 
 /-- **A unique stationary distribution at every rate in `[0, 1/200]`.** -/
 theorem nearLog_existsUnique_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))

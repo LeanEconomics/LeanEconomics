@@ -27,15 +27,6 @@ namespace LeanEconomics
 
 open IncomeFluctuation
 
-/-- Positive consumption against EVERY continuation with concave slices, not just at the fixed
-point: what the induction sees. -/
-theorem nearLog_withRate_positiveConsumptionAll {r : ℝ} (hrr : nearLog.RateOK r) :
-    (nearLog.withRate r hrr).PositiveConsumptionAll := by
-  refine (nearLog.withRate r hrr).positiveConsumptionAll_of_marginalInada ?_
-  rw [show (nearLog.withRate r hrr).dom = Ici 0 from nearLog_bounded,
-    show (nearLog.withRate r hrr).u = crraUtility (15 / 16) from rfl]
-  exact marginalInadaOn_Ici_crraUtility (by norm_num) (by norm_num)
-
 /-- **The calibration inequality, for any oscillation bound at most `27/5`.** This is the
 `hlt` of `crra_policyOf_lt_assetCap`, with the oscillation left as a parameter so that it can be
 fed either economy's iterates. -/

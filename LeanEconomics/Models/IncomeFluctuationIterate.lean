@@ -870,6 +870,7 @@ def IncDiffSlices (assetFloor assetCap : ℝ) (v w : (ℝ × Z) →ᵇ ℝ) : Pr
   ∀ (z : Z) (x y : ℝ), x ∈ Icc assetFloor assetCap → y ∈ Icc assetFloor assetCap → x ≤ y →
     v (y, z) - v (x, z) ≤ w (y, z) - w (x, z)
 
+omit [Fintype Z] [Nonempty Z] [DiscreteTopology Z] in
 theorem incDiffSlices_zero (assetFloor assetCap : ℝ) :
     IncDiffSlices (Z := Z) assetFloor assetCap 0 0 := by
   intro z x y _ _ _
@@ -904,9 +905,9 @@ theorem policyOf_le_of_contOf_increasingDifferences {v w : (ℝ × Z) →ᵇ ℝ
   have hoptW := P.objROf_le_of_mem w ha hbVm hcV
   have hidd := hid z bW bV (P.feasible_subset_region hbWm) (P.feasible_subset_region hbVm) hcon.le
   have hβ0 : (0 : ℝ) ≤ P.discount := P.discount.coe_nonneg
-  simp only [objROf, ← hbV, ← hbW] at hoptV hoptW
+  simp only [objROf] at hoptV hoptW
   have hWeq : P.objROf w (a, z) bV = P.objROf w (a, z) bW := by
-    simp only [objROf, ← hbV, ← hbW]
+    simp only [objROf]
     nlinarith [hoptV, hoptW, mul_le_mul_of_nonneg_left hidd hβ0]
   have hbell : P.toExtended.objectiveE w (a, z) bV
       = ((P.toExtended.bellmanFn w (a, z) : ℝ) : EReal) := by
