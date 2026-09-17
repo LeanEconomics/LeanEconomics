@@ -365,6 +365,17 @@ half as far above the borrowing limit — works against any continuation, with `
 `‖V‖`. The iterates are uniformly bounded because the Bellman operator adds at most the reward
 and contracts what it inherits, so one calibration inequality covers the whole iteration. -/
 
+/-- **The fixed point oscillates by no more than the iterates do**, being their uniform limit. -/
+theorem oscOn_valueFunction : P.OscOn P.toExtended.valueFunction P.oscSpread := by
+  intro x hx y hy z z'
+  have hpt : ∀ p : ℝ × Z, Tendsto
+      (fun n => ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) p) atTop
+        (𝓝 (P.toExtended.valueFunction p)) := fun p =>
+    (BoundedContinuousFunction.tendsto_iff_tendstoUniformly.mp
+      (P.toExtended.tendsto_iterate_valueFunction 0)).tendsto_at p
+  exact le_of_tendsto_of_tendsto ((hpt (x, z)).sub (hpt (y, z'))) tendsto_const_nhds
+    (Eventually.of_forall fun n => P.oscOn_iterate n x hx y hy z z')
+
 theorem abs_contOf_le (v : (ℝ × Z) →ᵇ ℝ) (z : Z) (x : ℝ) : |P.contOf v z x| ≤ ‖v‖ := by
   have h1 : |∑ z' : Z, P.transitionMatrix z z' * v (x, z')|
       ≤ ∑ z' : Z, |P.transitionMatrix z z' * v (x, z')| := Finset.abs_sum_le_sum_abs _ _

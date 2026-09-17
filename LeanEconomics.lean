@@ -80,3 +80,4 @@ import LeanEconomics.Analysis.SoftMin
 import LeanEconomics.Models.CARA
 import LeanEconomics.Models.IncomeFluctuationCARA
 import LeanEconomics.Models.IncomeFluctuationPatience
+import LeanEconomics.Equilibrium.UniquenessClass
