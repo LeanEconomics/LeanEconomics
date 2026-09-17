@@ -5,6 +5,8 @@ Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuationEuler
 import LeanEconomics.Models.IncomeFluctuationIterate
+import LeanEconomics.Models.IncomeFluctuationRateStep
+import LeanEconomics.Models.ImpatientDecline
 import LeanEconomics.Analysis.HARA
 
 /-!
@@ -314,6 +316,139 @@ theorem concaveOn_consumptionFnOf_bellman_of_hara_corner {γ η : ℝ} (hγ : 0 
       (hslackv _ (P.feasible_subset_region (P.policyOf_mem _ (a, z))))
       fun z' => hpos z' _ (P.feasible_subset_region (P.policyOf_mem _ (a, z)))
 
+/-! ### The proportional bound on saving
+
+`policyOf_le_of_marginal_bound` prices a deviation against the LEVEL of the continuation, which
+for a bounded utility is far too crude to keep the cap slack at any interesting discount factor.
+The CRRA development fixes that with `crra_policyOf_le_mul`: deviate to a FRACTION `θ` of the
+saving rather than a fixed amount, and price the extra consumption at the margin where it lands.
+The bound then involves the continuation's OSCILLATION and is proportional to consumption.
+
+The shifted-CRRA version is that argument with the marginal step read at `η + c`. Everything
+else — the deviation, the concavity of the continuation, the oscillation — knows nothing about
+preferences. -/
+
+theorem hara_policyOf_le_mul {γ η θ G : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
+    (hθ0 : 0 < θ) (hθ1 : θ < 1) (hu : P.u = haraUtility γ η) (hpc : P.PositiveConsumptionAll)
+    {v : (ℝ × Z) →ᵇ ℝ} (hv : ConcaveSlices assetFloor assetCap v) (hG : 0 ≤ G)
+    (hosc : P.OscOn v G) {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) (z : Z) :
+    P.policyOf v (a, z) - assetFloor
+      ≤ ((P.discount : ℝ) * G / θ)
+        * (η + P.consumptionFnOf v z a
+            + (1 - θ) * (P.policyOf v (a, z) - assetFloor)) ^ γ := by
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  set b : ℝ := P.policyOf v (a, z) with hbdef
+  set c : ℝ := P.consumptionFnOf v z a with hcdef
+  have hbreg : b ∈ Icc assetFloor assetCap :=
+    P.feasible_subset_region (P.policyOf_mem v (a, z))
+  have hcpos : 0 < c := hpc v hv z a ha
+  have hbase : (0 : ℝ) < η + c + (1 - θ) * (b - assetFloor) := by
+    have h := mul_nonneg (show (0 : ℝ) ≤ 1 - θ by linarith)
+      (show (0 : ℝ) ≤ b - assetFloor by linarith [hbreg.1])
+    linarith
+  have hrpow : (0 : ℝ) < (η + c + (1 - θ) * (b - assetFloor)) ^ γ := Real.rpow_pos_of_pos hbase _
+  rcases eq_or_lt_of_le hbreg.1 with hzero | hbpos
+  · rw [← hzero, sub_self]
+    positivity
+  have hbf : (0 : ℝ) < b - assetFloor := by linarith
+  set w : ℝ := assetFloor + θ * (b - assetFloor) with hwdef
+  have hw0 : assetFloor < w := by rw [hwdef]; nlinarith
+  have hwb : w < b := by rw [hwdef]; nlinarith
+  have hwmem : w ∈ Icc assetFloor assetCap := ⟨hw0.le, by linarith [hbreg.2]⟩
+  have hfeas : w ∈ P.toExtended.feasible (a, z) := by
+    rw [P.feasible_eq]
+    exact ⟨hw0.le, by linarith [(P.policyOf_mem v (a, z)).2]⟩
+  have hcb : c = P.resources (a, z) - b := rfl
+  have hcons : P.consumption (a, z) w = c + (1 - θ) * (b - assetFloor) := by
+    simp only [consumption, hwdef]; rw [hcb]; ring
+  have hdev : 0 < P.consumption (a, z) w := by rw [hcons]; linarith
+  have hopt := P.objROf_le_of_mem v ha hfeas (P.mem_dom_of_pos hdev)
+  simp only [objROf, hcons] at hopt
+  rw [show P.consumption (a, z) (P.policyOf v (a, z)) = c from rfl,
+    show P.policyOf v (a, z) = b from rfl] at hopt
+  have hslope := (P.concaveOn_contOf hv z).slope_anti_adjacent
+    (mem_Icc.mpr ⟨le_rfl, P.assetFloor_le_assetCap⟩) hbreg hw0 hwb
+  have hgap := P.contOf_sub_le_osc hosc hwmem
+    (show assetFloor ∈ Icc assetFloor assetCap from ⟨le_rfl, P.assetFloor_le_assetCap⟩) z z
+  have hbw : b - w = (1 - θ) * (b - assetFloor) := by rw [hwdef]; ring
+  have hwf : w - assetFloor = θ * (b - assetFloor) := by rw [hwdef]; ring
+  have hloss : P.contOf v z b - P.contOf v z w ≤ (1 - θ) / θ * G := by
+    rw [div_le_div_iff₀ (show (0 : ℝ) < b - w by linarith)
+      (show (0 : ℝ) < w - assetFloor by linarith), hbw, hwf] at hslope
+    have h2 : (P.contOf v z b - P.contOf v z w) * (θ * (b - assetFloor))
+        ≤ G * ((1 - θ) * (b - assetFloor)) := by
+      nlinarith [hslope, hgap, mul_pos (show (0:ℝ) < 1 - θ by linarith) hbf]
+    rw [div_mul_eq_mul_div, le_div_iff₀ hθ0]
+    nlinarith [h2, hbf]
+  -- the marginal gain, priced where it lands: the CRRA step read at `η + c`
+  have hmg : (η + c + (1 - θ) * (b - assetFloor)) ^ (-γ) * ((1 - θ) * (b - assetFloor))
+      ≤ P.u (c + (1 - θ) * (b - assetFloor)) - P.u c := by
+    rw [hu]
+    have hbound := haraUtility_marginal_bound (γ := γ) (η := η)
+      (R := c + (1 - θ) * (b - assetFloor)) hγ0 hγ1 hη (d := c) (c := c + (1 - θ) * (b - assetFloor))
+      hcpos.le (le_add_of_nonneg_right (mul_nonneg (by linarith) hbf.le)) le_rfl
+    have he : η + (c + (1 - θ) * (b - assetFloor)) = η + c + (1 - θ) * (b - assetFloor) := by ring
+    rw [he] at hbound
+    have he2 : c + (1 - θ) * (b - assetFloor) - c = (1 - θ) * (b - assetFloor) := by ring
+    rw [he2] at hbound
+    exact hbound
+  have hmid : P.u (c + (1 - θ) * (b - assetFloor)) - P.u c
+      ≤ (P.discount : ℝ) * (P.contOf v z b - P.contOf v z w) := by
+    have hd : (P.discount : ℝ) * (P.contOf v z b - P.contOf v z w)
+        = (P.discount : ℝ) * P.contOf v z b - (P.discount : ℝ) * P.contOf v z w := by ring
+    linarith [hopt, hd.le, hd.ge]
+  have hkey := le_trans hmg (le_trans hmid (mul_le_mul_of_nonneg_left hloss hβ))
+  rw [Real.rpow_neg hbase.le γ] at hkey
+  have h1θ : (0 : ℝ) < 1 - θ := by linarith
+  have hexp : ((η + c + (1 - θ) * (b - assetFloor)) ^ γ)⁻¹ * ((1 - θ) * (b - assetFloor))
+      = (1 - θ) * ((b - assetFloor) / (η + c + (1 - θ) * (b - assetFloor)) ^ γ) := by field_simp
+  rw [hexp, show (P.discount : ℝ) * ((1 - θ) / θ * G)
+      = (1 - θ) * ((P.discount : ℝ) * G / θ) from by ring] at hkey
+  have hdiv := le_of_mul_le_mul_left hkey h1θ
+  rw [div_le_iff₀ hrpow] at hdiv
+  linarith
+
+/-- **Saving never reaches the asset cap**, for shifted CRRA. -/
+theorem hara_policyOf_lt_assetCap {γ η θ G : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
+    (hθ0 : 0 < θ) (hθ1 : θ < 1) (hu : P.u = haraUtility γ η) (hpc : P.PositiveConsumptionAll)
+    {v : (ℝ × Z) →ᵇ ℝ} (hv : ConcaveSlices assetFloor assetCap v) (hG : 0 ≤ G)
+    (hosc : P.OscOn v G)
+    (hlt : ((P.discount : ℝ) * G / θ)
+        * (η + P.maxIncome + (1 + P.interest - θ) * assetCap - (1 - θ) * assetFloor) ^ γ
+      < assetCap - assetFloor)
+    {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) (z : Z) :
+    P.policyOf v (a, z) < assetCap := by
+  by_contra hcon
+  rw [not_lt] at hcon
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  set b : ℝ := P.policyOf v (a, z) with hbdef
+  set c : ℝ := P.consumptionFnOf v z a with hcdef
+  have hbreg : b ∈ Icc assetFloor assetCap :=
+    P.feasible_subset_region (P.policyOf_mem v (a, z))
+  have hkey := P.hara_policyOf_le_mul hγ0 hγ1 hη hθ0 hθ1 hu hpc hv hG hosc ha z
+  rw [← hbdef, ← hcdef] at hkey
+  have hcpos : 0 < c := hpc v hv z a ha
+  have hres : P.resources (a, z) - assetFloor ≤ P.maxConsumption :=
+    P.consumption_le_maxConsumption (s := (a, z)) ha le_rfl
+  have hsum : c + (1 - θ) * (b - assetFloor)
+      = (P.resources (a, z) - assetFloor) - θ * (b - assetFloor) := by
+    simp only [hcdef, consumptionFnOf, consumption, ← hbdef]; ring
+  have hle : η + c + (1 - θ) * (b - assetFloor)
+      ≤ η + P.maxIncome + (1 + P.interest - θ) * assetCap - (1 - θ) * assetFloor := by
+    have hθb : θ * (assetCap - assetFloor) ≤ θ * (b - assetFloor) :=
+      mul_le_mul_of_nonneg_left (by linarith) hθ0.le
+    simp only [maxConsumption] at hres
+    nlinarith [hres, hθb, hsum]
+  have hnn : (0 : ℝ) ≤ η + c + (1 - θ) * (b - assetFloor) := by
+    have h := mul_nonneg (show (0 : ℝ) ≤ 1 - θ by linarith)
+      (show (0 : ℝ) ≤ b - assetFloor by linarith [hbreg.1])
+    linarith
+  have hmono : (η + c + (1 - θ) * (b - assetFloor)) ^ γ
+      ≤ (η + P.maxIncome + (1 + P.interest - θ) * assetCap - (1 - θ) * assetFloor) ^ γ :=
+    Real.rpow_le_rpow hnn hle hγ0.le
+  have hcoef : (0 : ℝ) ≤ (P.discount : ℝ) * G / θ := by positivity
+  nlinarith [hkey, mul_le_mul_of_nonneg_left hmono hcoef, hlt]
+
 /-! ### The assembly -/
 
 theorem concaveOn_consumptionFnOf_iterates_of_hara {γ η : ℝ} (hγ : 0 < γ) (hη : 0 ≤ η)
@@ -402,6 +537,61 @@ theorem concaveOn_consumptionFn_of_hara {γ η δ : ℝ} (hγ0 : 0 < γ) (hγ1 :
       exact haraUtility_marginal_bound hγ0 hγ1 hη (P.nonneg_of_mem_dom hd) hdc hcmax
   exact P.concaveOn_consumptionFn_of_iterates
     (P.concaveOn_consumptionFnOf_iterates_of_hara hγ0 hη hβ hu hpos hslack) z
+
+
+/-! ### The two comparative-statics corollaries, for shifted CRRA
+
+Light's Theorem 1 and the impatience-driven decline both take the marginal-utility hypotheses
+abstractly, so shifted CRRA discharges them the same way CRRA does — with `(η + c) ^ (-γ)` in
+place of `c ^ (-γ)`. Relative risk aversion of the shifted family is `γc/(η + c) ≤ γ`, so a
+NON-NEGATIVE subsistence level only helps Light's condition. -/
+
+theorem hara_marginal_antitone {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η) :
+    AntitoneOn (fun c => (η + c) ^ (-γ)) (Ioi (0 : ℝ)) := fun x hx y _ hxy =>
+  Real.rpow_le_rpow_of_nonpos (by linarith [mem_Ioi.mp hx]) (by linarith) (by linarith)
+
+theorem hara_marginal_pos {γ η : ℝ} (hη : 0 ≤ η) {c : ℝ} (hc : 0 < c) :
+    0 < (η + c) ^ (-γ) := Real.rpow_pos_of_pos (by linarith) _
+
+/-- **Light (2018) Theorem 1 for shifted CRRA.** -/
+theorem policy_mono_withRate_hara {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
+    {γ η : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1) (hη : 0 ≤ η) (hu : P.u = haraUtility γ η)
+    {r₁ r₂ : ℝ} (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (hr : r₁ ≤ r₂)
+    (hpc : (P.withRate r₂ h₂).PositiveConsumptionAll)
+    (hslackv : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
+      (((P.withRate r₁ h₁).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
+    (hslackw : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
+      (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
+    (hcons : ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
+      ((P.withRate r₂ h₂).consumptionFnOf
+        (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z))
+    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
+    (P.withRate r₁ h₁).policy (a, z) ≤ (P.withRate r₂ h₂).policy (a, z) :=
+  P.policy_mono_withRate' h₁ h₂ hr (du := fun c => (η + c) ^ (-γ))
+    (fun c hc => by rw [hu]; exact hasDerivAt_haraUtility γ (by linarith))
+    (hara_marginal_antitone hγ0 hη)
+    (by
+      have hrra := (relativeRiskAversionLeOne_haraUtility hγ0 hγ1 hη).monotoneOn_mul_deriv
+        (du := fun c => (η + c) ^ (-γ))
+        (fun c hc => hasDerivAt_haraUtility γ (by have := mem_Ioi.mp hc; linarith))
+      exact hrra)
+    (fun y hy => (hara_marginal_pos hη (mem_Ioi.mp hy)).le)
+    hpc hslackv hslackw hcons ha z
+
+/-- **Açıkgöz Proposition 4 for shifted CRRA**: the decline condition is impatience. -/
+theorem hara_exists_exhaust_of_impatient {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η)
+    (hu : P.u = haraUtility γ η)
+    (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hiid : P.IidIncome)
+    (hpos : ∀ (z : Z), ∀ x ∈ Icc assetFloor assetCap, 0 < P.consumptionFn z x)
+    (hslack : ∀ (z : Z), ∀ x ∈ Icc assetFloor assetCap, P.policy (x, z) < P.maxSaving (x, z))
+    {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
+    {a₀ : ℝ} (ha₀ : assetFloor < a₀) (hle : a₀ ≤ assetCap)
+    (hzero : ∀ a ∈ Icc assetFloor a₀, P.policy (a, z₀) = assetFloor) :
+    ∃ N : ℕ, (P.gBad z₀)^[N] P.topState = P.botState :=
+  P.exists_exhaust_of_impatient hβR hiid (du := fun c => (η + c) ^ (-γ))
+    (fun c hc => by rw [hu]; exact hasDerivAt_haraUtility γ (by linarith))
+    (hara_marginal_antitone hγ0 hη)
+    (fun c hc => hara_marginal_pos hη hc) hpos hslack hz₀ ha₀ hle hzero
 
 end IncomeFluctuation
 

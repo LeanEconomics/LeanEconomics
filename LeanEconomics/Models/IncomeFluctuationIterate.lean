@@ -84,6 +84,22 @@ def PositiveConsumptionAll : Prop :=
 theorem positiveConsumptionAll_of_unbounded (hd : P.Unbounded) : P.PositiveConsumptionAll :=
   fun v _ _ _ ha => P.consumptionFnOf_pos hd v ha
 
+/-- **Positive consumption for free, when the cap is narrow relative to income.** If the whole
+asset range is worth less than one period's minimum consumption, no feasible saving can exhaust
+resources, so consumption is positive whatever the continuation. Utilities with FINITE marginal
+value at zero — CARA, shifted CRRA — have no Inada condition to appeal to, and this is the
+alternative: keep the household away from zero consumption by the budget rather than by the
+preferences. -/
+theorem positiveConsumptionAll_of_rich (hrich : assetCap - assetFloor < P.minConsumption) :
+    P.PositiveConsumptionAll := by
+  intro v hv z a ha
+  have h1 : P.minConsumption ≤ P.resources (a, z) - assetFloor :=
+    P.minConsumption_le_consumption_floor (a, z)
+  have h2 : P.policyOf v (a, z) ≤ assetCap :=
+    (P.feasible_subset_region (P.policyOf_mem v (a, z))).2
+  simp only [consumptionFnOf, consumption]
+  linarith
+
 /-- The objective in the reals agrees with the extended objective where consumption is
 positive. -/
 theorem objectiveE_eq_coe_of (v : (ℝ × Z) →ᵇ ℝ) {a : ℝ} {z : Z} {x : ℝ}
