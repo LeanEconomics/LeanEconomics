@@ -76,3 +76,6 @@ import LeanEconomics.Models.IncomeFluctuationHARA
 import LeanEconomics.DynamicProgramming.StochasticOptimality
 import LeanEconomics.DynamicProgramming.ExtendedStochasticOptimality
 import LeanEconomics.Models.IncomeFluctuationSequence
+import LeanEconomics.Analysis.SoftMin
+import LeanEconomics.Models.CARA
+import LeanEconomics.Models.IncomeFluctuationCARA

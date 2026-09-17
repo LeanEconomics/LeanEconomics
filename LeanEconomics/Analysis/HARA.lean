@@ -23,8 +23,15 @@ derivative-free and is what every proof below actually uses:
   `u c = k · (a + c) ^ (1 - γ) / (1 - γ) + l`,  and the `γ = 1` logarithm,
 
 with `k > 0`. This is the `b ≠ 0` branch of HARA -- the one that contains CRRA, and the one
-macroeconomics uses. The other branches, CARA (`b = 0`) and quadratic (`b < 0`), are excluded:
-the first is unbounded above so no capped model admits it, and the second satiates.
+macroeconomics uses. The quadratic branch (`b < 0`) is excluded because it satiates.
+
+CARA (`b = 0`) is NOT excluded, and an earlier version of this docstring was wrong about why it
+might be: `u c = -exp (-α c) / α` is bounded above by `0` and equals `-1/α` at zero consumption,
+so a capped model admits it -- `Models.IncomeFluctuationCARA.caraWitness` is one. What CARA does
+not have is Light's condition, since relative risk aversion `α c` is unbounded
+(`not_monotoneOn_mul_deriv_caraUtility`). It is covered separately because its Carroll--Kimball
+step needs a different aggregator, the soft minimum of `Analysis.SoftMin` rather than a power
+mean; see `Models.IncomeFluctuationCARA`.
 
 The shift `a` is the subsistence level of Stone and Geary. `a = 0` is CRRA exactly.
 

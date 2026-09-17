@@ -37,7 +37,8 @@ The induction STEP is here, for the whole `b ≠ 0` HARA branch. What is not is 
 statement: the iteration also needs positive consumption and the asset cap slack, and those are
 proved in `IncomeFluctuationIterate` through CRRA-specific bounds (`crra_policyOf_le_mul` and the
 oscillation machinery). The CARA branch `b = 0`, where marginal utility is `exp (-α c)`, needs a
-different aggregator — the soft minimum `-(1/α) log Σ π exp (-α c)` — and is not here.
+different aggregator — the soft minimum `-(1/α) log Σ π exp (-α c)` — and is in
+`IncomeFluctuationCARA`, on top of `Analysis.SoftMin`.
 -/
 
 open Set Filter Topology BoundedContinuousFunction
