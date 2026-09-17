@@ -67,28 +67,43 @@ theorem hasDerivAt_lazyValue (v : (ℝ × Z) →ᵇ ℝ) (z : Z) (a' : ℝ) {a d
   exact hsum
 
 /-- **The lazy value is a lower bound**: freezing a feasible saving can only do worse than
-optimising. -/
-theorem lazyValue_le (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a ∈ Icc assetFloor assetCap)
-    (hmem : a' ∈ P.toExtended.feasible (a, z)) (hc : 0 < P.consumption (a, z) a') :
+optimising. Stated on the utility DOMAIN, so that it survives the bounded family, where zero
+consumption is admissible and positivity has to be earned. -/
+theorem lazyValue_le_dom (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ}
+    (ha : a ∈ Icc assetFloor assetCap)
+    (hmem : a' ∈ P.toExtended.feasible (a, z)) (hc : P.consumption (a, z) a' ∈ P.dom) :
     P.lazyValue v z a' a ≤ P.toExtended.bellmanFn v (a, z) := by
   have hobj := P.toExtended.le_bellmanFn v hmem
-  have hrw := P.reward_eq_coe (s := (a, z)) ha hmem hc
+  have hrw := P.reward_eq_coe_dom (s := (a, z)) ha hmem hc
   have hdx : (P.toExtended.discount : ℝ) = (P.discount : ℝ) := rfl
   rw [ExtendedStochasticProgram.objectiveE, hrw, hdx, ← EReal.coe_add,
     EReal.coe_le_coe_iff] at hobj
   exact hobj
 
+theorem lazyValue_le (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a ∈ Icc assetFloor assetCap)
+    (hmem : a' ∈ P.toExtended.feasible (a, z)) (hc : 0 < P.consumption (a, z) a') :
+    P.lazyValue v z a' a ≤ P.toExtended.bellmanFn v (a, z) :=
+  P.lazyValue_le_dom v z ha hmem (P.mem_dom_of_pos hc)
+
 /-- At the optimum the lazy value touches the Bellman value. -/
-theorem lazyValue_eq (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a ∈ Icc assetFloor assetCap)
-    (hmem : a' ∈ P.toExtended.feasible (a, z)) (hc : 0 < P.consumption (a, z) a')
+theorem lazyValue_eq_dom (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ}
+    (ha : a ∈ Icc assetFloor assetCap)
+    (hmem : a' ∈ P.toExtended.feasible (a, z)) (hc : P.consumption (a, z) a' ∈ P.dom)
     (hopt : P.toExtended.objectiveE v (a, z) a'
       = ((P.toExtended.bellmanFn v (a, z) : ℝ) : EReal)) :
     P.lazyValue v z a' a = P.toExtended.bellmanFn v (a, z) := by
-  have hrw := P.reward_eq_coe (s := (a, z)) ha hmem hc
+  have hrw := P.reward_eq_coe_dom (s := (a, z)) ha hmem hc
   have hdx : (P.toExtended.discount : ℝ) = (P.discount : ℝ) := rfl
   rw [ExtendedStochasticProgram.objectiveE, hrw, hdx, ← EReal.coe_add,
     EReal.coe_eq_coe_iff] at hopt
   exact hopt
+
+theorem lazyValue_eq (v : (ℝ × Z) →ᵇ ℝ) (z : Z) {a' a : ℝ} (ha : a ∈ Icc assetFloor assetCap)
+    (hmem : a' ∈ P.toExtended.feasible (a, z)) (hc : 0 < P.consumption (a, z) a')
+    (hopt : P.toExtended.objectiveE v (a, z) a'
+      = ((P.toExtended.bellmanFn v (a, z) : ℝ) : EReal)) :
+    P.lazyValue v z a' a = P.toExtended.bellmanFn v (a, z) :=
+  P.lazyValue_eq_dom v z ha hmem (P.mem_dom_of_pos hc) hopt
 
 /-! ### The envelope theorem
 

@@ -57,11 +57,15 @@ the only thing `concaveOn_of_egm` ever needed. `concaveOn_of_egm_corner` and
 monotonicity of the consumption function, proved at the fixed point in this development, restated
 for an arbitrary continuation, and a uniform bound on saving that covers every iterate at once.
 
-**So Carroll and Kimball is proved** -- `concaveOn_consumptionFn_of_marginal` -- for CRRA, with
-two inputs left explicit. One is `PositiveConsumptionAll`: consumption is positive at the optimum
-against every continuation, automatic when utility is unbounded below and still owed for the
-bounded CES family, where it has to be earned from a marginal Inada condition. The other is one
-calibration inequality putting the asset cap above the uniform bound on saving.
+**So Carroll and Kimball is proved** -- `concaveOn_consumptionFn_of_marginal` for CRRA,
+`concaveOn_consumptionFn_of_bounded_crra` for the bounded CES family `0 < γ < 1`, where positive
+consumption comes from the marginal Inada condition run against an arbitrary continuation.
+
+One input is left explicit: a calibration inequality putting the asset cap above the uniform
+bound on saving. The bound used there is crude -- `2 ‖v‖` for the continuation's oscillation --
+and the CES witnesses in this development have caps below it. Sharpening it means porting the
+multiplicative bound `crra_policy_le_mul`, which is what the fixed-point argument uses, to an
+arbitrary continuation.
 
 **Toda (2021) still bounds what can be hoped for.** Under regularity conditions HARA is
 NECESSARY for the consumption function to be concave, and the structure assumes of `u` only
@@ -84,7 +88,10 @@ The obstruction has moved four times.
 * The borrowing-constraint kink was the fifth, and `concaveOn_of_egm_corner` absorbs it.
 * The induction's bookkeeping was the sixth, and `IncomeFluctuationIterate` does it.
 
-What remains is `PositiveConsumptionAll` for the bounded CES family, and the cap calibration.
+* Positive consumption for the bounded CES family was the seventh, and
+  `positiveConsumptionAll_of_marginalInada` does it.
+
+What remains is sharpening the cap calibration so that the existing CES witnesses satisfy it.
 
 This file holds the analysis and the closure step; `IncomeFluctuationEuler` the first-order
 condition and the corner; `IncomeFluctuationIterate` the bookkeeping and the theorem.
