@@ -82,3 +82,4 @@ import LeanEconomics.Models.IncomeFluctuationCARA
 import LeanEconomics.Models.IncomeFluctuationPatience
 import LeanEconomics.Equilibrium.UniquenessClass
 import LeanEconomics.Models.StoneGearyWitness
+import LeanEconomics.Models.Quadratic

@@ -23,7 +23,12 @@ derivative-free and is what every proof below actually uses:
   `u c = k · (a + c) ^ (1 - γ) / (1 - γ) + l`,  and the `γ = 1` logarithm,
 
 with `k > 0`. This is the `b ≠ 0` branch of HARA -- the one that contains CRRA, and the one
-macroeconomics uses. The quadratic branch (`b < 0`) is excluded because it satiates.
+macroeconomics uses. The quadratic branch (`b < 0`) is excluded because it satiates, and that
+exclusion is now a theorem rather than a remark: `Models.Quadratic.no_incomeFluctuation_quadUtility`
+shows no economy in this development can have quadratic utility, for any bliss point, since the
+structure asks for monotone utility on the whole of `dom` and a quadratic falls beyond its bliss
+point. `Models.Quadratic` also records what the branch would give if it could be hosted — Hall's
+certainty equivalence, the aggregator being the plain weighted mean.
 
 CARA (`b = 0`) is NOT excluded, and an earlier version of this docstring was wrong about why it
 might be: `u c = -exp (-α c) / α` is bounded above by `0` and equals `-1/α` at zero consumption,
