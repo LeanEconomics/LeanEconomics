@@ -69,3 +69,4 @@ import LeanEconomics.Models.IncomeFluctuationEuler
 import LeanEconomics.Models.IncomeFluctuationIterate
 import LeanEconomics.Models.CESConcaveConsumption
 import LeanEconomics.Models.IncomeFluctuationRateStep
+import LeanEconomics.Models.CESRateMonotone

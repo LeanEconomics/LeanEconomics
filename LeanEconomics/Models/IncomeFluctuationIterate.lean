@@ -254,6 +254,9 @@ def OscOn (_P : IncomeFluctuation Z assetFloor assetCap) (v : (ℝ × Z) →ᵇ 
   ∀ x ∈ Icc assetFloor assetCap, ∀ y ∈ Icc assetFloor assetCap, ∀ z z' : Z,
     v (x, z) - v (y, z') ≤ G
 
+theorem OscOn.mono {v : (ℝ × Z) →ᵇ ℝ} {G G' : ℝ} (h : P.OscOn v G) (hG : G ≤ G') :
+    P.OscOn v G' := fun x hx y hy z z' => (h x hx y hy z z').trans hG
+
 /-- The spread the iteration can produce: the reward's spread, amplified by `(1 - β)⁻¹`. At a
 zero borrowing limit this is definitionally `CRRAConstants.oscGap`, so the witnesses' bounds on
 that transfer unchanged. -/
