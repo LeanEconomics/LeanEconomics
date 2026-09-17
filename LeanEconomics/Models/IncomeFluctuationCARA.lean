@@ -147,6 +147,76 @@ theorem concaveOn_consumptionFnOf_bellman_of_cara_euler {α : ℝ} (hα : 0 < α
   simp only [consumptionFnOf, consumption, hres]
   ring
 
+/-- **The Euler INEQUALITY in endogenous-gridpoint form**, for CARA: consumption never exceeds
+the value the grid assigns to the saving chosen. This holds AT the borrowing limit, where the
+equality fails, and it is what carries concavity across the kink. -/
+theorem cara_egmMap_ge {α : ℝ} (hα : 0 < α) (hβ : 0 < (P.discount : ℝ))
+    (hu : P.u = caraUtility α) {v : (ℝ × Z) →ᵇ ℝ} {z : Z} {a A : ℝ}
+    (ha : a ∈ Icc assetFloor assetCap)
+    (hA : P.policyOf (P.toExtended.bellman v) (a, z) = A)
+    (hAmax : A < P.maxSaving (a, z))
+    (hc : 0 < P.consumptionFnOf (P.toExtended.bellman v) z a)
+    (hc' : ∀ z' : Z, 0 < P.consumptionFnOf v z' A) :
+    P.consumptionFnOf (P.toExtended.bellman v) z a ≤ P.caraEgmMap v α z A := by
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hK : (0 : ℝ) < (P.discount : ℝ) * (1 + P.interest) := mul_pos hβ hR
+  have hS : (0 : ℝ) < ∑ z' : Z, P.transitionMatrix z z'
+      * Real.exp (-α * P.consumptionFnOf v z' A) :=
+    sum_exp_pos (P.transitionMatrix_nonneg z) (P.transitionMatrix_sum z) α _
+  have hd : HasDerivAt P.u (Real.exp (-α * P.consumptionFnOf (P.toExtended.bellman v) z a))
+      (P.consumptionFnOf (P.toExtended.bellman v) z a) := by
+    rw [hu]; exact hasDerivAt_caraUtility (ne_of_gt hα) _
+  have hd' : ∀ z' : Z, HasDerivAt P.u (Real.exp (-α * P.consumptionFnOf v z' A))
+      (P.consumptionFnOf v z' A) := fun z' => by
+    rw [hu]; exact hasDerivAt_caraUtility (ne_of_gt hα) _
+  have hE := P.euler_le ha hA hAmax hc hd hc' hd'
+  -- take logs
+  have hprod : ((P.discount : ℝ) * (1 + P.interest))
+      * (∑ z' : Z, P.transitionMatrix z z' * Real.exp (-α * P.consumptionFnOf v z' A))
+      ≤ Real.exp (-α * P.consumptionFnOf (P.toExtended.bellman v) z a) := by
+    refine le_trans (le_of_eq ?_) hE
+    ring
+  have hlog := Real.log_le_log (by positivity) hprod
+  rw [Real.log_mul (ne_of_gt hK) (ne_of_gt hS), Real.log_exp] at hlog
+  simp only [caraEgmMap, softMin]
+  have hαne : α ≠ 0 := ne_of_gt hα
+  have hαpos : (0 : ℝ) < 1 / α := by positivity
+  have h2 := mul_le_mul_of_nonneg_left hlog hαpos.le
+  have h3 : (1 / α) * (-α * P.consumptionFnOf (P.toExtended.bellman v) z a)
+      = -P.consumptionFnOf (P.toExtended.bellman v) z a := by field_simp
+  rw [h3] at h2
+  linarith
+
+/-- **Carroll and Kimball for CARA, across the borrowing-limit kink.** The version that does not
+assume the choice is interior: where the constraint binds the Euler equation fails, but the
+INEQUALITY still holds, and `concaveOn_of_egm_corner` needs only that. -/
+theorem concaveOn_consumptionFnOf_bellman_of_cara_corner {α : ℝ} (hα : 0 < α)
+    (hβ : 0 < (P.discount : ℝ)) (hu : P.u = caraUtility α) {v : (ℝ × Z) →ᵇ ℝ} (z : Z)
+    (hpos : ∀ z' : Z, ∀ A ∈ Icc assetFloor assetCap, 0 < P.consumptionFnOf v z' A)
+    (hconc : ∀ z' : Z, ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFnOf v z'))
+    (hmono : ∀ z' : Z, MonotoneOn (P.consumptionFnOf v z') (Icc assetFloor assetCap))
+    (hcW : ∀ a ∈ Icc assetFloor assetCap, 0 < P.consumptionFnOf (P.toExtended.bellman v) z a)
+    (hslackW : ∀ a ∈ Icc assetFloor assetCap,
+      P.policyOf (P.toExtended.bellman v) (a, z) < P.maxSaving (a, z))
+    (hslackv : ∀ A ∈ Icc assetFloor assetCap, ∀ z' : Z,
+      P.policyOf v (A, z') < P.maxSaving (A, z')) :
+    ConcaveOn ℝ (Icc assetFloor assetCap)
+      (P.consumptionFnOf (P.toExtended.bellman v) z) := by
+  refine P.concaveOn_of_egm_corner (z := z)
+    (g := fun a => P.policyOf (P.toExtended.bellman v) (a, z)) (C := P.caraEgmMap v α z)
+    (P.concaveOn_caraEgmMap hα z hconc)
+    (strictMonoOn_add_egm (P.monotoneOn_caraEgmMap hα z hmono))
+    (fun a _ => P.feasible_subset_region (P.policyOf_mem _ (a, z))) (fun a ha => ?_)
+    (fun a ha => ?_) fun a ha hfloor => ?_
+  · have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a := by
+      simp only [resources, max_eq_right ha.1]
+    simp only [consumptionFnOf, consumption, hres]; ring
+  · exact P.cara_egmMap_ge hα hβ hu ha rfl (hslackW a ha) (hcW a ha)
+      fun z' => hpos z' _ (P.feasible_subset_region (P.policyOf_mem _ (a, z)))
+  · exact P.cara_egmMap_consumptionFnOf hα hβ hu ha rfl hfloor (hslackW a ha) (hcW a ha)
+      (hslackv _ (P.feasible_subset_region (P.policyOf_mem _ (a, z))))
+      fun z' => hpos z' _ (P.feasible_subset_region (P.policyOf_mem _ (a, z)))
+
 /-- **The induction step for CARA, with the Euler equation proved.** What is assumed is
 interiority, a property of the state, not of the model — the same hypothesis the CRRA and
 shifted-CRRA versions carry. -/
@@ -164,6 +234,106 @@ theorem concaveOn_consumptionFnOf_bellman_of_cara {α : ℝ} (hα : 0 < α)
   obtain ⟨hA0, hAmax, hint'⟩ := hint a ha
   exact P.cara_egmMap_consumptionFnOf hα hβ hu ha rfl hA0 hAmax (hcpos a ha) hint'
     (fun z' => hpos z' _ (P.feasible_subset_region (P.policyOf_mem _ (a, z))))
+
+/-! ### The assembly, beyond CRRA
+
+The induction step is not the whole theorem: the iteration also needs consumption positive and
+the asset cap slack at every stage, and in the CRRA development both come from CRRA-specific
+bounds. For CARA they come from the two marginal bounds of `Models.CARA` — one near zero, one
+over the whole consumption range — and two inequalities. -/
+
+/-- **Carroll and Kimball along the iteration, for CARA.** -/
+theorem concaveOn_consumptionFnOf_iterates_of_cara {α : ℝ} (hα : 0 < α)
+    (hβ : 0 < (P.discount : ℝ)) (hu : P.u = caraUtility α)
+    (hpos : ∀ n : ℕ, ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap,
+      0 < P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a)
+    (hslack : ∀ n : ℕ, ∀ a ∈ Icc assetFloor assetCap, ∀ z : Z,
+      P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < P.maxSaving (a, z)) :
+    ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc assetFloor assetCap)
+      (P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z) := by
+  have hslices : ∀ n : ℕ, ConcaveSlices assetFloor assetCap
+      ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => exact concaveSlices_zero
+    | succ k ih =>
+      rw [Function.iterate_succ_apply']
+      exact P.concaveSlices_bellman ih
+  intro n
+  induction n with
+  | zero => exact P.concaveOn_consumptionFnOf_zero
+  | succ k ih =>
+    intro z
+    have hnext : ∀ a ∈ Icc assetFloor assetCap, 0 < P.consumptionFnOf
+        (P.toExtended.bellman ((P.toExtended.bellman)^[k] (0 : (ℝ × Z) →ᵇ ℝ))) z a := by
+      intro a ha
+      have := hpos (k + 1) z a ha
+      rwa [Function.iterate_succ_apply'] at this
+    have hnextslack : ∀ a ∈ Icc assetFloor assetCap, P.policyOf
+        (P.toExtended.bellman ((P.toExtended.bellman)^[k] (0 : (ℝ × Z) →ᵇ ℝ))) (a, z)
+          < P.maxSaving (a, z) := by
+      intro a ha
+      have := hslack (k + 1) a ha z
+      rwa [Function.iterate_succ_apply'] at this
+    rw [Function.iterate_succ_apply']
+    exact P.concaveOn_consumptionFnOf_bellman_of_cara_corner hα hβ hu z
+      (fun z' A hA => hpos k z' A hA) ih
+      (fun z' x hx y hy hxy => P.consumptionFnOf_mono (hslices k) hx hy hxy)
+      hnext hnextslack (fun A hA z' => hslack k A hA z')
+
+/-- **Carroll and Kimball for CARA, from two inequalities.** The consumption function is
+concave.
+
+The first inequality says the marginal value of consumption near zero beats the discounted slope
+of the continuation, which is what keeps consumption positive when marginal utility at zero is
+FINITE; the second says the cap sits above the saving the marginal bound allows. Neither is
+about preferences — they are the two artefacts of the capped, floored formulation. -/
+theorem concaveOn_consumptionFn_of_cara {α δ : ℝ} (hα : 0 < α) (hδ : 0 < δ)
+    (hβ : 0 < (P.discount : ℝ)) (hb : P.Bounded) (hu : P.u = caraUtility α)
+    (hfloor : (P.discount : ℝ) * P.oscSlopeConst P.oscSpread < Real.exp (-α * δ))
+    (hcap : assetFloor + 4 * (P.discount : ℝ)
+        * (max |P.toExtended.rewardMin| |P.toExtended.rewardMax| / (1 - P.discount))
+        / Real.exp (-α * P.maxConsumption) < assetCap)
+    (z : Z) : ConcaveOn ℝ (Icc assetFloor assetCap) (P.consumptionFn z) := by
+  have hslices : ∀ n : ℕ, ConcaveSlices assetFloor assetCap
+      ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => exact concaveSlices_zero
+    | succ k ih =>
+      rw [Function.iterate_succ_apply']
+      exact P.concaveSlices_bellman ih
+  have hM : MarginalBoundOn P.dom P.u (Real.exp (-α * δ)) := by
+    rw [hb, hu]
+    exact marginalBoundOn_caraUtility hα hδ
+  -- positivity, from the marginal bound near zero
+  have hpos : ∀ n : ℕ, ∀ z' : Z, ∀ a ∈ Icc assetFloor assetCap,
+      0 < P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z' a :=
+    fun n z' a ha => P.consumptionFnOf_pos_of_marginal hM P.oscSpread_nonneg (hslices n)
+      (P.oscOn_iterate n) hfloor z' ha
+  -- the cap, from the marginal bound over the whole range
+  have hmpos : (0 : ℝ) < Real.exp (-α * P.maxConsumption) := Real.exp_pos _
+  have hslack : ∀ n : ℕ, ∀ a ∈ Icc assetFloor assetCap, ∀ z' : Z,
+      P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z') < P.maxSaving (a, z') := by
+    intro n a ha z'
+    refine P.policyOf_lt_maxSaving_of_pos (hpos n z' a ha) ?_
+    have hbound := P.policyOf_le_of_marginal_bound (hslices n) hmpos ?_ ha z'
+    · have hn := P.norm_iterate_le n
+      have h4 : (0 : ℝ) ≤ 4 * (P.discount : ℝ) := by positivity
+      have hstep := mul_le_mul_of_nonneg_left hn h4
+      have hdiv : 4 * (P.discount : ℝ) * ‖(P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)‖
+            / Real.exp (-α * P.maxConsumption)
+          ≤ 4 * (P.discount : ℝ)
+            * (max |P.toExtended.rewardMin| |P.toExtended.rewardMax| / (1 - P.discount))
+            / Real.exp (-α * P.maxConsumption) := by
+        rw [div_le_div_iff_of_pos_right hmpos]
+        linarith
+      linarith
+    · intro c d hd hdc hcmax
+      rw [hu]
+      exact cara_marginal_bound hα hdc hcmax
+  exact P.concaveOn_consumptionFn_of_iterates
+    (P.concaveOn_consumptionFnOf_iterates_of_cara hα hβ hu hpos hslack) z
 
 end IncomeFluctuation
 
@@ -216,5 +386,160 @@ not reach it. -/
 theorem caraWitness_not_relativeRiskAversionLeOne :
     ¬ MonotoneOn (fun c => c * Real.exp (-(1 : ℝ) * c)) (Ioi (0 : ℝ)) :=
   not_monotoneOn_mul_deriv_caraUtility one_pos
+
+/-! ### A CARA economy whose consumption function is concave, unconditionally
+
+`caraWitness` shows a capped CARA model exists. This one is calibrated so that both inequalities
+of `concaveOn_consumptionFn_of_cara` hold, which makes it the first non-CRRA economy in the
+development with a concave consumption function and nothing assumed.
+
+The calibration is deliberately slack: income at least `3/2` keeps the consumption floor well
+away from zero, where CARA's finite marginal utility is weakest, and `β = 1/1000` keeps the
+saving bound far below the cap. Both inequalities hold by two orders of magnitude. -/
+
+theorem exp_neg_three_halves_le : Real.exp (-(3 / 2 : ℝ)) ≤ 1 / 4 := by
+  have hhalf : (3 : ℝ) / 2 ≤ Real.exp (1 / 2) := by
+    have := Real.add_one_le_exp (1 / 2 : ℝ)
+    linarith
+  have he : (2.7182818283 : ℝ) < Real.exp 1 := Real.exp_one_gt_d9
+  have hsplit : Real.exp ((3 : ℝ) / 2) = Real.exp 1 * Real.exp (1 / 2) := by
+    rw [← Real.exp_add]; norm_num
+  have hbig : (4 : ℝ) ≤ Real.exp ((3 : ℝ) / 2) := by
+    rw [hsplit]; nlinarith [Real.exp_pos (1 / 2 : ℝ)]
+  rw [Real.exp_neg, inv_le_comm₀ (Real.exp_pos _) (by norm_num)]
+  linarith
+
+theorem inv_three_le_exp_neg_one : (1 : ℝ) / 3 ≤ Real.exp (-1) := by
+  have he : Real.exp 1 < 2.7182818286 := Real.exp_one_lt_d9
+  rw [Real.exp_neg, le_inv_comm₀ (by norm_num) (Real.exp_pos _)]
+  linarith
+
+theorem inv_twentyone_le_exp_neg_three : (1 : ℝ) / 21 ≤ Real.exp (-3) := by
+  have he : Real.exp 1 < 2.7182818286 := Real.exp_one_lt_d9
+  have he0 : (0 : ℝ) < Real.exp 1 := Real.exp_pos _
+  have hsplit : Real.exp (3 : ℝ) = Real.exp 1 * Real.exp 1 * Real.exp 1 := by
+    rw [← Real.exp_add, ← Real.exp_add]; norm_num
+  have h21 : Real.exp (3 : ℝ) ≤ 21 := by rw [hsplit]; nlinarith
+  rw [show (-3 : ℝ) = -(3 : ℝ) from rfl, Real.exp_neg,
+    le_inv_comm₀ (by norm_num) (Real.exp_pos _)]
+  linarith
+
+/-- **A calibrated CARA economy.** -/
+noncomputable def caraCal : IncomeFluctuation (Fin 2) 0 1 where
+  income z := if z = 0 then 3 / 2 else 2
+  transitionMatrix _ _ := 1 / 2
+  interest := 0
+  discount := 1 / 1000
+  u := caraUtility 1
+  minIncome := 3 / 2
+  maxIncome := 2
+  minIncome_pos := by norm_num
+  minIncome_le z := by fin_cases z <;> norm_num
+  le_maxIncome z := by fin_cases z <;> norm_num
+  transitionMatrix_nonneg _ _ := by norm_num
+  transitionMatrix_sum _ := by simp
+  interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
+  assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
+  discount_lt_one := by norm_num
+  dom := Ici 0
+  Ioi_subset_dom := Ioi_subset_Ici_self
+  dom_subset_Ici := subset_rfl
+  continuousOn_u_dom := (continuous_caraUtility one_ne_zero).continuousOn
+  monotoneOn_u_dom := monotoneOn_caraUtility one_pos _
+  strictConcaveOn_u_dom := (strictConcaveOn_caraUtility one_pos).subset (subset_univ _)
+    (convex_Ici 0)
+  continuousOn_extendDom :=
+    continuousOn_extendDom_Ici (continuous_caraUtility one_ne_zero).continuousOn
+
+@[simp] theorem caraCal_u : caraCal.u = caraUtility 1 := rfl
+@[simp] theorem caraCal_discount : (caraCal.discount : ℝ) = 1 / 1000 := rfl
+@[simp] theorem caraCal_interest : caraCal.interest = 0 := rfl
+@[simp] theorem caraCal_minConsumption : caraCal.minConsumption = 3 / 2 := by
+  norm_num [caraCal]
+
+theorem caraCal_bounded : caraCal.Bounded := rfl
+
+theorem caraCal_maxConsumption : caraCal.maxConsumption = 3 := by
+  simp only [IncomeFluctuation.maxConsumption]
+  norm_num [caraCal]
+
+/-- The oscillation is small, because utility is bounded and the household is impatient. -/
+theorem caraCal_oscSpread_le : caraCal.oscSpread ≤ 1 / 3 := by
+  have hu3 : caraCal.u caraCal.maxConsumption = -Real.exp (-3) := by
+    rw [caraCal_maxConsumption, caraCal_u]
+    simp only [caraUtility]
+    norm_num
+  have hu32 : caraCal.u caraCal.minConsumption = -Real.exp (-(3 / 2)) := by
+    rw [caraCal_minConsumption, caraCal_u]
+    simp only [caraUtility]
+    norm_num
+  have hlow : (0 : ℝ) < Real.exp (-3) := Real.exp_pos _
+  have hhigh := exp_neg_three_halves_le
+  simp only [IncomeFluctuation.oscSpread, hu3, hu32, caraCal_discount]
+  rw [div_le_div_iff₀ (by norm_num) (by norm_num)]
+  linarith
+
+theorem caraCal_floor_cond :
+    (caraCal.discount : ℝ) * caraCal.oscSlopeConst caraCal.oscSpread < Real.exp (-1 * 1) := by
+  have hosc := caraCal_oscSpread_le
+  have hosc0 := caraCal.oscSpread_nonneg
+  have hexp : (1 : ℝ) / 3 ≤ Real.exp (-1 * 1) := by
+    rw [show (-1 : ℝ) * 1 = -1 from by ring]
+    exact inv_three_le_exp_neg_one
+  simp only [IncomeFluctuation.oscSlopeConst, caraCal_minConsumption, caraCal_discount]
+  nlinarith [hosc, hosc0, hexp]
+
+theorem caraCal_cap_cond :
+    (0 : ℝ) + 4 * (caraCal.discount : ℝ)
+        * (max |caraCal.toExtended.rewardMin| |caraCal.toExtended.rewardMax|
+            / (1 - caraCal.discount))
+        / Real.exp (-1 * caraCal.maxConsumption) < 1 := by
+  have hmin : |caraCal.toExtended.rewardMin| ≤ 1 / 4 := by
+    have : caraCal.toExtended.rewardMin = -Real.exp (-(3 / 2)) := by
+      change caraCal.u caraCal.minConsumption = _
+      rw [caraCal_minConsumption, caraCal_u]
+      simp only [caraUtility]
+      norm_num
+    rw [this, abs_neg, abs_of_pos (Real.exp_pos _)]
+    exact exp_neg_three_halves_le
+  have hmax : |caraCal.toExtended.rewardMax| ≤ 1 / 4 := by
+    have : caraCal.toExtended.rewardMax = -Real.exp (-3) := by
+      change caraCal.u caraCal.maxConsumption = _
+      rw [caraCal_maxConsumption, caraCal_u]
+      simp only [caraUtility]
+      norm_num
+    rw [this, abs_neg, abs_of_pos (Real.exp_pos _)]
+    have h1 : Real.exp (-3 : ℝ) ≤ Real.exp (-(3 / 2) : ℝ) := Real.exp_le_exp.mpr (by norm_num)
+    linarith [exp_neg_three_halves_le]
+  have hm : (1 : ℝ) / 21 ≤ Real.exp (-1 * caraCal.maxConsumption) := by
+    rw [caraCal_maxConsumption, show (-1 : ℝ) * 3 = -3 from by ring]
+    exact inv_twentyone_le_exp_neg_three
+  have hmpos : (0 : ℝ) < Real.exp (-1 * caraCal.maxConsumption) := Real.exp_pos _
+  have hmaxle : max |caraCal.toExtended.rewardMin| |caraCal.toExtended.rewardMax| ≤ 1 / 4 :=
+    max_le hmin hmax
+  have hmax0 : (0 : ℝ) ≤ max |caraCal.toExtended.rewardMin| |caraCal.toExtended.rewardMax| :=
+    le_trans (abs_nonneg _) (le_max_left _ _)
+  rw [zero_add, div_lt_one hmpos]
+  have hstep : 4 * ((1 : ℝ) / 1000)
+      * (max |caraCal.toExtended.rewardMin| |caraCal.toExtended.rewardMax| / (1 - 1 / 1000))
+      ≤ 4 * (1 / 1000) * ((1 / 4) / (999 / 1000)) := by
+    have : max |caraCal.toExtended.rewardMin| |caraCal.toExtended.rewardMax| / (1 - 1 / 1000)
+        ≤ (1 / 4) / (999 / 1000 : ℝ) := by
+      rw [div_le_div_iff₀ (by norm_num) (by norm_num)]
+      linarith
+    nlinarith [this]
+  simp only [caraCal_discount] at hstep ⊢
+  nlinarith [hstep, hm, hmpos]
+
+/-- **Carroll and Kimball at a CARA calibration, with nothing assumed.** The first non-CRRA
+economy in the development whose consumption function is concave outright. -/
+theorem caraCal_concaveOn_consumptionFn (z : Fin 2) :
+    ConcaveOn ℝ (Icc (0 : ℝ) 1) (caraCal.consumptionFn z) :=
+  caraCal.concaveOn_consumptionFn_of_cara (α := 1) (δ := 1) one_pos one_pos
+    (by rw [caraCal_discount]; norm_num) caraCal_bounded rfl
+    caraCal_floor_cond caraCal_cap_cond z
 
 end LeanEconomics

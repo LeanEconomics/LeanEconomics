@@ -5,6 +5,8 @@ Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuation
 import LeanEconomics.Analysis.RelativeRiskAversion
+import LeanEconomics.Models.IncomeFluctuationIterate
+import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
 # CARA utility
@@ -101,5 +103,43 @@ theorem not_monotoneOn_mul_deriv_caraUtility {α : ℝ} (hα : 0 < α) :
     rw [hrw] at hmul
     exact le_of_mul_le_mul_right (by linarith) hpos
   linarith [Real.add_one_lt_exp (x := (1 : ℝ)) one_ne_zero]
+
+/-! ### Marginal bounds
+
+CARA has FINITE marginal utility at zero — `u' 0 = 1` — so it satisfies no Inada condition and
+the consumption floor has to be earned by an inequality rather than a limit. Both bounds below
+come from one convexity fact, `1 + x ≤ exp x`. -/
+
+/-- **The secant slope is at least the marginal utility at the right end.** -/
+theorem caraUtility_marginal_ge {α : ℝ} (hα : 0 < α) {c d : ℝ} (hdc : d ≤ c) :
+    Real.exp (-α * c) * (c - d) ≤ caraUtility α c - caraUtility α d := by
+  have hkey : 1 + α * (c - d) ≤ Real.exp (α * (c - d)) := by
+    have := Real.add_one_le_exp (α * (c - d))
+    linarith
+  have hpos : (0 : ℝ) < Real.exp (-α * c) := Real.exp_pos _
+  have hsplit : Real.exp (-α * d) = Real.exp (-α * c) * Real.exp (α * (c - d)) := by
+    rw [← Real.exp_add]; ring_nf
+  have hmul := mul_le_mul_of_nonneg_left hkey hpos.le
+  rw [← hsplit] at hmul
+  simp only [caraUtility]
+  rw [div_sub_div_same, le_div_iff₀ hα]
+  nlinarith [hmul]
+
+/-- **A marginal bound near zero**: below `δ`, every extra unit of consumption is worth at least
+`exp (-α δ)`. -/
+theorem marginalBoundOn_caraUtility {α δ : ℝ} (hα : 0 < α) (hδ : 0 < δ) :
+    MarginalBoundOn (Ici (0 : ℝ)) (caraUtility α) (Real.exp (-α * δ)) := by
+  refine ⟨δ, hδ, fun c c' _ hcc' hc'δ => ?_⟩
+  have hstep : Real.exp (-α * δ) ≤ Real.exp (-α * c') := Real.exp_le_exp.mpr (by nlinarith)
+  exact le_trans (mul_le_mul_of_nonneg_right hstep (by linarith))
+    (caraUtility_marginal_ge hα hcc'.le)
+
+/-- **A marginal bound over the whole consumption range**, which is what the bound on saving
+prices deviations against. -/
+theorem cara_marginal_bound {α C : ℝ} (hα : 0 < α) {c d : ℝ} (hdc : d ≤ c)
+    (hcC : c ≤ C) : Real.exp (-α * C) * (c - d) ≤ caraUtility α c - caraUtility α d := by
+  have hstep : Real.exp (-α * C) ≤ Real.exp (-α * c) := Real.exp_le_exp.mpr (by nlinarith)
+  exact le_trans (mul_le_mul_of_nonneg_right hstep (by linarith))
+    (caraUtility_marginal_ge hα hdc)
 
 end LeanEconomics

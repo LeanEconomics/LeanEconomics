@@ -34,9 +34,12 @@ precisely affineness — the level `η` rides through untouched.
 ## What is and is not covered
 
 The induction STEP is here, for the whole `b ≠ 0` HARA branch. What is not is the assembled
-statement: the iteration also needs positive consumption and the asset cap slack, and those are
-proved in `IncomeFluctuationIterate` through CRRA-specific bounds (`crra_policyOf_le_mul` and the
-oscillation machinery). The CARA branch `b = 0`, where marginal utility is `exp (-α c)`, needs a
+statement: the iteration also needs positive consumption and the asset cap slack. Those are no
+longer CRRA-specific — `consumptionFnOf_pos_of_marginal` gets positivity from a FINITE marginal
+bound, which is what a shifted CRRA has at zero (`(η + c) ^ (-γ)` at `c = 0` is `η ^ (-γ)`), and
+`policyOf_le_of_marginal_bound` was always general. `IncomeFluctuationCARA` carries that
+assembly through for CARA; the same two inequalities would do it here, and are not checked at
+any shifted-CRRA calibration yet. The CARA branch `b = 0`, where marginal utility is `exp (-α c)`, needs a
 different aggregator — the soft minimum `-(1/α) log Σ π exp (-α c)` — and is in
 `IncomeFluctuationCARA`, on top of `Analysis.SoftMin`.
 -/

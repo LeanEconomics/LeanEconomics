@@ -66,6 +66,15 @@ def MarginalInadaOn (D : Set ℝ) (u : ℝ → ℝ) : Prop :=
 /-- The classical form, on the positives. -/
 abbrev MarginalInada (u : ℝ → ℝ) : Prop := MarginalInadaOn (Ioi 0) u
 
+/-- **A marginal lower bound near zero.** `MarginalInadaOn` is this for every `M`; a utility
+with finite marginal value at zero -- CARA, or a shifted CRRA -- satisfies it for the `M` its
+slope near zero allows, and the consumption floor then has to be earned by an inequality. -/
+def MarginalBoundOn (D : Set ℝ) (u : ℝ → ℝ) (M : ℝ) : Prop :=
+  ∃ δ > 0, ∀ c c' : ℝ, c ∈ D → c < c' → c' ≤ δ → M * (c' - c) ≤ u c' - u c
+
+theorem marginalBoundOn_of_inada {D : Set ℝ} {u : ℝ → ℝ} (h : MarginalInadaOn D u) (M : ℝ) :
+    MarginalBoundOn D u M := h M
+
 /-- Marginal utility explodes at zero. -/
 theorem tendsto_rpow_neg_atTop {γ : ℝ} (hγ : 0 < γ) :
     Tendsto (fun c : ℝ => c ^ (-γ)) (𝓝[>] 0) atTop := by
