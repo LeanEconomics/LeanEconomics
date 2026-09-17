@@ -110,7 +110,8 @@ theorem nearLog_policy_mono_interest {r₁ r₂ : ℝ} (hr₁ : r₁ ∈ Icc (0 
       (((nearLog.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Fin 2) →ᵇ ℝ)) (x, z') < 1 :=
     fun n x hx z' => nearLog_policyOf_lt_cap hr₂ h₂ (hslices r₂ h₂ n) (hosc r₂ hr₂ h₂ n) hx z'
   exact nearLog.policy_mono_withRate_crra (γ := 15 / 16) (by norm_num) (by norm_num) rfl h₁ h₂ hr
-    hpc hslackv hslackw
+    (fun n a ha z' => hpc _ (hslices r₁ h₁ n) z' a ha)
+    (fun n a ha z' => hpc _ (hslices r₂ h₂ n) z' a ha) hslackv hslackw
     ((nearLog.withRate r₂ h₂).concaveOn_consumptionFnOf_iterates_of_crra hpc (by norm_num)
       (by rw [show (((nearLog.withRate r₂ h₂).discount : ℝ)) = 1 / 8 from rfl]; norm_num) rfl
       hslackw) ha z

@@ -290,7 +290,7 @@ theorem stoneGeary_calibrated :
   eta_nonneg := by norm_num
   utility := rfl
   discount_pos := by rw [stoneGeary_discount]; norm_num
-  positive := fun r _ hrr => stoneGeary_positiveConsumptionAll hrr
+  positive := fun r _ hrr v hv _ z a ha => stoneGeary_positiveConsumptionAll hrr v hv z a ha
   rlo_nonneg := le_rfl
   rate_le := by norm_num
   iid := fun _ _ _ => rfl

@@ -59,10 +59,14 @@ structure Calibrated (P : IncomeFluctuation Z 0 assetCap) (γ η G a₀ : ℝ) (
   eta_nonneg : 0 ≤ η
   utility : P.u = haraUtility γ η
   discount_pos : 0 < (P.discount : ℝ)
-  /-- Consumption is positive at every optimum, at every rate in the interval. With CRRA this
-  comes from the Inada condition; with a subsistence level it comes from the budget, the asset
-  range being narrow relative to income (`positiveConsumptionAll_of_rich`). -/
-  positive : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, (P.withRate r hrr).PositiveConsumptionAll
+  /-- Consumption is positive at every optimum against every continuation the iteration can
+  produce — concave slices, oscillation at most `G`. With CRRA this holds for EVERY continuation,
+  by the Inada condition; with a subsistence level marginal utility at zero is finite and the
+  oscillation bound is what makes the comparison go through
+  (`consumptionFnOf_pos_of_marginal`). -/
+  positive : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ v : (ℝ × Z) →ᵇ ℝ,
+    ConcaveSlices (0 : ℝ) assetCap v → (P.withRate r hrr).OscOn v G →
+    ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap, 0 < (P.withRate r hrr).consumptionFnOf v z a
   /-- The rate interval sits above zero, so every rate in it is admissible. -/
   rlo_nonneg : 0 ≤ rlo
   rate_le : rlo ≤ rhi
@@ -95,10 +99,6 @@ include h
 theorem rateOK {r : ℝ} (hr : r ∈ Icc rlo rhi) : P.RateOK r :=
   IncomeFluctuation.rateOK_of_floor_zero (by linarith [h.rlo_nonneg, hr.1])
 
-/-- Consumption is positive at every optimum, against every continuation with concave slices. -/
-theorem positiveConsumptionAll {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) :
-    (P.withRate r hrr).PositiveConsumptionAll := h.positive r hr hrr
-
 /-- Concave slices of the iterates, in every economy of the family. -/
 theorem concaveSlices_iterate {r : ℝ} (hrr : P.RateOK r) (n : ℕ) :
     ConcaveSlices (0 : ℝ) assetCap
@@ -118,6 +118,22 @@ theorem oscOn_iterate_le {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) {
   IncomeFluctuation.OscOn.mono (P.withRate r' hrr')
     ((P.withRate r hrr).oscOn_iterate n) (h.osc_le r hr hrr)
 
+/-- Positivity at the iterates of any rate in the interval, read in any economy of the family. -/
+theorem positive_iterate {r r' : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r)
+    (hr' : r' ∈ Icc rlo rhi) (hrr' : P.RateOK r') (n : ℕ) {a : ℝ}
+    (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
+    0 < (P.withRate r' hrr').consumptionFnOf
+      (((P.withRate r hrr).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a :=
+  h.positive r' hr' hrr' _ (h.concaveSlices_iterate hrr n) (h.oscOn_iterate_le hr hrr hrr' n)
+    z a ha
+
+/-- Positivity at the fixed point. -/
+theorem positive_valueFunction {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) (z : Z)
+    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) : 0 < (P.withRate r hrr).consumptionFn z a :=
+  h.positive r hr hrr _ (P.withRate r hrr).concaveSlices_valueFunction
+    (IncomeFluctuation.OscOn.mono (P.withRate r hrr)
+      (P.withRate r hrr).oscOn_valueFunction (h.osc_le r hr hrr)) z a ha
+
 theorem policyOf_iterate_lt_cap {r r' : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r)
     (hr' : r' ∈ Icc rlo rhi) (hrr' : P.RateOK r') (n : ℕ) {a : ℝ}
     (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
@@ -132,10 +148,10 @@ theorem concaveOn_consumptionFnOf_iterates {r : ℝ} (hr : r ∈ Icc rlo rhi) (h
         (((P.withRate r hrr).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z) :=
   (P.withRate r hrr).concaveOn_consumptionFnOf_iterates_of_hara h.gamma_pos h.eta_nonneg
     h.discount_pos h.utility
-    (fun m z' a ha => h.positiveConsumptionAll hr hrr _
-      (h.concaveSlices_iterate hrr m) z' a ha)
-    (fun m a ha z' => (P.withRate r hrr).policyOf_lt_maxSaving (h.positiveConsumptionAll hr hrr)
-      (h.concaveSlices_iterate hrr m) ha (h.policyOf_iterate_lt_cap hr hrr hr hrr m ha z'))
+    (fun m z' a ha => h.positive_iterate hr hrr hr hrr m ha z')
+    (fun m a ha z' => (P.withRate r hrr).policyOf_lt_maxSaving_of_pos
+      (h.positive_iterate hr hrr hr hrr m ha z')
+      (h.policyOf_iterate_lt_cap hr hrr hr hrr m ha z'))
     n z
 
 /-- The cap is slack at the fixed point too: the value function is the uniform limit of the
@@ -149,15 +165,17 @@ theorem policy_lt_cap {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) {a :
 theorem policy_lt_maxSaving {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) (z : Z) {a : ℝ}
     (ha : a ∈ Icc (0 : ℝ) assetCap) :
     (P.withRate r hrr).policy (a, z) < (P.withRate r hrr).maxSaving (a, z) :=
-  (P.withRate r hrr).policyOf_lt_maxSaving (h.positiveConsumptionAll hr hrr)
-    (P.withRate r hrr).concaveSlices_valueFunction ha (h.policy_lt_cap hr hrr ha z)
+  (P.withRate r hrr).policyOf_lt_maxSaving_of_pos (h.positive_valueFunction hr hrr z ha)
+    (h.policy_lt_cap hr hrr ha z)
 
 /-- **Light (2018) Theorem 1** for the whole family. -/
 theorem policy_mono {r r' : ℝ} (hr : r ∈ Icc rlo rhi) (hr' : r' ∈ Icc rlo rhi) (hle : r ≤ r')
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
     (P.withRate r (h.rateOK hr)).policy (a, z) ≤ (P.withRate r' (h.rateOK hr')).policy (a, z) :=
   P.policy_mono_withRate_hara h.gamma_pos (le_of_lt h.gamma_lt_one) h.eta_nonneg h.utility
-    (h.rateOK hr) (h.rateOK hr') hle (h.positiveConsumptionAll hr' (h.rateOK hr'))
+    (h.rateOK hr) (h.rateOK hr') hle
+    (fun n b hb z' => h.positive_iterate hr (h.rateOK hr) hr' (h.rateOK hr') n hb z')
+    (fun n b hb z' => h.positive_iterate hr' (h.rateOK hr') hr' (h.rateOK hr') n hb z')
     (fun n b hb z' => h.policyOf_iterate_lt_cap hr (h.rateOK hr) hr' (h.rateOK hr') n hb z')
     (fun n b hb z' => h.policyOf_iterate_lt_cap hr' (h.rateOK hr') hr' (h.rateOK hr') n hb z')
     (fun n z' => h.concaveOn_consumptionFnOf_iterates hr' (h.rateOK hr') n z') ha z
@@ -168,17 +186,14 @@ theorem exhausts {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) :
       = (P.withRate r hrr).botState := by
   refine (P.withRate r hrr).hara_exists_exhaust_of_impatient h.gamma_pos h.eta_nonneg
     h.utility ?_ h.iid
-    (fun z b hb => (P.withRate r hrr).consumptionFn_pos ?_ hb z)
+    (fun z b hb => h.positive_valueFunction hr hrr z hb)
     (fun z b hb => h.policy_lt_maxSaving hr hrr z hb) h.income_min h.a₀_pos h.a₀_le
     (fun b hb => h.corner r hr hrr b hb)
   · have := h.impatient r hr
     rw [show ((P.withRate r hrr).discount : ℝ) = (P.discount : ℝ) from rfl,
       show (P.withRate r hrr).interest = r from rfl]
     exact this
-  · intro s hs
-    exact (P.withRate r hrr).consumption_policy_pos
-      (fun t ht => (h.positiveConsumptionAll hr hrr) _
-        (P.withRate r hrr).concaveSlices_valueFunction t.2 t.1 ht) hs
+
 
 /-- **Carroll and Kimball at the fixed point**, at every rate in the interval. -/
 theorem concaveOn_consumptionFn {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) (z : Z) :
@@ -288,7 +303,8 @@ theorem nearLog_calibrated :
   eta_nonneg := le_rfl
   utility := by rw [haraUtility_zero_shift]; rfl
   discount_pos := by rw [nearLog_discount]; norm_num
-  positive := fun r _ hrr => nearLog_withRate_positiveConsumptionAll hrr
+  positive := fun r _ hrr v hv _ z a ha =>
+    nearLog_withRate_positiveConsumptionAll hrr v hv z a ha
   rlo_nonneg := le_rfl
   rate_le := by norm_num
   iid := fun _ _ _ => rfl

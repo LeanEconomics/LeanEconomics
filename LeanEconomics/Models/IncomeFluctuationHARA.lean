@@ -7,6 +7,7 @@ import LeanEconomics.Models.IncomeFluctuationEuler
 import LeanEconomics.Models.IncomeFluctuationIterate
 import LeanEconomics.Models.IncomeFluctuationRateStep
 import LeanEconomics.Models.ImpatientDecline
+import LeanEconomics.Equilibrium.SignChange
 import LeanEconomics.Analysis.HARA
 
 /-!
@@ -47,7 +48,8 @@ different aggregator — the soft minimum `-(1/α) log Σ π exp (-α c)` — an
 `IncomeFluctuationCARA`, on top of `Analysis.SoftMin`.
 -/
 
-open Set Filter Topology BoundedContinuousFunction
+open scoped NNReal
+open Set Filter Topology MeasureTheory BoundedContinuousFunction
 
 namespace LeanEconomics
 
@@ -557,7 +559,12 @@ theorem hara_marginal_pos {γ η : ℝ} (hη : 0 ≤ η) {c : ℝ} (hc : 0 < c) 
 theorem policy_mono_withRate_hara {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
     {γ η : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1) (hη : 0 ≤ η) (hu : P.u = haraUtility γ η)
     {r₁ r₂ : ℝ} (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (hr : r₁ ≤ r₂)
-    (hpc : (P.withRate r₂ h₂).PositiveConsumptionAll)
+    (hposv : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, 0 <
+      (P.withRate r₂ h₂).consumptionFnOf
+        (((P.withRate r₁ h₁).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a)
+    (hposw : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, 0 <
+      (P.withRate r₂ h₂).consumptionFnOf
+        (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a)
     (hslackv : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
       (((P.withRate r₁ h₁).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
     (hslackw : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
@@ -576,7 +583,7 @@ theorem policy_mono_withRate_hara {assetCap : ℝ} (P : IncomeFluctuation Z 0 as
         (fun c hc => hasDerivAt_haraUtility γ (by have := mem_Ioi.mp hc; linarith))
       exact hrra)
     (fun y hy => (hara_marginal_pos hη (mem_Ioi.mp hy)).le)
-    hpc hslackv hslackw hcons ha z
+    hposv hposw hslackv hslackw hcons ha z
 
 /-- **Açıkgöz Proposition 4 for shifted CRRA**: the decline condition is impatience. -/
 theorem hara_exists_exhaust_of_impatient {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η)
@@ -592,6 +599,114 @@ theorem hara_exists_exhaust_of_impatient {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 
     (fun c hc => by rw [hu]; exact hasDerivAt_haraUtility γ (by linarith))
     (hara_marginal_antitone hγ0 hη)
     (fun c hc => hara_marginal_pos hη hc) hpos hslack hz₀ ha₀ hle hzero
+
+
+/-! ### The supply floor
+
+The household saves something, so aggregate capital is positive. The shape is the CRRA one: the
+cost of saving a little is priced at the margin where consumption is lowest, the gain at the
+margin in the bad successor state, and the comparison is between two marginal utilities. With a
+subsistence level both are read at `η + c`. -/
+
+theorem hara_cost_of_saving {γ η : ℝ} (hγ : 0 < γ) (hη : 0 ≤ η) {m h R b : ℝ} (hh0 : 0 < h)
+    (hhm : h < m) (hmR : m ≤ R) (hb0 : 0 ≤ b) (hbh : b ≤ h) :
+    haraUtility γ η (R - b) - haraUtility γ η (R - h) ≤ (η + m - h) ^ (-γ) * h := by
+  have hstep := crra_cost_of_saving (γ := γ) (m := η + m) (h := h) (R := η + R) (b := b) hγ hh0
+    (by linarith) (by linarith) hb0 hbh
+  have e1 : η + R - b = η + (R - b) := by ring
+  have e2 : η + R - h = η + (R - h) := by ring
+  have e3 : η + m - h = η + m - h := rfl
+  rw [e1, e2] at hstep
+  simpa only [haraUtility] using hstep
+
+/-- **The continuation's gain, for shifted CRRA.** -/
+theorem hara_cont_sub_ge_gen {γ η : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
+    (hu : P.u = haraUtility γ η) (hfl : assetFloor = 0) (hpc : P.PositiveConsumption)
+    (z z₀ : Z) {x y : ℝ}
+    (hx : x ∈ Icc assetFloor assetCap) (hy : y ∈ Icc assetFloor assetCap) (hxy : x ≤ y) :
+    P.transitionMatrix z z₀ * ((η + P.income z₀ + (1 + P.interest) * y) ^ (-γ)
+        * ((1 + P.interest) * (y - x)))
+      ≤ P.cont z y - P.cont z x := by
+  subst hfl
+  have hRh : 0 ≤ (1 + P.interest) * (y - x) :=
+    mul_nonneg P.interest_gt_neg_one.le (by linarith)
+  have hsum : P.cont z y - P.cont z x = ∑ z' : Z, P.transitionMatrix z z' *
+      (P.toExtended.valueFunction (y, z') - P.toExtended.valueFunction (x, z')) := by
+    simp only [cont, ← Finset.sum_sub_distrib, ← mul_sub]
+  have hterm : P.transitionMatrix z z₀ *
+      (P.toExtended.valueFunction (y, z₀) - P.toExtended.valueFunction (x, z₀))
+        ≤ P.cont z y - P.cont z x := by
+    rw [hsum]
+    refine Finset.single_le_sum (f := fun z' : Z => P.transitionMatrix z z' *
+      (P.toExtended.valueFunction (y, z') - P.toExtended.valueFunction (x, z')))
+      (fun z' _ => ?_) (Finset.mem_univ z₀)
+    exact mul_nonneg (P.transitionMatrix_nonneg _ _)
+      (by linarith [P.valueFunction_le_of_le hpc (z := z') hx hy hxy])
+  have hc0 : 0 < P.consumption (x, z₀) (P.policy (x, z₀)) := P.consumption_policy_pos hpc hx
+  have hresx : P.resources (x, z₀) = P.income z₀ + (1 + P.interest) * x := by
+    simp only [resources, max_eq_right hx.1]
+  have hcle : P.consumption (x, z₀) (P.policy (x, z₀))
+      ≤ P.income z₀ + (1 + P.interest) * x := by
+    simp only [consumption, hresx]
+    linarith [(P.policy_mem_region (x, z₀)).1]
+  have hgain := P.valueFunction_sub_ge hpc hx hy hxy z₀
+  rw [hu] at hgain
+  have hbound : (η + P.income z₀ + (1 + P.interest) * y) ^ (-γ) * ((1 + P.interest) * (y - x))
+      ≤ haraUtility γ η (P.consumption (x, z₀) (P.policy (x, z₀)) + (1 + P.interest) * (y - x))
+        - haraUtility γ η (P.consumption (x, z₀) (P.policy (x, z₀))) := by
+    have hR : P.consumption (x, z₀) (P.policy (x, z₀)) + (1 + P.interest) * (y - x)
+        ≤ P.income z₀ + (1 + P.interest) * y := by nlinarith [hcle]
+    have hstep := haraUtility_marginal_bound (γ := γ) (η := η)
+      (R := P.income z₀ + (1 + P.interest) * y) hγ0 hγ1 hη hc0.le
+      (le_add_of_nonneg_right hRh) hR
+    have he : η + (P.income z₀ + (1 + P.interest) * y)
+        = η + P.income z₀ + (1 + P.interest) * y := by ring
+    rw [he] at hstep
+    have he2 : P.consumption (x, z₀) (P.policy (x, z₀)) + (1 + P.interest) * (y - x)
+        - P.consumption (x, z₀) (P.policy (x, z₀)) = (1 + P.interest) * (y - x) := by ring
+    rw [he2] at hstep
+    exact hstep
+  exact le_trans (mul_le_mul_of_nonneg_left (le_trans hbound hgain)
+    (P.transitionMatrix_nonneg z z₀)) hterm
+
+/-- **Saving is bounded below**, for shifted CRRA, when the gain beats the cost. -/
+theorem hara_policy_ge_of_gain {γ η : ℝ} (hγ : 0 < γ) (hη : 0 ≤ η)
+    (hu : P.u = haraUtility γ η) (hfl : assetFloor = 0)
+    (hpc : P.PositiveConsumption) (z₁ : Z) {h : ℝ} (hh0 : 0 < h) (hhcap : h ≤ assetCap)
+    (hhinc : h < P.income z₁)
+    (hgain : (η + P.income z₁ - h) ^ (-γ) * h
+      < P.discount * (P.cont z₁ h - P.cont z₁ (h / 2)))
+    {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) :
+    h / 2 ≤ P.policy (a, z₁) := by
+  refine P.policy_ge_of_cost hfl hpc z₁ hh0 hhcap hhinc (fun R b hm hb0 hbh => ?_) hgain ha
+  rw [hu]
+  exact hara_cost_of_saving hγ hη hh0 hhinc hm hb0 hbh
+
+section Measure
+
+variable [MeasurableSpace Z] [BorelSpace Z]
+
+/-- **Positive aggregate capital for shifted CRRA, from primitives.** -/
+theorem hara_le_aggregateCapital_of_gain {γ η : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1) (hη : 0 ≤ η)
+    (hu : P.u = haraUtility γ η) (hfl : assetFloor = 0) (hpc : P.PositiveConsumption)
+    {μ : ProbabilityMeasure P.State} (hμ : P.IsStationary μ) {z₁ z₀ : Z} {p₀ h : ℝ}
+    (hh0 : 0 < h) (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
+    (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
+    (hgain : (η + P.income z₁ - h) ^ (-γ) * h
+      < P.discount * (P.transitionMatrix z₁ z₀
+          * ((η + P.income z₀ + (1 + P.interest) * h) ^ (-γ) * ((1 + P.interest) * (h / 2))))) :
+    h / 2 * p₀ ≤ P.aggregateCapital μ := by
+  subst hfl
+  refine P.le_aggregateCapital hμ (by linarith) hp fun a ha => ?_
+  refine P.hara_policy_ge_of_gain hγ0 hη hu rfl hpc z₁ hh0 hhcap hhinc ?_ ha
+  refine lt_of_lt_of_le hgain (mul_le_mul_of_nonneg_left ?_ P.discount.coe_nonneg)
+  have hhalf : h / 2 ∈ Icc (0 : ℝ) assetCap := ⟨by linarith, by linarith⟩
+  have hfull : h ∈ Icc (0 : ℝ) assetCap := ⟨hh0.le, hhcap⟩
+  have hgen := P.hara_cont_sub_ge_gen hγ0 hγ1 hη hu rfl hpc z₁ z₀ hhalf hfull (by linarith)
+  rw [show h - h / 2 = h / 2 from by ring] at hgen
+  exact hgen
+
+end Measure
 
 end IncomeFluctuation
 
