@@ -189,10 +189,13 @@ be signed is
 
   `F' a = R₂ u'(c_w(a)) - t R₂ u'(c_v(t a)) = R₂ u'(c_w(a)) - R₁ u'(c_v(t a))`.
 
-The second term is bounded by `mul_marginal_le_of_scale`, Light's pivotal inequality, which needs
-the consumption function to be CONCAVE — that is the Carroll–Kimball input, and the reason step 5
-had to wait for it. The first is then reached by single crossing in the continuation, which puts
-`c_w(a) ≤ c_v(a)` and so `u'(c_v(a)) ≤ u'(c_w(a))`.
+The second term is signed in two moves. Single crossing in the continuation puts
+`c_w(t a) ≤ c_v(t a)`, so `u'(c_v(t a)) ≤ u'(c_w(t a))`; and then `mul_marginal_le_of_scale`,
+Light's pivotal inequality, carries `R₁ u'(c_w(t a)) ≤ R₂ u'(c_w(a))`. Note which consumption
+function the pivotal inequality is applied to: `c_w`, economy TWO's own, whose concavity is what
+Carroll–Kimball delivers. Routing the comparison through `c_w` rather than through `c_v` is what
+keeps the argument inside one economy's Carroll–Kimball theorem — `c_v` is the hybrid object
+(economy two's choice against economy one's continuation) and no concavity of it is needed.
 
 Note what the envelope is asked for: the state interior and the CHOICE strictly below the saving
 cap. Nothing is asked at the borrowing constraint, so the argument survives where it binds. -/
@@ -213,8 +216,8 @@ theorem monotoneOn_bellman_sub_scaled {assetCap : ℝ} (Q : IncomeFluctuation Z 
     (hintw : ∀ x ∈ Icc (0 : ℝ) assetCap, Q.policyOf w (x, z) < Q.maxSaving (x, z))
     (hposv : ∀ x ∈ Icc (0 : ℝ) assetCap, 0 < Q.consumptionFnOf v z x)
     (hposw : ∀ x ∈ Icc (0 : ℝ) assetCap, 0 < Q.consumptionFnOf w z x)
-    (hcv : ConcaveOn ℝ (Icc (0 : ℝ) assetCap) (Q.consumptionFnOf v z))
-    (hmv : MonotoneOn (Q.consumptionFnOf v z) (Icc (0 : ℝ) assetCap)) :
+    (hcw : ConcaveOn ℝ (Icc (0 : ℝ) assetCap) (Q.consumptionFnOf w z))
+    (hmw : MonotoneOn (Q.consumptionFnOf w z) (Icc (0 : ℝ) assetCap)) :
     MonotoneOn (fun a => (Q.toExtended.bellman w) (a, z) - (Q.toExtended.bellman v) (t * a, z))
       (Icc (0 : ℝ) assetCap) := by
   have hR : (0 : ℝ) < 1 + Q.interest := Q.interest_gt_neg_one
@@ -244,19 +247,21 @@ theorem monotoneOn_bellman_sub_scaled {assetCap : ℝ} (Q : IncomeFluctuation Z 
     have hd2 : HasDerivAt (fun x : ℝ => (Q.toExtended.bellman v) (t * x, z))
         ((1 + Q.interest) * du (Q.consumptionFnOf v z (t * a)) * t) a := hbase.comp a hlin
     refine ⟨_, ?_, hd1.sub hd2⟩
-    -- Light's pivotal inequality, at `α₁ = t R`, `α₂ = R`, `x = a / R`
+    -- Light's pivotal inequality, at `α₁ = t R`, `α₂ = R`, `x = a / R`, applied to economy
+    -- two's OWN consumption function
     have e1 : t * (1 + Q.interest) * (a / (1 + Q.interest)) = t * a := by field_simp
     have e2 : (1 + Q.interest) * (a / (1 + Q.interest)) = a := by field_simp
-    have hpiv := mul_marginal_le_of_scale (c := Q.consumptionFnOf v z) (du := du) hcv hzero
-      (hposv 0 hzero) hmv hrra hdunn (α₁ := t * (1 + Q.interest)) (α₂ := 1 + Q.interest)
+    have hpiv := mul_marginal_le_of_scale (c := Q.consumptionFnOf w z) (du := du) hcw hzero
+      (hposw 0 hzero) hmw hrra hdunn (α₁ := t * (1 + Q.interest)) (α₂ := 1 + Q.interest)
       (x := a / (1 + Q.interest)) (by positivity) (by nlinarith) (by positivity)
       (by rw [e1]; exact htamem) (by rw [e2]; exact hamem)
     rw [e1, e2] at hpiv
-    -- single crossing in the continuation
-    have hcross : Q.consumptionFnOf w z a ≤ Q.consumptionFnOf v z a :=
-      Q.consumptionFnOf_le_of_contOf_increasingDifferences hwc hid hamem
-    have hdu := hanti (mem_Ioi.mpr (hposw a hamem)) (mem_Ioi.mpr (hposv a hamem)) hcross
-    nlinarith [hpiv, hdu, hR]
+    -- single crossing in the continuation, at the SCALED asset level
+    have hcross : Q.consumptionFnOf w z (t * a) ≤ Q.consumptionFnOf v z (t * a) :=
+      Q.consumptionFnOf_le_of_contOf_increasingDifferences hwc hid htamem
+    have hdu := hanti (mem_Ioi.mpr (hposw _ htamem)) (mem_Ioi.mpr (hposv _ htamem)) hcross
+    have ht1' : (0 : ℝ) < t * (1 + Q.interest) := by positivity
+    nlinarith [hpiv, hdu, hR, ht1']
   refine monotoneOn_of_deriv_nonneg (convex_Icc _ _) ?_ ?_ ?_
   · refine ContinuousOn.sub ?_ ?_
     · exact ((Q.toExtended.bellman w).continuous.comp

@@ -851,10 +851,22 @@ def ContOfIncreasingDifferences (v w : (ℝ × Z) →ᵇ ℝ) : Prop :=
   ∀ (z : Z) (x y : ℝ), x ∈ Icc assetFloor assetCap → y ∈ Icc assetFloor assetCap → x ≤ y →
     P.contOf v z y - P.contOf v z x ≤ P.contOf w z y - P.contOf w z x
 
+/-- **Increasing differences slice by slice**, between two bounded continuous functions on the
+state space. This is the property the induction of Light's step 5 carries along the iteration:
+it mentions no economy, so it makes sense between the iterates of two DIFFERENT economies, and
+it is closed under pointwise limits. -/
+def IncDiffSlices (assetFloor assetCap : ℝ) (v w : (ℝ × Z) →ᵇ ℝ) : Prop :=
+  ∀ (z : Z) (x y : ℝ), x ∈ Icc assetFloor assetCap → y ∈ Icc assetFloor assetCap → x ≤ y →
+    v (y, z) - v (x, z) ≤ w (y, z) - w (x, z)
+
+theorem incDiffSlices_zero (assetFloor assetCap : ℝ) :
+    IncDiffSlices (Z := Z) assetFloor assetCap 0 0 := by
+  intro z x y _ _ _
+  simp
+
 /-- It suffices to have increasing differences slice by slice in the continuations themselves. -/
 theorem contOfIncreasingDifferences_of_slices {v w : (ℝ × Z) →ᵇ ℝ}
-    (h : ∀ (z : Z) (x y : ℝ), x ∈ Icc assetFloor assetCap → y ∈ Icc assetFloor assetCap → x ≤ y →
-      v (y, z) - v (x, z) ≤ w (y, z) - w (x, z)) :
+    (h : IncDiffSlices assetFloor assetCap v w) :
     P.ContOfIncreasingDifferences v w := by
   intro z x y hx hy hxy
   simp only [contOf, ← Finset.sum_sub_distrib, ← mul_sub]
