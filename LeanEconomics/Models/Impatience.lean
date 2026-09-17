@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.Equilibrium.PositiveCapital
+import LeanEconomics.Models.ImpatientDecline
+import LeanEconomics.Models.CESNearLogWitness
 
 /-!
 # Impatience is a theorem, not an assumption
@@ -39,7 +41,7 @@ Chaining the three: `u c - u (c - ε) > β (1 + r) (u c - u (c - ε)) ≥ u c - 
 `ε` exists, and letting `ε` shrink says consumption cannot fall in EVERY successor state
 (`exists_consumption_ge_of_patient`). That much holds with genuine income risk.
 
-## Why the asset conclusion is deterministic
+## Why the DERIVATIVE-FREE asset conclusion is deterministic
 
 Turning "consumption does not fall" into "assets do not fall" uses the budget identity, and with
 fluctuating income the successor that keeps consumption up may be the one with the high income
@@ -50,11 +52,23 @@ GROW by a factor `1 + r ≥ 1` each period, which no borrowing limit can absorb.
 consumption-savings problem. That is exactly the margin MOHW's Proposition 2(c) works on before
 the labour margin is added.
 
+## The risky case, once the derivative exists
+
+The paragraph above is about the SECANT argument. With the envelope theorem proved
+(`hasDerivAt_bellman`) the Euler inequality is available and the asset conclusion holds with
+genuine income risk: run it at the state where consumption is HIGHEST rather than pathwise, and
+`u'(c) ≥ β(1+r) E u'(c')` closes in one line (`lt_policy_of_patient`,
+`discount_mul_le_one_of_cap_slack`). The trade is strictness — the secant results cover the
+knife edge `β(1+r) = 1`, the Euler results need `β(1+r) > 1`. `nearLog` at a rate of `100`
+witnesses the risky case, with two income states and a real transition matrix.
+
 ## What it settles
 
 `policy_assetCap_of_patient` is the converse of `crra_policy_lt_assetCap`: the cap is slack
 under impatience and binds without it. So the asset cap, which the development treats as an
-artefact to be discharged, is an artefact PRECISELY when `β (1 + r) < 1`.
+artefact to be discharged, is an artefact PRECISELY when `β (1 + r) < 1`. With risk, that is
+`exists_policy_assetCap_of_patient`, and `discount_mul_le_one_of_cap_slack` states it the way
+the development consumes it: every cap-slackness result in the tree is evidence of impatience.
 -/
 
 open Set Filter Topology BoundedContinuousFunction
@@ -223,6 +237,125 @@ theorem exists_consumption_ge_of_patient (hpc : P.PositiveConsumption)
   have hz := hzm z' (Finset.mem_univ _)
   linarith
 
+/-! ### The risky case, from the Euler equation
+
+The docstring above says the Euler route "needs a derivative", and that the secant substitute
+runs out at the asset conclusion, which is why the results so far are deterministic. The
+derivative now exists (`hasDerivAt_bellman`, `euler_le`), and with it the asset conclusion holds
+WITH income risk. The price is strictness: the secant argument covers `β(1+r) ≥ 1`, this one
+covers `β(1+r) > 1`.
+
+The argument mirrors `policy_lt_self_of_impatient` exactly, reflected. There the Euler
+inequality from saving LESS was run at the state where consumption is lowest; here the one from
+saving MORE is run at the state where consumption is HIGHEST. If the household did not
+accumulate there, every next-period consumption would be at most today's, every marginal utility
+at least today's, and `u'(c) ≥ β(1+r) E u'(c')` would force `β(1+r) ≤ 1`.
+
+Note which interiority is needed: room ABOVE, at the current state only — the household must not
+already be saving everything it has. Nothing is asked of next period. -/
+
+/-- **Patience forces accumulation at the richest-consumption state**, with income risk. -/
+theorem lt_policy_of_patient (hβR : 1 < (P.discount : ℝ) * (1 + P.interest))
+    {du : ℝ → ℝ} (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
+    (hanti : AntitoneOn du (Ioi (0 : ℝ))) (hdupos : ∀ c : ℝ, 0 < c → 0 < du c)
+    (hpos : ∀ (z : Z), ∀ x ∈ Icc assetFloor assetCap, 0 < P.consumptionFn z x)
+    {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) {z : Z}
+    (hroom : P.policy (a, z) < P.maxSaving (a, z))
+    (hmax : ∀ z' : Z, P.consumptionFn z' a ≤ P.consumptionFn z a) :
+    a < P.policy (a, z) := by
+  by_contra hcon
+  rw [not_lt] at hcon
+  set A : ℝ := P.policy (a, z) with hA
+  have hAmem : A ∈ Icc assetFloor assetCap := P.feasible_subset_region (P.policy_mem _)
+  have hbv := P.toExtended.bellman_valueFunction
+  have hc : 0 < P.consumptionFn z a := hpos z a ha
+  have hE := P.euler_le (v := P.toExtended.valueFunction) (z := z) (a := a) (A := A)
+    (du := du (P.consumptionFn z a)) (du' := fun z' => du (P.consumptionFn z' A))
+    ha (by rw [hbv, hA]; exact congrFun P.policyOf_valueFunction (a, z)) hroom
+    (by rw [hbv]; exact hc) (by rw [hbv]; exact hderiv _ hc) (fun z' => hpos z' A hAmem)
+    (fun z' => hderiv _ (hpos z' A hAmem))
+  -- every next-period marginal utility is at least today's
+  have hbound : ∀ z' : Z, du (P.consumptionFn z a) ≤ du (P.consumptionFn z' A) := fun z' =>
+    hanti (mem_Ioi.mpr (hpos z' A hAmem)) (mem_Ioi.mpr hc)
+      (le_trans (P.consumptionFn_mono hAmem ha hcon) (hmax z'))
+  have hsum : du (P.consumptionFn z a)
+      ≤ ∑ z' : Z, P.transitionMatrix z z' * du (P.consumptionFn z' A) := by
+    refine le_trans (le_of_eq ?_) (Finset.sum_le_sum fun z' _ =>
+      mul_le_mul_of_nonneg_left (hbound z') (P.transitionMatrix_nonneg z z'))
+    rw [← Finset.sum_mul, P.transitionMatrix_sum, one_mul]
+  have hdu : 0 < du (P.consumptionFn z a) := hdupos _ hc
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hcoef : (0 : ℝ) ≤ (P.discount : ℝ) * (1 + P.interest) := mul_nonneg hβ hR.le
+  have h2 : ((P.discount : ℝ) * (1 + P.interest)) * du (P.consumptionFn z a)
+      ≤ ((P.discount : ℝ) * (1 + P.interest))
+        * (∑ z' : Z, P.transitionMatrix z z' * du (P.consumptionFn z' A)) :=
+    mul_le_mul_of_nonneg_left hsum hcoef
+  nlinarith [hE, h2, hdu, hβR]
+
+/-- **Marcet–Obiols-Homs–Weil, Proposition 3, with income risk.** An economy in which
+consumption is positive and the asset cap never binds is impatient.
+
+This is the converse of every cap-slackness result in the development: `crra_policy_lt_assetCap`
+and the witnesses' calibrations prove the cap slack, and this says that could not have happened
+without `β(1+r) ≤ 1`. Impatience is therefore not an assumption chosen for convenience — it is
+forced by the objects the development is about. -/
+theorem discount_mul_le_one_of_cap_slack
+    {du : ℝ → ℝ} (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
+    (hanti : AntitoneOn du (Ioi (0 : ℝ))) (hdupos : ∀ c : ℝ, 0 < c → 0 < du c)
+    (hpos : ∀ (z : Z), ∀ x ∈ Icc assetFloor assetCap, 0 < P.consumptionFn z x)
+    (hcap : ∀ z : Z, P.policy (assetCap, z) < assetCap) :
+    (P.discount : ℝ) * (1 + P.interest) ≤ 1 := by
+  classical
+  by_contra hcon
+  rw [not_le] at hcon
+  obtain ⟨z, -, hmax⟩ := Finset.exists_max_image Finset.univ
+    (fun z => P.consumptionFn z assetCap) ⟨Classical.ofNonempty, Finset.mem_univ _⟩
+  have hmem : assetCap ∈ Icc assetFloor assetCap := ⟨P.assetFloor_le_assetCap, le_rfl⟩
+  -- the cap is slack, and consumption is positive, so the household has room above
+  have hroom : P.policy (assetCap, z) < P.maxSaving (assetCap, z) := by
+    rw [P.maxSaving_eq]
+    refine lt_min (hcap z) ?_
+    have := hpos z assetCap hmem
+    simp only [consumptionFn, consumption] at this
+    linarith
+  have hlt := P.lt_policy_of_patient hcon hderiv hanti hdupos hpos hmem hroom
+    (fun z' => hmax z' (Finset.mem_univ _))
+  exact absurd (P.policy_mem_region (assetCap, z)).2 (by linarith)
+
+/-- **The cap binds at the top when the household is strictly patient**, with income risk. The
+exact converse of `crra_policy_lt_assetCap`, and the risky counterpart of
+`policy_assetCap_of_patient`, which needs `Subsingleton Z` but allows the knife edge. -/
+theorem exists_policy_assetCap_of_patient (hβR : 1 < (P.discount : ℝ) * (1 + P.interest))
+    {du : ℝ → ℝ} (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
+    (hanti : AntitoneOn du (Ioi (0 : ℝ))) (hdupos : ∀ c : ℝ, 0 < c → 0 < du c)
+    (hpos : ∀ (z : Z), ∀ x ∈ Icc assetFloor assetCap, 0 < P.consumptionFn z x) :
+    ∃ z : Z, P.policy (assetCap, z) = assetCap := by
+  by_contra hcon
+  push_neg at hcon
+  exact absurd (P.discount_mul_le_one_of_cap_slack hderiv hanti hdupos hpos
+    fun z => lt_of_le_of_ne (P.policy_mem_region (assetCap, z)).2 (hcon z)) (by linarith)
+
+/-- **The cap binds for CRRA**, with the marginal-utility hypotheses discharged. -/
+theorem crra_exists_policy_assetCap_of_patient {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβR : 1 < (P.discount : ℝ) * (1 + P.interest))
+    (hpos : ∀ (z : Z), ∀ x ∈ Icc assetFloor assetCap, 0 < P.consumptionFn z x) :
+    ∃ z : Z, P.policy (assetCap, z) = assetCap :=
+  P.exists_policy_assetCap_of_patient hβR (du := fun c => c ^ (-γ))
+    (fun c hc => by rw [hu]; exact hasDerivAt_crraUtility γ hc)
+    (fun _ hx _ _ hxy => Real.rpow_le_rpow_of_nonpos hx hxy (by linarith))
+    (fun c hc => Real.rpow_pos_of_pos hc _) hpos
+
+/-- **Proposition 3 for CRRA**, with the marginal-utility hypotheses discharged. -/
+theorem crra_discount_mul_le_one_of_cap_slack {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hpos : ∀ (z : Z), ∀ x ∈ Icc assetFloor assetCap, 0 < P.consumptionFn z x)
+    (hcap : ∀ z : Z, P.policy (assetCap, z) < assetCap) :
+    (P.discount : ℝ) * (1 + P.interest) ≤ 1 :=
+  P.discount_mul_le_one_of_cap_slack (du := fun c => c ^ (-γ))
+    (fun c hc => by rw [hu]; exact hasDerivAt_crraUtility γ hc)
+    (fun _ hx _ _ hxy => Real.rpow_le_rpow_of_nonpos hx hxy (by linarith))
+    (fun c hc => Real.rpow_pos_of_pos hc _) hpos hcap
+
 /-! ### The deterministic problem: assets cannot fall either
 
 With income constant the budget identity turns "consumption does not fall" into a recursion on
@@ -321,6 +454,7 @@ theorem not_decline_of_patient (hpc : P.PositiveConsumption)
   absurd (P.le_policy_of_patient hpc hβR ⟨ha₀, hle⟩ z)
     (not_le.mpr (hdecl a₀ ⟨le_rfl, hle⟩))
 
+
 /-! ### Not vacuous
 
 A household that is exactly on the knife edge, `β (1 + r) = 1`. Nothing above is an empty
@@ -384,5 +518,30 @@ theorem patient_le_policy {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) (z : Fin 1) :
 end Deterministic
 
 end IncomeFluctuation
+
+/-! ### Not vacuous WITH risk
+
+`patient` has one income state, so it witnesses the deterministic results only. A genuinely
+risky strictly-patient economy is `nearLog` at a high enough rate: two income states, a real
+transition matrix, and `β(1+r) = 101/8 > 1`. Its cap must bind at the top — the exact converse
+of `nearLog_policy_lt_cap`, which holds at the rates the equilibrium argument uses. -/
+
+theorem nearLog_rateOK_hundred : nearLog.RateOK (100 : ℝ) :=
+  IncomeFluctuation.rateOK_of_floor_zero (by norm_num)
+
+theorem nearLog_hundred_patient :
+    1 < ((nearLog.withRate 100 nearLog_rateOK_hundred).discount : ℝ)
+      * (1 + (nearLog.withRate 100 nearLog_rateOK_hundred).interest) := by
+  rw [show (((nearLog.withRate 100 nearLog_rateOK_hundred).discount : ℝ)) = 1 / 8 from rfl,
+    show (nearLog.withRate 100 nearLog_rateOK_hundred).interest = 100 from rfl]
+  norm_num
+
+/-- **The cap binds for a strictly patient economy with income risk.** -/
+theorem nearLog_hundred_exists_policy_assetCap :
+    ∃ z : Fin 2, (nearLog.withRate 100 nearLog_rateOK_hundred).policy (1, z) = 1 :=
+  (nearLog.withRate 100 nearLog_rateOK_hundred).crra_exists_policy_assetCap_of_patient
+    (γ := 15 / 16) (by norm_num) rfl nearLog_hundred_patient
+    fun z x hx => (nearLog.withRate 100 nearLog_rateOK_hundred).consumptionFn_pos
+      (nearLog_withRate_positiveConsumption nearLog_rateOK_hundred) hx z
 
 end LeanEconomics
