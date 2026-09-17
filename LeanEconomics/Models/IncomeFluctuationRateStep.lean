@@ -426,6 +426,42 @@ theorem policy_mono_withRate' (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (hr 
     (P.contIncreasingDifferences_withRate h₁ h₂ hr hderiv hanti hrra hdunn hpc hslackv hslackw
       hcons) ha z
 
+/-! ### CRRA, with the marginal-utility hypotheses discharged
+
+For `u = crraUtility γ` marginal utility is `c ^ (-γ)`, which is decreasing and non-negative for
+every `γ > 0`, and `c · u'(c) = c ^ (1 - γ)` is nondecreasing exactly when `γ ≤ 1` — relative
+risk aversion at most one, the hypothesis Light needs and the one this development has carried
+since `RelativeRiskAversion`. -/
+
+theorem policy_mono_withRate_crra {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1) (hu : P.u = crraUtility γ)
+    (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (hr : r₁ ≤ r₂)
+    (hpc : (P.withRate r₂ h₂).PositiveConsumptionAll)
+    (hslackv : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
+      (((P.withRate r₁ h₁).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
+    (hslackw : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r₂ h₂).policyOf
+      (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
+    (hcons : ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
+      ((P.withRate r₂ h₂).consumptionFnOf
+        (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z))
+    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
+    (P.withRate r₁ h₁).policy (a, z) ≤ (P.withRate r₂ h₂).policy (a, z) := by
+  have hpow : ∀ c : ℝ, 0 < c → c * c ^ (-γ) = c ^ (1 - γ) := by
+    intro c hc
+    rw [show (1 : ℝ) - γ = 1 + -γ by ring, Real.rpow_add hc, Real.rpow_one]
+  refine P.policy_mono_withRate' h₁ h₂ hr (du := fun c => c ^ (-γ)) ?_ ?_ ?_ ?_
+    hpc hslackv hslackw hcons ha z
+  · intro c hc
+    rw [hu]
+    exact hasDerivAt_crraUtility γ hc
+  · intro x hx y hy hxy
+    exact Real.rpow_le_rpow_of_nonpos hx hxy (by linarith)
+  · intro x hx y hy hxy
+    simp only []
+    rw [hpow x hx, hpow y hy]
+    exact Real.rpow_le_rpow hx.le hxy (by linarith)
+  · intro y hy
+    exact Real.rpow_nonneg hy.le _
+
 end IncomeFluctuation
 
 end LeanEconomics
