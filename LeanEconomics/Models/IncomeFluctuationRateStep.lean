@@ -24,9 +24,24 @@ two maximisations are literally the same maximisation, and `lazyValue_withRate` 
 
 That turns the difference `(T_{R₂} f)(a) - (T_{R₁} f)(a)` into `(T_{R₂} f)(a) - (T_{R₂} f)(t a)`,
 a statement about ONE economy, and increasing differences across rates becomes monotonicity of
-that difference in `a`. The envelope makes its derivative `R₂ u'(σ(a)) - R₁ u'(σ(t a))`, and
-`mul_marginal_le_of_scale` signs it: concavity of `σ` for one factor, relative risk aversion at
-most one for the other.
+that difference in `a`. The envelope makes its derivative `R₂ u'(c_w(a)) - R₁ u'(c_v(t a))`,
+where `v` and `w` are the two continuations, and two moves sign it: single crossing in the
+continuation at the scaled asset level, then `mul_marginal_le_of_scale` — concavity of the
+consumption function for one factor, relative risk aversion at most one for the other.
+
+Doing it in that order matters. Applying the pivotal inequality directly to `c_v` would need
+Carroll–Kimball for economy two's choice against economy ONE's continuation, a hybrid object no
+induction produces; going through `c_v(t a) ≥ c_w(t a)` first puts the pivotal inequality on
+`c_w`, economy two's own, which is exactly what `concaveOn_consumptionFn_of_iterates` delivers.
+
+## What is left
+
+`contIncreasingDifferences_withRate` discharges the `hid` of `policy_mono_interest`, so Light's
+Theorem 1 holds outright. Its hypotheses are the standing ones of this development: utility
+differentiable with decreasing, non-negative marginal utility and relative risk aversion at most
+one; consumption positive at every optimum; the asset cap slack along the iteration; and the
+Carroll–Kimball concavity of the iterates' consumption functions. `CESConcaveConsumption` shows
+these hold together at concrete CES calibrations.
 -/
 
 open Set Filter Topology BoundedContinuousFunction
@@ -277,6 +292,132 @@ theorem monotoneOn_bellman_sub_scaled {assetCap : ℝ} (Q : IncomeFluctuation Z 
     obtain ⟨D, hD0, hD⟩ := key x hx
     rw [hD.deriv]
     exact hD0
+
+/-! ### The step, across rates
+
+Reading the difference back through the budget coincidence turns the previous theorem into the
+statement Light's induction propagates: the Bellman images of two continuations with increasing
+differences again have increasing differences, at the two rates. -/
+
+/-- **Light (2018), step 5.** Increasing differences survive the Bellman operator. -/
+theorem incDiffSlices_bellman_withRate (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (hr : r₁ ≤ r₂)
+    {v w : (ℝ × Z) →ᵇ ℝ} {du : ℝ → ℝ}
+    (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
+    (hanti : AntitoneOn du (Ioi (0 : ℝ))) (hrra : MonotoneOn (fun y => y * du y) (Ioi (0 : ℝ)))
+    (hdunn : ∀ y ∈ Ioi (0 : ℝ), 0 ≤ du y)
+    (hvc : ConcaveSlices (0 : ℝ) assetCap v) (hwc : ConcaveSlices (0 : ℝ) assetCap w)
+    (hpc : (P.withRate r₂ h₂).PositiveConsumptionAll)
+    (hslack : ∀ u : (ℝ × Z) →ᵇ ℝ, ConcaveSlices (0 : ℝ) assetCap u → ∀ a ∈ Icc (0 : ℝ) assetCap,
+      ∀ z : Z, (P.withRate r₂ h₂).policyOf u (a, z) < assetCap)
+    (hcw : ∀ z : Z, ConcaveOn ℝ (Icc (0 : ℝ) assetCap) ((P.withRate r₂ h₂).consumptionFnOf w z))
+    (hid : IncDiffSlices (0 : ℝ) assetCap v w) :
+    IncDiffSlices (0 : ℝ) assetCap ((P.withRate r₁ h₁).toExtended.bellman v)
+      ((P.withRate r₂ h₂).toExtended.bellman w) := by
+  have hR₁ : (0 : ℝ) < 1 + r₁ := h₁.1
+  have hR₂ : (0 : ℝ) < 1 + r₂ := h₂.1
+  intro z x y hx hy hxy
+  have hmono := (P.withRate r₂ h₂).monotoneOn_bellman_sub_scaled
+    (t := (1 + r₁) / (1 + r₂)) (div_pos hR₁ hR₂) (by rw [div_le_one hR₂]; linarith)
+    (v := v) (w := w) (z := z) (du := du) hderiv hanti hrra hdunn hwc
+    ((P.withRate r₂ h₂).contOfIncreasingDifferences_of_slices hid)
+    ((P.withRate r₂ h₂).concaveSlices_bellman hvc z)
+    ((P.withRate r₂ h₂).concaveSlices_bellman hwc z)
+    (fun a ha => (P.withRate r₂ h₂).policyOf_lt_maxSaving hpc hvc ha (hslack v hvc a ha z))
+    (fun a ha => (P.withRate r₂ h₂).policyOf_lt_maxSaving hpc hwc ha (hslack w hwc a ha z))
+    (fun a ha => hpc v hvc z a ha) (fun a ha => hpc w hwc z a ha) (hcw z)
+    (fun a ha a' ha' hle => (P.withRate r₂ h₂).consumptionFnOf_mono hwc ha ha' hle)
+  have hkey := hmono hx hy hxy
+  -- read the economy-one terms back through the budget coincidence
+  have hcoin : ∀ a ∈ Icc (0 : ℝ) assetCap,
+      ((P.withRate r₁ h₁).toExtended.bellman v) (a, z)
+        = ((P.withRate r₂ h₂).toExtended.bellman v) ((1 + r₁) / (1 + r₂) * a, z) := by
+    intro a ha
+    rw [(P.withRate r₁ h₁).toExtended.bellman_apply,
+      (P.withRate r₂ h₂).toExtended.bellman_apply]
+    exact P.bellmanFn_withRate h₁ h₂ hr v z ha
+  rw [hcoin x hx, hcoin y hy]
+  linarith
+
+/-! ### The induction, and the limit
+
+`IncDiffSlices` mentions no economy and is closed under pointwise limits, so the step iterates
+from the common start `0` and passes to the two value functions. That discharges the hypothesis
+`hid` of `policy_mono_interest`, and with it Light's Theorem 1. -/
+
+/-- **Light (2018) Theorem 1, with step 5 discharged.** The value functions at two rates have
+increasing differences in assets, so the continuations do. -/
+theorem contIncreasingDifferences_withRate (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (hr : r₁ ≤ r₂)
+    {du : ℝ → ℝ} (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
+    (hanti : AntitoneOn du (Ioi (0 : ℝ))) (hrra : MonotoneOn (fun y => y * du y) (Ioi (0 : ℝ)))
+    (hdunn : ∀ y ∈ Ioi (0 : ℝ), 0 ≤ du y)
+    (hpc : (P.withRate r₂ h₂).PositiveConsumptionAll)
+    (hslack : ∀ u : (ℝ × Z) →ᵇ ℝ, ConcaveSlices (0 : ℝ) assetCap u → ∀ a ∈ Icc (0 : ℝ) assetCap,
+      ∀ z : Z, (P.withRate r₂ h₂).policyOf u (a, z) < assetCap)
+    (hcons : ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
+      ((P.withRate r₂ h₂).consumptionFnOf
+        (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z)) :
+    ContIncreasingDifferences (P.withRate r₁ h₁) (P.withRate r₂ h₂) := by
+  have hvs : ∀ n : ℕ, ConcaveSlices (0 : ℝ) assetCap
+      (((P.withRate r₁ h₁).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => exact concaveSlices_zero
+    | succ k ih =>
+      rw [Function.iterate_succ_apply']
+      exact (P.withRate r₁ h₁).concaveSlices_bellman ih
+  have hws : ∀ n : ℕ, ConcaveSlices (0 : ℝ) assetCap
+      (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => exact concaveSlices_zero
+    | succ k ih =>
+      rw [Function.iterate_succ_apply']
+      exact (P.withRate r₂ h₂).concaveSlices_bellman ih
+  -- the induction
+  have hstep : ∀ n : ℕ, IncDiffSlices (0 : ℝ) assetCap
+      (((P.withRate r₁ h₁).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ))
+      (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
+    intro n
+    induction n with
+    | zero => exact incDiffSlices_zero _ _
+    | succ k ih =>
+      rw [Function.iterate_succ_apply', Function.iterate_succ_apply']
+      exact P.incDiffSlices_bellman_withRate h₁ h₂ hr hderiv hanti hrra hdunn (hvs k) (hws k)
+        hpc hslack (hcons k) ih
+  -- and the limit
+  refine contIncreasingDifferences_of_valueFunction _ _ rfl ?_
+  intro z x y hx hy hxy
+  have hlim₁ : Tendsto (fun n => ((P.withRate r₁ h₁).toExtended.bellman)^[n]
+      (0 : (ℝ × Z) →ᵇ ℝ)) atTop (𝓝 (P.withRate r₁ h₁).toExtended.valueFunction) :=
+    (P.withRate r₁ h₁).toExtended.tendsto_iterate_valueFunction 0
+  have hlim₂ : Tendsto (fun n => ((P.withRate r₂ h₂).toExtended.bellman)^[n]
+      (0 : (ℝ × Z) →ᵇ ℝ)) atTop (𝓝 (P.withRate r₂ h₂).toExtended.valueFunction) :=
+    (P.withRate r₂ h₂).toExtended.tendsto_iterate_valueFunction 0
+  have hpt : ∀ (F : ℕ → (ℝ × Z) →ᵇ ℝ) (G : (ℝ × Z) →ᵇ ℝ), Tendsto F atTop (𝓝 G) →
+      ∀ p : ℝ × Z, Tendsto (fun n => F n p) atTop (𝓝 (G p)) := fun F G hF p =>
+    (BoundedContinuousFunction.tendsto_iff_tendstoUniformly.mp hF).tendsto_at p
+  have hev₁ := hpt _ _ hlim₁
+  have hev₂ := hpt _ _ hlim₂
+  exact le_of_tendsto_of_tendsto ((hev₁ (y, z)).sub (hev₁ (x, z)))
+    ((hev₂ (y, z)).sub (hev₂ (x, z))) (Eventually.of_forall fun n => hstep n z x y hx hy hxy)
+
+/-- **Light (2018) Theorem 1, unconditional on the increasing-differences hypothesis.** A
+household facing a higher interest rate saves at least as much, at every asset level and every
+income state. -/
+theorem policy_mono_withRate' (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂) (hr : r₁ ≤ r₂)
+    {du : ℝ → ℝ} (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
+    (hanti : AntitoneOn du (Ioi (0 : ℝ))) (hrra : MonotoneOn (fun y => y * du y) (Ioi (0 : ℝ)))
+    (hdunn : ∀ y ∈ Ioi (0 : ℝ), 0 ≤ du y)
+    (hpc : (P.withRate r₂ h₂).PositiveConsumptionAll)
+    (hslack : ∀ u : (ℝ × Z) →ᵇ ℝ, ConcaveSlices (0 : ℝ) assetCap u → ∀ a ∈ Icc (0 : ℝ) assetCap,
+      ∀ z : Z, (P.withRate r₂ h₂).policyOf u (a, z) < assetCap)
+    (hcons : ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
+      ((P.withRate r₂ h₂).consumptionFnOf
+        (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z))
+    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
+    (P.withRate r₁ h₁).policy (a, z) ≤ (P.withRate r₂ h₂).policy (a, z) :=
+  P.policy_mono_withRate h₁ h₂ hr
+    (P.contIncreasingDifferences_withRate h₁ h₂ hr hderiv hanti hrra hdunn hpc hslack hcons) ha z
 
 end IncomeFluctuation
 

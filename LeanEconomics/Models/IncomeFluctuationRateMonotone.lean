@@ -35,7 +35,7 @@ The theorem then chains
 
 the first step single crossing and the second `policy_mono`, since `t ≤ 1`.
 
-## What is left, and that it is the SAME gap as Carroll–Kimball
+## The hypothesis `hid`, and where it is discharged
 
 The hypothesis `hid` is the property Light propagates through the operator, and propagating it
 is his step 5. That step is not derivative-free and cannot be made so: it runs on the envelope
@@ -43,6 +43,11 @@ condition `(Tf)'(a, R) = R u'(σ_f(a, R))` as an EQUALITY, and the derivative-fr
 sandwich between two utility increments which is strictly loose. The Clausen–Strub lemma in
 `Analysis.DifferentiableSandwich` is exactly the statement that the sandwich closes only in the
 derivative limit.
+
+It is now PROVED, in `IncomeFluctuationRateStep`: `contIncreasingDifferences_withRate`. The
+envelope equality it needs is `hasDerivAt_bellman`, Clausen–Strub's lazy agent, and the other
+input is the Carroll–Kimball concavity of the consumption function. Theorem 1 with `hid`
+discharged is `policy_mono_withRate'`.
 
 Worth recording precisely: his step 5 applies Lemma 3 to `σ_f(·, R₂)` and needs it CONCAVE. That
 is Light's Lemma 4, which is the Carroll and Kimball theorem — the hypothesis `hT` of
@@ -171,9 +176,9 @@ theorem rateScale_mem (hr : P.interest ≤ Q.interest) {a : ℝ} (ha : a ∈ Icc
 /-- **Light (2018) Theorem 1.** A household facing a higher interest rate saves at least as much,
 at every asset level and every income state.
 
-The hypothesis `hid` is Light's step 5, and by the module docstring it is the same gap as the
-Carroll–Kimball hypothesis `hT`: propagating it needs the envelope condition together with
-concavity of the consumption function. Everything else is proved. -/
+The hypothesis `hid` is Light's step 5; it is discharged in `IncomeFluctuationRateStep` by
+`contIncreasingDifferences_withRate`, which needs the envelope condition together with concavity
+of the consumption function. See `policy_mono_withRate'` for the form without it. -/
 theorem policy_mono_interest (hu : P.u = Q.u) (hdom : P.dom = Q.dom)
     (hβ : (P.discount : ℝ) = (Q.discount : ℝ))
     (hinc : P.income = Q.income) (hr : P.interest ≤ Q.interest)
