@@ -180,6 +180,12 @@ theorem exhausts {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) :
       (fun t ht => (h.positiveConsumptionAll hr hrr) _
         (P.withRate r hrr).concaveSlices_valueFunction t.2 t.1 ht) hs
 
+/-- **Carroll and Kimball at the fixed point**, at every rate in the interval. -/
+theorem concaveOn_consumptionFn {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) (z : Z) :
+    ConcaveOn ℝ (Icc (0 : ℝ) assetCap) ((P.withRate r hrr).consumptionFn z) :=
+  (P.withRate r hrr).concaveOn_consumptionFn_of_iterates
+    (fun n z' => h.concaveOn_consumptionFnOf_iterates hr hrr n z') z
+
 /-! ### The distribution, and the equilibrium rate -/
 
 variable [MeasurableSpace Z] [BorelSpace Z]
