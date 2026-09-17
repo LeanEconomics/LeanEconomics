@@ -61,11 +61,13 @@ for an arbitrary continuation, and a uniform bound on saving that covers every i
 `concaveOn_consumptionFn_of_bounded_crra` for the bounded CES family `0 < γ < 1`, where positive
 consumption comes from the marginal Inada condition run against an arbitrary continuation.
 
-One input is left explicit: a calibration inequality putting the asset cap above the uniform
-bound on saving. The bound used there is crude -- `2 ‖v‖` for the continuation's oscillation --
-and the CES witnesses in this development have caps below it. Sharpening it means porting the
-multiplicative bound `crra_policy_le_mul`, which is what the fixed-point argument uses, to an
-arbitrary continuation.
+One input is left explicit: a calibration inequality putting the asset cap above the bound on
+saving. `crra_policyOf_le_mul` makes that bound the multiplicative one -- deviate to a FRACTION
+of the saving and price the extra consumption where it lands -- so it involves the continuation's
+OSCILLATION rather than its level, and the hypothesis is character for character the one
+`crra_policy_lt_assetCap` carries. The witnesses that discharge that one discharge this one:
+`nearLog_concaveOn_consumptionFn` is Carroll and Kimball for a concrete CES economy, at every
+rate the equilibrium argument uses.
 
 **Toda (2021) still bounds what can be hoped for.** Under regularity conditions HARA is
 NECESSARY for the consumption function to be concave, and the structure assumes of `u` only
@@ -90,8 +92,10 @@ The obstruction has moved four times.
 
 * Positive consumption for the bounded CES family was the seventh, and
   `positiveConsumptionAll_of_marginalInada` does it.
+* The cap calibration was the eighth, and `crra_policyOf_le_mul` makes it the one the witnesses
+  already prove.
 
-What remains is sharpening the cap calibration so that the existing CES witnesses satisfy it.
+Nothing remains: `nearLog_concaveOn_consumptionFn` is the theorem at a concrete calibration.
 
 This file holds the analysis and the closure step; `IncomeFluctuationEuler` the first-order
 condition and the corner; `IncomeFluctuationIterate` the bookkeeping and the theorem.
