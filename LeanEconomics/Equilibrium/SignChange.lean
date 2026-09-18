@@ -349,7 +349,7 @@ household consumes at least the share `κ` of cash on hand; feeding that to
 number the calibration determines. The denominator is `1 - Þ`, so the ceiling blows up exactly as
 the household stops being impatient. -/
 theorem crra_aggregateCapital_le_of_minMPC {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
-    (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hκ : 0 < P.minMPC γ) (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1)
     (hpos : ∀ n : ℕ, ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap,
       0 < P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a)
@@ -362,13 +362,13 @@ theorem crra_aggregateCapital_le_of_minMPC {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u 
     (IncomeFluctuation.minMPC_le_one hγ0 hβ) ?_ ?_
   · rw [IncomeFluctuation.one_sub_minMPC_mul]
     exact IncomeFluctuation.patience_lt_one hγ0 hβR
-  · exact fun z a ha => P.crra_minMPC_mul_le_consumptionFn hγ0 hu rfl hint hβ hβR hpos hcapit z ha
+  · exact fun z a ha => P.crra_minMPC_mul_le_consumptionFn hγ0 hu rfl hκ hβ hβR hpos hcapit z ha
 
 /-- **The ceiling for shifted CRRA.** The subsistence level enters through `minMPCShare`, which
 charges the constant in `κ(η+m) ≤ η+c` against the smallest cash on hand there can be. At `η = 0`
 it is the CRRA statement. -/
 theorem hara_aggregateCapital_le_of_minMPC {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η)
-    (hu : P.u = haraUtility γ η) (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hu : P.u = haraUtility γ η) (hκ : 0 < P.minMPC γ) (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1)
     (hshare : (1 - P.minMPCShare γ η) * (1 + P.interest) < 1)
     (hpos : ∀ n : ℕ, ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap,
@@ -387,7 +387,7 @@ theorem hara_aggregateCapital_le_of_minMPC {γ η : ℝ} (hγ0 : 0 < γ) (hη : 
     simp only [IncomeFluctuation.minMPCShare]
     linarith
   · exact fun z a ha =>
-      P.hara_minMPCShare_mul_le_consumptionFn hγ0 hη hu rfl hint hβ hβR hpos hcapit z ha
+      P.hara_minMPCShare_mul_le_consumptionFn hγ0 hη hu rfl hκ hβ hβR hpos hcapit z ha
 
 end IncomeFluctuation
 

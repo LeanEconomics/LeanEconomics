@@ -283,8 +283,12 @@ theorem log_equilibriumRate_unique_wage {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α
       rw [IncomeFluctuation.minMPC_one]
       change 1 - (1 - (P.discount : ℝ)) = (P.discount : ℝ)
       ring
+    have hQκpos : 0 < Q.minMPC 1 := by
+      rw [IncomeFluctuation.minMPC_one]
+      change 0 < 1 - (P.discount : ℝ)
+      nlinarith [hr.1, hβ]
     refine Q.crra_existsUnique_isStationary_of_euler_corner_monotone (γ := 1) one_pos
-      (show Q.u = crraUtility 1 from hu) (mul_zero w) (show (0 : ℝ) ≤ r from hr.1) hβ hβR'
+      (show Q.u = crraUtility 1 from hu) (mul_zero w) hQκpos hβ hβR'
       ((P.withRate r hrr).monotoneTransitions_scale hw hmono)
       (Q.positiveConsumptionAll_of_unbounded hunb) ?_ (z₀ := z₀) ?_ hreach (a₀ := w * a₀)
       (mul_pos hw ha₀) (mul_le_mul_of_nonneg_left hle hw.le) ?_

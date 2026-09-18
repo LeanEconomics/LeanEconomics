@@ -116,7 +116,7 @@ theorem crra_policyOf_withRate_lt_cap {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crr
   -- economy 1's minimal-MPC bound at this iterate
   have hmpc : κ * Q₁.resources (a, z) ≤ Q₁.consumptionFnOf v z a :=
     (Q₁.crra_minMPC_of_cap hγ0 (show Q₁.u = crraUtility γ from hu) rfl
-      (show (0 : ℝ) ≤ Q₁.interest from hint₁) hβ
+      (minMPC_pos (P := Q₁) hγ0 (show (0 : ℝ) ≤ Q₁.interest from hint₁) hβR₁) hβ
       hβR₁ hpos₁ hthr₁ n).1 z a ha
   -- the rescale, and monotonicity of consumption in assets
   set t : ℝ := (1 + r₁) / (1 + r₂) with ht
@@ -190,8 +190,8 @@ theorem crra_policy_mono_withRate_of_minMPC {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : �
   have hslackw : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
       (P.withRate r₂ h₂).policyOf
         (((P.withRate r₂ h₂).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap :=
-    fun n a ha z => ((P.withRate r₂ h₂).crra_minMPC_of_cap hγ0 hu rfl hint₂
-      hβ hβR₂ hpos₂ hthr₂ n).2 a ha z
+    fun n a ha z => ((P.withRate r₂ h₂).crra_minMPC_of_cap hγ0 hu rfl
+      (minMPC_pos (P := P.withRate r₂ h₂) hγ0 hint₂ hβR₂) hβ hβR₂ hpos₂ hthr₂ n).2 a ha z
   -- Carroll--Kimball along economy 2's iteration
   have hcons : ∀ n : ℕ, ∀ z : Z, ConcaveOn ℝ (Icc (0 : ℝ) assetCap)
       ((P.withRate r₂ h₂).consumptionFnOf

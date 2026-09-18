@@ -319,8 +319,8 @@ theorem exhausts {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) :
       show (P.withRate r hrr).interest = r from rfl]
     exact this
   refine (P.withRate r hrr).hara_exists_exhaust_of_minMPC h.gamma_pos h.eta_nonneg h.utility rfl
-    (show (0 : ℝ) ≤ (P.withRate r hrr).interest by
-      simpa using le_trans h.rlo_nonneg hr.1)
+    (minMPC_pos (P := P.withRate r hrr) h.gamma_pos
+      (show (0 : ℝ) ≤ (P.withRate r hrr).interest by simpa using le_trans h.rlo_nonneg hr.1) hβR)
     (by simpa using h.discount_pos) hβR
     (fun n z' b hb => h.positive_iterate hr hrr hr hrr n hb z')
     (fun n b hb z' => h.policyOf_iterate_lt_cap hr hrr hr hrr n hb z')

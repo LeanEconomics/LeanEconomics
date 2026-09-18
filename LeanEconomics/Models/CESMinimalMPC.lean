@@ -33,12 +33,22 @@ namespace LeanEconomics
 
 open IncomeFluctuation
 
+/-- **`nearLog`'s minimal MPC is positive** on the rate band, from return impatience. -/
+theorem nearLog_minMPC_pos {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : nearLog.RateOK r) :
+    0 < (nearLog.withRate r hrr).minMPC (15 / 16) :=
+  IncomeFluctuation.minMPC_pos (P := nearLog.withRate r hrr) (by norm_num) hr.1
+    (by
+      rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl,
+        show (nearLog.withRate r hrr).interest = r from rfl]
+      linarith [hr.2])
+
 /-- **The minimal-MPC bound for `nearLog`.** -/
 theorem nearLog_minMPC_mul_le_consumptionFn {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
     (hrr : nearLog.RateOK r) (z : Fin 2) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) :
     (nearLog.withRate r hrr).minMPC (15 / 16) * (nearLog.withRate r hrr).resources (a, z)
       ≤ (nearLog.withRate r hrr).consumptionFn z a :=
-  (nearLog.withRate r hrr).crra_minMPC_mul_le_consumptionFn (by norm_num) rfl rfl hr.1
+  (nearLog.withRate r hrr).crra_minMPC_mul_le_consumptionFn (by norm_num) rfl rfl
+    (nearLog_minMPC_pos hr hrr)
     (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
     (by
       rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl,
@@ -54,7 +64,7 @@ theorem nearLog_aggregateCapital_le {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200
     (hμ : (nearLog.withRate r hrr).IsStationary μ) :
     nearLog.aggregateCapital μ ≤ 1 / 8 := by
   have hkey := (nearLog.withRate r hrr).crra_aggregateCapital_le_of_minMPC (γ := 15 / 16)
-    (by norm_num) rfl hr.1
+    (by norm_num) rfl (nearLog_minMPC_pos hr hrr)
     (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
     (by
       rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl,
@@ -124,7 +134,7 @@ theorem nearLog_exists_exhaust_of_minMPC {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 
       (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
     linarith
   refine (nearLog.withRate r hrr).crra_exists_exhaust_of_minMPC (γ := 15 / 16) (z₀ := 0)
-    (a₀ := 1 / 50) (by norm_num) rfl rfl hr.1
+    (a₀ := 1 / 50) (by norm_num) rfl rfl (nearLog_minMPC_pos hr hrr)
     (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
     (by
       rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl,

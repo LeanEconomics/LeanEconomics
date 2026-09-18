@@ -382,7 +382,11 @@ theorem stoneGeary_aggregateCapital_le {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 
   have hshare := stoneGeary_minMPCShare hrr
   have hint : (stoneGeary.withRate r hrr).interest = r := rfl
   have hkey := (stoneGeary.withRate r hrr).hara_aggregateCapital_le_of_minMPC
-    (γ := 1) (η := 1 / 1000) (by norm_num) (by norm_num) rfl hr.1
+    (γ := 1) (η := 1 / 1000) (by norm_num) (by norm_num) rfl
+    (IncomeFluctuation.minMPC_pos (P := stoneGeary.withRate r hrr) (by norm_num) hr.1
+      (by
+        rw [show ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 from rfl, hint]
+        linarith [hr.2]))
     (by rw [show ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
     (by
       rw [show ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 from rfl, hint]

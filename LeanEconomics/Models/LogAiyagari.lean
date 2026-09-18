@@ -38,7 +38,7 @@ variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCa
 The two ways of supplying that are iid income (`crra_exists_exhaust_of_euler_corner`) and
 monotone transitions (`crra_exists_exhaust_of_euler_corner_monotone`). -/
 theorem crra_exists_exhaust_of_euler_corner_of_lowest {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hκ : 0 < P.minMPC γ)
         (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1)
     (hpc : P.PositiveConsumptionAll)
@@ -60,7 +60,7 @@ theorem crra_exists_exhaust_of_euler_corner_of_lowest {γ : ℝ} (hγ0 : 0 < γ)
   -- cap slack at the fixed point, from the minimal MPC
   have hslack : ∀ z : Z, ∀ x ∈ Icc (0 : ℝ) assetCap, P.policy (x, z) < P.maxSaving (x, z) :=
     fun z x hx => P.policyOf_lt_maxSaving_of_pos (hpos z x hx)
-      (P.crra_policy_lt_cap_of_minMPC hγ0 hu rfl hint hβ hβR hposIt hthr hx z)
+      (P.crra_policy_lt_cap_of_minMPC hγ0 hu rfl hκ hβ hβR hposIt hthr hx z)
   -- the corner below `a₀`, from the Euler inequality
   have hzero : ∀ a ∈ Icc (0 : ℝ) a₀, P.policy (a, z₀) = 0 := by
     intro a ha
@@ -87,7 +87,7 @@ theorem crra_exists_exhaust_of_euler_corner_of_lowest {γ : ℝ} (hγ0 : 0 < γ)
 /-- **The exhaustion data with iid income.** -/
 theorem crra_exists_exhaust_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
     (hfl : assetFloor = 0)
-    (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hκ : 0 < P.minMPC γ) (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hiid : P.IidIncome)
     (hpc : P.PositiveConsumptionAll)
     (hthr : (1 - P.minMPC γ) * (P.maxIncome + (1 + P.interest) * assetCap) < assetCap)
@@ -97,14 +97,14 @@ theorem crra_exists_exhaust_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u
       < (P.income z₀ + (1 + P.interest) * a₀) ^ (-γ)) :
     ∃ N : ℕ, (P.gBad z₀)^[N] P.topState = P.botState := by
   subst hfl
-  exact P.crra_exists_exhaust_of_euler_corner_of_lowest hγ0 hu rfl hint hβ hβR hpc hthr
+  exact P.crra_exists_exhaust_of_euler_corner_of_lowest hγ0 hu rfl hκ hβ hβR hpc hthr
     (fun a ha z => P.consumptionFn_le_of_income_le hiid (hz₀ z) ha) ha₀ hle hcorner
 
 /-- **The exhaustion data with persistent income**: monotone transitions in place of iid, via
 Huggett's Lemma 1 (`consumptionFn_le_of_income_le_monotone`). The extra iterate-level
 hypotheses that lemma needs are supplied by the minimal MPC. -/
 theorem crra_exists_exhaust_of_euler_corner_monotone {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hκ : 0 < P.minMPC γ)
         (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hmono : P.MonotoneTransitions)
     (hpc : P.PositiveConsumptionAll)
@@ -120,8 +120,8 @@ theorem crra_exists_exhaust_of_euler_corner_monotone {γ : ℝ} (hγ0 : 0 < γ)
     fun n z a ha => hpc _ (P.concaveSlices_iterate_zero n) z a ha
   have hslackIt : ∀ n : ℕ, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
       P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (x, z) < assetCap :=
-    fun n x hx z => (P.crra_minMPC_of_cap hγ0 hu rfl hint hβ hβR hposIt hthr n).2 x hx z
-  refine P.crra_exists_exhaust_of_euler_corner_of_lowest hγ0 hu rfl hint hβ hβR hpc hthr
+    fun n x hx z => (P.crra_minMPC_of_cap hγ0 hu rfl hκ hβ hβR hposIt hthr n).2 x hx z
+  refine P.crra_exists_exhaust_of_euler_corner_of_lowest hγ0 hu rfl hκ hβ hβR hpc hthr
     (fun a ha z => ?_) ha₀ hle hcorner
   exact P.consumptionFn_le_of_income_le_monotone hmono (du := fun c => c ^ (-γ))
     (fun c hc => by rw [hu]; exact hasDerivAt_crraUtility γ hc)
@@ -134,7 +134,7 @@ variable [MeasurableSpace Z] [BorelSpace Z]
 
 /-- **A unique stationary distribution at large `β`.** -/
 theorem crra_existsUnique_isStationary_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hκ : 0 < P.minMPC γ)
         (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hiid : P.IidIncome)
     (hpc : P.PositiveConsumptionAll)
@@ -144,13 +144,13 @@ theorem crra_existsUnique_isStationary_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ
     (hcorner : (P.discount : ℝ) * (1 + P.interest) * P.minIncome ^ (-γ)
       < (P.income z₀ + (1 + P.interest) * a₀) ^ (-γ)) :
     ∃! μ : ProbabilityMeasure P.State, P.IsStationary μ := by
-  obtain ⟨N, hN⟩ := P.crra_exists_exhaust_of_euler_corner hγ0 hu hfl hint hβ hβR hiid hpc hthr
+  obtain ⟨N, hN⟩ := P.crra_exists_exhaust_of_euler_corner hγ0 hu hfl hκ hβ hβR hiid hpc hthr
     hz₀ ha₀ hle hcorner
   exact P.existsUnique_isStationary hreach hN
 
 /-- **Convergence to it from any start**, Doeblin with the atom at the constraint. -/
 theorem crra_tendsto_pushProb_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hκ : 0 < P.minMPC γ)
         (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hiid : P.IidIncome)
     (hpc : P.PositiveConsumptionAll)
@@ -162,7 +162,7 @@ theorem crra_tendsto_pushProb_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ)
     (μ₀ : ProbabilityMeasure P.State) {μ : ProbabilityMeasure P.State} (hμ : P.IsStationary μ) :
     Tendsto (fun m => P.pushProb^[m] μ₀) atTop (𝓝 μ) := by
   classical
-  obtain ⟨N, hN⟩ := P.crra_exists_exhaust_of_euler_corner hγ0 hu hfl hint hβ hβR hiid hpc hthr
+  obtain ⟨N, hN⟩ := P.crra_exists_exhaust_of_euler_corner hγ0 hu hfl hκ hβ hβR hiid hpc hthr
     hz₀ ha₀ hle hcorner
   obtain ⟨z₁, -, hmin⟩ := Finset.exists_min_image Finset.univ
     (fun z => P.transitionMatrix z z₀) ⟨Classical.ofNonempty, Finset.mem_univ _⟩
@@ -171,7 +171,7 @@ theorem crra_tendsto_pushProb_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ)
 
 /-- **A unique stationary distribution at large `β`, with persistent income.** -/
 theorem crra_existsUnique_isStationary_of_euler_corner_monotone {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hκ : 0 < P.minMPC γ)
         (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hmono : P.MonotoneTransitions)
     (hpc : P.PositiveConsumptionAll)
@@ -181,13 +181,13 @@ theorem crra_existsUnique_isStationary_of_euler_corner_monotone {γ : ℝ} (hγ0
     (hcorner : (P.discount : ℝ) * (1 + P.interest) * P.minIncome ^ (-γ)
       < (P.income z₀ + (1 + P.interest) * a₀) ^ (-γ)) :
     ∃! μ : ProbabilityMeasure P.State, P.IsStationary μ := by
-  obtain ⟨N, hN⟩ := P.crra_exists_exhaust_of_euler_corner_monotone hγ0 hu hfl hint hβ hβR hmono
+  obtain ⟨N, hN⟩ := P.crra_exists_exhaust_of_euler_corner_monotone hγ0 hu hfl hκ hβ hβR hmono
     hpc hthr hz₀ ha₀ hle hcorner
   exact P.existsUnique_isStationary hreach hN
 
 /-- **Convergence to it from any start, with persistent income.** -/
 theorem crra_tendsto_pushProb_of_euler_corner_monotone {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hκ : 0 < P.minMPC γ)
         (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hmono : P.MonotoneTransitions)
     (hpc : P.PositiveConsumptionAll)
@@ -199,7 +199,7 @@ theorem crra_tendsto_pushProb_of_euler_corner_monotone {γ : ℝ} (hγ0 : 0 < γ
     (μ₀ : ProbabilityMeasure P.State) {μ : ProbabilityMeasure P.State} (hμ : P.IsStationary μ) :
     Tendsto (fun m => P.pushProb^[m] μ₀) atTop (𝓝 μ) := by
   classical
-  obtain ⟨N, hN⟩ := P.crra_exists_exhaust_of_euler_corner_monotone hγ0 hu hfl hint hβ hβR hmono
+  obtain ⟨N, hN⟩ := P.crra_exists_exhaust_of_euler_corner_monotone hγ0 hu hfl hκ hβ hβR hmono
     hpc hthr hz₀ ha₀ hle hcorner
   obtain ⟨z₁, -, hmin⟩ := Finset.exists_min_image Finset.univ
     (fun z => P.transitionMatrix z z₀) ⟨Classical.ofNonempty, Finset.mem_univ _⟩
