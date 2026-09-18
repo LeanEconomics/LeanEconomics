@@ -1,0 +1,124 @@
+/-
+Copyright (c) 2026 Robert Kirkby. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Robert Kirkby
+-/
+import LeanEconomics.Equilibrium.SignChange
+import LeanEconomics.Equilibrium.UniquenessClass
+
+/-!
+# The minimal MPC at a witness
+
+`crra_minMPC_mul_le_consumptionFn` bounds the consumption share below by `κ = 1 - Þ/R`. This file
+evaluates it at `nearLog`, where `β = 1/8` and `γ = 15/16`, so
+
+  `Þ = (β(1+r))^(16/15) ≈ 0.109`  and  `1 - κ ≤ 111/1000`
+
+uniformly over the rate interval `[0, 1/200]`. The consequence is a ceiling on capital supply of
+`1/8`, in place of the asset cap `1`.
+
+That matters for the equilibrium: the asset cap is bookkeeping, imposed to make the state space
+compact, and it appears in the technology band of `exists_equilibrium_of_technology` as the number
+demand has to clear at the bottom of the rate interval. Replacing it by a number the calibration
+determines makes the band eight times wider.
+
+The two hypotheses of the bound — consumption positive at each iterate, and the saving cap slack
+there — are exactly `Calibrated.positive_iterate` and `Calibrated.policyOf_iterate_lt_cap`, so
+`nearLog_calibrated` supplies them.
+-/
+
+open Set Filter Topology MeasureTheory BoundedContinuousFunction
+
+namespace LeanEconomics
+
+open IncomeFluctuation
+
+/-- **`1 - κ ≤ 111/1000` for `nearLog`**, uniformly over `[0, 1/200]`. The patience factor is
+`(β(1+r))^(16/15)`, and dividing by `1+r` leaves `β^(16/15)(1+r)^(1/15)`, which is largest at the
+top of the interval. -/
+theorem nearLog_one_sub_minMPC_le {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) :
+    1 - (nearLog.withRate r hrr).minMPC (15 / 16) ≤ 111 / 1000 := by
+  have hR1 : (1 : ℝ) ≤ 1 + r := by linarith [hr.1]
+  have hβ : ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 := rfl
+  have hint : (nearLog.withRate r hrr).interest = r := rfl
+  have hexp : (1 : ℝ) / (15 / 16) = 16 / 15 := by norm_num
+  simp only [IncomeFluctuation.minMPC, hβ, hint, sub_sub_cancel, hexp]
+  have hbase : (0 : ℝ) ≤ 1 / 8 * (1 + r) := by positivity
+  have hle : (1 : ℝ) / 8 * (1 + r) ≤ 201 / 1600 := by linarith [hr.2]
+  have hmono : ((1 : ℝ) / 8 * (1 + r)) ^ (16 / 15 : ℝ) ≤ (201 / 1600 : ℝ) ^ (16 / 15 : ℝ) :=
+    Real.rpow_le_rpow hbase hle (by norm_num)
+  have hnum : (201 / 1600 : ℝ) ^ (16 / 15 : ℝ) ≤ 111 / 1000 :=
+    rpow_le_of_pow_le (m := 16) (n := 15) (by norm_num) (by norm_num) (by norm_num)
+      (by norm_num) (by norm_num)
+  have hpos : (0 : ℝ) ≤ ((1 : ℝ) / 8 * (1 + r)) ^ (16 / 15 : ℝ) := Real.rpow_nonneg hbase _
+  rw [div_le_iff₀ (by linarith)]
+  nlinarith [hmono, hnum, hpos, hR1]
+
+/-- **The minimal-MPC bound for `nearLog`.** -/
+theorem nearLog_minMPC_mul_le_consumptionFn {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) (z : Fin 2) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) :
+    (nearLog.withRate r hrr).minMPC (15 / 16) * (nearLog.withRate r hrr).resources (a, z)
+      ≤ (nearLog.withRate r hrr).consumptionFn z a :=
+  (nearLog.withRate r hrr).crra_minMPC_mul_le_consumptionFn (by norm_num) rfl rfl hr.1
+    (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
+    (by
+      rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl,
+        show (nearLog.withRate r hrr).interest = r from rfl]
+      linarith [hr.2])
+    (fun n z' b hb => nearLog_calibrated.positive_iterate hr hrr hr hrr n hb z')
+    (fun n b hb z' => nearLog_calibrated.policyOf_iterate_lt_cap hr hrr hr hrr n hb z') z ha
+
+/-- **Capital supply at `nearLog` never exceeds `1/8`** — eight times better than the asset cap,
+and a number the calibration determines rather than one imposed for compactness. -/
+theorem nearLog_aggregateCapital_le {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) {μ : ProbabilityMeasure nearLog.State}
+    (hμ : (nearLog.withRate r hrr).IsStationary μ) :
+    nearLog.aggregateCapital μ ≤ 1 / 8 := by
+  have hkey := (nearLog.withRate r hrr).crra_aggregateCapital_le_of_minMPC (γ := 15 / 16)
+    (by norm_num) rfl hr.1
+    (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
+    (by
+      rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl,
+        show (nearLog.withRate r hrr).interest = r from rfl]
+      linarith [hr.2])
+    (fun n z' b hb => nearLog_calibrated.positive_iterate hr hrr hr hrr n hb z')
+    (fun n b hb z' => nearLog_calibrated.policyOf_iterate_lt_cap hr hrr hr hrr n hb z') hμ
+  have heq : (nearLog.withRate r hrr).aggregateCapital μ = nearLog.aggregateCapital μ := rfl
+  rw [heq] at hkey
+  have hone : 1 - (nearLog.withRate r hrr).minMPC (15 / 16) ≤ 111 / 1000 :=
+    nearLog_one_sub_minMPC_le hr hrr
+  have hzero : (0 : ℝ) ≤ 1 - (nearLog.withRate r hrr).minMPC (15 / 16) := by
+    have := IncomeFluctuation.minMPC_le_one (P := nearLog.withRate r hrr) (γ := 15 / 16)
+      (by norm_num)
+      (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
+    linarith
+  have hM : (nearLog.withRate r hrr).maxIncome = 1 := rfl
+  have hint : (nearLog.withRate r hrr).interest = r := rfl
+  rw [hM, hint] at hkey
+  set x : ℝ := 1 - (nearLog.withRate r hrr).minMPC (15 / 16) with hxdef
+  have hden : (0 : ℝ) < 1 - x * (1 + r) := by nlinarith [hr.1, hr.2]
+  rw [le_div_iff₀ hden] at hkey
+  nlinarith [hkey, hone, hzero, hr.1, hr.2]
+
+/-- **An equilibrium for `nearLog` at a technology five times less extreme.** The ceiling `1/8`
+in place of the asset cap `1` widens the band of admissible `A` by a factor of `√8`, and with it
+the admissible depreciation: `δ = 1/2000` against the `1/10000` the asset-cap version allowed.
+
+The two inequalities are the same as before — `4δ²·M ≤ A²` clears the ceiling at the bottom of
+the interval and `A² ≤ 4(1/200+δ)²·m` falls under the floor at the top — but with `M = 1/8`
+rather than `M = 1`. -/
+theorem nearLog_exists_equilibrium_of_technology' :
+    ∃ r ∈ Icc (0 : ℝ) (1 / 200),
+      IsAiyagariEquilibrium
+        (nearLog.rateFamily (by norm_num : (0:ℝ) < 1 + 0) (by norm_num : (0:ℝ) ≤ 1 / 200))
+        (capitalDemand (1 / 2000) (1 / 2000)) r :=
+  nearLog.exists_equilibrium_of_ceiling_and_floor (by norm_num) (by norm_num)
+    (fun r hr hrr => nearLog_existsUnique_uniform hr hrr)
+    (M := 1 / 8) (fun hrlo' μ hμ => nearLog_aggregateCapital_le (by norm_num) hrlo' hμ)
+    (fun hrr μ hμ => nearLog_floor_top hrr μ hμ)
+    (1 / 2000) (1 / 2000) (by norm_num)
+    (le_capitalDemand_of_sq (by norm_num) (by norm_num))
+    (capitalDemand_le_of_sq (by norm_num) (by norm_num))
+
+end LeanEconomics

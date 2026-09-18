@@ -6,6 +6,7 @@ Authors: Robert Kirkby
 import LeanEconomics.Equilibrium.Firm
 import LeanEconomics.Equilibrium.PositiveCapital
 import LeanEconomics.Models.IncomeFluctuationConsumption
+import LeanEconomics.Models.MinimalMPC
 
 /-!
 # The sign change, both ends
@@ -35,7 +36,7 @@ decline condition alone needs `ε > r/(1+r)`, and with `ε ≈ 0.27` that caps t
 structural gap in the equilibrium argument.
 -/
 
-open Set Filter Topology MeasureTheory
+open Set Filter Topology MeasureTheory BoundedContinuousFunction
 
 namespace LeanEconomics
 
@@ -203,14 +204,17 @@ household has a positive supply floor: that is the content of
 
 Note which bound is used where. The ceiling is the free one, `aggregateCapital_le`; only the floor
 `m` is household work. -/
-theorem exists_equilibrium_of_technology {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo) (hlt : rlo < rhi)
+theorem exists_equilibrium_of_ceiling_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
+    (hlt : rlo < rhi)
     (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r,
       ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ)
-    {m : ℝ}
+    {m M : ℝ}
+    (hceil : ∀ hrlo' : P.RateOK rlo, ∀ μ : ProbabilityMeasure P.State,
+      (P.withRate rlo hrlo').IsStationary μ → P.aggregateCapital μ ≤ M)
     (hfloor : ∀ hrhi : P.RateOK rhi, ∀ μ : ProbabilityMeasure P.State,
       (P.withRate rhi hrhi).IsStationary μ → m ≤ P.aggregateCapital μ)
     (A δ : ℝ) (hδ : 0 < rlo + δ)
-    (hDlo : assetCap ≤ capitalDemand A δ rlo) (hDhi : capitalDemand A δ rhi ≤ m) :
+    (hDlo : M ≤ capitalDemand A δ rlo) (hDhi : capitalDemand A δ rhi ≤ m) :
     ∃ r ∈ Icc rlo rhi,
       IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) (capitalDemand A δ) r := by
   classical
@@ -234,13 +238,31 @@ theorem exists_equilibrium_of_technology {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo) (h
     refine (hE r).choose_spec.2 μ ?_
     rw [P.withRate_congr hc (hpos r) hrr]
     exact hμ
+  have hlo' : rlo ∈ Icc rlo rhi := ⟨le_rfl, hle⟩
   have hhi' : rhi ∈ Icc rlo rhi := ⟨hle, le_rfl⟩
+  have hrlo' : P.RateOK rlo := rateOK_of_floor_zero hrlo
   have hrhi : P.RateOK rhi := rateOK_of_floor_zero (by linarith)
-  have hub : P.aggregateCapital (ν rlo) ≤ assetCap := P.aggregateCapital_le _
+  have hub : P.aggregateCapital (ν rlo) ≤ M := hceil hrlo' _ (hν rlo hlo' hrlo')
   have hlbhi : m ≤ P.aggregateCapital (ν rhi) := hfloor hrhi _ (hν rhi hhi' hrhi)
   exact P.exists_equilibrium_of_selection hrlo hle ν hν hunique
     (capitalDemand A δ) (continuousOn_capitalDemand hδ)
     (le_trans hub hDlo) (le_trans hDhi hlbhi)
+
+/-- **The same with the free ceiling.** Capital supply can never exceed the asset cap, so a
+technology that clears the cap at `rlo` needs no household-side ceiling at all. This is the form
+every witness used before `crra_aggregateCapital_le_of_minMPC` gave a sharper one. -/
+theorem exists_equilibrium_of_technology {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo) (hlt : rlo < rhi)
+    (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r,
+      ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ)
+    {m : ℝ}
+    (hfloor : ∀ hrhi : P.RateOK rhi, ∀ μ : ProbabilityMeasure P.State,
+      (P.withRate rhi hrhi).IsStationary μ → m ≤ P.aggregateCapital μ)
+    (A δ : ℝ) (hδ : 0 < rlo + δ)
+    (hDlo : assetCap ≤ capitalDemand A δ rlo) (hDhi : capitalDemand A δ rhi ≤ m) :
+    ∃ r ∈ Icc rlo rhi,
+      IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) (capitalDemand A δ) r :=
+  P.exists_equilibrium_of_ceiling_and_floor hrlo hlt huniq
+    (fun _ μ _ => P.aggregateCapital_le μ) hfloor A δ hδ hDlo hDhi
 
 
 /-- **An Aiyagari equilibrium from household-side hypotheses alone.** Uniqueness of the stationary
@@ -321,6 +343,27 @@ theorem aggregateCapital_le_of_consumption_bound {μ : ProbabilityMeasure P.Stat
   rw [le_div_iff₀ (by linarith)]
   nlinarith [hint]
 
+/-- **A quantitative ceiling on capital supply, from primitives.** The minimal-MPC bound says the
+household consumes at least the share `κ` of cash on hand; feeding that to
+`aggregateCapital_le_of_consumption_bound` replaces the asset cap, which is bookkeeping, by a
+number the calibration determines. The denominator is `1 - Þ`, so the ceiling blows up exactly as
+the household stops being impatient. -/
+theorem crra_aggregateCapital_le_of_minMPC {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hβR : (P.discount : ℝ) * (1 + P.interest) < 1)
+    (hpos : ∀ n : ℕ, ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap,
+      0 < P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a)
+    (hcapit : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
+      P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
+    {μ : ProbabilityMeasure P.State} (hμ : P.IsStationary μ) :
+    P.aggregateCapital μ
+      ≤ (1 - P.minMPC γ) * P.maxIncome / (1 - (1 - P.minMPC γ) * (1 + P.interest)) := by
+  refine P.aggregateCapital_le_of_consumption_bound hμ
+    (IncomeFluctuation.minMPC_le_one hγ0 hβ) ?_ ?_
+  · rw [IncomeFluctuation.one_sub_minMPC_mul]
+    exact IncomeFluctuation.patience_lt_one hγ0 hβR
+  · exact fun z a ha => P.crra_minMPC_mul_le_consumptionFn hγ0 hu rfl hint hβ hβR hpos hcapit z ha
+
 end IncomeFluctuation
 
 /-! ### Uniformity in the interest rate
@@ -329,6 +372,7 @@ The supply floor has to hold at every rate in the interval, and the gain conditi
 the rate: raising `r` raises `(1+r) t / (y₀ + (1+r) t)` towards one, so the right-hand side grows
 while the left does not move. Checking the condition at the LOW end of the interval therefore
 covers all of it. -/
+
 
 theorem gain_term_mono {y₀ t : ℝ} (hy₀ : 0 < y₀) (ht : 0 < t) {s₀ s₁ : ℝ}
     (hs₀ : 0 < s₀) (hs : s₀ ≤ s₁) :

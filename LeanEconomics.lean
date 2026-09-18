@@ -84,3 +84,5 @@ import LeanEconomics.Equilibrium.UniquenessClass
 import LeanEconomics.Models.StoneGearyWitness
 import LeanEconomics.Models.Quadratic
 import LeanEconomics.Models.CESPatienceWitness
+import LeanEconomics.Models.MinimalMPC
+import LeanEconomics.Models.CESMinimalMPC
