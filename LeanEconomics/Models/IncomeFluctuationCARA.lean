@@ -42,7 +42,7 @@ is unbounded (`not_monotoneOn_mul_deriv_caraUtility`). Carroll–Kimball and uni
 separate requirements, and this file is about the first.
 -/
 
-open Set Filter Topology BoundedContinuousFunction
+open Set Filter Topology BoundedContinuousFunction MeasureTheory
 
 namespace LeanEconomics
 
@@ -335,6 +335,17 @@ theorem concaveOn_consumptionFn_of_cara {α δ : ℝ} (hα : 0 < α) (hδ : 0 < 
   exact P.concaveOn_consumptionFn_of_iterates
     (P.concaveOn_consumptionFnOf_iterates_of_cara hα hβ hu hpos hslack) z
 
+/-- **The corner condition for CARA**, from the generic Lipschitz bound and CARA's own marginal
+bound. The CRRA and shifted-CRRA versions are `crra_policy_eq_zero_of_resources` and
+`hara_policy_eq_zero_of_primitives`; nothing in the argument was ever CRRA-specific. -/
+theorem cara_policy_eq_zero_of_resources {α L : ℝ} (hα : 0 < α) (hu : P.u = caraUtility α)
+    (hL : 0 ≤ L) (hbig : (P.slopeBoundU + P.discount * L) * (1 + P.interest) ≤ L)
+    {s : ℝ × Z} (hs : s.1 ∈ Icc assetFloor assetCap)
+    (hlt : (P.discount : ℝ) * L < Real.exp (-α * (P.resources s - assetFloor))) :
+    P.policy s = assetFloor :=
+  P.policy_eq_zero_of_corner_at (P.valueFunction_lipschitz hL hbig) hs
+    (fun c d _ hdc hc => by rw [hu]; exact cara_marginal_bound hα hdc hc) hlt
+
 end IncomeFluctuation
 
 /-! ### A capped model with CARA utility exists
@@ -541,5 +552,77 @@ theorem caraCal_concaveOn_consumptionFn (z : Fin 2) :
   caraCal.concaveOn_consumptionFn_of_cara (α := 1) (δ := 1) one_pos one_pos
     (by rw [caraCal_discount]; norm_num) caraCal_bounded rfl
     caraCal_floor_cond caraCal_cap_cond z
+
+/-! ### What CARA can and cannot have
+
+`caraCal` has Carroll--Kimball unconditionally, so it is a legitimate household. It is NOT a
+`Calibrated` instance, and there are two independent reasons, both worth stating rather than
+reporting.
+
+**Light's Theorem 1 is unavailable.** The class carries `gamma_le_one` because rate monotonicity
+needs relative risk aversion at most one. CARA's relative risk aversion is `α c`, so the
+condition is `α · maxConsumption ≤ 1` — a restriction on the CALIBRATION, not on the functional
+form. `caraCal` has `α = 1` and consumption at least `3/2`, so it fails
+(`caraWitness_not_relativeRiskAversionLeOne`, which is a statement about `caraUtility 1` and so
+covers this economy too).
+
+**And it holds no capital anyway.** At `β = 1/1000` the household is so impatient that the corner
+condition holds at EVERY asset level in the region: `β L ≤ 1/1000` against a marginal utility of
+at least `1/21` even at the richest state. So it saves nothing, and capital supply is exactly
+zero — the same conclusion as the riskless CRRA economy, reached for the opposite reason.
+
+Those two are not independent accidents. The gain test that buys a positive floor needs
+`exp(α(y₀ + Rh - y₁ + h)) < βπR/2`; with `α y₁ ≤ 1` forced by Light's condition, the left side
+cannot fall below `e⁻¹`, so `βπR > 2/e`. A CARA economy with both Light's theorem and positive
+capital would therefore have to be PATIENT — `βR` close to one — which is exactly where the
+oscillation `1/(1-β)` blows the positivity and cap-slack conditions. That squeeze, not the
+utility function, is what keeps CARA out. -/
+
+/-- The secant slope of `caraCal`'s utility over `[3/4, 3/2]` is at most `2/3`, because
+`exp(-3/4)` is the square root of `exp(-3/2) ≤ 1/4`. -/
+theorem caraCal_slopeBoundU_le : caraCal.slopeBoundU ≤ 2 / 3 := by
+  have hsq : Real.exp (-(3 / 4 : ℝ)) * Real.exp (-(3 / 4 : ℝ)) = Real.exp (-(3 / 2 : ℝ)) := by
+    rw [← Real.exp_add]; norm_num
+  have hpos : (0 : ℝ) < Real.exp (-(3 / 4 : ℝ)) := Real.exp_pos _
+  have hhalf : Real.exp (-(3 / 4 : ℝ)) ≤ 1 / 2 := by
+    nlinarith [hsq, exp_neg_three_halves_le, hpos]
+  have hlow : (0 : ℝ) < Real.exp (-(3 / 2 : ℝ)) := Real.exp_pos _
+  simp only [IncomeFluctuation.slopeBoundU, caraCal_minConsumption, caraCal_u, slopeBound,
+    caraUtility]
+  rw [div_le_div_iff₀ (by norm_num) (by norm_num)]
+  have h1 : -Real.exp (-1 * (3 / 2 : ℝ)) / 1 = -Real.exp (-(3 / 2 : ℝ)) := by norm_num
+  have h2 : -Real.exp (-1 * (3 / 2 / 2 : ℝ)) / 1 = -Real.exp (-(3 / 4 : ℝ)) := by norm_num
+  rw [h1, h2]
+  linarith [hhalf, hlow]
+
+/-- **The `caraCal` household never saves.** At `β = 1/1000` the corner condition holds at every
+asset level: `β L ≤ 1/1000` against a marginal utility of at least `1/21`. -/
+theorem caraCal_policy_eq_zero {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) (z : Fin 2) :
+    caraCal.policy (a, z) = 0 := by
+  have hres : caraCal.resources (a, z) ≤ 3 := by
+    have hinc : caraCal.income z ≤ 2 := caraCal.le_maxIncome z
+    simp only [IncomeFluctuation.resources, max_eq_right ha.1,
+      show caraCal.interest = 0 from rfl]
+    linarith [ha.2]
+  refine caraCal.cara_policy_eq_zero_of_resources (α := 1) (L := 1) one_pos rfl (by norm_num)
+    ?_ ha ?_
+  · simp only [show caraCal.interest = 0 from rfl, caraCal_discount]
+    linarith [caraCal_slopeBoundU_le]
+  · have hge : Real.exp (-3 : ℝ) ≤ Real.exp (-1 * (caraCal.resources (a, z) - 0)) :=
+      Real.exp_le_exp.mpr (by linarith [hres])
+    have h21 := inv_twentyone_le_exp_neg_three
+    rw [caraCal_discount]
+    linarith [hge, h21]
+
+/-- **Capital supply at `caraCal` is exactly zero.** -/
+theorem caraCal_aggregateCapital_eq_zero {μ : ProbabilityMeasure caraCal.State}
+    (hμ : caraCal.IsStationary μ) : caraCal.aggregateCapital μ = 0 := by
+  rw [caraCal.aggregateCapital_eq_integral_policy hμ]
+  have hz : ∀ s : caraCal.State, caraCal.policyCoord s = 0 := by
+    intro s
+    have hmem : ((s.1 : ℝ)) ∈ Icc (0 : ℝ) 1 := s.1.2
+    simp only [IncomeFluctuation.policyCoord_apply, IncomeFluctuation.incl]
+    exact caraCal_policy_eq_zero hmem s.2
+  simp only [hz, integral_zero]
 
 end LeanEconomics
