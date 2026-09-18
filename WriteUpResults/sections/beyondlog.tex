@@ -1,0 +1,166 @@
+\section{Higher risk aversion: the frontier for \texorpdfstring{$\mu\in\{3,5\}$}{mu = 3, 5}}
+\label{sec:beyond}
+
+Everything in Section~\ref{sec:arch} except Theorem 1 goes through for CRRA utility with any
+$\mu>0$: the corner, the minimal MPC with $\kappa=1-\Thorn/R$, the cap slack, the Doeblin
+uniqueness and convergence, the coupling, the homogeneity, single crossing. The formal statement is
+\lean{crra\_equilibriumRate\_unique\_of\_marginal}, and it carries exactly one hypothesis that is
+not discharged: Theorem 1. This section says what that hypothesis is, why it fails at Aiyagari's
+numbers, what it becomes when the proof is tightened, and where that leaves the problem.
+
+\subsection{Theorem 1 reduces to an elasticity condition}\label{sec:elasticity}
+
+\begin{proposition}[Saving rises with the rate under an elasticity condition]\label{prop:elas}
+Let $r_1\le r_2$ be admissible, with positive consumption and a slack cap at both rates, and let
+$u'$ be strictly decreasing. Fix $(a,z)$ with $a\ge0$ and let $b=g_1(a,z)$. If
+\begin{equation}\label{eq:EC}
+  R_1\,u'\bigl(c_1(b,z')\bigr)\ \le\ R_2\,u'\bigl(c_2(b,z')\bigr)\qquad\text{for every }z',
+\end{equation}
+then $g_1(a,z)\le g_2(a,z)$.
+\formal{IncomeFluctuation.policy\_le\_policy\_withRate\_of\_marginal\_at}
+\end{proposition}
+
+The proof is four lines of Euler inequalities and holds for any period utility. Suppose
+$g_2(a,z)<g_1(a,z)=b$. Then the higher-rate household has room under the cap, so
+$\beta R_2\,\E[u'(c_2(g_2,\cdot))]\le u'(c_2(a,z))$; the lower-rate household has room above the
+floor, so $u'(c_1(a,z))\le\beta R_1\,\E[u'(c_1(b,\cdot))]$; it consumes strictly less today, so
+$u'(c_2(a,z))<u'(c_1(a,z))$; and consumption rises with assets, so
+$u'(c_2(b,\cdot))\le u'(c_2(g_2,\cdot))$. Chaining, $R_2\E[u'(c_2(b,\cdot))]<R_1\E[u'(c_1(b,\cdot))]$,
+which \eqref{eq:EC} forbids. For CRRA, \eqref{eq:EC} is
+\[
+  \Bigl(\frac{c_2(b,z')}{c_1(b,z')}\Bigr)^{\mu}\le\frac{R_2}{R_1},
+\]
+an elasticity of consumption to the gross rate of at most $1/\mu$ (\lean{crra\_elasticity\_iff}).
+It says that the income effect of the rate on consumption does not outweigh the human-wealth
+effect. Uniqueness on $[r_{lo},r_{hi}]$ follows from \eqref{eq:EC} at every state and every pair of
+rates (\lean{crra\_equilibriumRate\_unique\_of\_marginal}), and, since the coupling only visits
+states the economy visits, from \eqref{eq:EC} on any interval $[0,\bar a']$ that the lower-rate
+policy maps into itself (\lean{crra\_equilibriumRate\_unique\_of\_marginal\_on},
+Section~\ref{sec:invariant}).
+
+\subsection{The condition fails for the rich when \texorpdfstring{$\mu>1$}{mu > 1}}
+
+By \citet{MaToda2022}, the consumption function is asymptotically linear, $c(x)/x\to\kappa(R)$,
+with $\kappa(R)=1-(\beta R)^{1/\mu}/R$ the minimal MPC. For $\mu>1$, $\kappa$ rises with $R$. So at
+high wealth $c_2(b)/c_1(b)\to\kappa_2R_2/(\kappa_1R_1)$ and
+\[
+  \Bigl(\frac{\kappa_2R_2}{\kappa_1R_1}\Bigr)^{\mu}
+  =\Bigl(\frac{\kappa_2}{\kappa_1}\Bigr)^{\mu}\Bigl(\frac{R_2}{R_1}\Bigr)^{\mu}>\frac{R_2}{R_1},
+\]
+so \eqref{eq:EC} fails for all large $b$ (\lean{crra\_elasticity\_fails\_of\_asymptotic\_mpc}).
+Saving of the rich nonetheless rises with the rate, since $g\approx\Thorn b$ with
+$\Thorn=(\beta R)^{1/\mu}$ increasing in $R$; the sufficient condition does not see it. With the
+linear approximation $c\approx\kappa(R)(Rb+H)$ and $H\approx\bar Y/r$, the human-wealth effect
+dominates and consumption falls with the rate for $b$ below about $13\bar Y$ at $\mu=3$ and
+$7\bar Y$ at $\mu=5$, where \eqref{eq:EC} holds; above, it fails. The stationary distribution
+reaches far beyond those levels, because the top income type keeps accumulating until wealth of
+order $y_{\max}/(1-\Thorn)$, so the invariant-interval form does not rescue the argument at
+Aiyagari's numbers.
+
+\subsection{The chain throws a term away}\label{sec:slack}
+
+The supposition $g_2(a,z)<g_1(a,z)$ gives not $c_2(a,z)>c_1(a,z)$ but
+\[
+  c_2(a,z)>c_1(a,z)+(r_2-r_1)\,a,
+\]
+and the proof above uses only the weaker inequality. Keeping the extra interest income, the chain
+closes under a weaker condition.
+
+\begin{proposition}[The slack elasticity condition]\label{prop:slack}
+In the setting of Proposition~\ref{prop:elas}, with $u'>0$, if
+\begin{equation}\label{eq:SEC}
+  R_1\,u'\bigl(c_1(b,z')\bigr)\,u'\bigl(c_1(a,z)+(r_2-r_1)a\bigr)
+  \ \le\ R_2\,u'\bigl(c_2(b,z')\bigr)\,u'\bigl(c_1(a,z)\bigr)\qquad\text{for every }z',
+\end{equation}
+then $g_1(a,z)\le g_2(a,z)$. For CRRA, \eqref{eq:SEC} reads
+\[
+  \Bigl(\frac{c_2(b,z')}{c_1(b,z')}\Bigr)^{\mu}\le\frac{R_2}{R_1}
+  \Bigl(1+\frac{(r_2-r_1)\,a}{c_1(a,z)}\Bigr)^{\mu}.
+\]
+\formal{IncomeFluctuation.policy\_le\_policy\_withRate\_of\_slack\_at; crra\_slack\_elasticity\_iff}
+\end{proposition}
+
+The new factor is at least one and grows with $a/c_1(a)$, which is largest exactly where
+\eqref{eq:EC} fails. In the high-wealth limit, with $L_i=\kappa_iR_i=R_i-\Thorn_i$ the asymptotic
+slopes and $b\approx\Thorn_1a$, $c_1(a)\approx L_1a$, both sides have limits and the inequality
+between them is exact:
+
+\begin{proposition}[The slack condition holds in the homogeneous limit for every $\mu$]
+\label{prop:homog}
+For $0<R_1\le R_2$, $\Thorn_1\le\Thorn_2$, $\Thorn_1<R_1$, $\Thorn_2<R_2$ and $\mu\ge0$,
+\[
+  \Bigl(\frac{R_2-\Thorn_2}{R_1-\Thorn_1}\Bigr)^{\mu}\ \le\
+  \frac{R_2}{R_1}\Bigl(\frac{R_2-\Thorn_1}{R_1-\Thorn_1}\Bigr)^{\mu},
+\]
+with strict inequality when $\Thorn_1<\Thorn_2$ and $\mu>0$. Consequently, along tomorrow's
+assets, if $c_2(b(a))/c_1(b(a))\to L_2/L_1$ and $c_1(a)/a\to L_1$, the CRRA slack condition holds
+for all large $a$.
+\formal{crra\_slack\_elasticity\_of\_patience; crra\_slack\_elasticity\_holds\_of\_asymptotic\_mpc}
+\end{proposition}
+
+The proof is one line: $R_2-\Thorn_2\le R_2-\Thorn_1$ because $\Thorn_1\le\Thorn_2$, and
+$R_2/R_1\ge1$ is spare. In logarithmic terms per unit of rate difference the two sides grow at
+rates $\mu(\kappa'R+\kappa)/(\kappa R)$ and $1/R+\mu/(\kappa R)$, whose difference is exactly
+$1/(\kappa R)$ for every $\mu$: about $25$ at Aiyagari's numbers. Table~\ref{tab:slack} gives the
+values.
+
+\begin{table}[t]
+\centering
+\caption{The slack elasticity condition at Aiyagari's numbers, $r\approx4\%$. Rows two and three
+are the logarithmic growth rates of the two sides of \eqref{eq:SEC} per unit of rate difference in
+the high-wealth limit; the condition holds when the left is below the right. Row four is the wealth
+below which consumption falls with the rate, where the unweakened condition \eqref{eq:EC} already
+holds.}
+\label{tab:slack}
+\begin{tabular}{lcc}
+\toprule
+ & $\mu=3$ & $\mu=5$\\
+\midrule
+minimal MPC $\kappa$ & $0.0390$ & $0.0388$\\
+left side, deep tail & $50$ & $100$\\
+right side, deep tail & $75$ & $125$\\
+wealth below which \eqref{eq:EC} holds (multiples of mean income) & $\approx13$ & $\approx7$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+So at every wealth level the slack condition is, numerically, true: in the body because
+consumption falls with the rate, in the tail by Proposition~\ref{prop:homog} with margin, and in
+between with margin as well. The reduction theorems with the slack condition in place of
+\eqref{eq:EC} are \lean{equilibriumRate\_unique\_of\_slack},
+\lean{equilibriumRate\_unique\_of\_slack\_on} and
+\lean{crra\_equilibriumRate\_unique\_of\_slack\_on}.
+
+\subsection{What remains}\label{sec:frontier}
+
+To prove \eqref{eq:SEC} from primitives one needs the ratio $c_2(b)/c_1(b)$ of consumption at two
+rates to a relative precision of the order of $r_2-r_1$, uniformly in $b$ on the support, since
+that is the size of the margin. Two available routes do not deliver it. The sandwich
+$\kappa x\le c(x)\le\kappa x+C$, with $C$ of the order of mean income, has a gap of order one and
+so pins the ratio only for rate pairs far enough apart, whereas uniqueness must handle all pairs.
+The fixed-point perturbation bound for the Coleman operator in the marginal-utility metric of
+\citet{LiStachurski2014}, which we formalised (Section~\ref{sec:aux}), gives a bound that is
+uniform in wealth in the wrong sense: it loses a factor of the inverse contraction modulus,
+$1/(1-\Thorn)\approx2000$ at these numbers, and is vacuous where $u'$ is small. What would be
+needed is a Lipschitz estimate in the rate for the consumption function that is relative rather than
+absolute, that is, comparative statics of $c$ in $r$ uniform on the support. We know of no such
+result. The status of $\mu\in\{3,5\}$ is therefore: reduced to an inequality on two consumption
+functions that is numerically true everywhere, with an explicit margin, and unproved.
+
+Two further reductions are recorded for completeness. The rescaling proof of Section~\ref{sec:thm1}
+uses relative risk aversion at most one only through a range condition on the true consumption
+function of the higher-rate economy, $(1-c_2(0)/c_2(ta))(\rho-1)\le\rho^{1/\mu}-1$ with
+$\rho=R_2/R_1$, roughly $c(a)\lesssim\frac{\mu}{\mu-1}c(0)$ (\lean{policy\_mono\_withRate\_crra\_of\_range}).
+It is weaker than $\mu\le1$ but fails at moderate wealth. And Theorem 1 holds at equal cash on
+hand for all $a$: $g_1(a,z)\le g_2(ta,z)$ with $t=R_1/R_2$ (\lean{policy\_le\_policy\_scaled\_withRate\_of\_marginal\_at}).
+
+\subsection{The invariant-interval form}\label{sec:invariant}
+
+Since Theorem 1 uses the condition only at tomorrow's assets and the coupling only along coupled
+paths, if $[0,\bar a']$ is invariant under the lower-rate policy then the condition on $[0,\bar a']$
+alone orders the policies there, the coupling started at zero assets never leaves the interval, and
+uniqueness follows (\lean{AboveSet}, \lean{push\_aboveSet\_eq\_zero},
+\lean{equilibriumRate\_unique\_of\_marginal\_on}). This is the honest form of the reduction: the
+condition is needed on the ergodic support and nowhere else. At Aiyagari's numbers the support is
+too long for the unweakened condition, as noted; for the slack condition the invariant form is
+available but, by Proposition~\ref{prop:homog}, not needed.

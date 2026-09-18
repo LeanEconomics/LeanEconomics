@@ -1,0 +1,63 @@
+\section{Huggett (1993)}\label{sec:huggett}
+
+In Huggett's exchange economy households trade a bond in zero net supply at price $q$; the rate is
+$r=1/q-1$, the borrowing limit $\underline a<0$ is a credit limit, and the equilibrium condition is
+$K(\mu)=0$. His calibration is $\beta=0.99322$, $\sigma\in\{1.5,3\}$, a two-state endowment, and
+credit limits $\underline a\in\{-2,-4,-6,-8\}$ in units of the high endowment. Two things change.
+
+\paragraph{Single crossing needs strictness.}
+Against a constant supply, a monotone $K(r)$ gives nothing: two rates with $K=0$ are compatible
+with $K\equiv0$ between them. What is needed is that $K$ be strictly increasing, and this follows
+if the higher-rate policy dominates the lower-rate one everywhere and strictly on a set the
+lower-rate stationary distribution charges (\lean{aggregateCapital\_lt\_of\_policy\_lt},
+\lean{huggett\_equilibriumRate\_unique}). The strict form of Theorem 1 holds for creditors: at
+$a>0$ with an interior choice, and $r_1<r_2$, $g_1(a,z)<g_2(a,z)$ under \eqref{eq:EC}
+(\lean{policy\_lt\_policy\_withRate\_of\_marginal\_at}).
+
+\paragraph{Debtors lose cash on hand when the rate rises.}
+For $a<0$, the step $c_2(a)>c_1(a)+(r_2-r_1)a$ has a negative last term, and the chain gives only
+\begin{equation}\label{eq:loss}
+  g_1(a,z)\ \le\ g_2(a,z)+(r_2-r_1)\max\{0,-a\}:
+\end{equation}
+saving can fall with the rate for a debtor, but by no more than the extra interest on the debt
+(\lean{policy\_le\_policy\_add\_withRate\_of\_marginal\_at}; the slack version is
+\lean{policy\_le\_policy\_add\_withRate\_of\_slack\_at}). For $a\ge0$ the loss vanishes and
+Theorem 1 is as before.
+
+\paragraph{Carrying the loss through the coupling.}
+The coupling of Section~\ref{sec:coupling} needs exact dominance. A version that tolerates a shift
+replaces first-order dominance by \emph{dominance up to $\delta$}: $\int h\,d\mu\le\int h\,d\nu+\delta L$
+for every test function increasing in assets and $L$-Lipschitz in assets. One period of the
+operator turns a shift $\delta$ into $\delta K+\gamma$, where $\gamma$ is the pointwise policy gap
+\eqref{eq:loss} and $K$ is a Lipschitz constant of the higher-rate policy in assets; iterating and
+passing to the limit,
+\begin{equation}\label{eq:shift}
+  K(\mu_1)\ \le\ K(\mu_2)+\frac{(r_2-r_1)\,|\underline a|}{1-K}\qquad\text{if }K<1
+\end{equation}
+(\lean{DominatesShift}, \lean{dominatesShift\_iterate},
+\lean{huggett\_aggregateCapital\_le\_add}). Here $K$ is the marginal propensity to save out of
+assets. For CRRA the policy's slope in assets is $R(1-\mathrm{MPC})$, and asymptotically the MPC is
+$\kappa$, giving $K=R(1-\kappa)=\Thorn=(\beta R)^{1/\sigma}<1$: impatience, with almost no room. At
+Huggett's numbers $1-\Thorn_2\approx0.00067$, so the amplification in \eqref{eq:shift} is about
+$1500$.
+
+\paragraph{The propensity-to-save bound cannot be had on a bounded region.}
+It is tempting to derive the MPC floor from Carroll--Kimball concavity of the consumption function
+together with the minimal-MPC level bound $c(x)\ge\kappa x$. On a ray this works: a concave function
+above the line $\kappa x$ has every secant slope at least $\kappa$, by one chord far to the right
+(\lean{secant\_ge\_of\_concaveOn\_Ici}, with the chord chosen explicitly). On the region
+$[\underline a,\bar a]$ it does not: the constant function at the level of the bound at the cap is
+concave, lies above the bound, and is flat (\lean{exists\_concaveOn\_ge\_flat}). The MPC floor is an
+asymptotic property of the uncapped problem, and the chord at the cap says nothing because there
+the level bound is far below actual consumption. So \eqref{eq:shift} is restated with the floor as a
+hypothesis in the form it is used: a consumption slope floor $(R_2-K)(b-a)\le c_2(b)-c_2(a)$ is
+exactly the Lipschitz bound $K$ for the policy (\lean{policy\_lipschitz\_of\_consumption\_slope}),
+and the CRRA form takes $K=\Thorn_2$ and the floor $\kappa_2R_2(b-a)\le c_2(b)-c_2(a)$
+(\lean{crra\_huggett\_aggregateCapital\_le\_add\_of\_slack}).
+
+\paragraph{Where Huggett stands.}
+Uniqueness reduces to a quantitative race: the creditors' strict gain in \lean{huggett\_equilibriumRate\_unique}
+against the debtors' loss bounded by \eqref{eq:shift}. We have the sign of the gain and no lower
+bound on its size; every attempt at one runs into a pivot condition of the type \eqref{eq:EC}. And
+the MPC floor on the region is the same asymptotic structure that blocks the slack condition at
+$\mu>1$. Both are open.

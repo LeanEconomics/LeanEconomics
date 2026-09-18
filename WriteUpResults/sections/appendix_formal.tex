@@ -1,0 +1,44 @@
+\section{The formalisation}\label{app:formal}
+
+\paragraph{What was checked.}
+The development is written in Lean 4 \citep{Lean4}, toolchain \lean{v4.34.0-rc2}, against the
+Mathlib library \citep{Mathlib} at a fixed revision recorded in the repository manifest. It
+comprises 115 source files, about 35,000 lines, and about 1,500 theorem declarations. A Lean proof
+is a term whose type is the statement; the kernel checks that the term is well-formed. What the
+reader is asked to trust is the kernel, the axioms, and that the formal statement means what the
+prose says. The first two are shared with every Lean development. For the third, each result in the
+text names its declaration, and Section~\ref{sec:model} describes the formal objects in enough
+detail that the statements can be read; the hypotheses in the text are the hypotheses in the code.
+
+\paragraph{The household problem.}
+The dynamic programme is built on a general stochastic dynamic-programming layer with
+extended-real rewards, so that $u=-\infty$ at zero consumption is handled without a consumption
+floor. The principle of optimality, existence and uniqueness of the bounded value function,
+Berge's maximum theorem for the policy (which Mathlib lacks; ours is built on its hemicontinuity
+definitions), and the Blackwell contraction are theorems of that layer. The asset region
+$[\underline a,\bar a]$ is a type parameter, which is what lets the same theorems serve Aiyagari and
+Huggett.
+
+\paragraph{The rate as a state.}
+Continuity of the policy in the interest rate is obtained by adjoining the rate to the state and
+solving one dynamic programme on the product, so that joint continuity in the state is continuity
+in the rate. This avoids any parametric-continuity argument, which would need a modulus that the
+Bellman contraction does not obviously supply.
+
+\paragraph{Secant slopes.}
+Lipschitz bounds, monotonicity in assets, monotonicity in the rate and the Euler inequalities are
+all proved by comparing plans, with no derivative of the value function. Where the development
+proves the value function differentiable it uses the sandwich lemma of \citet{ClausenStrub2020},
+formalised as \lean{DifferentiableSandwich}. The uniqueness proof does not depend on it.
+
+\paragraph{Probability.}
+Stationary distributions are Borel probability measures on a compact metric space, in Mathlib's
+\lean{ProbabilityMeasure} type with the weak topology; the Krylov--Bogolyubov existence argument,
+weak continuity of aggregation, and the Doeblin contraction on bounded continuous functions are
+proved in \lean{Distribution/}. The normal distribution behind Tauchen's method is Mathlib's
+\lean{gaussianReal}.
+
+\paragraph{Reproducing the check.}
+With Lean and Mathlib installed, \lean{lake build} at the repository root compiles the
+development, and \lean{\#print axioms} on any declaration in the index reports the axioms it uses.
+The repository is public and the history records the order in which the results were obtained.

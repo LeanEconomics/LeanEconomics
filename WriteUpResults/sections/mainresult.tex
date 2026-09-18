@@ -1,0 +1,144 @@
+\section{Results for the log calibration}\label{sec:main}
+
+Throughout this section $P$ is a household economy with $\underline a=0$, cap $\bar a$, log
+utility, $\beta=24/25$, and an earnings process $(Z,y,\Pi)$. Two conditions on the earnings
+process are assumed in every uniqueness statement:
+\begin{enumerate}[label=(E\arabic*)]
+  \item\label{E1} the transitions are monotone;
+  \item\label{E2} there is a state $z_0$ with $y(z_0)=y_{\min}$ and $\Pi(z,z_0)>0$ for every $z$.
+\end{enumerate}
+The cap enters through one inequality, evaluated at the larger of the two rates compared:
+\begin{equation}\label{eq:cap}
+  2\beta\,y_{\max}<\bigl(1-\beta(1+r)\bigr)\,\bar a .
+\end{equation}
+It says the cap was set large enough not to bind; nothing else about $\bar a$ is used.
+
+\subsection{Uniqueness}
+
+\begin{theorem}[Aiyagari at $\mu=1$: the equilibrium rate is unique on $(-\delta,\lambda)$]
+\label{thm:main}
+Let $r_1,r_2\in(-2/25,\,1/24)$ be admissible, and suppose that for $i=1,2$ there is a stationary
+distribution $\mu_i$ of $P.\text{withRate}(r_i)$ with $K(\mu_i)=D(r_i)$, where
+$D(r)=\alpha/((1-\alpha)(r+\delta))$ with $\alpha=9/25$, $\delta=2/25$. If \eqref{eq:cap} holds at
+$\max\{r_1,r_2\}$, then $r_1=r_2$.
+\formal{IncomeFluctuation.aiyagari1994\_log\_equilibriumRate\_unique\_Ioo}
+\end{theorem}
+
+The theorem is stated for every interval $[r_{lo},r_{hi}]$ with $-\delta<r_{lo}\le r_{hi}<\lambda$
+in the form \lean{aiyagari1994\_log\_equilibriumRate\_unique}, with \eqref{eq:cap} at $r_{hi}$;
+the open-interval version applies it to $[\min\{r_1,r_2\},\max\{r_1,r_2\}]$. The lower end
+$-\delta$ is where demand becomes infinite; the upper end $\lambda$ is where the household becomes
+patient. Both are excluded for a reason (Theorems~\ref{thm:above} and \ref{thm:below}), so
+Theorem~\ref{thm:main} covers every rate at which an equilibrium could exist, up to a band above
+$\lambda$ discussed below.
+
+\begin{corollary}[Aiyagari's own earnings processes]\label{cor:tauchen}
+Let $n\ge0$, $\rho\in[0,1)$, $\sigma>0$, $c>0$, and let the endowment take the $n+2$ values
+$c\,e^{-3\sigma+i\cdot 6\sigma/(n+1)}$, $i=0,\dots,n+1$, with the Tauchen transition matrix of
+$\log l'=\rho\log l+\sigma\sqrt{1-\rho^2}\,\varepsilon$ on that grid. Then the conclusion of
+Theorem~\ref{thm:main} holds, with \eqref{eq:cap} read with $y_{\max}=c\,e^{3\sigma}$.
+\formal{aiyagariTauchen\_equilibriumRate\_unique\_Ioo}
+\end{corollary}
+
+The corollary covers all eight of Aiyagari's processes and any finer grid. Its proof is that the
+Tauchen chain satisfies \ref{E1} and \ref{E2}: the cumulative rows
+$F_i(k)=\Phi\bigl((x_k+h/2-\rho x_i)/\sigma_\varepsilon\bigr)$ are decreasing in $i$ because $\Phi$
+is monotone and $\rho\ge0$, which is first-order dominance, and every entry of the first column is
+a value of $\Phi$ on the real line, hence positive. The normal distribution is Mathlib's
+$\mathrm{gaussianReal}$, so $\Phi$ is a genuine cumulative distribution function and the
+positivity is a theorem about the Lebesgue integral, not a numerical fact. The scale $c$ is
+whatever normalises the mean to one; uniqueness does not depend on it except through
+\eqref{eq:cap}.
+
+\begin{remark}[What is used about the earnings process]
+Only \ref{E1} and \ref{E2}. No transition probability is named, no stationary distribution of the
+chain is computed, and the number of states is arbitrary. \ref{E1} is what Light's Theorem 1 needs
+to propagate monotonicity of the value function in income through the expectation; \ref{E2} is
+what the Doeblin argument needs to produce an atom. For $\rho=0$ both are immediate; for $\rho>0$
+they are Huggett's Lemma 1 for Tauchen chains.
+\end{remark}
+
+\subsection{No equilibrium outside \texorpdfstring{$(-\delta,\lambda)$}{the interval}}
+
+\begin{theorem}[Above the rate of time preference]\label{thm:above}
+Let $r\ge0$ with $\beta(1+r)>1$, and let $\mu$ be stationary for $P.\text{withRate}(r)$. If
+\[
+  y_{\max}+(1+r)D<\Bigl(1-\frac{1}{\beta(1+r)}\Bigr)\bigl(y_{\min}+r\bar a\bigr),
+\]
+then $K(\mu)\ne D$. In particular no equilibrium exists at $r$ once $r-\lambda$ exceeds a
+quantity of order $(y_{\max}+(1+r)D(r))/(\beta r\bar a)$.
+\formal{IncomeFluctuation.log\_no\_equilibrium\_of\_patient\_risk}
+\end{theorem}
+
+The proof is a supermartingale bound. With $\beta R>1$ the Euler inequality makes
+$u'(c_t)$ a supermartingale that cannot decrease on average, so consumption cannot rise on average,
+while cash on hand grows at rate $r$ on the part of the distribution near the cap; integrating
+against the stationary distribution gives a floor on $K(\mu)$ of order $(1-1/\beta R)\,r\bar a$.
+The band $(\lambda,\lambda+\epsilon)$ that escapes has width shrinking like $1/\bar a$, and with
+$\bar a$ chosen to satisfy \eqref{eq:cap} it is thin. A version for CRRA with integer risk
+aversion $n$, via Jensen on $x^{-n}$, is \lean{crra\_no\_equilibrium\_of\_patient\_mean}.
+
+\begin{theorem}[Negative rates]\label{thm:below}
+Assume \ref{E2} and that the earnings process is normalised so that the invariant distribution of
+$\Pi$ has mean at most one. Let $\mu$ be stationary for $P.\text{withRate}(r)$.
+\begin{enumerate}[label=(\roman*)]
+\item For any period utility satisfying the standing assumptions, if $r\in(-2/25,-13/250]$ then
+  $K(\mu)\ne D(r)$.
+\item For log utility, if $24\,y_{\max}<\bar a$ and $r\in(-2/25,-1/25]$ then $K(\mu)\ne D(r)$.
+\end{enumerate}
+\formal{IncomeFluctuation.aiyagari1994\_no\_equilibrium\_of\_budget; IncomeFluctuation.aiyagari1994\_log\_no\_equilibrium\_below\_mean}
+\end{theorem}
+
+Part (i) uses nothing about preferences: at a negative rate, integrating the budget constraint
+against a stationary distribution gives $K\le \bar Y/(-r)$, the capital whose interest cost
+exhausts mean income, which is the zero-consumption supply schedule of \citet{YoungWalsh2025}.
+Part (ii) uses the log ceiling $K\le\beta\bar Y/(1-\beta(1+r))$ from the minimal MPC
+(Section~\ref{sec:mpc}). Both need the income marginal of the stationary distribution to be the
+chain's invariant distribution, which is where \ref{E2} enters, through a finite-chain uniqueness
+argument (\lean{invariant\_eq\_of\_reach}). In both cases the ceiling falls below $D(r)$, which
+grows without bound as $r\downarrow-\delta$.
+
+Together, Theorems~\ref{thm:main}--\ref{thm:below}: for Aiyagari's log calibration the set of
+equilibrium rates is contained in $(-1/25,\lambda+\epsilon)$ and has at most one point in
+$(-\delta,\lambda)$.
+
+\subsection{Existence}\label{sec:exist}
+
+\begin{theorem}[Existence on an interval, given a supply floor at its top]\label{thm:exist}
+Let $-\delta<r_{lo}<r_{hi}<\lambda$, assume \ref{E1}, \ref{E2} and \eqref{eq:cap} at $r_{hi}$.
+Suppose
+\[
+  \frac{\beta\,y_{\max}}{1-\beta(1+r_{lo})}\le D(r_{lo}),\qquad
+  D(r_{hi})\le m\le K(\mu)\ \text{ for every stationary }\mu\text{ at }r_{hi}.
+\]
+Then there is an equilibrium rate in $[r_{lo},r_{hi}]$.
+\formal{IncomeFluctuation.aiyagari1994\_log\_exists\_equilibrium\_of\_floor}
+\end{theorem}
+
+The first inequality is the log capital ceiling at $r_{lo}$ against demand there, and it holds
+for $r_{lo}$ near $-\delta$ because demand is unbounded. The second is a floor $m$ on capital
+supply at $r_{hi}$ that exceeds demand there, and it is the one quantitative fact about the log
+household that this development does not prove. Aiyagari's equilibria sit where $k/w\approx5$; the
+analytic supply floors available (an atom at the cap, positive saving from the corner) are nowhere
+near that, and how much an impatient household accumulates before impatience takes over is a
+quantitative question about the policy that the qualitative theory does not answer. With the floor
+supplied, existence follows by the intermediate value theorem, because capital supply along the
+unique stationary distribution is continuous in the rate (Section~\ref{sec:cont}).
+
+\subsection{Computation}
+
+\begin{theorem}[Bisection converges to the equilibrium rate]\label{thm:bisect}
+Under the hypotheses of Theorem~\ref{thm:main} on $[r_{lo},r_{hi}]$, let $\nu$ be any selection of
+stationary distributions, $\nu(r)$ stationary for $P.\text{withRate}(r)$ on $[r_{lo},r_{hi}]$,
+and let $E(r)=K(\nu(r))-D(r)$ be excess supply. If $r^*\in[r_{lo},r_{hi}]$ is an equilibrium rate,
+then the bisection on $E$ started from $[r_{lo},r_{hi}]$ brackets $r^*$ at every step, its
+midpoint after $n$ steps is within $(r_{hi}-r_{lo})/2^{n+1}$ of $r^*$, and its endpoints converge
+to $r^*$.
+\formal{IncomeFluctuation.aiyagari1994\_log\_bisection}
+\end{theorem}
+
+Excess supply is strictly increasing under these hypotheses, because supply is monotone
+(Section~\ref{sec:coupling}) and demand strictly decreasing, and strict monotonicity alone decides
+which half of a bracket contains the zero; neither continuity nor a sign condition at the ends is
+used. Any stationary distribution at $r$ is the selection's, by the Doeblin uniqueness, so the
+algorithm does not depend on how the stationary distribution is computed.

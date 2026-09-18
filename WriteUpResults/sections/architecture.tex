@@ -1,0 +1,150 @@
+\section{How the proof goes}\label{sec:arch}
+
+The argument is Light's chain. This section describes each link and what had to be done to make
+it hold at $\beta=0.96$. Formal names are given at each step; the emphasis is on the economics.
+
+\subsection{Theorem 1: saving rises with the rate}\label{sec:thm1}
+
+Fix two admissible rates $r_1<r_2$ and write $g_i$ for the policy at $r_i$. Light's Theorem 1 is
+$g_1(a,z)\le g_2(a,z)$ for every state. His proof compares the two Bellman operators along
+value-function iterates: the map $v\mapsto v(ta,\cdot)$, $t=R_1/R_2$, turns a household at the
+higher rate with assets $ta$ into one with the same cash on hand as a household at the lower rate
+with assets $a$, and the induction shows that the difference of the two value functions has
+increasing differences in assets, which is what makes the higher-rate policy larger. The step where
+the utility function enters is an inequality of the form $t\,u'(c(ta))\le u'(c(a))$ for the
+rescaled consumption, and this is where relative risk aversion at most one is used: it is
+monotonicity of $c\,u'(c)$, which for log utility is an identity.
+(\lean{monotoneOn\_bellman\_sub\_scaled\_of\_piv}, \lean{policy\_mono\_withRate\_crra}.)
+
+The induction needs the constraint slack at the compared states and the cap slack everywhere along
+the iterates, and the published tests for both scale like $1/(1-\beta R)$. At Aiyagari's rates
+$1-\beta R$ is about $0.002$, and the tests fail by orders of magnitude. What replaces them is in
+the next two subsections. With those in hand the induction is run locally, on an interval of rates
+short enough that the constants survive, and the local statements are chained across
+$[r_{lo},r_{hi}]$ (\lean{LargeBetaLight}).
+
+\subsection{The corner from the Euler inequality}\label{sec:corner}
+
+\begin{lemma}[Nobody at the constraint consumes less than the lowest income]
+At an interior choice $g(a,z)>0$ the Euler inequality reads $u'(c)\le\beta R\,\E[u'(c')]$. Take the
+income state at which consumption at zero assets is smallest. If that household saved, tomorrow's
+consumption would be at least today's minimum, so $u'(c)\le\beta R\,u'(c)$, impossible with
+$\beta R<1$. So it is at the corner, consumes its income, and consumption at the constraint is at
+least $y_{\min}$ in every state.
+\formal{IncomeFluctuation.minIncome\_le\_consumptionFn\_floor}
+\end{lemma}
+
+The corner condition at a state $(a,z)$ is then the contrapositive of the Euler inequality: if
+$\beta R\,u'(y_{\min})<u'(m(a,z))$, saving is not optimal, because saving would give
+$u'(m(a,z))\le u'(c)\le\beta R\,\E[u'(c')]\le\beta R\,u'(y_{\min})$. This is a primitive
+inequality, checkable by hand at $\beta=0.96$, and it is what
+\lean{aiyagari1994\_log\_equilibriumRate\_unique} evaluates internally with an explicit corner
+level $a_0=\min\{\bar a,\;y_{\min}(1-\beta R)/(2\beta R^2)\}$.
+(\lean{EulerCorner}.)
+
+\subsection{The cap from the minimal marginal propensity to consume}\label{sec:mpc}
+
+\begin{lemma}[Minimal MPC]
+For CRRA utility with parameter $\gamma$ at a zero borrowing limit, with $\beta R<1$,
+\[
+  c(a,z)\ \ge\ \kappa\, m(a,z),\qquad \kappa=1-\frac{\Thorn}{R},\quad \Thorn=(\beta R)^{1/\gamma}.
+\]
+\formal{IncomeFluctuation.crra\_minMPC\_mul\_le\_consumptionFn}
+\end{lemma}
+
+$\Thorn$ is Carroll's absolute patience factor and $\kappa$ the MPC of a perfect-foresight consumer
+with no human wealth \citep{CarrollShanker2026}. The bound is self-reproducing under the Bellman
+operator: if the continuation's consumption satisfies it, then at an interior choice the Euler
+inequality gives $c^{-\gamma}\le\beta R(\kappa R a')^{-\gamma}$, hence $c\ge(\kappa R/\Thorn)a'$, and
+$(\kappa R/\Thorn)/(1+\kappa R/\Thorn)=\kappa$ exactly because $1-\kappa=\Thorn/R$; at the corner
+the household consumes everything. For log utility $\kappa=1-\beta$ at every rate, which is why the
+log results carry no rate-dependent constant.
+
+Two things follow. Saving is at most $(1-\kappa)m(a,z)$, so at the cap
+$g(\bar a,z)\le\beta(y_{\max}+R\bar a)<\bar a$ whenever \eqref{eq:cap} holds, and the cap is slack
+along every iterate and at the fixed point (\lean{crra\_policy\_lt\_cap\_of\_minMPC}). And
+integrating against a stationary distribution, $K\le\beta(\bar Y+RK)$, so
+\begin{equation}\label{eq:ceiling}
+  K(\mu)\le\frac{\beta\,\bar Y}{1-\beta R},
+\end{equation}
+the log capital ceiling used in Theorems~\ref{thm:below} and \ref{thm:exist}
+(\lean{log\_aggregateCapital\_le}, \lean{log\_aggregateCapital\_le\_mean}).
+
+\subsection{Theorem 2: the coupling}\label{sec:coupling}
+
+\begin{proposition}[Aggregate capital rises with the rate]
+Let $g_1\le g_2$ pointwise on the region, and let the two Markov operators be run from a common
+initial distribution $\mu_0$, converging to stationary distributions $\mu_1$ and $\mu_2$. Then
+$\mu_2$ dominates $\mu_1$ in the asset coordinate, and $K(\mu_1)\le K(\mu_2)$.
+\formal{IncomeFluctuation.monotoneOn\_capitalSupply\_of\_policy\_mono}
+\end{proposition}
+
+Dominance is tested against bounded continuous functions that are increasing in assets at each
+income state. Three facts carry the argument: the Markov operator preserves that test class, because
+the policy is increasing in assets (\lean{policy\_mono}); a pointwise-larger policy gives a
+dominating operator on that class; and dominance is closed under weak limits. The asset coordinate
+itself is in the test class, so the mean is ordered. This is the argument of \citet{Light2022},
+Theorem 2, which asks for monotonicity in one coordinate only; monotonicity in the whole state
+fails here because the policy need not rise with the income shock.
+
+\subsection{Uniqueness and convergence of the stationary distribution}\label{sec:doeblin}
+
+The coupling needs the iterates from $\mu_0$ to converge, and the equilibrium condition needs
+capital supply to be a function of the rate, not a correspondence. Both come from a Doeblin
+condition. The asset transition is deterministic given the shock, so two households with different
+assets never meet, and no minorisation against a spread-out measure holds. The borrowing constraint
+supplies an atom: if a run of $N$ draws of the worst income state $z_0$ drives every household to
+exactly zero assets, then every $N$-step transition charges the single point $(0,z_0)$ with
+probability at least $\Pi_{\min}(\cdot,z_0)^N$, which is a Doeblin condition. The contraction is run
+on the function side: the oscillation of $T^N h$ is at most $(1-\epsilon)$ times that of $h$, so
+two stationary distributions agree on every bounded continuous function, and the iterates from any
+start converge weakly to the stationary distribution.
+(\lean{stationary\_unique}, \lean{tendsto\_pushProb\_iterate}.)
+
+That a run of bad shocks reaches the constraint is the \emph{decline} property: above some asset
+level the household dissaves in the worst state. For an impatient household this is
+\citet{Acikgoz2018}, Proposition 4, and it is proved here from the corner condition and the minimal
+MPC (\lean{ImpatientDecline}). \ref{E2} is what makes the run have positive probability from every
+state. At each rate in $[r_{lo},r_{hi}]$ the conclusion is a unique stationary distribution,
+reached from every start (\lean{log\_existsUnique\_isStationary}).
+
+\subsection{Theorem 3: single crossing, and Aiyagari's form of the condition}\label{sec:homog}
+
+With supply a monotone function of the rate on $[r_{lo},r_{hi}]$ and $D$ strictly decreasing, two
+equilibrium rates coincide: this is \lean{eq\_of\_monotoneOn\_of\_strictAntiOn} and needs no
+continuity. The remaining step is to connect \eqref{eq:eqm} to Aiyagari's condition at the
+equilibrium wage.
+
+\begin{proposition}[Homogeneity of the stationary distribution]
+Scaling every income and the cap by $w>0$ scales the policy by $w$. The map $(a,z)\mapsto(wa,z)$
+therefore commutes with the Markov operator, so it carries stationary distributions of the unit-wage
+economy to stationary distributions of the wage-$w$ economy, and aggregate capital scales by $w$.
+\formal{IncomeFluctuation.HomotheticDistribution}
+\end{proposition}
+
+This is Açıkgöz's Proposition 7 at the level of measures. It is what lets the theorems be stated in
+Aiyagari's own form, $K(r)=\E_r[a]$ at $w(r)$, while the household side is solved once at wage one
+and the firm side reduces to $k/w=\alpha/((1-\alpha)(r+\delta))$, which needs no root
+(\lean{aiyagari1994\_equilibriumRate\_unique\_wage}).
+
+\subsection{Continuity of supply, for existence}\label{sec:cont}
+
+Existence uses the intermediate value theorem, which needs capital supply continuous in the rate.
+The rate is not a parameter of the household problem in the formal development but part of its
+state, so that a family of problems indexed by the rate is one problem on a product space, and
+continuity of the policy in the rate is joint continuity of one policy. Weak continuity of the
+stationary distribution in the rate then follows from the Doeblin uniqueness (a limit of stationary
+distributions is stationary, and there is only one), and aggregation is weakly continuous
+because the asset coordinate is bounded and continuous (\lean{continuousOn\_capitalSupply}).
+
+\subsection{What is never differentiated}\label{sec:deriv}
+
+Every inequality above is derived without a derivative of the value or policy function. The Euler
+inequalities come from perturbing the optimal plan by $\epsilon$ in one direction and letting
+$\epsilon$ shrink: carrying the poorer household's plan forward, or the richer household's plan
+back, gives one-sided bounds on the marginal value of assets, and the first-order condition is read
+off the pair (\lean{euler\_le}, \lean{euler\_ge}; the construction is that of
+\citealp{ClausenStrub2020}). Lipschitz constants are secant bounds; monotonicity in the rate is a
+comparison of two plans. Where the development does establish differentiability of the value
+function (\lean{IncomeFluctuationEnvelope}) it uses the Clausen--Strub sandwich and not the
+Benveniste--Scheinkman argument, and the uniqueness proof does not depend on it.

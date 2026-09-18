@@ -1,0 +1,90 @@
+\section{The model, as formalised}\label{sec:model}
+
+\subsection{The household}
+
+A household economy is a tuple
+\[
+  P=\bigl(Z,\;y,\;\Pi,\;r,\;\beta,\;u,\;\underline a,\;\bar a\bigr).
+\]
+$Z$ is a finite set of income states; $y:Z\to\R$ is the labour endowment with
+$0<y_{\min}\le y(z)\le y_{\max}$; $\Pi$ is a stochastic matrix on $Z$; $r>-1$ is the interest rate;
+$\beta\in[0,1)$ is the discount factor; $u$ is period utility; and $[\underline a,\bar a]$ with
+$\underline a\le\bar a$, $0\le \bar a$, is the asset region. The borrowing limit and the cap are
+\emph{type parameters} of the formal object, so that Aiyagari's economy ($\underline a=0$) and
+Huggett's ($\underline a<0$) are the same structure, and a theorem proved for a general floor
+applies to both. The state is $(a,z)\in[\underline a,\bar a]\times Z$, cash on hand is
+$m(a,z)=y(z)+(1+r)a$, and the household solves
+\begin{equation}\label{eq:bellman}
+  V(a,z)=\max_{a'\in[\underline a,\;\min\{\bar a,\,m(a,z)\}]}
+  \Bigl\{u\bigl(m(a,z)-a'\bigr)+\beta\sum_{z'}\Pi(z,z')V(a',z')\Bigr\}.
+\end{equation}
+Utility is required to be continuous, increasing and strictly concave on a domain that is either
+$(0,\infty)$ (utility unbounded below, as for log and CRRA with $\mu\ge1$) or $[0,\infty)$; off the
+domain the reward is $-\infty$. With a negative borrowing limit the model carries Aiyagari's
+natural-borrowing-limit condition, $y_{\min}+r\underline a>0$: income at the limit covers the
+interest on the debt. Because raising $r$ raises the debt service, a rate is \emph{admissible}
+for $P$, written $\operatorname{RateOK}(r)$, when $1+r>0$ and the limit remains sustainable at $r$;
+with $\underline a=0$ the second condition is vacuous. $P.\text{withRate}(r)$ denotes the same
+economy at rate $r$.
+
+The value function exists and is the unique bounded fixed point of \eqref{eq:bellman}; the policy
+$a'=g(a,z)$ is unique by strict concavity; consumption is $c(a,z)=m(a,z)-g(a,z)$. These are
+theorems of the development (a stochastic principle of optimality with extended-real rewards), not
+assumptions. Where a result needs consumption to be positive at the optimum it takes the hypothesis
+$\operatorname{PositiveConsumption}$, which is discharged automatically when utility is unbounded
+below and by a marginal Inada condition otherwise.
+
+\subsection{Distributions}
+
+The state space $S=[\underline a,\bar a]\times Z$ is compact. The policy and the transition matrix
+define a Markov kernel on $S$, and its action on Borel probability measures is the operator
+$\mu\mapsto T\mu$. A \emph{stationary distribution} is a fixed point, $T\mu=\mu$. Aggregate capital
+is mean assets,
+\[
+  K(\mu)=\int a\,d\mu(a,z).
+\]
+Existence of a stationary distribution is by the Krylov--Bogolyubov argument on the compact state
+space, a theorem of the development; uniqueness is not automatic and is discussed in
+Section~\ref{sec:doeblin}.
+
+Two structural conditions on the earnings process recur. The transitions are \emph{monotone} when
+for any $z_1,z_2$ with $y(z_1)\le y(z_2)$, the row $\Pi(z_2,\cdot)$ first-order stochastically
+dominates $\Pi(z_1,\cdot)$ in the income order; iid income is the trivial case, and a Tauchen
+discretisation of an AR(1) with $\rho\ge0$ is monotone by construction. A state $z_0$ is
+\emph{reached from everywhere} when $\Pi(z,z_0)>0$ for every $z$; for the Doeblin argument $z_0$
+is a state of minimal income.
+
+\subsection{The firm and the equilibrium condition}
+
+Aiyagari's firm is Cobb--Douglas with capital share $\alpha$ and depreciation $\delta$, with labour
+supplied inelastically and the endowment process normalised to mean one, so that per-capita capital
+demand and the wage at rate $r$ are
+\[
+  k(r)=\Bigl(\frac{\alpha}{r+\delta}\Bigr)^{1/(1-\alpha)},\qquad
+  w(r)=(1-\alpha)k(r)^{\alpha},\qquad
+  \frac{k(r)}{w(r)}=\frac{\alpha}{(1-\alpha)(r+\delta)}.
+\]
+His stationary equilibrium condition is $k(r)=\E_{r,w(r)}[a]$: capital demand equals mean asset
+holdings under the stationary distribution of the household economy at rate $r$ and wage $w(r)$.
+The household problem at wage $w$ is the problem at wage one with incomes and the cap scaled by
+$w$, and the stationary distribution scales with it, so the condition is equivalent to
+\begin{equation}\label{eq:eqm}
+  \E^{1}_{r}[a]=D(r),\qquad D(r):=\frac{k(r)}{w(r)}=\frac{\alpha}{(1-\alpha)(r+\delta)},
+\end{equation}
+where $\E^1_r$ is taken under a stationary distribution of the unit-wage economy at rate $r$. The
+formal object $\operatorname{normalisedDemand}(\alpha,\delta,r)$ is $D(r)$, and an
+\emph{equilibrium rate} is an admissible $r$ together with a stationary distribution $\mu$ of
+$P.\text{withRate}(r)$ satisfying $K(\mu)=D(r)$. The reduction from Aiyagari's form to
+\eqref{eq:eqm} is Section~\ref{sec:homog}.
+
+$D$ is strictly decreasing on any interval with $r+\delta>0$ and unbounded as $r\downarrow-\delta$.
+The rate of time preference is $\lambda=1/\beta-1$; at $\beta=0.96$ it is $1/24\approx4.17\%$, and
+Aiyagari's reported equilibrium rates at $\mu=1$ lie between $3.3\%$ and $4.17\%$.
+
+\subsection{Aiyagari's calibration}
+
+Throughout, ``Aiyagari's numbers'' means $\beta=24/25$, $\alpha=9/25$, $\delta=2/25$,
+$\underline a=0$, log utility for $\mu=1$ and $u(c)=c^{1-\mu}/(1-\mu)$ for $\mu\in\{3,5\}$, and a
+labour endowment $\log l'=\rho\log l+\sigma\sqrt{1-\rho^2}\,\varepsilon$ with
+$\rho\in\{0,0.3,0.6,0.9\}$, $\sigma\in\{0.2,0.4\}$, discretised by Tauchen's method on
+$[-3\sigma,3\sigma]$. The formal statements use the rational values; $0.96$ is $24/25$ exactly.

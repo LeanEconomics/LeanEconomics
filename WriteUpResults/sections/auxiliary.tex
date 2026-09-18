@@ -1,0 +1,86 @@
+\section{Auxiliary results}\label{sec:aux}
+
+The development contains a number of results that were built as tools for the main theorem or as
+tests of the frontier and stand on their own. This section lists the ones an economist may want.
+
+\paragraph{Multiplicity is exactly non-monotone supply, and the equilibrium system permits it.}
+Two distinct equilibrium rates force capital supply to be non-monotone on any interval containing
+them (\lean{not\_monotoneOn\_of\_equilibria\_ne}), so every multiplicity example in the literature
+is a counterexample to Light's Theorem 1 and to nothing else. Conversely an explicit continuous,
+strictly positive supply schedule, Cobb--Douglas demand plus a cubic wiggle, has exactly three
+equilibria with the demand $D(r)=A^2/(4(r+\delta)^2)$ (\lean{wiggleSupply\_equilibria}),
+matching the three-equilibrium shape \citet{YoungWalsh2025} report: nothing in the firm side, the
+fixed-point machinery or the intermediate-value argument rules multiplicity out. What is not
+proved is that such a schedule is the capital supply of any household; the two bounds available,
+the gain test and the minimal MPC, both move the wrong way for a backward bend.
+
+\paragraph{All capital is precautionary.}
+A two-state economy near log utility holds at least $1/400$ of capital at every stationary
+distribution. The same economy with its income risk removed, both states replaced by their mean,
+saves nothing at any asset level, so its capital supply is exactly zero
+(\lean{riskless\_aggregateCapital\_eq\_zero}). The corner condition of Section~\ref{sec:corner}
+holds at every asset level in the riskless economy and fails above a threshold in the risky one,
+and the gap is the value of the insurance the household is buying.
+
+\paragraph{Impatience is necessary.}
+\citet{MarcetObiolsWeil2007}, Proposition 3: no stationary equilibrium with finite capital exists at
+$\beta R\ge1$. Formalised with income risk through the Euler route, requiring $\beta R>1$ strictly,
+and deterministically through secant slopes (\lean{Impatience}); the version with a supply floor is
+Theorem~\ref{thm:above}.
+
+\paragraph{Carroll--Kimball concavity across HARA.}
+The consumption function is concave in assets for CRRA, shifted CRRA (via a power-mean
+inequality), and CARA (via a soft-minimum construction); quadratic utility is proved inadmissible
+because it is not increasing (\lean{not\_monotoneOn\_quadUtility}). The induction runs along
+Bellman iterates, so it needs the Euler equation one step at a time and at states where the
+constraint binds, which is what \lean{IncomeFluctuationEuler} supplies. A witness shows Carroll and
+Kimball's conclusion is false when the cap binds (\lean{not\_concaveOn\_consumptionFn\_of\_cap\_binds}),
+which is why the cap slack condition cannot be dropped.
+
+\paragraph{A calibrated class with existence and uniqueness.}
+Before the log calibration was reached, existence and uniqueness were proved for a class of
+economies (\lean{Calibrated}) each of whose numerical fields is one primitive inequality: near-log
+CRRA, log Stone--Geary (\lean{stoneGeary\_exists\_equilibrium\_of\_technology'}), and the $b\neq0$
+branch of HARA, with general finite Markov income. These carry the machinery of
+Section~\ref{sec:arch} at parameters where the published constants do work, and a CES witness
+proved uncalibratable shows the cap conditions are not vacuous.
+
+\paragraph{Sufficiency of the Euler equation, without differentiability of the value function.}
+A solution of the functional Euler equation with equality at interior choices and the correct
+inequality at the constraint is the optimal consumption function
+(\lean{eq\_consumptionFn\_of\_isEulerSolution}). The proof is the contraction of the Coleman
+operator in the marginal-utility supremum metric of \citet{LiStachurski2014}, run on a class of
+candidate policies with a consumption floor and a saving slack. This is the sufficient direction
+of the Coleman--Reffett conjugacy of \citet{SargentStachurski2024}, Proposition 8.3.13, proved
+without the conjugacy.
+
+\paragraph{Abstract fixed-point results from Sargent and Stachurski.}
+Parametric monotonicity of fixed points (Vol.\ 1, Prop.\ 2.2.7); eventually contracting maps
+(Thm.\ 6.1.5), which is what spectral-radius conditions deliver; the fitted-value-iteration error
+bound (Vol.\ 2, Thm.\ 9.1.3), the value-error input to the policy error bounds of \citet{Li2015};
+and uniqueness of fixed points of increasing concave maps, in one dimension and in Du's form on
+a finite product (\lean{OrderedFixedPoints}). \citet{Santos2000}'s policy error bound was
+assessed and not formalised: it needs interior solutions, which the borrowing constraint denies.
+
+\paragraph{Mean-field-game uniqueness, and why it does not reach Bewley.}
+The Lasry--Lions argument for uniqueness of mean-field equilibria adds two optimality inequalities.
+Its measure-theoretic core is formalised for the static game and for the finite-horizon
+finite-state game on paths: two mean-field Nash distributions have nonpositive Lasry--Lions pairing;
+under monotone costs the pairing vanishes; under strict monotonicity the costs coincide, though the
+distributions need not (\lean{cost\_eq\_of\_nash}, \lean{value\_eq\_of\_pathEquilibrium}; the
+static form of \citealp{CannarsaCapuani2018}, Thm.\ 4.1). The argument cancels
+$\int(u_1-u_2)\,d(m_1(0)-m_2(0))$ by a common initial distribution, which a stationary discounted
+equilibrium does not have; and \citet{GraberMatter2024} show that games coupled through a market
+price are typically not Lasry--Lions monotone, the right condition there being monotonicity of the
+error map $Q\mapsto Q-\text{best response}(Q)$, which for Aiyagari is Light's single crossing. The
+quantitative version, a strongly monotone Lipschitz operator on a real inner product space has a
+unique zero found by a damped iteration with modulus $\sqrt{1-m^2/L^2}$, is formalised
+(\lean{exists\_unique\_zero\_of\_stronglyMonotone}); for excess supply it would need a slope floor
+and a Lipschitz constant in the rate, neither of which is available.
+
+\paragraph{Tauchen's method.}
+The Tauchen transition matrix is defined from cumulative rows of the standard normal distribution
+function, taken from Mathlib's Gaussian measure, and proved to be stochastic, positive in its first
+column, and monotone in the sense of \ref{E1} for $\rho\ge0$
+(\lean{monotoneTransitions\_of\_tauchen}). This is what allows Corollary~\ref{cor:tauchen} to be
+stated for any number of grid points.

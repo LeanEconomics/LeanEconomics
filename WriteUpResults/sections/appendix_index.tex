@@ -1,0 +1,76 @@
+\section{Theorem index}\label{app:index}
+
+Each result stated in the text, with the Lean declaration that proves it and the file that contains
+it. All files are under \lean{LeanEconomics/}. Every declaration listed depends only on the three
+standard axioms of Mathlib, \lean{propext}, \lean{Classical.choice} and \lean{Quot.sound}, as
+reported by \lean{\#print axioms}; the development contains no \lean{sorry}.
+
+\begin{footnotesize}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.20\textwidth}>{\raggedright\arraybackslash}p{0.43\textwidth}>{\raggedright\arraybackslash}p{0.29\textwidth}}
+\toprule
+Result & Declaration & File\\
+\midrule
+\endhead
+Theorem~\ref{thm:main} & \lean{aiyagari1994\_log\_equilibriumRate\_unique\_Ioo} & Equilibrium/\allowbreak AiyagariUniqueness\\
+Theorem~\ref{thm:main}, interval form & \lean{aiyagari1994\_log\_equilibriumRate\_unique} & Equilibrium/\allowbreak AiyagariUniqueness\\
+Theorem~\ref{thm:main}, at the wage & \lean{aiyagari1994\_equilibriumRate\_unique\_wage} & Equilibrium/\allowbreak HomotheticDistribution\\
+Corollary~\ref{cor:tauchen} & \lean{aiyagariTauchen\_equilibriumRate\_unique\_Ioo} & Models/\allowbreak AiyagariTauchenWitness\\
+Tauchen chain monotone & \lean{monotoneTransitions\_of\_tauchen} & Models/\allowbreak Tauchen\\
+Theorem~\ref{thm:above} & \lean{log\_no\_equilibrium\_of\_patient\_risk} & Equilibrium/\allowbreak RateRange\\
+Theorem~\ref{thm:above}, CRRA $n$ & \lean{crra\_no\_equilibrium\_of\_patient\_mean} & Equilibrium/\allowbreak Localisation\\
+Theorem~\ref{thm:below}(i) & \lean{aiyagari1994\_no\_equilibrium\_of\_budget} & Equilibrium/\allowbreak Localisation\\
+Theorem~\ref{thm:below}(ii) & \lean{aiyagari1994\_log\_no\_equilibrium\_below\_mean} & Equilibrium/\allowbreak IncomeMarginal\\
+Theorem~\ref{thm:exist} & \lean{aiyagari1994\_log\_exists\_equilibrium\_of\_floor} & Equilibrium/\allowbreak AiyagariExistence\\
+Theorem~\ref{thm:bisect} & \lean{aiyagari1994\_log\_bisection} & Equilibrium/\allowbreak Bisection\\
+\midrule
+Theorem 1, log, local & \lean{crra\_policy\_mono\_withRate\_of\_minMPC} & Models/\allowbreak LargeBetaLight\\
+Theorem 1, rescaling core & \lean{monotoneOn\_bellman\_sub\_scaled\_of\_piv} & Models/\allowbreak IncomeFluctuationRateStep\\
+Corner from Euler & \lean{minIncome\_le\_consumptionFn\_floor} & Models/\allowbreak EulerCorner\\
+Minimal MPC & \lean{crra\_minMPC\_mul\_le\_consumptionFn} & Models/\allowbreak MinimalMPC\\
+Cap slack & \lean{crra\_policy\_lt\_cap\_of\_minMPC} & Models/\allowbreak MinimalMPC\\
+Log ceiling \eqref{eq:ceiling} & \lean{log\_aggregateCapital\_le} & Equilibrium/\allowbreak AiyagariUniqueness\\
+Theorem 2, coupling & \lean{monotoneOn\_capitalSupply\_of\_policy\_mono} & Equilibrium/\allowbreak CapitalSupplyMonotone\\
+Doeblin uniqueness & \lean{stationary\_unique} & Distribution/\allowbreak Uniqueness\\
+Doeblin convergence & \lean{tendsto\_pushProb\_iterate} & Distribution/\allowbreak Uniqueness\\
+Unique stationary distribution, log & \lean{log\_existsUnique\_isStationary} & Equilibrium/\allowbreak AiyagariUniqueness\\
+Theorem 3, single crossing & \lean{eq\_of\_monotoneOn\_of\_strictAntiOn} & Equilibrium/\allowbreak Uniqueness\\
+Homogeneity of the distribution & \lean{isStationary\_scaleProb\_log} & Equilibrium/\allowbreak HomotheticDistribution\\
+Continuity of supply & \lean{continuousOn\_capitalSupply} & Equilibrium/\allowbreak AiyagariContinuity\\
+Euler inequalities & \lean{euler\_le}, \lean{euler\_ge} & Models/\allowbreak IncomeFluctuationEuler\\
+Income marginal is invariant & \lean{invariant\_eq\_of\_reach} & Equilibrium/\allowbreak IncomeMarginal\\
+\midrule
+Proposition~\ref{prop:elas} & \lean{policy\_le\_policy\_withRate\_of\_marginal\_at} & Equilibrium/\allowbreak ElasticityReduction\\
+CRRA form of \eqref{eq:EC} & \lean{crra\_elasticity\_iff} & Equilibrium/\allowbreak InvariantRegion\\
+Uniqueness under \eqref{eq:EC} & \lean{crra\_equilibriumRate\_unique\_of\_marginal} & Equilibrium/\allowbreak ElasticityReduction\\
+Invariant-interval form & \lean{crra\_equilibriumRate\_unique\_of\_marginal\_on} & Equilibrium/\allowbreak InvariantRegion\\
+Failure at high wealth & \lean{crra\_elasticity\_fails\_of\_asymptotic\_mpc} & Equilibrium/\allowbreak InvariantRegion\\
+Proposition~\ref{prop:slack} & \lean{policy\_le\_policy\_withRate\_of\_slack\_at} & Equilibrium/\allowbreak SlackEuler\\
+CRRA form of \eqref{eq:SEC} & \lean{crra\_slack\_elasticity\_iff} & Equilibrium/\allowbreak SlackEuler\\
+Proposition~\ref{prop:homog} & \lean{crra\_slack\_elasticity\_of\_patience} & Equilibrium/\allowbreak SlackEuler\\
+Proposition~\ref{prop:homog}, eventual form & \lean{crra\_slack\_elasticity\_holds\_of\_asymptotic\_mpc} & Equilibrium/\allowbreak SlackEuler\\
+Uniqueness under \eqref{eq:SEC} & \lean{crra\_equilibriumRate\_unique\_of\_slack\_on} & Equilibrium/\allowbreak SlackEuler\\
+Range condition & \lean{policy\_mono\_withRate\_crra\_of\_range} & Models/\allowbreak IncomeFluctuationRateStep\\
+Equal cash on hand & \lean{policy\_le\_policy\_scaled\_withRate\_of\_marginal\_at} & Equilibrium/\allowbreak DebtorRate\\
+\midrule
+Huggett single crossing & \lean{huggett\_equilibriumRate\_unique} & Equilibrium/\allowbreak Huggett\\
+Strict Theorem 1, creditors & \lean{policy\_lt\_policy\_withRate\_of\_marginal\_at} & Equilibrium/\allowbreak DebtorRate\\
+Debtor loss \eqref{eq:loss} & \lean{policy\_le\_policy\_add\_withRate\_of\_marginal\_at} & Equilibrium/\allowbreak DebtorRate\\
+Shifted dominance \eqref{eq:shift} & \lean{huggett\_aggregateCapital\_le\_add} & Equilibrium/\allowbreak ShiftedDominance\\
+Secant slope on a ray & \lean{secant\_ge\_of\_concaveOn\_Ici} & Equilibrium/\allowbreak SavingPropensity\\
+Bounded-region obstruction & \lean{exists\_concaveOn\_ge\_flat} & Equilibrium/\allowbreak SavingPropensity\\
+MPC floor is a Lipschitz bound & \lean{policy\_lipschitz\_of\_consumption\_slope} & Equilibrium/\allowbreak SavingPropensity\\
+Huggett bound, CRRA, slack & \lean{crra\_huggett\_aggregateCapital\_le\_add\_of\_slack} & Equilibrium/\allowbreak SavingPropensity\\
+\midrule
+Multiplicity forces non-monotone supply & \lean{not\_monotoneOn\_of\_equilibria\_ne} & Equilibrium/\allowbreak Multiplicity\\
+Three equilibria & \lean{wiggleSupply\_equilibria} & Equilibrium/\allowbreak Multiplicity\\
+Riskless twin saves nothing & \lean{riskless\_aggregateCapital\_eq\_zero} & Models/\allowbreak Precautionary\\
+Euler sufficiency & \lean{eq\_consumptionFn\_of\_isEulerSolution} & Models/\allowbreak ColemanReffett\\
+Sargent--Stachurski results & \lean{fixedPoint\_le\_of\_dominates}, \lean{tendsto\_iterate\_of\_eventuallyContracting}, \lean{dist\_fixedPoint\_le\_of\_fittedVFI}, \lean{eq\_of\_fixedPt\_of\_concave\_du} & DynamicProgramming/\allowbreak OrderedFixedPoints\\
+Lasry--Lions, static & \lean{cost\_eq\_of\_nash} & Equilibrium/\allowbreak LasryLions\\
+Lasry--Lions, finite horizon & \lean{value\_eq\_of\_pathEquilibrium} & Equilibrium/\allowbreak LasryLions\\
+Strongly monotone operators & \lean{exists\_unique\_zero\_of\_stronglyMonotone} & Analysis/\allowbreak StronglyMonotone\\
+Quadratic utility inadmissible & \lean{not\_monotoneOn\_quadUtility} & Models/\allowbreak Quadratic\\
+Concavity fails when the cap binds & \lean{not\_concaveOn\_consumptionFn\_of\_cap\_binds} & Models/\allowbreak IncomeFluctuationCarrollKimball\\
+\bottomrule
+\end{longtable}
+\end{footnotesize}

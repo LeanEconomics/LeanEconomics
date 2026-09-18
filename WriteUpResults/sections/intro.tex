@@ -1,0 +1,154 @@
+\section{Introduction}
+
+The stationary equilibrium of \citet{Aiyagari1994} is a number: the interest rate at which the
+capital that a continuum of households accumulates against uninsurable earnings risk equals the
+capital a competitive firm demands. Aiyagari computed it by bisection on the rate and reported it,
+for three degrees of relative risk aversion $\mu\in\{1,3,5\}$ and eight earnings processes, in his
+Table II. He did not ask whether the number was unique, and for three decades the question was
+treated as settled by the picture: capital supply is drawn rising in the rate, demand falling, and
+the curves cross once.
+
+The picture is not a theorem. \citet{Acikgoz2018} proved existence and gave conditions for
+uniqueness that do not cover Aiyagari's parameters; \citet{Light2020} proved uniqueness for
+relative risk aversion at most one, again under conditions on the discount factor and the earnings
+process that his own statement does not verify at $\beta=0.96$; \citet{Light2022} put the argument
+in a general mean-field framework; \citet{YoungWalsh2025} showed by computation that at high risk
+aversion the supply curve can bend backward and the equilibrium can fail to be unique. The survey
+of \citet{TodaWalsh2024} lists uniqueness in the Aiyagari model with its actual calibration as
+open.
+
+This paper closes it for $\mu=1$ and locates the obstruction for $\mu\in\{3,5\}$, and it does so in
+a form that is new to economics: every result is checked by a proof assistant. The whole
+development, from the definition of the household problem to the theorem that two equilibrium rates
+of Aiyagari's log economy coincide, is written in Lean 4 \citep{Lean4} against the Mathlib library
+\citep{Mathlib}, and the Lean kernel has verified that each proof follows from its hypotheses and
+the standard axioms of the library. There are no unproved steps, no appeals to results that are
+``well known'', and no numerical approximations. The formal statement of each result reported below
+is named in the text, and Appendix~\ref{app:index} lists them with the files that contain them.
+
+\paragraph{The main result.}
+Fix Aiyagari's preferences and technology at $\mu=1$: log utility, $\beta=0.96$, Cobb--Douglas
+production with capital share $\alpha=0.36$ and depreciation $\delta=0.08$, no borrowing. Let the
+labour endowment follow any finite-state Markov chain whose transitions are monotone (a higher
+state's row first-order stochastically dominates a lower state's) and whose lowest state is reached
+from every state in one step. Then at most one interest rate in $(-\delta,\lambda)$, with
+$\lambda=1/\beta-1$, is a stationary equilibrium rate (Theorem~\ref{thm:main}). Aiyagari's own
+earnings processes, Tauchen discretisations of an AR(1) with positive persistence on any number of
+grid points, satisfy the two conditions by construction (Corollary~\ref{cor:tauchen}). Outside
+$(-\delta,\lambda)$ there is nothing: above $\lambda$ the household is patient and accumulates
+without bound, so no stationary distribution has finite mean capital below demand
+(Theorem~\ref{thm:above}); below $-4\%$ the only capital a log household holds is bounded by
+$\beta\bar y/(1-\beta(1+r))$, which falls under demand as demand explodes at $-\delta$
+(Theorem~\ref{thm:below}). Existence on any interval is reduced to a single inequality on capital
+supply at its upper end (Theorem~\ref{thm:exist}), and the bisection Aiyagari ran is proved to
+bracket and converge to the unique rate (Theorem~\ref{thm:bisect}).
+
+\paragraph{Why the published arguments do not apply, and what does.}
+The economics of the proof is the chain of \citet{Light2020}: individual saving rises with the
+rate (his Theorem 1); therefore aggregate capital, the mean of the stationary distribution, rises
+with the rate (his Theorem 2); therefore supply meets the strictly decreasing demand at most once
+(his Theorem 3). Each link needed something new at $\beta=0.96$.
+
+Theorem 1 is where relative risk aversion enters, through the monotonicity of $c\,u'(c)$ that the
+rescaling argument needs, and for log utility that is available. But the argument is an induction
+along value-function iterates, and it needs the borrowing constraint to be slack at the states it
+compares and the asset cap, an artefact of compactness, to be slack everywhere. The published
+sufficient conditions for both involve Lipschitz constants of the value function that scale like
+$1/(1-\beta R)$, which at Aiyagari's rates is several hundred; at his parameters the tests fail by
+orders of magnitude. What replaces them are two consequences of the Euler inequality itself: a
+household at the constraint consumes at least the lowest income, which turns the corner condition
+into the primitive inequality $\beta R\,u'(y_{\min})<u'(\text{cash on hand})$
+(Section~\ref{sec:corner}); and a minimal marginal propensity to consume, $\kappa=1-\beta$ for log
+utility at every rate, which bounds saving above and makes the cap slack under a single inequality
+$2\beta\bar y<(1-\beta R)\bar a$ (Section~\ref{sec:mpc}).
+
+Theorem 2 is a coupling: the two economies are run from a common initial distribution, the higher
+rate's policy dominates pointwise, the Markov operator preserves the order, and the order passes to
+the limit. The limit exists and is the stationary distribution because of a Doeblin condition that
+the borrowing constraint supplies, an atom at zero assets after a run of bad shocks; the same
+atom gives uniqueness of the stationary distribution at each rate, which is what turns capital
+supply into a function of the rate (Section~\ref{sec:doeblin}).
+
+Theorem 3 is elementary once supply is a monotone function, but Aiyagari's equilibrium condition is
+stated at the equilibrium wage, and the household problem is solved at wage one. The bridge is
+homogeneity of the stationary distribution in the wage, proved at the level of measures rather than
+policies (Section~\ref{sec:homog}), so that the condition $K(r)=\E_r[a]$ at wage $w(r)$ becomes
+$k(r)/w(r)=\E^{1}_r[a]$ for the unit-wage economy, and $k/w=\alpha/((1-\alpha)(r+\delta))$ needs no
+root.
+
+A last feature deserves mention because it shaped the whole development. Nothing is differentiated.
+The value function of a constrained household is not known to be differentiable where the
+constraint binds, and the standard envelope theorems do not apply there. The Euler inequalities
+that drive every argument are derived from one-sided perturbations of the optimal plan and secant
+slopes, in the manner of \citet{ClausenStrub2020}; Lipschitz bounds are secant bounds; monotonicity
+is proved by comparing two plans, never by a derivative. This is not a stylistic choice: it is what
+allowed the proofs to be completed at all in a setting where a proof assistant will not let a
+differentiability assumption pass unnoticed.
+
+\paragraph{Higher risk aversion.}
+For $\mu\in\{3,5\}$ the argument fails at Theorem 1, and we show exactly how. The Euler-chain proof
+of Theorem 1 reduces to a single \emph{elasticity condition} on the consumption function
+(Section~\ref{sec:elasticity}): at tomorrow's assets $b$,
+$R_1u'(c_1(b))\le R_2u'(c_2(b))$, that is, for CRRA, $(c_2/c_1)^\mu\le R_2/R_1$. For $\mu>1$ this
+is false at high wealth, by the asymptotic linearity of the consumption function
+\citep{MaToda2022}: the asymptotic marginal propensity to consume rises with the rate when $\mu>1$,
+so consumption of the very rich rises with the rate by more than the condition allows. At
+Aiyagari's numbers the condition holds for households with wealth up to about thirteen times mean
+income at $\mu=3$ and seven times at $\mu=5$, and fails beyond. Saving of the rich nonetheless
+rises with the rate; the sufficient condition simply does not see it.
+
+The chain, it turns out, throws a term away. It starts from the supposition that saving falls with
+the rate, which gives $c_2(a)>c_1(a)+(r_2-r_1)a$, and uses only $c_2(a)>c_1(a)$. Keeping the extra
+interest income weakens the condition to $(c_2(b)/c_1(b))^\mu\le
+(R_2/R_1)(1+(r_2-r_1)a/c_1(a))^\mu$ (Section~\ref{sec:slack}), and in the high-wealth limit this
+holds for every $\mu$, exactly, with a margin in logarithmic terms of $1/(\kappa R)$ per unit of
+rate difference, about $25$ at Aiyagari's parameters. The slack condition is therefore numerically
+true at every wealth level. What we cannot do is prove it from primitives: it asks for the ratio of
+consumption at two rates to a relative precision of the order of the rate difference, uniformly in
+wealth, and no bound we have on the consumption function is that sharp. That is the frontier, and
+we state it as such.
+
+\paragraph{Huggett.}
+In \citet{Huggett1993} the asset is a bond in zero net supply and households borrow. Against a
+constant supply, monotone capital supply is not enough for single crossing, strict monotonicity is
+needed, and we prove the strict form of Theorem 1 for creditors. For debtors a higher rate lowers
+cash on hand, and saving can fall with the rate by up to the extra interest on the debt. We carry
+this loss through the coupling and obtain $K_1\le K_2+(r_2-r_1)|\underline a|/(1-\Thorn_2)$, where
+$\Thorn_2=(\beta R_2)^{1/\sigma}$ is the marginal propensity to save of the rich
+(Section~\ref{sec:huggett}). At Huggett's numbers the amplification is about $1500$, and we have no
+lower bound on the creditors' gain to set against it. We also show that the propensity-to-save
+bound the argument needs cannot be obtained on a bounded asset region from the concavity of the
+consumption function and its minimal-MPC floor, although it can on a ray, and we give the
+counterexample as a theorem.
+
+\paragraph{What is and is not claimed.}
+The result is about Aiyagari's model as he wrote it, with one difference: assets are confined to
+$[0,\bar a]$ for some cap $\bar a$, which his computation also imposes, and the theorem carries one
+inequality saying the cap is large enough not to bind. Everything else is his: the utility, the
+technology, the earnings process up to the two structural conditions. The uniqueness is of the
+equilibrium interest rate; the stationary distribution at that rate is unique as well, by the
+Doeblin argument. Existence is proved on any interval $[r_{lo},r_{hi}]\subset(-\delta,\lambda)$
+whose upper end carries enough capital supply to exceed demand; that supply floor is the one
+quantitative fact about the log household this paper does not prove, and Section~\ref{sec:exist}
+says why. The bisection theorem takes an equilibrium as given and certifies the algorithm.
+
+\paragraph{Related work.}
+Uniqueness in Bewley economies is treated by \citet{Acikgoz2018}, \citet{Light2020},
+\citet{Light2022}, and surveyed in \citet{TodaWalsh2024}; multiplicity at high risk aversion is
+documented by \citet{YoungWalsh2025}. The consumption-function theory we lean on is
+\citet{CarrollKimball1996} for concavity, \citet{MaToda2022} for asymptotic linearity and the
+minimal MPC, \citet{CarrollShanker2026} for the buffer-stock bounds, and \citet{LiStachurski2014}
+for the contraction in marginal-utility space that gives sufficiency of the Euler equation.
+Continuous-time counterparts are in \citet{AchdouEtAl2022}. The formalisation uses the fixed-point
+and monotone-operator results of \citet{SargentStachurski2024}, several of which we formalised
+along the way (Section~\ref{sec:aux}). On formal verification in economics we know of no prior
+formalisation of a recursive macroeconomic equilibrium; the closest work is the mean-field-games
+literature on uniqueness, \citet{LasryLions2007}, \citet{GraberMatter2024},
+\citet{CannarsaCapuani2018}, whose monotonicity conditions we discuss in Section~\ref{sec:aux}
+and show do not reach stationary discounted equilibria.
+
+Section~\ref{sec:model} sets out the model as formalised. Section~\ref{sec:main} states the
+results for $\mu=1$. Section~\ref{sec:arch} explains the proof. Sections~\ref{sec:beyond} and
+\ref{sec:huggett} give the frontier for $\mu>1$ and for Huggett. Section~\ref{sec:aux} collects
+auxiliary results. Appendix~\ref{app:index} is the theorem index and Appendix~\ref{app:formal}
+describes the formalisation.
