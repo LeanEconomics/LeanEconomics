@@ -50,20 +50,22 @@ variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
 
 /-! ### Theorem 1 from the elasticity condition -/
 
-/-- **Saving rises with the rate wherever `R·u'(c)` does.** Two rates `r₁ ≤ r₂` of the same
-economy; positive consumption, cap slack at both rates, and the elasticity condition
-`R₁ u'(c₁(b,z)) ≤ R₂ u'(c₂(b,z))` at every state. Then `policy₁ ≤ policy₂`. -/
-theorem policy_le_policy_withRate_of_marginal {r₁ r₂ : ℝ} (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂)
-    (hr : r₁ ≤ r₂) {du : ℝ → ℝ} (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
+/-- **Saving rises with the rate at a state where `R·u'(c)` does at tomorrow's assets.** Two
+rates `r₁ ≤ r₂` of the same economy; positive consumption, cap slack at both rates, and the
+elasticity condition `R₁ u'(c₁(b,z')) ≤ R₂ u'(c₂(b,z'))` at the single asset level
+`b = policy₁(a, z)` — the only place the proof uses it. Then `policy₁(a,z) ≤ policy₂(a,z)`. -/
+theorem policy_le_policy_withRate_of_marginal_at {r₁ r₂ : ℝ} (h₁ : P.RateOK r₁)
+    (h₂ : P.RateOK r₂) (hr : r₁ ≤ r₂) {du : ℝ → ℝ}
+    (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
     (hanti : StrictAntiOn du (Ioi (0 : ℝ)))
     (hpc₁ : (P.withRate r₁ h₁).PositiveConsumption)
     (hpc₂ : (P.withRate r₂ h₂).PositiveConsumption)
     (hslack₁ : ∀ s : ℝ × Z, s.1 ∈ Icc (0 : ℝ) assetCap → (P.withRate r₁ h₁).policy s < assetCap)
     (hslack₂ : ∀ s : ℝ × Z, s.1 ∈ Icc (0 : ℝ) assetCap → (P.withRate r₂ h₂).policy s < assetCap)
-    (helas : ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
-      (1 + r₁) * du ((P.withRate r₁ h₁).consumptionFn z b)
-        ≤ (1 + r₂) * du ((P.withRate r₂ h₂).consumptionFn z b))
-    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
+    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z)
+    (helas : ∀ z' : Z,
+      (1 + r₁) * du ((P.withRate r₁ h₁).consumptionFn z' ((P.withRate r₁ h₁).policy (a, z)))
+        ≤ (1 + r₂) * du ((P.withRate r₂ h₂).consumptionFn z' ((P.withRate r₁ h₁).policy (a, z)))) :
     (P.withRate r₁ h₁).policy (a, z) ≤ (P.withRate r₂ h₂).policy (a, z) := by
   classical
   by_contra hcon
@@ -158,7 +160,7 @@ theorem policy_le_policy_withRate_of_marginal {r₁ r₂ : ℝ} (h₁ : P.RateOK
     rw [Finset.mul_sum, Finset.mul_sum]
     refine Finset.sum_le_sum fun z' _ => ?_
     have hπ := P.transitionMatrix_nonneg z z'
-    have h1 := helas _ hA₁mem z'
+    have h1 := helas z'
     have h2 := mul_le_mul_of_nonneg_left (hdu₂ z') hR₂.le
     calc (1 + r₁) * (P.transitionMatrix z z'
             * du ((P.withRate r₁ h₁).consumptionFn z' ((P.withRate r₁ h₁).policy (a, z))))
@@ -173,6 +175,23 @@ theorem policy_le_policy_withRate_of_marginal {r₁ r₂ : ℝ} (h₁ : P.RateOK
           ring
   have := mul_le_mul_of_nonneg_left hsum hβ
   linarith
+
+/-- **Saving rises with the rate wherever `R·u'(c)` does**: the elasticity condition at every
+state gives `policy₁ ≤ policy₂` at every state. -/
+theorem policy_le_policy_withRate_of_marginal {r₁ r₂ : ℝ} (h₁ : P.RateOK r₁) (h₂ : P.RateOK r₂)
+    (hr : r₁ ≤ r₂) {du : ℝ → ℝ} (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
+    (hanti : StrictAntiOn du (Ioi (0 : ℝ)))
+    (hpc₁ : (P.withRate r₁ h₁).PositiveConsumption)
+    (hpc₂ : (P.withRate r₂ h₂).PositiveConsumption)
+    (hslack₁ : ∀ s : ℝ × Z, s.1 ∈ Icc (0 : ℝ) assetCap → (P.withRate r₁ h₁).policy s < assetCap)
+    (hslack₂ : ∀ s : ℝ × Z, s.1 ∈ Icc (0 : ℝ) assetCap → (P.withRate r₂ h₂).policy s < assetCap)
+    (helas : ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
+      (1 + r₁) * du ((P.withRate r₁ h₁).consumptionFn z b)
+        ≤ (1 + r₂) * du ((P.withRate r₂ h₂).consumptionFn z b))
+    {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) :
+    (P.withRate r₁ h₁).policy (a, z) ≤ (P.withRate r₂ h₂).policy (a, z) :=
+  P.policy_le_policy_withRate_of_marginal_at h₁ h₂ hr hderiv hanti hpc₁ hpc₂ hslack₁ hslack₂ ha z
+    (fun z' => helas _ ((P.withRate r₁ h₁).policy_mem_region _) z')
 
 /-! ### The chain from Theorem 1 to uniqueness, for any utility -/
 

@@ -96,6 +96,7 @@ import LeanEconomics.Equilibrium.AiyagariExistence
 import LeanEconomics.Equilibrium.IncomeMarginal
 import LeanEconomics.Equilibrium.Localisation
 import LeanEconomics.Equilibrium.ElasticityReduction
+import LeanEconomics.Equilibrium.InvariantRegion
 import LeanEconomics.Models.AiyagariWitness
 import LeanEconomics.Models.AiyagariTauchenWitness
 import LeanEconomics.Models.MonotoneTransitions
