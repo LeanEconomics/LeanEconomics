@@ -93,6 +93,8 @@ import LeanEconomics.Models.LargeBetaLight
 import LeanEconomics.Models.LogAiyagari
 import LeanEconomics.Equilibrium.AiyagariUniqueness
 import LeanEconomics.Models.AiyagariWitness
+import LeanEconomics.Models.AiyagariTauchenWitness
 import LeanEconomics.Models.MonotoneTransitions
+import LeanEconomics.Models.Tauchen
 import LeanEconomics.Equilibrium.HomotheticDistribution
 import LeanEconomics.Equilibrium.RateRange
