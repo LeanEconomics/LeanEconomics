@@ -358,7 +358,8 @@ theorem aiyagari1994_equilibriumRate_unique_wage {rhi : ℝ}
     (hmin : P.income z₀ = P.minIncome) (hreach : ∀ z, 0 < P.transitionMatrix z z₀)
     {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc (0 : ℝ) rhi) (h₂ : r₂ ∈ Icc (0 : ℝ) rhi)
     (hrr₁ : P.RateOK r₁) (hrr₂ : P.RateOK r₂)
-    (hw₁ : 0 < cobbDouglasWage (9 / 25) (2 / 25) r₁) (hw₂ : 0 < cobbDouglasWage (9 / 25) (2 / 25) r₂)
+    (hw₁ : 0 < cobbDouglasWage (9 / 25) (2 / 25) r₁) (hw₂ : 0 < cobbDouglasWage (9 / 25)
+        (2 / 25) r₂)
     {μ₁ : ProbabilityMeasure ((P.withRate r₁ hrr₁).scale hw₁).State}
     {μ₂ : ProbabilityMeasure ((P.withRate r₂ hrr₂).scale hw₂).State}
     (hμ₁ : ((P.withRate r₁ hrr₁).scale hw₁).IsStationary μ₁)

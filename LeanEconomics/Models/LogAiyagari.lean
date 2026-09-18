@@ -38,7 +38,8 @@ variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCa
 The two ways of supplying that are iid income (`crra_exists_exhaust_of_euler_corner`) and
 monotone transitions (`crra_exists_exhaust_of_euler_corner_monotone`). -/
 theorem crra_exists_exhaust_of_euler_corner_of_lowest {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+        (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1)
     (hpc : P.PositiveConsumptionAll)
     (hthr : (1 - P.minMPC γ) * (P.maxIncome + (1 + P.interest) * assetCap) < assetCap)
@@ -84,7 +85,8 @@ theorem crra_exists_exhaust_of_euler_corner_of_lowest {γ : ℝ} (hγ0 : 0 < γ)
     (fun z' => hlow a hamem z')
 
 /-- **The exhaustion data with iid income.** -/
-theorem crra_exists_exhaust_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ) (hfl : assetFloor = 0)
+theorem crra_exists_exhaust_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hfl : assetFloor = 0)
     (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hiid : P.IidIncome)
     (hpc : P.PositiveConsumptionAll)
@@ -102,7 +104,8 @@ theorem crra_exists_exhaust_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u
 Huggett's Lemma 1 (`consumptionFn_le_of_income_le_monotone`). The extra iterate-level
 hypotheses that lemma needs are supplied by the minimal MPC. -/
 theorem crra_exists_exhaust_of_euler_corner_monotone {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+        (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hmono : P.MonotoneTransitions)
     (hpc : P.PositiveConsumptionAll)
     (hthr : (1 - P.minMPC γ) * (P.maxIncome + (1 + P.interest) * assetCap) < assetCap)
@@ -131,7 +134,8 @@ variable [MeasurableSpace Z] [BorelSpace Z]
 
 /-- **A unique stationary distribution at large `β`.** -/
 theorem crra_existsUnique_isStationary_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+        (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hiid : P.IidIncome)
     (hpc : P.PositiveConsumptionAll)
     (hthr : (1 - P.minMPC γ) * (P.maxIncome + (1 + P.interest) * assetCap) < assetCap)
@@ -146,7 +150,8 @@ theorem crra_existsUnique_isStationary_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ
 
 /-- **Convergence to it from any start**, Doeblin with the atom at the constraint. -/
 theorem crra_tendsto_pushProb_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+        (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hiid : P.IidIncome)
     (hpc : P.PositiveConsumptionAll)
     (hthr : (1 - P.minMPC γ) * (P.maxIncome + (1 + P.interest) * assetCap) < assetCap)
@@ -166,7 +171,8 @@ theorem crra_tendsto_pushProb_of_euler_corner {γ : ℝ} (hγ0 : 0 < γ)
 
 /-- **A unique stationary distribution at large `β`, with persistent income.** -/
 theorem crra_existsUnique_isStationary_of_euler_corner_monotone {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+        (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hmono : P.MonotoneTransitions)
     (hpc : P.PositiveConsumptionAll)
     (hthr : (1 - P.minMPC γ) * (P.maxIncome + (1 + P.interest) * assetCap) < assetCap)
@@ -181,7 +187,8 @@ theorem crra_existsUnique_isStationary_of_euler_corner_monotone {γ : ℝ} (hγ0
 
 /-- **Convergence to it from any start, with persistent income.** -/
 theorem crra_tendsto_pushProb_of_euler_corner_monotone {γ : ℝ} (hγ0 : 0 < γ)
-    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hu : P.u = crraUtility γ) (hfl : assetFloor = 0) (hint : 0 ≤ P.interest)
+        (hβ : 0 < (P.discount : ℝ))
     (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hmono : P.MonotoneTransitions)
     (hpc : P.PositiveConsumptionAll)
     (hthr : (1 - P.minMPC γ) * (P.maxIncome + (1 + P.interest) * assetCap) < assetCap)
