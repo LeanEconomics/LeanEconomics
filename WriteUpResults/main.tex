@@ -50,24 +50,19 @@ Comments welcome.}}
 \begin{abstract}
 \noindent
 \citet{Aiyagari1994} computed the stationary equilibrium of his heterogeneous-agent economy
-numerically and did not ask whether it was unique. We prove that at his logarithmic calibration
-($\mu=1$) it is: for any of his labour-endowment processes, and indeed for any finite Markov
-earnings process with monotone transitions, at most one interest rate in $(-\delta,\lambda)$ clears
-the capital market, where $\lambda=1/\beta-1$ is the rate of time preference; no equilibrium exists
-above $\lambda$ or at rates below $-4\%$; and the bisection he used to compute the rate is certified
-to converge to it. The proof is checked by the Lean 4 proof assistant against the Mathlib library,
-with no unproved steps. Its economics is Light's (2020) chain, saving rises with the rate, so
-aggregate capital does, so supply meets a decreasing demand once, but every step had to be
-re-established at $\beta=0.96$, where the constants in the published arguments fail by orders of
-magnitude; the tools that succeed are the Euler inequality at the borrowing constraint, a minimal
-marginal propensity to consume, a Doeblin atom at the constraint, and homogeneity of the stationary
-distribution in the wage. For $\mu\in\{3,5\}$ the proof does not close. We locate the obstruction
-exactly: the Euler-chain argument needs a condition on the response of consumption to the rate,
-which fails for households whose wealth exceeds about thirteen times mean income, and we show that
-keeping a term the argument discards weakens the condition to one that holds at every wealth level
-numerically, with an explicit margin, but that no available bound proves. For \citet{Huggett1993}
-the obstruction is the debtors, and we give the sharpest bound we can on how far the borrowers can
-push aggregate saving the wrong way.
+numerically. We prove that at his logarithmic calibration
+($\mu=1$) it is: for any of his labour-endowment processes, and for any finite Markov earnings
+process with monotone transitions, at most one interest rate in $(-\delta,\lambda)$ clears the
+capital market, where $\lambda=1/\beta-1$ is the rate of time preference; no equilibrium exists
+above $\lambda$ or below $-4\%$; and the bisection he used is certified to converge to the rate.
+Every step is checked by the Lean 4 proof assistant against the Mathlib library. The economics is Light's (2020) chain, saving rises with the rate, so aggregate capital
+does, so supply meets a decreasing demand once, but at $\beta=0.96$ the published constants fail; what
+succeeds is the Euler inequality at the borrowing constraint, a
+minimal marginal propensity to consume, a Doeblin atom, and homogeneity of the stationary
+distribution in the wage. For $\mu\in\{3,5\}$ we locate the obstruction exactly: a condition on
+the response of consumption to the rate that fails for the rich. A tighter argument weakens it to
+one that holds numerically at every wealth level with an explicit margin, but that remains
+unproved. For \citet{Huggett1993} the obstruction is the debtors, and we bound their effect.
 \end{abstract}
 
 \noindent\emph{JEL:} C63, D52, E21. \quad \emph{Keywords:} Bewley models, uniqueness, stationary
