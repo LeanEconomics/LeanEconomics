@@ -362,40 +362,35 @@ quantities, pinned by `(2000201/200000000) ^ 15 ≤ (1/74) ^ 16` and
 theorem nearLog_floor_top (hrhi : nearLog.RateOK (1 / 200 : ℝ))
     (μ : ProbabilityMeasure nearLog.State)
     (hμ : (nearLog.withRate (1 / 200) hrhi).IsStationary μ) :
-    1 / 4000000 ≤ nearLog.aggregateCapital μ := by
-  have hkey := (nearLog.withRate (1 / 200) hrhi).crra_le_aggregateCapital_of_gain
+    1 / 400 ≤ nearLog.aggregateCapital μ := by
+  have hkey := (nearLog.withRate (1 / 200) hrhi).crra_le_aggregateCapital_of_bounds
     (γ := 15 / 16) (by norm_num) (by norm_num) rfl
     (nearLog_withRate_positiveConsumption hrhi) hμ
-    (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (h := 1 / 1000000) (by norm_num) (by norm_num)
-    (by norm_num) (fun z => by norm_num) ?_
+    (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (h := 1 / 100)
+    (U := 100 / 99) (L := 38) (by norm_num) (by norm_num)
+    (by norm_num) (fun z => by norm_num) ?_ ?_ ?_
   · have heq : (nearLog.withRate (1 / 200) hrhi).aggregateCapital μ
         = nearLog.aggregateCapital μ := rfl
     rw [heq] at hkey
     linarith [hkey]
-  · simp only [IncomeFluctuation.withRate_income, IncomeFluctuation.withRate_interest,
-      IncomeFluctuation.withRate_discount, nearLog_income_zero, nearLog_income_one,
-      nearLog_discount]
-    rw [show (nearLog.withRate (1 / 200) hrhi).transitionMatrix 1 0 = 1 / 2 from rfl,
-      show (1 : ℝ) - 1 / 1000000 = 999999 / 1000000 from by norm_num,
-      show (1 : ℝ) / 100 + (1 + 1 / 200) * (1 / 1000000) = 2000201 / 200000000 from by norm_num,
-      show (1 + (1 : ℝ) / 200) * (1 / 1000000 / 2) = 201 / 400000000 from by norm_num,
-      Real.rpow_neg (show (0:ℝ) ≤ 999999 / 1000000 by norm_num),
-      Real.rpow_neg (show (0:ℝ) ≤ 2000201 / 200000000 by norm_num)]
-    have hA : (9 : ℝ) / 10 ≤ (999999 / 1000000 : ℝ) ^ ((15 : ℝ) / 16) :=
-      le_rpow_of_pow_le (m := 15) (n := 16) (by norm_num) (by norm_num) (by norm_num)
-        (by norm_num) (by norm_num)
-    have hApos : (0 : ℝ) < (999999 / 1000000 : ℝ) ^ ((15 : ℝ) / 16) :=
-      Real.rpow_pos_of_pos (by norm_num) _
-    have hB : (2000201 / 200000000 : ℝ) ^ ((15 : ℝ) / 16) ≤ 1 / 74 :=
-      rpow_le_of_pow_le (m := 15) (n := 16) (by norm_num) (by norm_num) (by norm_num)
-        (by norm_num) (by norm_num)
-    have hBpos : (0 : ℝ) < (2000201 / 200000000 : ℝ) ^ ((15 : ℝ) / 16) :=
-      Real.rpow_pos_of_pos (by norm_num) _
-    have hAinv : ((999999 / 1000000 : ℝ) ^ ((15 : ℝ) / 16))⁻¹ ≤ 10 / 9 := by
-      rw [inv_eq_one_div, div_le_iff₀ hApos]; nlinarith [hA]
-    have hBinv : (74 : ℝ) ≤ ((2000201 / 200000000 : ℝ) ^ ((15 : ℝ) / 16))⁻¹ := by
-      rw [inv_eq_one_div, le_div_iff₀ hBpos]; nlinarith [hB]
-    nlinarith [hAinv, hBinv]
+  · -- the cost side: the base is below one, so its reciprocal is bound enough
+    simp only [IncomeFluctuation.withRate_income, nearLog_income_one,
+      show (1 : ℝ) - 1 / 100 = 99 / 100 from by norm_num]
+    refine le_trans (rpow_neg_le_inv_of_le_one (by norm_num) (by norm_num) (by norm_num)) ?_
+    norm_num
+  · -- the gain side: the base is small, and this is the one place a root is still needed
+    simp only [IncomeFluctuation.withRate_income, IncomeFluctuation.withRate_interest,
+      nearLog_income_zero,
+      show (1 : ℝ) / 100 + (1 + 1 / 200) * (1 / 100) = 401 / 20000 from by norm_num]
+    refine le_rpow_neg_of_rpow_le (by norm_num) (by norm_num) ?_
+    rw [show ((38 : ℝ))⁻¹ = 1 / 38 from by norm_num]
+    exact rpow_le_of_pow_le (m := 15) (n := 16) (by norm_num) (by norm_num) (by norm_num)
+      (by norm_num) (by norm_num)
+  · -- and one inequality among the rationals
+    simp only [IncomeFluctuation.withRate_interest, IncomeFluctuation.withRate_discount,
+      nearLog_discount,
+      show (nearLog.withRate (1 / 200) hrhi).transitionMatrix 1 0 = 1 / 2 from rfl]
+    norm_num
 
 /-- **An Aiyagari equilibrium at the log calibration, with the asset cap provably slack.**
 Discount factor `1/8` and a `100 : 1` income spread, as before, but now with a cap that saving
@@ -415,24 +410,25 @@ theorem nearLog_exists_equilibrium :
     (fun r hr hrr => nearLog_existsUnique_uniform hr hrr) (by norm_num)
     (fun hrr μ hμ => nearLog_floor_top hrr μ hμ)
 
-/-- **The same equilibrium, with the technology fixed in advance.** `A = 1/250000` and
-`δ = 1/1000000` are not chosen to fit the household: they are named first, and the two
-inequalities `4δ² ≤ A²` and `A² ≤ 4(1/200+δ)²/4000000` — arithmetic in the rationals — are what
+/-- **The same equilibrium, with the technology fixed in advance.** `A = 1/4000` and
+`δ = 1/10000` are not chosen to fit the household: they are named first, and the two
+inequalities `4δ² ≤ A²` and `A² ≤ 4(1/200+δ)²/400` — arithmetic in the rationals — are what
 makes them an equilibrium technology for this economy.
 
-The numbers are small because the asset cap is `1` while the proved supply floor is `1/4000000`:
-demand has to fall by a factor of four million across an interval of width `1/200`, and only a
-nearly undepreciating technology is that steep. Sharpening the floor, not the argument, is what
-would move them. -/
+The numbers are small because the asset cap is `1` while the proved supply floor is `1/400`:
+demand has to fall by a factor of four hundred across an interval of width `1/200`, so the
+technology has to be steep. They are a hundred times larger than the first version of this
+theorem allowed, and the whole of that gain came from the FLOOR — `1/400` in place of
+`1/4000000` — not from the equilibrium argument. -/
 theorem nearLog_exists_equilibrium_of_technology :
     ∃ r ∈ Icc (0 : ℝ) (1 / 200),
       IsAiyagariEquilibrium
         (nearLog.rateFamily (by norm_num : (0:ℝ) < 1 + 0) (by norm_num : (0:ℝ) ≤ 1 / 200))
-        (capitalDemand (1 / 250000) (1 / 1000000)) r :=
+        (capitalDemand (1 / 4000) (1 / 10000)) r :=
   nearLog.exists_equilibrium_of_technology (by norm_num) (by norm_num)
     (fun r hr hrr => nearLog_existsUnique_uniform hr hrr)
     (fun hrr μ hμ => nearLog_floor_top hrr μ hμ)
-    (1 / 250000) (1 / 1000000) (by norm_num)
+    (1 / 4000) (1 / 10000) (by norm_num)
     (le_capitalDemand_of_sq (by norm_num) (by norm_num))
     (capitalDemand_le_of_sq (by norm_num) (by norm_num))
 

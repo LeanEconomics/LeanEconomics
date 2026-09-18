@@ -347,6 +347,68 @@ theorem monotoneOn_capitalSupply :
     rw [h.family_eq hr, h.family_eq hr']
     exact h.policy_mono hr hr' hle hs z
 
+/-! ### The supply floor, from primitives
+
+The third of the three things a witness used to assemble by hand, after `corner_of_primitives`
+and `slack_of_primitives`. The economics is the gain test: a household in a HIGH income state
+that saved nothing would face the low state tomorrow with nothing but its income, and the
+marginal utility there is so much larger than the cost today that it must save. So every
+household in that state holds at least `t/2`, and the state has probability at least
+`transitionMatrix z₀ z₁`.
+
+Two things drop out of the class rather than being hypotheses. Positivity of consumption comes
+from the `positive` field, and the uniform reach `∀ z, p₀ ≤ transitionMatrix z z₁` comes from
+`iid` — with iid income the probability of landing in `z₁` does not depend on where you are.
+The target state is the class's OWN `z₀`, which is not a coincidence: `income_min` makes it the
+lowest income state, which is exactly where tomorrow's marginal utility is largest.
+
+The floor is needed only at the top of the rate interval (`gain_term_mono`: the test is easier
+at higher rates), so `rhi` is the only rate that appears. -/
+
+/-- **A positive floor under capital supply**, from one inequality among the primitives. -/
+theorem le_aggregateCapital_of_gain {z₁ : Z} {t : ℝ} (ht0 : 0 < t) (htcap : t ≤ assetCap)
+    (htinc : t < P.income z₁)
+    (hgain : (η + P.income z₁ - t) ^ (-γ) * t
+      < (P.discount : ℝ) * (P.transitionMatrix z₁ z₀
+          * ((η + P.income z₀ + (1 + rhi) * t) ^ (-γ) * ((1 + rhi) * (t / 2)))))
+    {m : ℝ} (hm : m ≤ t / 2 * P.transitionMatrix z₀ z₁)
+    (hrr : P.RateOK rhi) {μ : ProbabilityMeasure P.State}
+    (hμ : (P.withRate rhi hrr).IsStationary μ) : m ≤ P.aggregateCapital μ := by
+  have hhi : rhi ∈ Icc rlo rhi := ⟨h.rate_le, le_rfl⟩
+  have hkey := (P.withRate rhi hrr).hara_le_aggregateCapital_of_gain h.gamma_pos h.eta_nonneg
+    (show (P.withRate rhi hrr).u = haraUtility γ η from h.utility) rfl
+    (fun s hs => h.positive_valueFunction hhi hrr s.2 hs) hμ
+    (z₁ := z₁) (z₀ := z₀) (p₀ := P.transitionMatrix z₀ z₁) (h := t) ht0 htcap
+    (show t < (P.withRate rhi hrr).income z₁ from htinc)
+    (fun z => le_of_eq (h.iid z₀ z z₁)) hgain
+  have heq : (P.withRate rhi hrr).aggregateCapital μ = P.aggregateCapital μ := rfl
+  rw [heq] at hkey
+  linarith
+
+/-- **The same, with the two powers bounded separately** — the form a witness actually uses.
+`hara_le_aggregateCapital_of_bounds` does the splitting; the class supplies positivity and the
+uniform reach. What a new witness has to produce is a bound on each power and one inequality
+among rationals. -/
+theorem le_aggregateCapital_of_bounds {z₁ : Z} {t U L : ℝ} (ht0 : 0 < t) (htcap : t ≤ assetCap)
+    (htinc : t < P.income z₁)
+    (hU : (η + P.income z₁ - t) ^ (-γ) ≤ U)
+    (hL : L ≤ (η + P.income z₀ + (1 + rhi) * t) ^ (-γ))
+    (hcond : U * t
+      < (P.discount : ℝ) * (P.transitionMatrix z₁ z₀ * (L * ((1 + rhi) * (t / 2)))))
+    {m : ℝ} (hm : m ≤ t / 2 * P.transitionMatrix z₀ z₁)
+    (hrr : P.RateOK rhi) {μ : ProbabilityMeasure P.State}
+    (hμ : (P.withRate rhi hrr).IsStationary μ) : m ≤ P.aggregateCapital μ := by
+  have hhi : rhi ∈ Icc rlo rhi := ⟨h.rate_le, le_rfl⟩
+  have hkey := (P.withRate rhi hrr).hara_le_aggregateCapital_of_bounds h.gamma_pos h.eta_nonneg
+    (show (P.withRate rhi hrr).u = haraUtility γ η from h.utility) rfl
+    (fun s hs => h.positive_valueFunction hhi hrr s.2 hs) hμ
+    (z₁ := z₁) (z₀ := z₀) (p₀ := P.transitionMatrix z₀ z₁) (t := t) (U := U) (L := L)
+    ht0 htcap (show t < (P.withRate rhi hrr).income z₁ from htinc)
+    (fun z => le_of_eq (h.iid z₀ z z₁)) hU hL hcond
+  have heq : (P.withRate rhi hrr).aggregateCapital μ = P.aggregateCapital μ := rfl
+  rw [heq] at hkey
+  linarith
+
 /-- **Uniqueness of the equilibrium rate, for the class.** -/
 theorem equilibriumRate_unique {A δ : ℝ} (hA : A ≠ 0) (hδ : 0 < rlo + δ)
     {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc rlo rhi) (h₂ : r₂ ∈ Icc rlo rhi)

@@ -162,6 +162,37 @@ theorem crra_le_aggregateCapital_of_gain {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ <
   rw [show h - h / 2 = h / 2 from by ring] at hgen
   exact hgen
 
+/-- **The supply floor with the two powers bounded separately**, CES version. The gain condition
+compares the marginal cost of saving `h` in the high state against its marginal value in the low
+state; bounding each power separately leaves one inequality among the bounds.
+
+A base above one needs no root (`rpow_neg_le_one_of_one_le`), and a base just below one needs
+only its reciprocal (`rpow_neg_le_inv_of_le_one`) — which is the cost side of every calibration
+so far. Only the gain side, where the base is small and the bound large, still goes through a
+root. -/
+theorem crra_le_aggregateCapital_of_bounds {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ < 1)
+    (hu : P.u = crraUtility γ) (hpc : P.PositiveConsumption)
+    [MeasurableSpace Z] [BorelSpace Z] {μ : ProbabilityMeasure P.State}
+    (hμ : P.IsStationary μ) {z₁ z₀ : Z} {p₀ h U L : ℝ} (hh0 : 0 < h)
+    (hhcap : h ≤ assetCap) (hhinc : h < P.income z₁)
+    (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
+    (hU : (P.income z₁ - h) ^ (-γ) ≤ U)
+    (hL : L ≤ (P.income z₀ + (1 + P.interest) * h) ^ (-γ))
+    (hcond : U * h
+      < (P.discount : ℝ) * (P.transitionMatrix z₁ z₀ * (L * ((1 + P.interest) * (h / 2))))) :
+    h / 2 * p₀ ≤ P.aggregateCapital μ := by
+  refine P.crra_le_aggregateCapital_of_gain hγ0 hγ1 hu hpc hμ (z₀ := z₀) hh0 hhcap hhinc hp ?_
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  have hπ : (0 : ℝ) ≤ P.transitionMatrix z₁ z₀ := P.transitionMatrix_nonneg _ _
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hcost : (P.income z₁ - h) ^ (-γ) * h ≤ U * h := mul_le_mul_of_nonneg_right hU hh0.le
+  have hgainL : (P.discount : ℝ) * (P.transitionMatrix z₁ z₀ * (L * ((1 + P.interest) * (h / 2))))
+      ≤ (P.discount : ℝ) * (P.transitionMatrix z₁ z₀
+          * ((P.income z₀ + (1 + P.interest) * h) ^ (-γ) * ((1 + P.interest) * (h / 2)))) :=
+    mul_le_mul_of_nonneg_left
+      (mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right hL (by positivity)) hπ) hβ
+  linarith
+
 end IncomeFluctuation
 
 end LeanEconomics

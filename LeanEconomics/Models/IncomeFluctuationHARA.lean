@@ -828,6 +828,38 @@ theorem hara_le_aggregateCapital_of_gain {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 
   rw [show h - h / 2 = h / 2 from by ring] at hgen
   exact hgen
 
+
+/-- **The supply floor with the two powers bounded separately.** The gain condition compares
+`(η + y₁ - t)^(-γ)`, the marginal cost of saving `t` in the high state, against
+`(η + y₀ + Rt)^(-γ)`, the marginal value of having it in the low state. Bounding the first from
+above and the second from below leaves ONE inequality among the bounds — and when a base sits on
+the right side of one, its bound needs no root at all (`rpow_neg_le_one_of_one_le`,
+`rpow_neg_le_inv_of_le_one`).
+
+This is what makes a supply floor a calibration check rather than a proof. -/
+theorem hara_le_aggregateCapital_of_bounds {γ η : ℝ} (hγ0 : 0 < γ) (hη : 0 ≤ η)
+    (hu : P.u = haraUtility γ η) (hfl : assetFloor = 0) (hpc : P.PositiveConsumption)
+    {μ : ProbabilityMeasure P.State} (hμ : P.IsStationary μ) {z₁ z₀ : Z} {p₀ t U L : ℝ}
+    (ht0 : 0 < t) (htcap : t ≤ assetCap) (htinc : t < P.income z₁)
+    (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
+    (hU : (η + P.income z₁ - t) ^ (-γ) ≤ U)
+    (hL : L ≤ (η + P.income z₀ + (1 + P.interest) * t) ^ (-γ))
+    (hcond : U * t
+      < (P.discount : ℝ) * (P.transitionMatrix z₁ z₀ * (L * ((1 + P.interest) * (t / 2))))) :
+    t / 2 * p₀ ≤ P.aggregateCapital μ := by
+  refine P.hara_le_aggregateCapital_of_gain hγ0 hη hu hfl hpc hμ (z₀ := z₀) ht0 htcap htinc hp ?_
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  have hπ : (0 : ℝ) ≤ P.transitionMatrix z₁ z₀ := P.transitionMatrix_nonneg _ _
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hcost : (η + P.income z₁ - t) ^ (-γ) * t ≤ U * t :=
+    mul_le_mul_of_nonneg_right hU ht0.le
+  have hgainL : (P.discount : ℝ) * (P.transitionMatrix z₁ z₀ * (L * ((1 + P.interest) * (t / 2))))
+      ≤ (P.discount : ℝ) * (P.transitionMatrix z₁ z₀
+          * ((η + P.income z₀ + (1 + P.interest) * t) ^ (-γ) * ((1 + P.interest) * (t / 2)))) :=
+    mul_le_mul_of_nonneg_left
+      (mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right hL (by positivity)) hπ) hβ
+  linarith
+
 end Measure
 
 end IncomeFluctuation

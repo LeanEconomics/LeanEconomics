@@ -57,6 +57,32 @@ theorem rpow_le_of_pow_le {x c p : ℝ} {m n : ℕ} (hn : n ≠ 0) (hx : 0 ≤ x
     _ ≤ (c ^ n) ^ ((n : ℝ)⁻¹) := Real.rpow_le_rpow (by positivity) h (by positivity)
     _ = c := h2.symm
 
+/-! ### Negative exponents without a root
+
+The gain and cost sides of the supply floor are both `x ^ (-γ)`. When the base sits on the right
+side of one these need no root at all: a base above one makes the power at most one, and a base
+below one makes it at most the reciprocal (for `γ ≤ 1`). That covers the COST side of every
+calibration, where the base is `η + income - t` with `t` small. The GAIN side, where the base is
+small and the bound has to be large, is where a root is genuinely needed —
+`le_rpow_neg_of_rpow_le` hands it back to `rpow_le_of_pow_le`. -/
+
+/-- A base of at least one makes the negative power at most one. -/
+theorem rpow_neg_le_one_of_one_le {x γ : ℝ} (hx : 1 ≤ x) (hγ : 0 ≤ γ) : x ^ (-γ) ≤ 1 :=
+  Real.rpow_le_one_of_one_le_of_nonpos hx (by linarith)
+
+/-- A base of at most one makes the negative power at most the reciprocal, when `γ ≤ 1`. -/
+theorem rpow_neg_le_inv_of_le_one {x γ : ℝ} (hx : 0 < x) (hx1 : x ≤ 1) (hγ : γ ≤ 1) :
+    x ^ (-γ) ≤ x⁻¹ := by
+  have h := Real.rpow_le_rpow_of_exponent_ge hx hx1 (show (-1 : ℝ) ≤ -γ by linarith)
+  rwa [Real.rpow_neg_one] at h
+
+/-- The gain side: a bound on `x ^ γ` from above is a bound on `x ^ (-γ)` from below. -/
+theorem le_rpow_neg_of_rpow_le {x q γ : ℝ} (hx : 0 < x) (hq : 0 < q) (h : x ^ γ ≤ q⁻¹) :
+    q ≤ x ^ (-γ) := by
+  have hpos : (0 : ℝ) < x ^ γ := Real.rpow_pos_of_pos hx _
+  rw [Real.rpow_neg hx.le, le_inv_comm₀ hq hpos]
+  exact h
+
 theorem le_rpow_of_pow_le {x c p : ℝ} {m n : ℕ} (hn : n ≠ 0) (hx : 0 ≤ x) (hc : 0 ≤ c)
     (hp : p = (m : ℝ) / n) (h : c ^ n ≤ x ^ m) : c ≤ x ^ p := by
   have hn' : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)

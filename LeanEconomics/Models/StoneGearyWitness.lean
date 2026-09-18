@@ -292,7 +292,7 @@ theorem stoneGeary_equilibriumRate_unique {A δ : ℝ} (hA : A ≠ 0) (hδ : 0 <
 At the top of the rate interval the household strictly prefers saving `1/100000` to saving
 nothing: the cost, priced at the margin in the good income state, is at most `h`, and the gain,
 priced at the margin in the bad one, is at least `2.8 h`. So aggregate capital is at least
-`1/400000` at every stationary distribution there, and with uniqueness that is what the
+`1/400` at every stationary distribution there, and with uniqueness that is what the
 intermediate-value argument needs. -/
 
 theorem stoneGeary_positiveConsumption {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
@@ -302,35 +302,33 @@ theorem stoneGeary_positiveConsumption {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 
     (IncomeFluctuation.OscOn.mono (stoneGeary.withRate r hrr)
       (stoneGeary.withRate r hrr).oscOn_valueFunction (stoneGeary_oscSpread_le hr hrr)) s.2 hs
 
-/-- **The supply floor at the top rate.** -/
+/-- **The supply floor at the top rate**, from one inequality among the rationals.
+`le_aggregateCapital_of_bounds` supplies the gain argument, the positivity and the uniform
+reach; what is left is a bound on each of the two powers and the comparison between them.
+
+Both powers are reciprocals here (`γ = 1`), so neither needs a root: the cost base
+`1/1000 + 1 - 1/100 = 991/1000` is below one, so the power is at most `1000/991`, and the gain
+base `1/1000 + 1/100 + (201/200)(1/100) = 421/20000` is under `1/47`. The test is then
+`0.0101 < 0.0148`. -/
 theorem stoneGeary_floor_top (hrhi : stoneGeary.RateOK (1 / 200 : ℝ))
     (μ : ProbabilityMeasure stoneGeary.State)
     (hμ : (stoneGeary.withRate (1 / 200) hrhi).IsStationary μ) :
-    1 / 400000 ≤ stoneGeary.aggregateCapital μ := by
-  have hkey := (stoneGeary.withRate (1 / 200) hrhi).hara_le_aggregateCapital_of_gain
-    (γ := 1) (η := 1 / 1000) (by norm_num) (by norm_num) rfl rfl
-    (stoneGeary_positiveConsumption (by norm_num) hrhi) hμ
-    (z₁ := 1) (z₀ := 0) (p₀ := 1 / 2) (h := 1 / 100000) (by norm_num) (by norm_num)
-    (by rw [show (stoneGeary.withRate (1 / 200) hrhi).income 1 = 1 from rfl]; norm_num)
-    (fun z => by rw [show (stoneGeary.withRate (1 / 200) hrhi).transitionMatrix z 1 = 1 / 2
-      from rfl]) ?_
-  · have heq : (stoneGeary.withRate (1 / 200) hrhi).aggregateCapital μ
-        = stoneGeary.aggregateCapital μ := rfl
-    rw [heq] at hkey
-    linarith [hkey]
-  · have hinc1 : (stoneGeary.withRate (1 / 200) hrhi).income 1 = 1 := rfl
-    have hinc0 : (stoneGeary.withRate (1 / 200) hrhi).income 0 = 1 / 100 := rfl
-    have hπ : (stoneGeary.withRate (1 / 200) hrhi).transitionMatrix 1 0 = 1 / 2 := rfl
-    have hβ : ((stoneGeary.withRate (1 / 200) hrhi).discount : ℝ) = 1 / 8 := rfl
-    have hint : (stoneGeary.withRate (1 / 200) hrhi).interest = 1 / 200 := rfl
-    rw [hinc1, hinc0, hπ, hβ, hint, Real.rpow_neg_one, Real.rpow_neg_one]
-    have hcost : ((1 : ℝ) / 1000 + 1 - 1 / 100000)⁻¹ ≤ 1 := by
-      rw [inv_le_one_iff₀]
-      right; norm_num
-    have hgain : (90 : ℝ) ≤ ((1 : ℝ) / 1000 + 1 / 100 + (1 + 1 / 200) * (1 / 100000))⁻¹ := by
-      rw [le_inv_comm₀ (by norm_num) (by norm_num)]
-      norm_num
-    nlinarith [hcost, hgain]
+    1 / 400 ≤ stoneGeary.aggregateCapital μ := by
+  refine stoneGeary_calibrated.le_aggregateCapital_of_bounds (z₁ := 1) (t := 1 / 100)
+    (U := 1000 / 991) (L := 47) (by norm_num) (by norm_num)
+    (by rw [stoneGeary_income_one]; norm_num) ?_ ?_ ?_ ?_ hrhi hμ
+  · rw [stoneGeary_income_one,
+      show (1 : ℝ) / 1000 + 1 - 1 / 100 = 991 / 1000 from by norm_num]
+    refine le_trans (rpow_neg_le_inv_of_le_one (by norm_num) (by norm_num) (by norm_num)) ?_
+    norm_num
+  · rw [stoneGeary_income_zero,
+      show (1 : ℝ) / 1000 + 1 / 100 + (1 + 1 / 200) * (1 / 100) = 421 / 20000 from by norm_num]
+    refine le_rpow_neg_of_rpow_le (by norm_num) (by norm_num) ?_
+    rw [Real.rpow_one]; norm_num
+  · rw [stoneGeary_discount, show stoneGeary.transitionMatrix 1 0 = 1 / 2 from rfl]
+    norm_num
+  · rw [show stoneGeary.transitionMatrix 0 1 = 1 / 2 from rfl]
+    norm_num
 
 /-- **An Aiyagari equilibrium exists** for this economy, and by
 `stoneGeary_equilibriumRate_unique` the rate is unique. -/
@@ -341,20 +339,20 @@ theorem stoneGeary_exists_equilibrium :
         (capitalDemand A δ) r :=
   stoneGeary.exists_equilibrium_of_uniqueness_and_floor (by norm_num) (by norm_num)
     (fun r hr hrr => stoneGeary_calibrated.existsUnique_stationary hr hrr)
-    (m := 1 / 400000) (by norm_num) (fun hrhi μ hμ => stoneGeary_floor_top hrhi μ hμ)
+    (m := 1 / 400) (by norm_num) (fun hrhi μ hμ => stoneGeary_floor_top hrhi μ hμ)
 
 /-- **The same equilibrium, with the technology fixed in advance.** As for `nearLog`, and with the
-same `(A, δ)`: the Stone--Geary floor `1/400000` is ten times the near-log one, so the band of
-admissible `A` is wider and the same technology sits inside it. -/
+same `(A, δ)`: the two economies now have the same proved floor `1/400`, so the same band of
+admissible `A` serves both. -/
 theorem stoneGeary_exists_equilibrium_of_technology :
     ∃ r ∈ Icc (0 : ℝ) (1 / 200),
       IsAiyagariEquilibrium
         (stoneGeary.rateFamily (by norm_num : (0:ℝ) < 1 + 0) (by norm_num : (0:ℝ) ≤ 1 / 200))
-        (capitalDemand (1 / 250000) (1 / 1000000)) r :=
+        (capitalDemand (1 / 4000) (1 / 10000)) r :=
   stoneGeary.exists_equilibrium_of_technology (by norm_num) (by norm_num)
     (fun r hr hrr => stoneGeary_calibrated.existsUnique_stationary hr hrr)
-    (m := 1 / 400000) (fun hrhi μ hμ => stoneGeary_floor_top hrhi μ hμ)
-    (1 / 250000) (1 / 1000000) (by norm_num)
+    (m := 1 / 400) (fun hrhi μ hμ => stoneGeary_floor_top hrhi μ hμ)
+    (1 / 4000) (1 / 10000) (by norm_num)
     (le_capitalDemand_of_sq (by norm_num) (by norm_num))
     (capitalDemand_le_of_sq (by norm_num) (by norm_num))
 
