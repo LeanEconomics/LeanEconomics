@@ -176,25 +176,18 @@ theorem stoneGeary_oscSpread_le {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
   rw [div_le_iff₀ (by norm_num)]
   linarith
 
-/-- **Positive consumption**, against every continuation the iteration produces. Marginal utility
-at zero is `1000`, and the discounted slope of the continuation is at most `175`. -/
-theorem stoneGeary_positive {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : stoneGeary.RateOK r)
-    (v : (ℝ × Fin 2) →ᵇ ℝ) (hv : ConcaveSlices (0 : ℝ) 1 v)
-    (hosc : (stoneGeary.withRate r hrr).OscOn v 7) (z : Fin 2) {a : ℝ}
-    (ha : a ∈ Icc (0 : ℝ) 1) : 0 < (stoneGeary.withRate r hrr).consumptionFnOf v z a := by
-  have hM : MarginalBoundOn (stoneGeary.withRate r hrr).dom (stoneGeary.withRate r hrr).u
-      (((1 : ℝ) / 1000 + 1 / 1000) ^ (-(1 : ℝ))) := by
-    rw [show (stoneGeary.withRate r hrr).dom = Ici 0 from stoneGeary_bounded,
-      show (stoneGeary.withRate r hrr).u = haraUtility 1 (1 / 1000) from rfl]
-    exact marginalBoundOn_haraUtility_pos (by norm_num) (by norm_num) (by norm_num)
-  refine (stoneGeary.withRate r hrr).consumptionFnOf_pos_of_marginal hM (by norm_num) hv hosc
-    ?_ z ha
-  have hβ : ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 := rfl
-  have hmin : (stoneGeary.withRate r hrr).minConsumption = 1 / 100 := stoneGeary_minConsumption
-  have hM500 : (((1 : ℝ) / 1000 + 1 / 1000) ^ (-(1 : ℝ))) = 500 := by
-    rw [show (1 : ℝ) / 1000 + 1 / 1000 = (1 : ℝ) / 500 by norm_num, Real.rpow_neg_one]
-    norm_num
-  rw [hM500, IncomeFluctuation.oscSlopeConst, hβ, hmin]
+/-- **Positive consumption**, against every continuation the iteration produces, from one
+inequality in the primitives: marginal utility at consumption `1/500` is `500`, and the
+discounted slope an oscillation of `7` can produce is `(1/8)(2·7/(1/100)) = 175`. -/
+theorem stoneGeary_positive :
+    ∀ r ∈ Icc (0 : ℝ) (1 / 200), ∀ hrr : stoneGeary.RateOK r, ∀ v : (ℝ × Fin 2) →ᵇ ℝ,
+      ConcaveSlices (0 : ℝ) 1 v → (stoneGeary.withRate r hrr).OscOn v 7 →
+      ∀ z : Fin 2, ∀ a ∈ Icc (0 : ℝ) 1,
+        0 < (stoneGeary.withRate r hrr).consumptionFnOf v z a := by
+  refine IncomeFluctuation.positive_of_primitives (γ := 1) (η := 1 / 1000) (δ := 1 / 1000)
+    (by norm_num) (by norm_num) (by norm_num) rfl stoneGeary_bounded (by norm_num) ?_
+  rw [stoneGeary_discount, show stoneGeary.minConsumption = 1 / 100 from stoneGeary_minConsumption,
+    show (1 : ℝ) / 1000 + 1 / 1000 = 1 / 500 from by norm_num, Real.rpow_neg_one]
   norm_num
 
 /-- **The cap is slack**, from one inequality in the primitives. `slack_of_primitives` supplies
@@ -207,7 +200,7 @@ theorem stoneGeary_slack :
       ∀ a ∈ Icc (0 : ℝ) 1, ∀ z : Fin 2, (stoneGeary.withRate r hrr).policyOf v (a, z) < 1 := by
   refine IncomeFluctuation.slack_of_primitives (γ := 1) (η := 1 / 1000) (θ := 999 / 1000)
     (by norm_num) (by norm_num) (by norm_num) (by norm_num) rfl (by norm_num) le_rfl
-    (fun r hr hrr v hv hosc z a ha => stoneGeary_positive hr hrr v hv hosc z ha) ?_
+    (fun r hr hrr v hv hosc z a ha => stoneGeary_positive r hr hrr v hv hosc z a ha) ?_
   have hinc : stoneGeary.maxIncome = 1 := rfl
   rw [stoneGeary_discount, hinc, Real.rpow_one]
   norm_num
@@ -256,7 +249,7 @@ theorem stoneGeary_calibrated :
   eta_nonneg := by norm_num
   utility := rfl
   discount_pos := by rw [stoneGeary_discount]; norm_num
-  positive := fun r hr hrr v hv hosc z a ha => stoneGeary_positive hr hrr v hv hosc z ha
+  positive := stoneGeary_positive
   rlo_nonneg := le_rfl
   rate_le := by norm_num
   income_min := fun z => by fin_cases z <;> norm_num [stoneGeary]
@@ -305,9 +298,9 @@ intermediate-value argument needs. -/
 theorem stoneGeary_positiveConsumption {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
     (hrr : stoneGeary.RateOK r) : (stoneGeary.withRate r hrr).PositiveConsumption := by
   intro s hs
-  exact stoneGeary_positive hr hrr _ (stoneGeary.withRate r hrr).concaveSlices_valueFunction
+  exact stoneGeary_positive r hr hrr _ (stoneGeary.withRate r hrr).concaveSlices_valueFunction
     (IncomeFluctuation.OscOn.mono (stoneGeary.withRate r hrr)
-      (stoneGeary.withRate r hrr).oscOn_valueFunction (stoneGeary_oscSpread_le hr hrr)) s.2 hs
+      (stoneGeary.withRate r hrr).oscOn_valueFunction (stoneGeary_oscSpread_le hr hrr)) s.2 _ hs
 
 /-- **The supply floor at the top rate**, from one inequality among the rationals.
 `le_aggregateCapital_of_bounds` supplies the gain argument, the positivity and the uniform

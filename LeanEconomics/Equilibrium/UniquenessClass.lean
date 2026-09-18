@@ -99,6 +99,40 @@ structure Calibrated (P : IncomeFluctuation Z 0 assetCap) (γ η G a₀ : ℝ) (
     (1 - (P.withRate r hrr).minMPC γ) * (η + P.income z₀)
       < (1 - (1 - (P.withRate r hrr).minMPC γ) * (1 + r)) * a₀
 
+/-! ### Building the positivity field from primitives
+
+The last of the four. Positivity of consumption against every continuation the iteration produces
+is what both the deviation argument (`slack`) and the Euler argument (`decline`) need in order to
+price anything at the margin, so it cannot be dropped — but it can be reduced.
+
+`consumptionFnOf_pos_of_marginal` already does the reduction: a marginal bound `M` on utility
+near zero against the discounted slope `β · 2G/minConsumption` that an oscillation of `G` can
+produce. For shifted CRRA the marginal bound has a closed form, `(η + δ)^(-γ)` for any `δ > 0`,
+so what is left is ONE inequality — and, unlike `slack` and `corner`, it does not mention the
+rate at all: `minConsumption` and `discount` are the rate-free part of the problem.
+
+CRRA keeps its own route, where the Inada condition makes positivity unconditional
+(`positiveConsumptionAll_of_marginalInada`); this is the `η > 0` counterpart, where marginal
+utility at zero is finite and the oscillation bound is what has to pay for it. -/
+
+theorem positive_of_primitives {P : IncomeFluctuation Z 0 assetCap} {γ η G δ : ℝ} {rlo rhi : ℝ}
+    (hγ0 : 0 < γ) (hη : 0 < η) (hδ : 0 < δ) (hu : P.u = haraUtility γ η) (hb : P.Bounded)
+    (hG : 0 ≤ G)
+    (hcond : (P.discount : ℝ) * (2 * G / P.minConsumption) < (η + δ) ^ (-γ)) :
+    ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ v : (ℝ × Z) →ᵇ ℝ,
+      ConcaveSlices (0 : ℝ) assetCap v → (P.withRate r hrr).OscOn v G →
+      ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap, 0 < (P.withRate r hrr).consumptionFnOf v z a := by
+  intro r _ hrr v hv hosc z a ha
+  have hM : MarginalBoundOn (P.withRate r hrr).dom (P.withRate r hrr).u ((η + δ) ^ (-γ)) := by
+    rw [show (P.withRate r hrr).dom = Ici 0 from hb,
+      show (P.withRate r hrr).u = haraUtility γ η from hu]
+    exact marginalBoundOn_haraUtility_pos hγ0 hη hδ
+  refine (P.withRate r hrr).consumptionFnOf_pos_of_marginal hM hG hv hosc ?_ z ha
+  rw [IncomeFluctuation.oscSlopeConst,
+    show ((P.withRate r hrr).discount : ℝ) = (P.discount : ℝ) from rfl,
+    show (P.withRate r hrr).minConsumption = P.minConsumption from rfl]
+  exact hcond
+
 /-! ### Building the slack field from primitives
 
 The `slack` field says the saving cap never binds against any continuation the iteration can
