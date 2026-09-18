@@ -30,7 +30,7 @@ artefact.
 * The corner condition: at the lowest income state the household saves nothing below `a₀`. The
   Doeblin argument needs the constraint to be REACHED, not approached, and that cannot come from
   impatience.
-* Income iid, the lowest income state reachable from everywhere.
+* The lowest income state reachable from everywhere — and nothing else about the process.
 
 ## What comes out
 
@@ -72,8 +72,10 @@ structure Calibrated (P : IncomeFluctuation Z 0 assetCap) (γ η G a₀ : ℝ) (
   /-- The rate interval sits above zero, so every rate in it is admissible. -/
   rlo_nonneg : 0 ≤ rlo
   rate_le : rlo ≤ rhi
-  /-- Income is iid, and `z₀` is its lowest state, reachable from everywhere. -/
-  iid : P.IidIncome
+  /-- `z₀` is the lowest income state, and it is reachable from everywhere. NOTHING ELSE is
+  assumed about the income process: the decline half of the exhaustion argument used to come from
+  Açıkgöz Proposition 4, which compares income states and so needed the process to be iid, and it
+  now comes from the minimal MPC, which compares nothing. -/
   income_min : ∀ z, P.income z₀ ≤ P.income z
   reach : ∀ z, 0 < P.transitionMatrix z z₀
   /-- Impatience on the whole interval. -/
@@ -90,6 +92,12 @@ structure Calibrated (P : IncomeFluctuation Z 0 assetCap) (γ η G a₀ : ℝ) (
   a₀_le : a₀ ≤ assetCap
   corner : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ a ∈ Icc (0 : ℝ) a₀,
     (P.withRate r hrr).policy (a, z₀) = 0
+  /-- **The decline threshold.** Above `a₀` the household runs its assets down, because it
+  consumes at least the share `κ = 1 - Þ/R` of cash on hand. Saving is then at most
+  `(1-κ)(η + m)`, so the test is one inequality among the primitives, rate by rate. -/
+  decline : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r,
+    (1 - (P.withRate r hrr).minMPC γ) * (η + P.income z₀)
+      < (1 - (1 - (P.withRate r hrr).minMPC γ) * (1 + r)) * a₀
 
 /-! ### Building the slack field from primitives
 
@@ -271,15 +279,21 @@ theorem policy_mono {r r' : ℝ} (hr : r ∈ Icc rlo rhi) (hr' : r' ∈ Icc rlo 
 theorem exhausts {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) :
     ∃ N : ℕ, ((P.withRate r hrr).gBad z₀)^[N] (P.withRate r hrr).topState
       = (P.withRate r hrr).botState := by
-  refine (P.withRate r hrr).hara_exists_exhaust_of_impatient h.gamma_pos h.eta_nonneg
-    h.utility ?_ h.iid
-    (fun z b hb => h.positive_valueFunction hr hrr z hb)
-    (fun z b hb => h.policy_lt_maxSaving hr hrr z hb) h.income_min h.a₀_pos h.a₀_le
-    (fun b hb => h.corner r hr hrr b hb)
-  · have := h.impatient r hr
+  have hβR : ((P.withRate r hrr).discount : ℝ) * (1 + (P.withRate r hrr).interest) < 1 := by
+    have := h.impatient r hr
     rw [show ((P.withRate r hrr).discount : ℝ) = (P.discount : ℝ) from rfl,
       show (P.withRate r hrr).interest = r from rfl]
     exact this
+  refine (P.withRate r hrr).hara_exists_exhaust_of_minMPC h.gamma_pos h.eta_nonneg h.utility rfl
+    (show (0 : ℝ) ≤ (P.withRate r hrr).interest by
+      simpa using le_trans h.rlo_nonneg hr.1)
+    (by simpa using h.discount_pos) hβR
+    (fun n z' b hb => h.positive_iterate hr hrr hr hrr n hb z')
+    (fun n b hb z' => h.policyOf_iterate_lt_cap hr hrr hr hrr n hb z')
+    h.a₀_pos h.a₀_le (fun b hb => h.corner r hr hrr b hb) ?_
+  · have := h.decline r hr hrr
+    rwa [show (P.withRate r hrr).income z₀ = P.income z₀ from rfl,
+      show (P.withRate r hrr).interest = r from rfl]
 
 
 /-- **Carroll and Kimball at the fixed point**, at every rate in the interval. -/
@@ -356,9 +370,9 @@ marginal utility there is so much larger than the cost today that it must save. 
 household in that state holds at least `t/2`, and the state has probability at least
 `transitionMatrix z₀ z₁`.
 
-Two things drop out of the class rather than being hypotheses. Positivity of consumption comes
-from the `positive` field, and the uniform reach `∀ z, p₀ ≤ transitionMatrix z z₁` comes from
-`iid` — with iid income the probability of landing in `z₁` does not depend on where you are.
+Positivity of consumption drops out of the class rather than being a hypothesis, from the
+`positive` field. The uniform reach `∀ z, p₀ ≤ transitionMatrix z z₁` is asked for: with iid
+income it is immediate, but the class no longer assumes that.
 The target state is the class's OWN `z₀`, which is not a coincidence: `income_min` makes it the
 lowest income state, which is exactly where tomorrow's marginal utility is largest.
 
@@ -371,16 +385,16 @@ theorem le_aggregateCapital_of_gain {z₁ : Z} {t : ℝ} (ht0 : 0 < t) (htcap : 
     (hgain : (η + P.income z₁ - t) ^ (-γ) * t
       < (P.discount : ℝ) * (P.transitionMatrix z₁ z₀
           * ((η + P.income z₀ + (1 + rhi) * t) ^ (-γ) * ((1 + rhi) * (t / 2)))))
-    {m : ℝ} (hm : m ≤ t / 2 * P.transitionMatrix z₀ z₁)
+    {p₀ : ℝ} (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
+    {m : ℝ} (hm : m ≤ t / 2 * p₀)
     (hrr : P.RateOK rhi) {μ : ProbabilityMeasure P.State}
     (hμ : (P.withRate rhi hrr).IsStationary μ) : m ≤ P.aggregateCapital μ := by
   have hhi : rhi ∈ Icc rlo rhi := ⟨h.rate_le, le_rfl⟩
   have hkey := (P.withRate rhi hrr).hara_le_aggregateCapital_of_gain h.gamma_pos h.eta_nonneg
     (show (P.withRate rhi hrr).u = haraUtility γ η from h.utility) rfl
     (fun s hs => h.positive_valueFunction hhi hrr s.2 hs) hμ
-    (z₁ := z₁) (z₀ := z₀) (p₀ := P.transitionMatrix z₀ z₁) (h := t) ht0 htcap
-    (show t < (P.withRate rhi hrr).income z₁ from htinc)
-    (fun z => le_of_eq (h.iid z₀ z z₁)) hgain
+    (z₁ := z₁) (z₀ := z₀) (p₀ := p₀) (h := t) ht0 htcap
+    (show t < (P.withRate rhi hrr).income z₁ from htinc) hp hgain
   have heq : (P.withRate rhi hrr).aggregateCapital μ = P.aggregateCapital μ := rfl
   rw [heq] at hkey
   linarith
@@ -395,16 +409,16 @@ theorem le_aggregateCapital_of_bounds {z₁ : Z} {t U L : ℝ} (ht0 : 0 < t) (ht
     (hL : L ≤ (η + P.income z₀ + (1 + rhi) * t) ^ (-γ))
     (hcond : U * t
       < (P.discount : ℝ) * (P.transitionMatrix z₁ z₀ * (L * ((1 + rhi) * (t / 2)))))
-    {m : ℝ} (hm : m ≤ t / 2 * P.transitionMatrix z₀ z₁)
+    {p₀ : ℝ} (hp : ∀ z, p₀ ≤ P.transitionMatrix z z₁)
+    {m : ℝ} (hm : m ≤ t / 2 * p₀)
     (hrr : P.RateOK rhi) {μ : ProbabilityMeasure P.State}
     (hμ : (P.withRate rhi hrr).IsStationary μ) : m ≤ P.aggregateCapital μ := by
   have hhi : rhi ∈ Icc rlo rhi := ⟨h.rate_le, le_rfl⟩
   have hkey := (P.withRate rhi hrr).hara_le_aggregateCapital_of_bounds h.gamma_pos h.eta_nonneg
     (show (P.withRate rhi hrr).u = haraUtility γ η from h.utility) rfl
     (fun s hs => h.positive_valueFunction hhi hrr s.2 hs) hμ
-    (z₁ := z₁) (z₀ := z₀) (p₀ := P.transitionMatrix z₀ z₁) (t := t) (U := U) (L := L)
-    ht0 htcap (show t < (P.withRate rhi hrr).income z₁ from htinc)
-    (fun z => le_of_eq (h.iid z₀ z z₁)) hU hL hcond
+    (z₁ := z₁) (z₀ := z₀) (p₀ := p₀) (t := t) (U := U) (L := L)
+    ht0 htcap (show t < (P.withRate rhi hrr).income z₁ from htinc) hp hU hL hcond
   have heq : (P.withRate rhi hrr).aggregateCapital μ = P.aggregateCapital μ := rfl
   rw [heq] at hkey
   linarith
@@ -456,7 +470,6 @@ theorem nearLog_calibrated :
     nearLog_withRate_positiveConsumptionAll hrr v hv z a ha
   rlo_nonneg := le_rfl
   rate_le := by norm_num
-  iid := fun _ _ _ => rfl
   income_min := fun z => by fin_cases z <;> norm_num
   reach := fun z => by rw [nearLog_transitionMatrix]; norm_num
   impatient := fun r hr => by rw [nearLog_discount]; linarith [hr.2]
@@ -468,6 +481,15 @@ theorem nearLog_calibrated :
   a₀_pos := by norm_num
   a₀_le := by norm_num
   corner := fun r hr hrr a ha => nearLog_corner_uniform hr hrr ha
+  decline := fun r hr hrr => by
+    have hone := nearLog_one_sub_minMPC_le hr hrr
+    have hzero : (0 : ℝ) ≤ 1 - (nearLog.withRate r hrr).minMPC (15 / 16) := by
+      have := IncomeFluctuation.minMPC_le_one (P := nearLog.withRate r hrr) (γ := 15 / 16)
+        (by norm_num)
+        (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
+      linarith
+    rw [nearLog_income_zero]
+    nlinarith [hone, hzero, hr.1, hr.2]
 
 /-- **The nearLog uniqueness theorem, as an instance of the class.** `CESUniqueness` proves the
 same thing directly; this says the direct proof used nothing specific to the calibration. -/

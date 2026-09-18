@@ -33,28 +33,6 @@ namespace LeanEconomics
 
 open IncomeFluctuation
 
-/-- **`1 - κ ≤ 111/1000` for `nearLog`**, uniformly over `[0, 1/200]`. The patience factor is
-`(β(1+r))^(16/15)`, and dividing by `1+r` leaves `β^(16/15)(1+r)^(1/15)`, which is largest at the
-top of the interval. -/
-theorem nearLog_one_sub_minMPC_le {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
-    (hrr : nearLog.RateOK r) :
-    1 - (nearLog.withRate r hrr).minMPC (15 / 16) ≤ 111 / 1000 := by
-  have hR1 : (1 : ℝ) ≤ 1 + r := by linarith [hr.1]
-  have hβ : ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 := rfl
-  have hint : (nearLog.withRate r hrr).interest = r := rfl
-  have hexp : (1 : ℝ) / (15 / 16) = 16 / 15 := by norm_num
-  simp only [IncomeFluctuation.minMPC, hβ, hint, sub_sub_cancel, hexp]
-  have hbase : (0 : ℝ) ≤ 1 / 8 * (1 + r) := by positivity
-  have hle : (1 : ℝ) / 8 * (1 + r) ≤ 201 / 1600 := by linarith [hr.2]
-  have hmono : ((1 : ℝ) / 8 * (1 + r)) ^ (16 / 15 : ℝ) ≤ (201 / 1600 : ℝ) ^ (16 / 15 : ℝ) :=
-    Real.rpow_le_rpow hbase hle (by norm_num)
-  have hnum : (201 / 1600 : ℝ) ^ (16 / 15 : ℝ) ≤ 111 / 1000 :=
-    rpow_le_of_pow_le (m := 16) (n := 15) (by norm_num) (by norm_num) (by norm_num)
-      (by norm_num) (by norm_num)
-  have hpos : (0 : ℝ) ≤ ((1 : ℝ) / 8 * (1 + r)) ^ (16 / 15 : ℝ) := Real.rpow_nonneg hbase _
-  rw [div_le_iff₀ (by linarith)]
-  nlinarith [hmono, hnum, hpos, hR1]
-
 /-- **The minimal-MPC bound for `nearLog`.** -/
 theorem nearLog_minMPC_mul_le_consumptionFn {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
     (hrr : nearLog.RateOK r) (z : Fin 2) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) :

@@ -219,6 +219,29 @@ theorem nearLogBeta_corner_uniform {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)
     show ((((nearLogBeta β hβ).withRate (1 / 200) hrhi).discount : ℝ)) = (β : ℝ) from rfl]
   nlinarith [hlip, hge, hlippos]
 
+/-- **`1 - κ ≤ 111/1000` for the whole family**, as for `nearLog`: the patience factor is
+increasing in `β`, so the bound at `β = 1/8` serves every member. -/
+theorem nearLogBeta_one_sub_minMPC_le {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : (nearLogBeta β hβ).RateOK r) :
+    1 - ((nearLogBeta β hβ).withRate r hrr).minMPC (15 / 16) ≤ 111 / 1000 := by
+  have hβr : (β : ℝ) ≤ 1 / 8 := nearLogBeta_discount_le hβ
+  have hβ0 : (0 : ℝ) ≤ (β : ℝ) := β.coe_nonneg
+  have hR1 : (1 : ℝ) ≤ 1 + r := by linarith [hr.1]
+  have hd : (((nearLogBeta β hβ).withRate r hrr).discount : ℝ) = (β : ℝ) := rfl
+  have hint : ((nearLogBeta β hβ).withRate r hrr).interest = r := rfl
+  have hexp : (1 : ℝ) / (15 / 16) = 16 / 15 := by norm_num
+  simp only [IncomeFluctuation.minMPC, hd, hint, sub_sub_cancel, hexp]
+  have hbase : (0 : ℝ) ≤ (β : ℝ) * (1 + r) := by positivity
+  have hle : (β : ℝ) * (1 + r) ≤ 201 / 1600 := by nlinarith [hr.2]
+  have hmono : ((β : ℝ) * (1 + r)) ^ (16 / 15 : ℝ) ≤ (201 / 1600 : ℝ) ^ (16 / 15 : ℝ) :=
+    Real.rpow_le_rpow hbase hle (by norm_num)
+  have hnum : (201 / 1600 : ℝ) ^ (16 / 15 : ℝ) ≤ 111 / 1000 :=
+    rpow_le_of_pow_le (m := 16) (n := 15) (by norm_num) (by norm_num) (by norm_num)
+      (by norm_num) (by norm_num)
+  have hpos : (0 : ℝ) ≤ ((β : ℝ) * (1 + r)) ^ (16 / 15 : ℝ) := Real.rpow_nonneg hbase _
+  rw [div_le_iff₀ (by linarith)]
+  nlinarith [hmono, hnum, hpos, hR1]
+
 /-- **The whole family is calibrated**, at every `0 < β ≤ 1/8`. -/
 theorem nearLogBeta_calibrated (hβpos : 0 < β) :
     (nearLogBeta β hβ).Calibrated (15 / 16) 0 (27 / 5) (1 / 50) 0 0 (1 / 200) where
@@ -231,7 +254,6 @@ theorem nearLogBeta_calibrated (hβpos : 0 < β) :
     nearLogBeta_withRate_positiveConsumptionAll hrr v hv z a ha
   rlo_nonneg := le_rfl
   rate_le := by norm_num
-  iid := fun _ _ _ => rfl
   income_min := fun z => by fin_cases z <;> norm_num [nearLogBeta]
   reach := fun z => by rw [nearLogBeta_transitionMatrix]; norm_num
   impatient := fun r hr => by
@@ -244,6 +266,15 @@ theorem nearLogBeta_calibrated (hβpos : 0 < β) :
   a₀_pos := by norm_num
   a₀_le := by norm_num
   corner := fun r hr hrr a ha => nearLogBeta_corner_uniform hr hrr ha
+  decline := fun r hr hrr => by
+    have hone := nearLogBeta_one_sub_minMPC_le (hβ := hβ) hr hrr
+    have hle1 : ((nearLogBeta β hβ).withRate r hrr).minMPC (15 / 16) ≤ 1 :=
+      IncomeFluctuation.minMPC_le_one (γ := 15 / 16) (by norm_num)
+        (by
+          rw [show (((nearLogBeta β hβ).withRate r hrr).discount : ℝ) = (β : ℝ) from rfl]
+          exact_mod_cast hβpos)
+    rw [show (nearLogBeta β hβ).income 0 = 1 / 100 from rfl]
+    nlinarith [hone, hle1, hr.1, hr.2]
 
 /-! ### The comparative static
 
@@ -304,7 +335,8 @@ theorem nearLogBeta_equilibriumRate_le {β₁ β₂ : ℝ≥0} {h₁ : β₁ ≤
     (he₁ : (nearLogBeta β₁ h₁).aggregateCapital
         ((nearLogBeta_calibrated (hβ := h₁) hp₁).stationary r₁) = capitalDemand A δ r₁)
     (he₂ : (nearLogBeta β₁ h₁).aggregateCapital
-        ((nearLogBeta_calibrated (hβ := h₂) hp₂).stationary r₂) = capitalDemand A δ r₂) : r₂ ≤ r₁ := by
+        ((nearLogBeta_calibrated (hβ := h₂) hp₂).stationary r₂) = capitalDemand A δ r₂) :
+    r₂ ≤ r₁ := by
   have c₁ := nearLogBeta_calibrated (hβ := h₁) hp₁
   have c₂ := nearLogBeta_calibrated (hβ := h₂) hp₂
   refine IncomeFluctuation.equilibriumRate_le_of_policy_le (P := nearLogBeta β₁ h₁)

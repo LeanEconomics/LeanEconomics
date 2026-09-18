@@ -259,7 +259,6 @@ theorem stoneGeary_calibrated :
   positive := fun r hr hrr v hv hosc z a ha => stoneGeary_positive hr hrr v hv hosc z ha
   rlo_nonneg := le_rfl
   rate_le := by norm_num
-  iid := fun _ _ _ => rfl
   income_min := fun z => by fin_cases z <;> norm_num [stoneGeary]
   reach := fun z => by
     rw [show stoneGeary.transitionMatrix z 0 = 1 / 2 from rfl]
@@ -271,6 +270,14 @@ theorem stoneGeary_calibrated :
   a₀_pos := by norm_num
   a₀_le := by norm_num
   corner := fun r hr hrr a ha => stoneGeary_corner r hr hrr a ha
+  decline := fun r hr hrr => by
+    -- at `γ = 1` the patience factor is `β` itself, so `1 - κ = 1/8` exactly
+    have hone : (1 : ℝ) - (stoneGeary.withRate r hrr).minMPC 1 = 1 / 8 := by
+      rw [IncomeFluctuation.minMPC_one,
+        show ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]
+      ring
+    rw [stoneGeary_income_zero, hone]
+    nlinarith [hr.1, hr.2]
 
 /-- **Carroll and Kimball for this economy**, at every rate in the interval. -/
 theorem stoneGeary_concaveOn_consumptionFn {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
@@ -316,7 +323,9 @@ theorem stoneGeary_floor_top (hrhi : stoneGeary.RateOK (1 / 200 : ℝ))
     1 / 400 ≤ stoneGeary.aggregateCapital μ := by
   refine stoneGeary_calibrated.le_aggregateCapital_of_bounds (z₁ := 1) (t := 1 / 100)
     (U := 1000 / 991) (L := 47) (by norm_num) (by norm_num)
-    (by rw [stoneGeary_income_one]; norm_num) ?_ ?_ ?_ ?_ hrhi hμ
+    (by rw [stoneGeary_income_one]; norm_num) ?_ ?_ ?_
+    (p₀ := 1 / 2) (fun z => by rw [show stoneGeary.transitionMatrix z 1 = 1 / 2 from rfl]) ?_
+    hrhi hμ
   · rw [stoneGeary_income_one,
       show (1 : ℝ) / 1000 + 1 - 1 / 100 = 991 / 1000 from by norm_num]
     refine le_trans (rpow_neg_le_inv_of_le_one (by norm_num) (by norm_num) (by norm_num)) ?_
@@ -327,8 +336,7 @@ theorem stoneGeary_floor_top (hrhi : stoneGeary.RateOK (1 / 200 : ℝ))
     rw [Real.rpow_one]; norm_num
   · rw [stoneGeary_discount, show stoneGeary.transitionMatrix 1 0 = 1 / 2 from rfl]
     norm_num
-  · rw [show stoneGeary.transitionMatrix 0 1 = 1 / 2 from rfl]
-    norm_num
+  · norm_num
 
 /-- **An Aiyagari equilibrium exists** for this economy, and by
 `stoneGeary_equilibriumRate_unique` the rate is unique. -/
@@ -353,6 +361,59 @@ theorem stoneGeary_exists_equilibrium_of_technology :
     (fun r hr hrr => stoneGeary_calibrated.existsUnique_stationary hr hrr)
     (m := 1 / 400) (fun hrhi μ hμ => stoneGeary_floor_top hrhi μ hμ)
     (1 / 4000) (1 / 10000) (by norm_num)
+    (le_capitalDemand_of_sq (by norm_num) (by norm_num))
+    (capitalDemand_le_of_sq (by norm_num) (by norm_num))
+
+/-! ### The ceiling, and a technology to match
+
+At `γ = 1` the patience factor is `β` itself, so `κ = 7/8` with no root to take. The subsistence
+level costs `(1-κ)η/minIncome = 1/80` of it, leaving a share `69/80` the household always
+consumes — and hence a ceiling of `4/25` on capital supply, against an asset cap of `1`. -/
+
+theorem stoneGeary_minMPCShare : ∀ {r : ℝ}, ∀ hrr : stoneGeary.RateOK r,
+    (stoneGeary.withRate r hrr).minMPCShare 1 (1 / 1000) = 69 / 80 := by
+  intro r hrr
+  have hone : (stoneGeary.withRate r hrr).minMPC 1 = 7 / 8 := by
+    rw [IncomeFluctuation.minMPC_one,
+      show ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]
+    norm_num
+  simp only [IncomeFluctuation.minMPCShare, hone,
+    show (stoneGeary.withRate r hrr).minIncome = 1 / 100 from rfl]
+  norm_num
+
+/-- **Capital supply at `stoneGeary` never exceeds `4/25`.** -/
+theorem stoneGeary_aggregateCapital_le {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : stoneGeary.RateOK r) {μ : ProbabilityMeasure stoneGeary.State}
+    (hμ : (stoneGeary.withRate r hrr).IsStationary μ) :
+    stoneGeary.aggregateCapital μ ≤ 4 / 25 := by
+  have hshare := stoneGeary_minMPCShare hrr
+  have hint : (stoneGeary.withRate r hrr).interest = r := rfl
+  have hkey := (stoneGeary.withRate r hrr).hara_aggregateCapital_le_of_minMPC
+    (γ := 1) (η := 1 / 1000) (by norm_num) (by norm_num) rfl hr.1
+    (by rw [show ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
+    (by
+      rw [show ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 from rfl, hint]
+      linarith [hr.2])
+    (by rw [hshare, hint]; nlinarith [hr.1, hr.2])
+    (fun n z' b hb => stoneGeary_calibrated.positive_iterate hr hrr hr hrr n hb z')
+    (fun n b hb z' => stoneGeary_calibrated.policyOf_iterate_lt_cap hr hrr hr hrr n hb z') hμ
+  have heq : (stoneGeary.withRate r hrr).aggregateCapital μ = stoneGeary.aggregateCapital μ := rfl
+  rw [heq, hshare, hint, show (stoneGeary.withRate r hrr).maxIncome = 1 from rfl] at hkey
+  have hden : (0 : ℝ) < 1 - (1 - 69 / 80) * (1 + r) := by nlinarith [hr.1, hr.2]
+  rw [le_div_iff₀ hden] at hkey
+  nlinarith [hkey, hr.1, hr.2]
+
+/-- **An equilibrium for `stoneGeary` at the same technology `nearLog` now admits.** -/
+theorem stoneGeary_exists_equilibrium_of_technology' :
+    ∃ r ∈ Icc (0 : ℝ) (1 / 200),
+      IsAiyagariEquilibrium
+        (stoneGeary.rateFamily (by norm_num : (0:ℝ) < 1 + 0) (by norm_num : (0:ℝ) ≤ 1 / 200))
+        (capitalDemand (1 / 2000) (1 / 2000)) r :=
+  stoneGeary.exists_equilibrium_of_ceiling_and_floor (by norm_num) (by norm_num)
+    (fun r hr hrr => stoneGeary_calibrated.existsUnique_stationary hr hrr)
+    (M := 4 / 25) (fun hrlo' μ hμ => stoneGeary_aggregateCapital_le (by norm_num) hrlo' hμ)
+    (m := 1 / 400) (fun hrhi μ hμ => stoneGeary_floor_top hrhi μ hμ)
+    (1 / 2000) (1 / 2000) (by norm_num)
     (le_capitalDemand_of_sq (by norm_num) (by norm_num))
     (capitalDemand_le_of_sq (by norm_num) (by norm_num))
 
