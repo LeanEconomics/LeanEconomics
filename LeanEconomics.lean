@@ -99,6 +99,7 @@ import LeanEconomics.Equilibrium.Localisation
 import LeanEconomics.Equilibrium.ElasticityReduction
 import LeanEconomics.Equilibrium.InvariantRegion
 import LeanEconomics.Equilibrium.DebtorRate
+import LeanEconomics.Equilibrium.Huggett
 import LeanEconomics.Models.AiyagariWitness
 import LeanEconomics.Models.AiyagariTauchenWitness
 import LeanEconomics.Models.MonotoneTransitions
