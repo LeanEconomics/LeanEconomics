@@ -341,6 +341,59 @@ theorem log_equilibriumRate_unique_of_cap {rhi α δ : ℝ} (hα0 : 0 < α) (hα
   exact P.log_equilibriumRate_unique hα0 hα1 hδ hu hunb hβ hrhi hβR hε hcapε hmono hz₀ hreach ha₀
     hle hcorn h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
 
+/-! ### Negative rates
+
+The uniqueness theorems live on `[0, rhi]`. Below zero the minimal-MPC ceiling on capital
+supply, `β · maxIncome / (1 - β(1+r))`, still holds for log utility — `κ = 1 - β` at every
+rate — while Cobb--Douglas demand blows up as `r ↓ -δ`. Where the ceiling is below demand there
+is no equilibrium. -/
+
+/-- **The log capital ceiling at any admissible rate** with `β(1+r) < 1`: no sign restriction on
+`r`, because `κ = 1 - β` (`minMPC_one`). -/
+theorem log_aggregateCapital_le {r : ℝ} (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
+    (hβ : 0 < (P.discount : ℝ)) (hβ1 : (P.discount : ℝ) < 1) (hrr : P.RateOK r)
+    (hβR : (P.discount : ℝ) * (1 + r) < 1)
+    (hthr : (P.discount : ℝ) * (P.maxIncome + (1 + r) * assetCap) < assetCap)
+    {μ : ProbabilityMeasure P.State} (hμ : (P.withRate r hrr).IsStationary μ) :
+    P.aggregateCapital μ
+      ≤ (P.discount : ℝ) * P.maxIncome / (1 - (P.discount : ℝ) * (1 + r)) := by
+  have hκ : 1 - (P.withRate r hrr).minMPC 1 = (P.discount : ℝ) := by
+    rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; ring
+  have hκpos : 0 < (P.withRate r hrr).minMPC 1 := by
+    rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; linarith
+  have hβR' : ((P.withRate r hrr).discount : ℝ) * (1 + (P.withRate r hrr).interest) < 1 := hβR
+  have hthr' : (1 - (P.withRate r hrr).minMPC 1)
+      * ((P.withRate r hrr).maxIncome + (1 + (P.withRate r hrr).interest) * assetCap)
+      < assetCap := by
+    rw [hκ]; exact hthr
+  have hpc : (P.withRate r hrr).PositiveConsumptionAll :=
+    (P.withRate r hrr).positiveConsumptionAll_of_unbounded hunb
+  have hposIt : ∀ n : ℕ, ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap,
+      0 < (P.withRate r hrr).consumptionFnOf
+        (((P.withRate r hrr).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a :=
+    fun n z a ha => hpc _ ((P.withRate r hrr).concaveSlices_iterate_zero n) z a ha
+  have hslackIt : ∀ n : ℕ, ∀ x ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
+      (P.withRate r hrr).policyOf
+        (((P.withRate r hrr).toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (x, z) < assetCap :=
+    fun n x hx z => ((P.withRate r hrr).crra_minMPC_of_cap one_pos hu rfl hκpos hβ hβR'
+      hposIt hthr' n).2 x hx z
+  have hkey := (P.withRate r hrr).crra_aggregateCapital_le_of_minMPC one_pos hu hκpos hβ hβR'
+    hposIt hslackIt hμ
+  rw [hκ] at hkey
+  exact hkey
+
+/-- **No equilibrium where the ceiling is below demand.** -/
+theorem log_no_equilibrium_of_ceiling {α δ r : ℝ} (hu : P.u = crraUtility 1)
+    (hunb : P.Unbounded) (hβ : 0 < (P.discount : ℝ)) (hβ1 : (P.discount : ℝ) < 1)
+    (hrr : P.RateOK r) (hβR : (P.discount : ℝ) * (1 + r) < 1)
+    (hthr : (P.discount : ℝ) * (P.maxIncome + (1 + r) * assetCap) < assetCap)
+    (hD : (P.discount : ℝ) * P.maxIncome / (1 - (P.discount : ℝ) * (1 + r))
+      < normalisedDemand α δ r)
+    {μ : ProbabilityMeasure P.State} (hμ : (P.withRate r hrr).IsStationary μ) :
+    P.aggregateCapital μ ≠ normalisedDemand α δ r := fun h => by
+  have := P.log_aggregateCapital_le hu hunb hβ hβ1 hrr hβR hthr hμ
+  linarith
+
 /-! ### Aiyagari (1994), `μ = 1`
 
 `β = 0.96`, `α = 0.36`, `δ = 0.08`, log utility, no borrowing, and an iid labour endowment
@@ -367,6 +420,46 @@ theorem aiyagari1994_log_equilibriumRate_unique {rhi : ℝ}
   P.log_equilibriumRate_unique_of_cap (by norm_num) (by norm_num) (by norm_num) hu hunb
     (by rw [hβ]; norm_num) hrhi (by rw [hβ]; linarith) (by rw [hβ]; exact hcap) hmono hz₀ hmin
     hreach h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
+
+/-- **Aiyagari (1994) at `μ = 1`: no equilibrium at a negative rate where the ceiling is below
+demand.** The condition is the ceiling–demand inequality written out with his numbers: it is
+polynomial in `r` and `maxIncome`, so it can be checked for any earnings grid. -/
+theorem aiyagari1994_log_no_equilibrium_of_ceiling {r : ℝ}
+    (hu : P.u = crraUtility 1) (hunb : P.Unbounded) (hβ : (P.discount : ℝ) = 24 / 25)
+    (hcap : 24 * P.maxIncome < assetCap) (hlo : -2 / 25 < r) (hr0 : r ≤ 0) (hrr : P.RateOK r)
+    (hD : 24 / 25 * P.maxIncome * (r + 2 / 25) < 9 / 16 * (1 - 24 / 25 * (1 + r)))
+    {μ : ProbabilityMeasure P.State} (hμ : (P.withRate r hrr).IsStationary μ) :
+    P.aggregateCapital μ ≠ normalisedDemand (9 / 25) (2 / 25) r := by
+  have hcap0 : (0 : ℝ) ≤ assetCap := P.assetCap_nonneg
+  have hmax : 0 < P.maxIncome := lt_of_lt_of_le P.minIncome_pos P.minIncome_le_maxIncome
+  refine P.log_no_equilibrium_of_ceiling hu hunb (by rw [hβ]; norm_num) (by rw [hβ]; norm_num)
+    hrr (by rw [hβ]; linarith) ?_ ?_ hμ
+  · rw [hβ]
+    have := mul_nonneg (neg_nonneg.mpr hr0) hcap0
+    nlinarith
+  · rw [hβ]
+    simp only [normalisedDemand]
+    have h1 : (0 : ℝ) < 1 - 24 / 25 * (1 + r) := by linarith
+    have h2 : (0 : ℝ) < (1 - 9 / 25) * (r + 2 / 25) := by nlinarith
+    rw [div_lt_div_iff₀ h1 h2]
+    nlinarith [hD]
+
+/-- **Aiyagari (1994) at `μ = 1`: no equilibrium on `(-δ, -1/20]`** whenever the highest
+endowment is at most `3/2` (in wage units, as his mean-one normalisation has it). The bound is
+not sharp — the ceiling–demand crossing sits near `-4.7%` — and the band `(-4.7%, 0)` stays
+open: there the minimal-MPC ceiling `β · maxIncome/(1 - β(1+r))` exceeds Cobb--Douglas demand,
+and excluding it needs a bound on capital supply that the household side does not yet give. -/
+theorem aiyagari1994_log_no_equilibrium_below {r : ℝ}
+    (hu : P.u = crraUtility 1) (hunb : P.Unbounded) (hβ : (P.discount : ℝ) = 24 / 25)
+    (hcap : 24 * P.maxIncome < assetCap) (hmax : P.maxIncome ≤ 3 / 2)
+    (hr : r ∈ Ioc (-2 / 25 : ℝ) (-1 / 20)) (hrr : P.RateOK r)
+    {μ : ProbabilityMeasure P.State} (hμ : (P.withRate r hrr).IsStationary μ) :
+    P.aggregateCapital μ ≠ normalisedDemand (9 / 25) (2 / 25) r := by
+  refine P.aiyagari1994_log_no_equilibrium_of_ceiling hu hunb hβ hcap hr.1 (by linarith [hr.2])
+    hrr ?_ hμ
+  have hx : (0 : ℝ) ≤ r + 2 / 25 := by linarith [hr.1]
+  have := mul_le_mul_of_nonneg_right hmax hx
+  nlinarith [hr.2]
 
 end Measure
 
