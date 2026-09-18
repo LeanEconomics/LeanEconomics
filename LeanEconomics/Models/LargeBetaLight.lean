@@ -70,16 +70,23 @@ theorem monotoneOn_of_local {f : ℝ → ℝ} {lo hi ε : ℝ} (hε : 0 < ε)
 namespace IncomeFluctuation
 
 variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
-variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
+
+section AnyFloor
+
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
 
 /-- Every iterate from `0` has concave slices. -/
 theorem concaveSlices_iterate_zero (n : ℕ) :
-    ConcaveSlices (0 : ℝ) assetCap ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
+    ConcaveSlices assetFloor assetCap ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) := by
   induction n with
   | zero => exact concaveSlices_zero
   | succ k ih =>
     rw [Function.iterate_succ_apply']
     exact P.concaveSlices_bellman ih
+
+end AnyFloor
+
+variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
 
 /-! ### The hybrid cap slack -/
 

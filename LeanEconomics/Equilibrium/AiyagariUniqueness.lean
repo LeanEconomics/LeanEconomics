@@ -161,8 +161,8 @@ theorem log_existsUnique_isStationary {rhi a₀ : ℝ} (hu : P.u = crraUtility 1
   have hcap0 : (0 : ℝ) ≤ assetCap := P.assetCap_nonneg
   have hκ : 1 - (P.withRate r hrr).minMPC 1 = (P.discount : ℝ) := by
     rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; ring
-  refine (P.withRate r hrr).crra_existsUnique_isStationary_of_euler_corner_monotone (γ := 1) one_pos hu
-    hr.1 hβ (by simpa using (show (P.discount : ℝ) * (1 + r) < 1 by nlinarith [hr.2, hβ]))
+  refine (P.withRate r hrr).crra_existsUnique_isStationary_of_euler_corner_monotone (γ := 1)
+    one_pos hu rfl hr.1 hβ (by simpa using (show (P.discount : ℝ) * (1 + r) < 1 by nlinarith [hr.2, hβ]))
     (P.monotoneTransitions_withRate hmono hrr)
     ((P.withRate r hrr).positiveConsumptionAll_of_unbounded hunb) ?_ hz₀ hreach ha₀ hle
     (P.log_corner_of_top hβ ha₀ hcorn hr hrr)
@@ -186,8 +186,8 @@ theorem log_tendsto_pushProb {rhi a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb :
   have hcap0 : (0 : ℝ) ≤ assetCap := P.assetCap_nonneg
   have hκ : 1 - (P.withRate r hrr).minMPC 1 = (P.discount : ℝ) := by
     rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; ring
-  refine (P.withRate r hrr).crra_tendsto_pushProb_of_euler_corner_monotone (γ := 1) one_pos hu
-    hr.1 hβ (by simpa using (show (P.discount : ℝ) * (1 + r) < 1 by nlinarith [hr.2, hβ]))
+  refine (P.withRate r hrr).crra_tendsto_pushProb_of_euler_corner_monotone (γ := 1)
+    one_pos hu rfl hr.1 hβ (by simpa using (show (P.discount : ℝ) * (1 + r) < 1 by nlinarith [hr.2, hβ]))
     (P.monotoneTransitions_withRate hmono hrr)
     ((P.withRate r hrr).positiveConsumptionAll_of_unbounded hunb) ?_ hz₀ hreach ha₀ hle
     (P.log_corner_of_top hβ ha₀ hcorn hr hrr) μ₀ hμ
