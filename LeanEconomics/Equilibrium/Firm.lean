@@ -97,6 +97,30 @@ theorem exists_capitalDemand_ge (δ : ℝ) {M : ℝ} (hM : 0 ≤ M) :
   rw [hexp, mul_one_div, div_le_one (by positivity)]
   nlinarith
 
+/-! ### Reading the two sides of the sign change off the technology
+
+`exists_capitalDemand_ge` and `exists_capitalDemand_le` FIND a rate at which demand clears a
+bound. The two lemmas here do the opposite and more useful thing: given the rate, they say what
+the technology has to satisfy. Both are the same inequality `4(r+δ)²K ≤ A²` read in the two
+directions, which in root form is `2(r+δ)√K ≤ A` — the marginal product of `K` units at rate `r`.
+-/
+
+/-- **The technology is productive enough to demand `K` at rate `r`.** In root form,
+`2(r+δ)√K ≤ A`. -/
+theorem le_capitalDemand_of_sq {A δ r K : ℝ} (hr : 0 < r + δ)
+    (h : 4 * (r + δ) ^ 2 * K ≤ A ^ 2) : K ≤ capitalDemand A δ r := by
+  simp only [capitalDemand]
+  rw [le_div_iff₀ (by positivity)]
+  linarith
+
+/-- **The technology is weak enough to demand no more than `K` at rate `r`.** In root form,
+`A ≤ 2(r+δ)√K`. -/
+theorem capitalDemand_le_of_sq {A δ r K : ℝ} (hr : 0 < r + δ)
+    (h : A ^ 2 ≤ 4 * (r + δ) ^ 2 * K) : capitalDemand A δ r ≤ K := by
+  simp only [capitalDemand]
+  rw [div_le_iff₀ (by positivity)]
+  linarith
+
 /-! ### The implied rate
 
 Equilibrium is often stated the other way round: a rate `r` induces a capital stock, the capital

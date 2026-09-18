@@ -342,4 +342,19 @@ theorem stoneGeary_exists_equilibrium :
     (fun r hr hrr => stoneGeary_calibrated.existsUnique_stationary hr hrr)
     (m := 1 / 400000) (by norm_num) (fun hrhi μ hμ => stoneGeary_floor_top hrhi μ hμ)
 
+/-- **The same equilibrium, with the technology fixed in advance.** As for `nearLog`, and with the
+same `(A, δ)`: the Stone--Geary floor `1/400000` is ten times the near-log one, so the band of
+admissible `A` is wider and the same technology sits inside it. -/
+theorem stoneGeary_exists_equilibrium_of_technology :
+    ∃ r ∈ Icc (0 : ℝ) (1 / 200),
+      IsAiyagariEquilibrium
+        (stoneGeary.rateFamily (by norm_num : (0:ℝ) < 1 + 0) (by norm_num : (0:ℝ) ≤ 1 / 200))
+        (capitalDemand (1 / 250000) (1 / 1000000)) r :=
+  stoneGeary.exists_equilibrium_of_technology (by norm_num) (by norm_num)
+    (fun r hr hrr => stoneGeary_calibrated.existsUnique_stationary hr hrr)
+    (m := 1 / 400000) (fun hrhi μ hμ => stoneGeary_floor_top hrhi μ hμ)
+    (1 / 250000) (1 / 1000000) (by norm_num)
+    (le_capitalDemand_of_sq (by norm_num) (by norm_num))
+    (capitalDemand_le_of_sq (by norm_num) (by norm_num))
+
 end LeanEconomics

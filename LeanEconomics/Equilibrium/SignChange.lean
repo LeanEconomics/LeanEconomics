@@ -178,7 +178,11 @@ it is defined at every real number while agreeing with the intended one on the i
 device `rateFamily` uses, and for the same reason. Uniqueness then gives both halves of what
 `exists_equilibrium_of_selection` asks: that `ν r` is stationary, and that nothing else is.
 
-The firm is chosen last, by `exists_firm_of_bounds`, from the supply floor `m` and the asset cap.
+`exists_equilibrium_of_technology` is the primitive statement: the technology `(A, δ)` is GIVEN,
+and two inequalities on it — enough demand at `rlo` to clear the asset cap, little enough at `rhi`
+to fall under the supply floor — deliver the equilibrium.
+`exists_equilibrium_of_uniqueness_and_floor` is then the corollary in which the firm is chosen
+last, by `exists_firm_of_bounds`, from the supply floor `m` and the asset cap.
 -/
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
@@ -186,20 +190,28 @@ theorem withRate_congr {a b : ℝ} (hab : a = b) (h₁ : P.RateOK a) (h₂ : P.R
     P.withRate a h₁ = P.withRate b h₂ := by
   subst hab; rfl
 
-/-- **An Aiyagari equilibrium from household-side hypotheses alone.** Uniqueness of the stationary
-distribution at each rate, and a positive floor under capital supply AT THE TOP OF THE INTERVAL,
-suffice: the firm is then calibrated to meet them.
+/-- **An Aiyagari equilibrium with the technology GIVEN.** The firm is no longer chosen to fit
+the household: any `(A, δ)` whose demand clears the asset cap at the bottom of the interval and
+falls below the supply floor at the top produces an equilibrium inside it.
 
-The floor is needed only at `rhi`, which matters: `gain_term_mono` says the gain condition is
-easier at higher rates, so the floor may be taken at the best rate rather than the worst. -/
-theorem exists_equilibrium_of_uniqueness_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
-    (hlt : rlo < rhi)
+The two hypotheses are inequalities on the technology and nothing else — `le_capitalDemand_of_sq`
+and `capitalDemand_le_of_sq` turn them into `4(rlo+δ)²·assetCap ≤ A²` and
+`A² ≤ 4(rhi+δ)²·m`, which is the band `2(rlo+δ)√assetCap ≤ A ≤ 2(rhi+δ)√m`. Such an `A` exists
+exactly when `(rlo+δ)√assetCap ≤ (rhi+δ)√m`, so the band is non-empty for small `δ` whenever the
+household has a positive supply floor: that is the content of
+`exists_equilibrium_of_uniqueness_and_floor`, which is now a corollary.
+
+Note which bound is used where. The ceiling is the free one, `aggregateCapital_le`; only the floor
+`m` is household work. -/
+theorem exists_equilibrium_of_technology {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo) (hlt : rlo < rhi)
     (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r,
       ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ)
-    {m : ℝ} (hm : 0 < m)
+    {m : ℝ}
     (hfloor : ∀ hrhi : P.RateOK rhi, ∀ μ : ProbabilityMeasure P.State,
-      (P.withRate rhi hrhi).IsStationary μ → m ≤ P.aggregateCapital μ) :
-    ∃ A δ : ℝ, 0 < A ∧ 0 < rlo + δ ∧ ∃ r ∈ Icc rlo rhi,
+      (P.withRate rhi hrhi).IsStationary μ → m ≤ P.aggregateCapital μ)
+    (A δ : ℝ) (hδ : 0 < rlo + δ)
+    (hDlo : assetCap ≤ capitalDemand A δ rlo) (hDhi : capitalDemand A δ rhi ≤ m) :
+    ∃ r ∈ Icc rlo rhi,
       IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) (capitalDemand A δ) r := by
   classical
   have hle : rlo ≤ rhi := hlt.le
@@ -222,19 +234,40 @@ theorem exists_equilibrium_of_uniqueness_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1
     refine (hE r).choose_spec.2 μ ?_
     rw [P.withRate_congr hc (hpos r) hrr]
     exact hμ
-  -- the two bounds on capital supply
-  have hlo' : rlo ∈ Icc rlo rhi := ⟨le_rfl, hle⟩
   have hhi' : rhi ∈ Icc rlo rhi := ⟨hle, le_rfl⟩
   have hrhi : P.RateOK rhi := rateOK_of_floor_zero (by linarith)
   have hub : P.aggregateCapital (ν rlo) ≤ assetCap := P.aggregateCapital_le _
   have hlbhi : m ≤ P.aggregateCapital (ν rhi) := hfloor hrhi _ (hν rhi hhi' hrhi)
-  have hmM : m ≤ assetCap := le_trans hlbhi (P.aggregateCapital_le _)
-  -- and the firm that meets them
+  exact P.exists_equilibrium_of_selection hrlo hle ν hν hunique
+    (capitalDemand A δ) (continuousOn_capitalDemand hδ)
+    (le_trans hub hDlo) (le_trans hDhi hlbhi)
+
+
+/-- **An Aiyagari equilibrium from household-side hypotheses alone.** Uniqueness of the stationary
+distribution at each rate, and a positive floor under capital supply AT THE TOP OF THE INTERVAL,
+suffice: the firm is then calibrated to meet them.
+
+The floor is needed only at `rhi`, which matters: `gain_term_mono` says the gain condition is
+easier at higher rates, so the floor may be taken at the best rate rather than the worst. -/
+theorem exists_equilibrium_of_uniqueness_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
+    (hlt : rlo < rhi)
+    (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r,
+      ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ)
+    {m : ℝ} (hm : 0 < m)
+    (hfloor : ∀ hrhi : P.RateOK rhi, ∀ μ : ProbabilityMeasure P.State,
+      (P.withRate rhi hrhi).IsStationary μ → m ≤ P.aggregateCapital μ) :
+    ∃ A δ : ℝ, 0 < A ∧ 0 < rlo + δ ∧ ∃ r ∈ Icc rlo rhi,
+      IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) (capitalDemand A δ) r := by
+  classical
+  have hle : rlo ≤ rhi := hlt.le
+  have hrhi : P.RateOK rhi := rateOK_of_floor_zero (by linarith)
+  -- the household side supplies the two numbers the firm has to be squeezed between
+  obtain ⟨μ₀, hμ₀⟩ := (huniq rhi ⟨hle, le_rfl⟩ hrhi).exists
+  have hmM : m ≤ assetCap :=
+    le_trans (hfloor hrhi μ₀ hμ₀) (P.aggregateCapital_le _)
   obtain ⟨A, δ, hA, hrδ, hDlo, hDhi⟩ := exists_firm_of_bounds hlt hm hmM
-  refine ⟨A, δ, hA, hrδ, P.exists_equilibrium_of_selection hrlo hle ν hν hunique
-    (capitalDemand A δ) (continuousOn_capitalDemand hrδ) ?_ ?_⟩
-  · exact le_trans hub hDlo
-  · exact le_trans hDhi hlbhi
+  exact ⟨A, δ, hA, hrδ,
+    P.exists_equilibrium_of_technology hrlo hlt huniq hfloor A δ hrδ hDlo hDhi⟩
 
 
 /-- **Capital supply is bounded above by the impatience of the household.** Every household saves

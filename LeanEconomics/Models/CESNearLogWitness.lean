@@ -415,6 +415,27 @@ theorem nearLog_exists_equilibrium :
     (fun r hr hrr => nearLog_existsUnique_uniform hr hrr) (by norm_num)
     (fun hrr μ hμ => nearLog_floor_top hrr μ hμ)
 
+/-- **The same equilibrium, with the technology fixed in advance.** `A = 1/250000` and
+`δ = 1/1000000` are not chosen to fit the household: they are named first, and the two
+inequalities `4δ² ≤ A²` and `A² ≤ 4(1/200+δ)²/4000000` — arithmetic in the rationals — are what
+makes them an equilibrium technology for this economy.
+
+The numbers are small because the asset cap is `1` while the proved supply floor is `1/4000000`:
+demand has to fall by a factor of four million across an interval of width `1/200`, and only a
+nearly undepreciating technology is that steep. Sharpening the floor, not the argument, is what
+would move them. -/
+theorem nearLog_exists_equilibrium_of_technology :
+    ∃ r ∈ Icc (0 : ℝ) (1 / 200),
+      IsAiyagariEquilibrium
+        (nearLog.rateFamily (by norm_num : (0:ℝ) < 1 + 0) (by norm_num : (0:ℝ) ≤ 1 / 200))
+        (capitalDemand (1 / 250000) (1 / 1000000)) r :=
+  nearLog.exists_equilibrium_of_technology (by norm_num) (by norm_num)
+    (fun r hr hrr => nearLog_existsUnique_uniform hr hrr)
+    (fun hrr μ hμ => nearLog_floor_top hrr μ hμ)
+    (1 / 250000) (1 / 1000000) (by norm_num)
+    (le_capitalDemand_of_sq (by norm_num) (by norm_num))
+    (capitalDemand_le_of_sq (by norm_num) (by norm_num))
+
 /-- The same equilibrium in implied-rate form. -/
 theorem nearLog_exists_equilibrium_impliedRate :
     ∃ A δ : ℝ, 0 < A ∧ ∃ r ∈ Icc (0 : ℝ) (1 / 200),
