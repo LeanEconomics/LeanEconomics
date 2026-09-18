@@ -234,7 +234,8 @@ theorem monotoneTransitions_scale (hlam : 0 < lam) (hmono : P.MonotoneTransition
 Aiyagari writes the steady state as `K(r) = Ea(r)`, with `Ea` computed in the economy whose
 income is `w(r) · l`. That economy is `(P.withRate r).scale (w r)` for the unit-wage economy `P`,
 and its unique stationary distribution is the pushforward of `P`'s. So `Ea_w = w · Ea₁`, and his
-condition is `Ea₁(r) = k(r)/w(r)` — the normalised one, whose uniqueness is `log_equilibriumRate_unique`.
+condition is `Ea₁(r) = k(r)/w(r)` — the normalised one, whose
+uniqueness is `log_equilibriumRate_unique`.
 The theorem below is that argument, with the scaled economy's Doeblin hypotheses checked by
 scaling the unit-wage ones. -/
 
