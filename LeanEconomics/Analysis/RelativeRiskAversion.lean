@@ -232,4 +232,67 @@ theorem mul_marginal_le_of_scale {c du : ℝ → ℝ} {s : Set ℝ}
     field_simp
   rwa [e1, e2] at hmul
 
+/-! ### Beyond relative risk aversion one
+
+For `u'(c) = c^{-γ}` with `γ > 1`, `c · u'(c) = c^{1-γ}` FALLS, so the second factor above goes
+the wrong way — but only by the factor `(c(α₂x)/c(α₁x))^{γ-1}`, and the first factor bounds that
+ratio: concavity through a positive value at zero gives the chord bound
+`c(α₂x)/c(α₁x) ≤ 1 + (1 - c(0)/c(α₁x))(α₂/α₁ - 1)`. So the pivotal inequality survives wherever
+
+  `(1 - c(0)/c(α₁x)) · (ρ - 1) ≤ ρ^{1/γ} - 1`,   `ρ = α₂/α₁`,
+
+which for returns close together says consumption at `α₁x` is at most about `γ/(γ-1)` times
+consumption at zero assets. For `γ ≤ 1` the condition is automatic, since `ρ^{1/γ} ≥ ρ`;
+for `γ > 1` it is a restriction on the RANGE of the consumption function, not on the utility. -/
+
+/-- **The chord bound.** A concave function on a set containing `0` grows past `y₁` at most at
+the average rate it had over `[0, y₁]`. -/
+theorem ConcaveOn.le_add_chord {c : ℝ → ℝ} {s : Set ℝ} (hc : ConcaveOn ℝ s c) (h0 : (0 : ℝ) ∈ s)
+    {y₁ y₂ : ℝ} (hy1 : 0 < y₁) (hy12 : y₁ < y₂) (hm2 : y₂ ∈ s) :
+    c y₂ ≤ c y₁ + (c y₁ - c 0) * ((y₂ - y₁) / y₁) := by
+  have h := hc.slope_anti_adjacent h0 hm2 hy1 hy12
+  rw [sub_zero] at h
+  have hy21 : 0 < y₂ - y₁ := by linarith
+  rw [div_le_div_iff₀ hy21 hy1] at h
+  have e : (c y₁ - c 0) * ((y₂ - y₁) / y₁) = (c y₁ - c 0) * (y₂ - y₁) / y₁ := by ring
+  rw [e, ← sub_le_iff_le_add', le_div_iff₀ hy1]
+  exact h
+
+/-- **Light's pivotal inequality beyond relative risk aversion one**, for `u'(c) = c^{-γ}` and
+any `γ > 0`: `α₁ · c(α₁x)^{-γ} ≤ α₂ · c(α₂x)^{-γ}` for `α₂ = ρ α₁ ≥ α₁`, provided
+`(1 - c(0)/c(α₁x))(ρ - 1) ≤ ρ^{1/γ} - 1`. -/
+theorem mul_rpow_neg_le_of_scale {c : ℝ → ℝ} {s : Set ℝ} {γ : ℝ} (hγ : 0 < γ)
+    (hc : ConcaveOn ℝ s c) (h0 : (0 : ℝ) ∈ s) (hc0 : 0 < c 0) (hmono : MonotoneOn c s)
+    {α₁ ρ x : ℝ} (h1 : 0 < α₁) (hρ : 1 ≤ ρ) (hx : 0 < x)
+    (hm1 : α₁ * x ∈ s) (hm2 : ρ * α₁ * x ∈ s)
+    (hθ : (1 - c 0 / c (α₁ * x)) * (ρ - 1) ≤ ρ ^ (1 / γ) - 1) :
+    α₁ * (c (α₁ * x)) ^ (-γ) ≤ ρ * α₁ * (c (ρ * α₁ * x)) ^ (-γ) := by
+  have hρ0 : 0 < ρ := by linarith
+  have hp1 : 0 < c (α₁ * x) := lt_of_lt_of_le hc0 (hmono h0 hm1 (by positivity))
+  have hp2 : 0 < c (ρ * α₁ * x) := lt_of_lt_of_le hc0 (hmono h0 hm2 (by positivity))
+  -- the ratio of consumptions is at most `ρ^{1/γ}`
+  have hratio : c (ρ * α₁ * x) ≤ ρ ^ (1 / γ) * c (α₁ * x) := by
+    rcases eq_or_lt_of_le hρ with hρ1 | hρ1
+    · subst hρ1
+      simp
+    · have hlt : α₁ * x < ρ * α₁ * x := by
+        have hpos : 0 < (ρ - 1) * (α₁ * x) := mul_pos (by linarith) (mul_pos h1 hx)
+        linarith [hpos]
+      have hchord := ConcaveOn.le_add_chord hc h0 (by positivity : 0 < α₁ * x) hlt hm2
+      have e : (ρ * α₁ * x - α₁ * x) / (α₁ * x) = ρ - 1 := by field_simp
+      rw [e] at hchord
+      have hθ' := mul_le_mul_of_nonneg_right hθ hp1.le
+      have e2 : (1 - c 0 / c (α₁ * x)) * (ρ - 1) * c (α₁ * x)
+          = (c (α₁ * x) - c 0) * (ρ - 1) := by field_simp
+      rw [e2] at hθ'
+      linarith
+  -- hence `c₂^γ ≤ ρ c₁^γ`, which is the claim
+  have hpow : (c (ρ * α₁ * x)) ^ γ ≤ ρ * (c (α₁ * x)) ^ γ := by
+    have := Real.rpow_le_rpow hp2.le hratio hγ.le
+    rwa [Real.mul_rpow (by positivity) hp1.le, ← Real.rpow_mul hρ0.le,
+      one_div_mul_cancel hγ.ne', Real.rpow_one] at this
+  rw [Real.rpow_neg hp1.le, Real.rpow_neg hp2.le, ← div_eq_mul_inv, ← div_eq_mul_inv,
+    div_le_div_iff₀ (Real.rpow_pos_of_pos hp1 _) (Real.rpow_pos_of_pos hp2 _)]
+  nlinarith [mul_le_mul_of_nonneg_left hpow h1.le]
+
 end LeanEconomics
