@@ -152,6 +152,181 @@ theorem eulerRhs_anti_of_le {du : ℝ → ℝ} (hdu : AntitoneOn du (Ioi (0 : �
   have hpos := hσpos z' A hA
   exact hdu (mem_Ioi.mpr hpos) (mem_Ioi.mpr (lt_of_lt_of_le hpos (hle z' A hA))) (hle z' A hA)
 
+/-! ### Sufficiency: the kinked Euler equation has one solution
+
+Li and Stachurski (2014) show the time-iteration operator is a contraction of modulus `βR` in
+the marginal-utility sup-metric `ρ(σ, τ) = sup |u'(σ) - u'(τ)|`. The estimate needs no
+operator: at a state where `σ` consumes strictly less than `τ`, `σ` saves strictly more, so
+its saving is interior and its Euler equation holds with equality, while `τ`'s holds at least
+as an inequality; subtracting, and using that `τ` rises with assets, the gap in marginal utility
+today is at most `βR` times the gap tomorrow. Two solutions are therefore at distance
+`ρ ≤ βR·ρ`, hence equal (`eq_of_isEulerSolution`). Since the optimal consumption function is
+a solution (`isEulerSolution_consumptionFn`), every solution in the class — increasing in
+assets, feasible, cap-slack, bounded away from zero — IS the optimal consumption function
+(`eq_consumptionFn_of_isEulerSolution`): the sufficient direction of Sargent–Stachurski's
+Prop. 8.3.13, with the borrowing kink and without the conjugacy. -/
+
+/-- The class in which the functional Euler equation is solved. -/
+structure EulerClass (σ : Z → ℝ → ℝ) (m₀ : ℝ) : Prop where
+  mono : ∀ z : Z, MonotoneOn (σ z) (Icc assetFloor assetCap)
+  floor_le : ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap, assetFloor ≤ P.resources (a, z) - σ z a
+  slack : ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap, P.resources (a, z) - σ z a < P.maxSaving (a, z)
+  pos : ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap, m₀ ≤ σ z a
+
+/-- **The one-sided contraction estimate.** At a state where `σ` consumes strictly less than
+`τ`, the marginal-utility gap today is at most `βR` times the largest gap tomorrow. -/
+theorem euler_gap_le {du : ℝ → ℝ} (hanti : AntitoneOn du (Ioi (0 : ℝ))) {σ τ : Z → ℝ → ℝ}
+    {m₀ : ℝ} (hm₀ : 0 < m₀) (hσ : P.IsEulerSolution du σ) (hτ : P.IsEulerSolution du τ)
+    (hσc : P.EulerClass σ m₀) (hτc : P.EulerClass τ m₀) {M : ℝ}
+    (hM : ∀ z : Z, ∀ b ∈ Icc assetFloor assetCap, du (σ z b) - du (τ z b) ≤ M)
+    {z : Z} {a : ℝ} (ha : a ∈ Icc assetFloor assetCap) (hlt : σ z a < τ z a) :
+    du (σ z a) - du (τ z a) ≤ (P.discount : ℝ) * (1 + P.interest) * M := by
+  classical
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  have hR : (0 : ℝ) ≤ 1 + P.interest := P.interest_gt_neg_one.le
+  set A := P.resources (a, z) - σ z a with hAdef
+  set B := P.resources (a, z) - τ z a with hBdef
+  have hAB : B < A := by rw [hAdef, hBdef]; linarith
+  have hBfl : assetFloor ≤ B := hτc.floor_le z a ha
+  have hAmem : A ∈ Icc assetFloor assetCap :=
+    ⟨le_trans hBfl hAB.le, le_trans (hσc.slack z a ha).le (P.maxSaving_le_assetCap _)⟩
+  have hBmem : B ∈ Icc assetFloor assetCap :=
+    ⟨hBfl, le_trans (hτc.slack z a ha).le (P.maxSaving_le_assetCap _)⟩
+  -- `σ` is interior, so its Euler equation holds with equality
+  have hσeq : du (σ z a) = P.eulerRhs du σ z A :=
+    hσ.interior z a ha (lt_of_le_of_lt hBfl hAB) (hσc.slack z a ha)
+  -- `τ`'s holds at least as an inequality
+  have hτle : P.eulerRhs du τ z B ≤ du (τ z a) := by
+    rcases eq_or_lt_of_le hBfl with h | h
+    · rw [← h]; exact hτ.corner z a ha h.symm
+    · exact le_of_eq (hτ.interior z a ha h (hτc.slack z a ha)).symm
+  -- tomorrow: `τ` at `B` consumes at most `τ` at `A`
+  have hterm : ∀ z' : Z, du (σ z' A) - du (τ z' B) ≤ M := by
+    intro z'
+    have h1 : τ z' B ≤ τ z' A := hτc.mono z' hBmem hAmem hAB.le
+    have hpos : 0 < τ z' B := lt_of_lt_of_le hm₀ (hτc.pos z' B hBmem)
+    have h2 : du (τ z' A) ≤ du (τ z' B) :=
+      hanti (mem_Ioi.mpr hpos) (mem_Ioi.mpr (lt_of_lt_of_le hpos h1)) h1
+    linarith [hM z' A hAmem]
+  have hsum : ∑ z' : Z, P.transitionMatrix z z' * du (σ z' A)
+      - ∑ z' : Z, P.transitionMatrix z z' * du (τ z' B) ≤ M := by
+    rw [← Finset.sum_sub_distrib]
+    calc ∑ z' : Z, (P.transitionMatrix z z' * du (σ z' A) - P.transitionMatrix z z' * du (τ z' B))
+        = ∑ z' : Z, P.transitionMatrix z z' * (du (σ z' A) - du (τ z' B)) := by
+          refine Finset.sum_congr rfl fun z' _ => ?_; ring
+      _ ≤ ∑ z' : Z, P.transitionMatrix z z' * M :=
+          Finset.sum_le_sum fun z' _ =>
+            mul_le_mul_of_nonneg_left (hterm z') (P.transitionMatrix_nonneg z z')
+      _ = M := by rw [← Finset.sum_mul, P.transitionMatrix_sum, one_mul]
+  have := mul_le_mul_of_nonneg_left hsum (mul_nonneg hβ hR)
+  unfold eulerRhs at hσeq hτle
+  nlinarith
+
+/-- **Two solutions of the kinked Euler equation in the class coincide** when `βR < 1`. -/
+theorem eq_of_isEulerSolution {du : ℝ → ℝ} (hanti : StrictAntiOn du (Ioi (0 : ℝ)))
+    (hdunn : ∀ c : ℝ, 0 < c → 0 ≤ du c)
+    (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) {σ τ : Z → ℝ → ℝ} {m₀ : ℝ} (hm₀ : 0 < m₀)
+    (hσ : P.IsEulerSolution du σ) (hτ : P.IsEulerSolution du τ)
+    (hσc : P.EulerClass σ m₀) (hτc : P.EulerClass τ m₀) :
+    ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap, σ z a = τ z a := by
+  classical
+  have hβR0 : (0 : ℝ) ≤ (P.discount : ℝ) * (1 + P.interest) :=
+    mul_nonneg P.discount.coe_nonneg P.interest_gt_neg_one.le
+  have hfc : assetFloor ≤ assetCap := P.assetFloor_le_assetCap
+  -- the gaps in marginal utility, and their supremum
+  set S : Set ℝ :=
+    {d | ∃ z : Z, ∃ a ∈ Icc assetFloor assetCap, d = |du (σ z a) - du (τ z a)|} with hSdef
+  have hgap : ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap, |du (σ z a) - du (τ z a)| ≤ du m₀ := by
+    intro z a ha
+    have h1 := hσc.pos z a ha
+    have h2 := hτc.pos z a ha
+    have hp1 : 0 < σ z a := lt_of_lt_of_le hm₀ h1
+    have hp2 : 0 < τ z a := lt_of_lt_of_le hm₀ h2
+    have hd1 : du (σ z a) ≤ du m₀ := hanti.antitoneOn (mem_Ioi.mpr hm₀) (mem_Ioi.mpr hp1) h1
+    have hd2 : du (τ z a) ≤ du m₀ := hanti.antitoneOn (mem_Ioi.mpr hm₀) (mem_Ioi.mpr hp2) h2
+    have hn1 := hdunn _ hp1
+    have hn2 := hdunn _ hp2
+    rw [abs_sub_le_iff]
+    constructor <;> linarith
+  have hSne : S.Nonempty := by
+    obtain ⟨z⟩ := (inferInstance : Nonempty Z)
+    exact ⟨_, z, assetFloor, ⟨le_rfl, hfc⟩, rfl⟩
+  have hSbdd : BddAbove S := by
+    refine ⟨du m₀, ?_⟩
+    rintro d ⟨z, a, ha, rfl⟩
+    exact hgap z a ha
+  set M : ℝ := sSup S with hMdef
+  have hMle : ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap, |du (σ z a) - du (τ z a)| ≤ M :=
+    fun z a ha => le_csSup hSbdd ⟨z, a, ha, rfl⟩
+  have hM0 : 0 ≤ M := by
+    obtain ⟨z⟩ := (inferInstance : Nonempty Z)
+    exact le_trans (abs_nonneg _) (hMle z assetFloor ⟨le_rfl, hfc⟩)
+  -- the contraction estimate, pointwise
+  have hpt : ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap,
+      |du (σ z a) - du (τ z a)| ≤ (P.discount : ℝ) * (1 + P.interest) * M := by
+    intro z a ha
+    rcases lt_trichotomy (σ z a) (τ z a) with hlt | heq | hgt
+    · have hM' : ∀ z' : Z, ∀ b ∈ Icc assetFloor assetCap, du (σ z' b) - du (τ z' b) ≤ M :=
+        fun z' b hb => le_trans (le_abs_self _) (hMle z' b hb)
+      have h := P.euler_gap_le hanti.antitoneOn hm₀ hσ hτ hσc hτc hM' ha hlt
+      have hp1 : 0 < σ z a := lt_of_lt_of_le hm₀ (hσc.pos z a ha)
+      have hp2 : 0 < τ z a := lt_of_lt_of_le hm₀ (hτc.pos z a ha)
+      have hpos : 0 < du (σ z a) - du (τ z a) :=
+        sub_pos.mpr (hanti (mem_Ioi.mpr hp1) (mem_Ioi.mpr hp2) hlt)
+      rw [abs_of_pos hpos]; exact h
+    · rw [heq, sub_self, abs_zero]; exact mul_nonneg hβR0 hM0
+    · have hM' : ∀ z' : Z, ∀ b ∈ Icc assetFloor assetCap, du (τ z' b) - du (σ z' b) ≤ M :=
+        fun z' b hb => le_trans (neg_le_abs _ |>.trans_eq' (by ring)) (hMle z' b hb)
+      have h := P.euler_gap_le hanti.antitoneOn hm₀ hτ hσ hτc hσc hM' ha hgt
+      have hp1 : 0 < σ z a := lt_of_lt_of_le hm₀ (hσc.pos z a ha)
+      have hp2 : 0 < τ z a := lt_of_lt_of_le hm₀ (hτc.pos z a ha)
+      have hpos : 0 < du (τ z a) - du (σ z a) :=
+        sub_pos.mpr (hanti (mem_Ioi.mpr hp2) (mem_Ioi.mpr hp1) hgt)
+      rw [abs_sub_comm, abs_of_pos hpos]; exact h
+  have hMM : M ≤ (P.discount : ℝ) * (1 + P.interest) * M := by
+    refine csSup_le hSne ?_
+    rintro d ⟨z, a, ha, rfl⟩
+    exact hpt z a ha
+  have hMzero : M = 0 := by nlinarith
+  intro z a ha
+  have h0 : |du (σ z a) - du (τ z a)| = 0 :=
+    le_antisymm (hMzero ▸ hMle z a ha) (abs_nonneg _)
+  have hp1 : 0 < σ z a := lt_of_lt_of_le hm₀ (hσc.pos z a ha)
+  have hp2 : 0 < τ z a := lt_of_lt_of_le hm₀ (hτc.pos z a ha)
+  exact hanti.injOn (mem_Ioi.mpr hp1) (mem_Ioi.mpr hp2) (sub_eq_zero.mp (abs_eq_zero.mp h0))
+
+/-- **The optimal consumption function is in the class**, given cap slack and a positive
+floor on consumption. -/
+theorem eulerClass_consumptionFn (hpc : P.PositiveConsumption)
+    (hslack : ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → P.policy s < assetCap)
+    {m₀ : ℝ} (hpos : ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap, m₀ ≤ P.consumptionFn z a) :
+    P.EulerClass P.consumptionFn m₀ where
+  mono := fun z a ha a' ha' hle => P.consumptionFn_mono ha ha' hle
+  floor_le := fun z a _ => by rw [P.resources_sub_consumptionFn]; exact (P.policy_mem_region _).1
+  slack := fun z a ha => by
+    rw [P.resources_sub_consumptionFn, maxSaving_eq]
+    refine lt_min (hslack _ ha) ?_
+    have := P.consumptionFn_pos hpc ha z
+    simp only [consumptionFn, consumption] at this
+    linarith
+  pos := hpos
+
+/-- **A solution of the kinked functional Euler equation is the optimal consumption
+function** — the sufficient direction, without conjugacy. -/
+theorem eq_consumptionFn_of_isEulerSolution {du : ℝ → ℝ}
+    (hderiv : ∀ c : ℝ, 0 < c → HasDerivAt P.u (du c) c)
+    (hanti : StrictAntiOn du (Ioi (0 : ℝ))) (hdunn : ∀ c : ℝ, 0 < c → 0 ≤ du c)
+    (hβR : (P.discount : ℝ) * (1 + P.interest) < 1) (hpc : P.PositiveConsumption)
+    (hfc : assetFloor < assetCap)
+    (hslack : ∀ s : ℝ × Z, s.1 ∈ Icc assetFloor assetCap → P.policy s < assetCap)
+    {m₀ : ℝ} (hm₀ : 0 < m₀)
+    (hpos : ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap, m₀ ≤ P.consumptionFn z a)
+    {σ : Z → ℝ → ℝ} (hσ : P.IsEulerSolution du σ) (hσc : P.EulerClass σ m₀) :
+    ∀ z : Z, ∀ a ∈ Icc assetFloor assetCap, σ z a = P.consumptionFn z a :=
+  P.eq_of_isEulerSolution hanti hdunn hβR hm₀ hσ
+    (P.isEulerSolution_consumptionFn hderiv hpc hfc hslack) hσc
+    (P.eulerClass_consumptionFn hpc hslack hpos)
+
 end IncomeFluctuation
 
 end LeanEconomics

@@ -168,4 +168,87 @@ theorem eq_of_fixedPt_of_concaveOn {g : ℝ → ℝ} (hg : ConcaveOn ℝ (Ioi (0
   -- `x ≥ μ g a + (1-μ) y > μ a + (1-μ) y = x`
   nlinarith
 
+/-! ### Du's theorem: uniqueness for concave order-preserving maps -/
+
+/-- **Du's theorem, the uniqueness half** (Sargent–Stachurski Vol. 1, Thm. 7.1.3 (i)). On the
+order interval `[v₁, v₂]` of functions on a finite set, an order-preserving concave `T` with
+`T v₁ ≫ v₁` (strictly above in every coordinate) has at most one fixed point. The cone
+argument: for fixed points `a ≤ b`, the largest `t` with `a ≥ t b + (1-t) v₁` must be `1`,
+since at any smaller `t` concavity lifts `a` strictly above `t b + (1-t) v₁` in every
+coordinate, leaving room to increase `t`. -/
+theorem eq_of_fixedPt_of_concave_du {X : Type*} [Finite X] [Nonempty X] {v₁ v₂ : X → ℝ}
+    {T : (X → ℝ) → (X → ℝ)}
+    (hmono : ∀ u v : X → ℝ, v₁ ≤ u → u ≤ v → v ≤ v₂ → T u ≤ T v)
+    (hconc : ∀ u v : X → ℝ, v₁ ≤ u → u ≤ v₂ → v₁ ≤ v → v ≤ v₂ → ∀ t ∈ Icc (0 : ℝ) 1, ∀ x,
+      t * T u x + (1 - t) * T v x ≤ T (fun y => t * u y + (1 - t) * v y) x)
+    (hv₁ : ∀ x, v₁ x < T v₁ x)
+    {a b : X → ℝ} (ha₁ : v₁ ≤ a) (hab : a ≤ b) (hb₂ : b ≤ v₂)
+    (ha : T a = a) (hb : T b = b) : a = b := by
+  classical
+  have : Fintype X := Fintype.ofFinite X
+  -- the set of admissible `t`
+  set S : Set ℝ := {t | t ∈ Icc (0 : ℝ) 1 ∧ ∀ x, t * b x + (1 - t) * v₁ x ≤ a x} with hSdef
+  have h0S : (0 : ℝ) ∈ S := ⟨⟨le_rfl, zero_le_one⟩, fun x => by simpa using ha₁ x⟩
+  have hSne : S.Nonempty := ⟨0, h0S⟩
+  have hSbdd : BddAbove S := ⟨1, fun t ht => ht.1.2⟩
+  have hSclosed : IsClosed S := by
+    have : S = Icc (0 : ℝ) 1 ∩ ⋂ x, {t | t * b x + (1 - t) * v₁ x ≤ a x} := by
+      ext t; simp [hSdef]
+    rw [this]
+    refine isClosed_Icc.inter (isClosed_iInter fun x => ?_)
+    exact isClosed_le (by fun_prop) continuous_const
+  set t₀ : ℝ := sSup S with ht₀
+  have ht₀S : t₀ ∈ S := hSclosed.csSup_mem hSne hSbdd
+  have ht₀1 : t₀ ≤ 1 := ht₀S.1.2
+  -- if `t₀ < 1`, concavity leaves room above
+  by_cases hlt : t₀ < 1
+  · exfalso
+    set w : X → ℝ := fun y => t₀ * b y + (1 - t₀) * v₁ y with hw
+    have hw₁ : v₁ ≤ w := fun y => by
+      have := ha₁ y; have := hab y
+      simp only [hw]; nlinarith [ht₀S.1.1]
+    have hwa : w ≤ a := fun y => ht₀S.2 y
+    have hw₂ : w ≤ v₂ := le_trans hwa (le_trans hab hb₂)
+    have hTw : T w ≤ a := by rw [← ha]; exact hmono w a hw₁ hwa (le_trans hab hb₂)
+    have hcv : ∀ x, t₀ * T b x + (1 - t₀) * T v₁ x ≤ T w x := fun x =>
+      hconc b v₁ (le_trans ha₁ hab) hb₂ le_rfl (le_trans ha₁ (le_trans hab hb₂)) t₀
+        ⟨ht₀S.1.1, ht₀1⟩ x
+    -- the slack in every coordinate, and a uniform bound on `b - v₁`
+    obtain ⟨x₀, -, hx₀⟩ := Finset.exists_min_image Finset.univ
+      (fun x => T v₁ x - v₁ x) Finset.univ_nonempty
+    obtain ⟨x₁, -, hx₁⟩ := Finset.exists_max_image Finset.univ
+      (fun x => b x - v₁ x) Finset.univ_nonempty
+    set g : ℝ := T v₁ x₀ - v₁ x₀ with hg
+    have hgpos : 0 < g := by rw [hg]; linarith [hv₁ x₀]
+    set D : ℝ := b x₁ - v₁ x₁ + 1 with hD
+    have hDpos : 0 < D := by rw [hD]; linarith [ha₁ x₁, hab x₁]
+    set δ : ℝ := min (1 - t₀) ((1 - t₀) * g / D) with hδ
+    have hδpos : 0 < δ := lt_min (by linarith) (by positivity)
+    have hδ1 : δ ≤ 1 - t₀ := min_le_left _ _
+    have hδg : δ * D ≤ (1 - t₀) * g := by
+      calc δ * D ≤ (1 - t₀) * g / D * D :=
+            mul_le_mul_of_nonneg_right (min_le_right _ _) hDpos.le
+        _ = (1 - t₀) * g := by field_simp
+    have hmem : t₀ + δ ∈ S := by
+      refine ⟨⟨by linarith [ht₀S.1.1], by linarith⟩, fun x => ?_⟩
+      have hslack : t₀ * b x + (1 - t₀) * v₁ x + (1 - t₀) * g ≤ a x := by
+        have h1 := hcv x
+        have h2 := hTw x
+        have h3 : g ≤ T v₁ x - v₁ x := hx₀ x (Finset.mem_univ x)
+        rw [hb] at h1
+        nlinarith [ht₀S.1.1]
+      have hbx : b x - v₁ x ≤ D := by
+        have := hx₁ x (Finset.mem_univ x); rw [hD]; linarith
+      have hbv : 0 ≤ b x - v₁ x := by linarith [ha₁ x, hab x]
+      have : δ * (b x - v₁ x) ≤ (1 - t₀) * g :=
+        le_trans (mul_le_mul_of_nonneg_left hbx hδpos.le) hδg
+      nlinarith
+    have := le_csSup hSbdd hmem
+    linarith
+  · push Not at hlt
+    have ht₀ : t₀ = 1 := le_antisymm ht₀1 hlt
+    have hba : b ≤ a := fun x => by
+      have := ht₀S.2 x; rw [ht₀] at this; simpa using this
+    exact le_antisymm hab hba
+
 end LeanEconomics
