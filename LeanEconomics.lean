@@ -111,3 +111,4 @@ import LeanEconomics.Equilibrium.RateRange
 import LeanEconomics.Analysis.StronglyMonotone
 import LeanEconomics.Equilibrium.LasryLions
 import LeanEconomics.Equilibrium.Bisection
+import LeanEconomics.Equilibrium.SlackEuler
