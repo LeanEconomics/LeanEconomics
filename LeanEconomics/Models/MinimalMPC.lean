@@ -398,7 +398,8 @@ theorem crra_policy_lt_cap_of_minMPC {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crra
     (hthr : (1 - P.minMPC γ) * (P.maxIncome + (1 + P.interest) * assetCap) < assetCap)
     {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (z : Z) : P.policy (a, z) < assetCap :=
   P.crra_policyOf_lt_cap_of_minMPC_bound hγ0 hβ hfl hthr
-    (fun z' b hb => P.crra_minMPC_mul_le_consumptionFn_of_cap hγ0 hu hfl hint hβ hβR hpos hthr z' hb)
+    (fun z' b hb =>
+      P.crra_minMPC_mul_le_consumptionFn_of_cap hγ0 hu hfl hint hβ hβR hpos hthr z' hb)
     ha z
 
 /-! ### The shifted-CRRA version
