@@ -191,20 +191,10 @@ theorem withRate_congr {a b : ℝ} (hab : a = b) (h₁ : P.RateOK a) (h₂ : P.R
     P.withRate a h₁ = P.withRate b h₂ := by
   subst hab; rfl
 
-/-- **An Aiyagari equilibrium with the technology GIVEN.** The firm is no longer chosen to fit
-the household: any `(A, δ)` whose demand clears the asset cap at the bottom of the interval and
-falls below the supply floor at the top produces an equilibrium inside it.
-
-The two hypotheses are inequalities on the technology and nothing else — `le_capitalDemand_of_sq`
-and `capitalDemand_le_of_sq` turn them into `4(rlo+δ)²·assetCap ≤ A²` and
-`A² ≤ 4(rhi+δ)²·m`, which is the band `2(rlo+δ)√assetCap ≤ A ≤ 2(rhi+δ)√m`. Such an `A` exists
-exactly when `(rlo+δ)√assetCap ≤ (rhi+δ)√m`, so the band is non-empty for small `δ` whenever the
-household has a positive supply floor: that is the content of
-`exists_equilibrium_of_uniqueness_and_floor`, which is now a corollary.
-
-Note which bound is used where. The ceiling is the free one, `aggregateCapital_le`; only the floor
-`m` is household work. -/
-theorem exists_equilibrium_of_ceiling_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
+/-- **The same for any continuous demand schedule.** The ceiling at `rlo` and the floor at
+`rhi` are compared with `D` there; the selection of stationary distributions supplies the
+continuity of supply in between. -/
+theorem exists_equilibrium_of_ceiling_and_floor_of_demand {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
     (hlt : rlo < rhi)
     (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r,
       ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ)
@@ -213,10 +203,8 @@ theorem exists_equilibrium_of_ceiling_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + 
       (P.withRate rlo hrlo').IsStationary μ → P.aggregateCapital μ ≤ M)
     (hfloor : ∀ hrhi : P.RateOK rhi, ∀ μ : ProbabilityMeasure P.State,
       (P.withRate rhi hrhi).IsStationary μ → m ≤ P.aggregateCapital μ)
-    (A δ : ℝ) (hδ : 0 < rlo + δ)
-    (hDlo : M ≤ capitalDemand A δ rlo) (hDhi : capitalDemand A δ rhi ≤ m) :
-    ∃ r ∈ Icc rlo rhi,
-      IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) (capitalDemand A δ) r := by
+    (D : ℝ → ℝ) (hD : ContinuousOn D (Icc rlo rhi)) (hDlo : M ≤ D rlo) (hDhi : D rhi ≤ m) :
+    ∃ r ∈ Icc rlo rhi, IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) D r := by
   classical
   have hle : rlo ≤ rhi := hlt.le
   have hclamp : ∀ r : ℝ, clampRate rlo rhi r ∈ Icc rlo rhi := clampRate_mem hle
@@ -244,9 +232,37 @@ theorem exists_equilibrium_of_ceiling_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + 
   have hrhi : P.RateOK rhi := rateOK_of_floor_zero (by linarith)
   have hub : P.aggregateCapital (ν rlo) ≤ M := hceil hrlo' _ (hν rlo hlo' hrlo')
   have hlbhi : m ≤ P.aggregateCapital (ν rhi) := hfloor hrhi _ (hν rhi hhi' hrhi)
-  exact P.exists_equilibrium_of_selection hrlo hle ν hν hunique
-    (capitalDemand A δ) (continuousOn_capitalDemand hδ)
+  exact P.exists_equilibrium_of_selection hrlo hle ν hν hunique D hD
     (le_trans hub hDlo) (le_trans hDhi hlbhi)
+
+/-- **An Aiyagari equilibrium with the technology GIVEN.** The firm is no longer chosen to fit
+the household: any `(A, δ)` whose demand clears the asset cap at the bottom of the interval and
+falls below the supply floor at the top produces an equilibrium inside it.
+
+The two hypotheses are inequalities on the technology and nothing else — `le_capitalDemand_of_sq`
+and `capitalDemand_le_of_sq` turn them into `4(rlo+δ)²·assetCap ≤ A²` and
+`A² ≤ 4(rhi+δ)²·m`, which is the band `2(rlo+δ)√assetCap ≤ A ≤ 2(rhi+δ)√m`. Such an `A` exists
+exactly when `(rlo+δ)√assetCap ≤ (rhi+δ)√m`, so the band is non-empty for small `δ` whenever the
+household has a positive supply floor: that is the content of
+`exists_equilibrium_of_uniqueness_and_floor`, which is now a corollary.
+
+Note which bound is used where. The ceiling is the free one, `aggregateCapital_le`; only the floor
+`m` is household work. -/
+theorem exists_equilibrium_of_ceiling_and_floor {rlo rhi : ℝ} (hrlo : 0 < 1 + rlo)
+    (hlt : rlo < rhi)
+    (huniq : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r,
+      ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ)
+    {m M : ℝ}
+    (hceil : ∀ hrlo' : P.RateOK rlo, ∀ μ : ProbabilityMeasure P.State,
+      (P.withRate rlo hrlo').IsStationary μ → P.aggregateCapital μ ≤ M)
+    (hfloor : ∀ hrhi : P.RateOK rhi, ∀ μ : ProbabilityMeasure P.State,
+      (P.withRate rhi hrhi).IsStationary μ → m ≤ P.aggregateCapital μ)
+    (A δ : ℝ) (hδ : 0 < rlo + δ)
+    (hDlo : M ≤ capitalDemand A δ rlo) (hDhi : capitalDemand A δ rhi ≤ m) :
+    ∃ r ∈ Icc rlo rhi,
+      IsAiyagariEquilibrium (P.rateFamily hrlo hlt.le) (capitalDemand A δ) r :=
+  P.exists_equilibrium_of_ceiling_and_floor_of_demand hrlo hlt huniq hceil hfloor
+    (capitalDemand A δ) (continuousOn_capitalDemand hδ) hDlo hDhi
 
 /-- **The same with the free ceiling.** Capital supply can never exceed the asset cap, so a
 technology that clears the cap at `rlo` needs no household-side ceiling at all. This is the form
