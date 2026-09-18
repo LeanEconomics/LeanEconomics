@@ -91,6 +91,62 @@ structure Calibrated (P : IncomeFluctuation Z 0 assetCap) (γ η G a₀ : ℝ) (
   corner : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ a ∈ Icc (0 : ℝ) a₀,
     (P.withRate r hrr).policy (a, z₀) = 0
 
+/-! ### Building the slack field from primitives
+
+The `slack` field says the saving cap never binds against any continuation the iteration can
+produce. `hara_policyOf_lt_assetCap` turns that into ONE inequality among the primitives, by
+pricing a proportional deviation: cut saving to a fraction `θ` of itself, and the extra
+consumption is worth more than the `βG` the continuation can possibly be giving up.
+
+The only rate-dependence is through `1 + r` multiplying the cap, so the inequality is hardest at
+the TOP of the interval and checking it at `rhi` suffices. `θ ∈ (0,1)` is a device of the proof,
+not of the economy: any `θ` for which the inequality holds will do, and a witness picks the one
+that makes its arithmetic easiest.
+
+What is NOT eliminated is positivity of consumption, which the deviation argument needs in order
+to price the margin. That is the class's own `positive` field, so a witness proves it once and
+feeds it to both.
+
+As with `corner_of_primitives`, this is the `η > 0` statement; pure CRRA keeps its own route
+through `crra_policyOf_lt_assetCap`, where positivity is unconditional (Inada) and the exponent
+is generally irrational, so the inequality is not rational arithmetic anyway. -/
+
+theorem slack_of_primitives {P : IncomeFluctuation Z 0 assetCap} {γ η G θ : ℝ} {rlo rhi : ℝ}
+    (hγ0 : 0 < γ) (hη : 0 ≤ η) (hθ0 : 0 < θ) (hθ1 : θ < 1) (hu : P.u = haraUtility γ η)
+    (hG : 0 ≤ G) (hrlo : 0 ≤ rlo)
+    (hpos : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ v : (ℝ × Z) →ᵇ ℝ,
+      ConcaveSlices (0 : ℝ) assetCap v → (P.withRate r hrr).OscOn v G →
+      ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap, 0 < (P.withRate r hrr).consumptionFnOf v z a)
+    (hcond : ((P.discount : ℝ) * G / θ)
+        * (η + P.maxIncome + (1 + rhi - θ) * assetCap) ^ γ < assetCap) :
+    ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ v : (ℝ × Z) →ᵇ ℝ,
+      ConcaveSlices (0 : ℝ) assetCap v → (P.withRate r hrr).OscOn v G →
+      ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, (P.withRate r hrr).policyOf v (a, z) < assetCap := by
+  intro r hr hrr v hv hosc a ha z
+  have hcap : (0 : ℝ) ≤ assetCap := P.assetCap_nonneg
+  have hmax : (0 : ℝ) < P.maxIncome :=
+    lt_of_lt_of_le P.minIncome_pos P.minIncome_le_maxIncome
+  refine (P.withRate r hrr).hara_policyOf_lt_assetCap hγ0 hη hθ0 hθ1
+    (show (P.withRate r hrr).u = haraUtility γ η from hu) hv hG hosc
+    (fun z' a' ha' => hpos r hr hrr v hv hosc z' a' ha') ?_ ha z
+  -- the inequality is hardest at `rhi`, since `r` enters only through `(1 + r - θ) * assetCap`
+  have hbase : (0 : ℝ) ≤ η + P.maxIncome + (1 + r - θ) * assetCap := by
+    have : (0 : ℝ) ≤ (1 + r - θ) * assetCap :=
+      mul_nonneg (by linarith [hr.1]) hcap
+    linarith
+  have hmono : (η + P.maxIncome + (1 + r - θ) * assetCap) ^ γ
+      ≤ (η + P.maxIncome + (1 + rhi - θ) * assetCap) ^ γ := by
+    refine Real.rpow_le_rpow hbase ?_ hγ0.le
+    have : (1 + r - θ) * assetCap ≤ (1 + rhi - θ) * assetCap :=
+      mul_le_mul_of_nonneg_right (by linarith [hr.2]) hcap
+    linarith
+  have hβ : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+  have hcoef : (0 : ℝ) ≤ (P.discount : ℝ) * G / θ := by positivity
+  simp only [IncomeFluctuation.withRate_maxIncome, IncomeFluctuation.withRate_interest,
+    IncomeFluctuation.withRate_discount, sub_zero, mul_zero]
+  linarith [mul_le_mul_of_nonneg_left hmono hcoef, hcond]
+
+
 /-! ### Building the corner field from primitives
 
 The `corner` field is the one hypothesis of the class that a witness used to assemble by hand:
@@ -110,8 +166,8 @@ theorem corner_of_primitives {P : IncomeFluctuation Z 0 assetCap} {γ η a₀ : 
     ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ a ∈ Icc (0 : ℝ) a₀,
       (P.withRate r hrr).policy (a, z₀) = 0 := by
   intro r hr hrr a ha
-  refine (P.withRate r hrr).hara_policy_eq_zero_of_primitives hγ0 hη (show (P.withRate r hrr).u = haraUtility γ η from hu) rfl ?_ z₀
-    ha₀ ha₀cap ?_ ha
+  refine (P.withRate r hrr).hara_policy_eq_zero_of_primitives hγ0 hη
+    (show (P.withRate r hrr).u = haraUtility γ η from hu) rfl ?_ z₀ ha₀ ha₀cap ?_ ha
   · rw [show ((P.withRate r hrr).discount : ℝ) = (P.discount : ℝ) from rfl,
       show (P.withRate r hrr).interest = r from rfl]
     exact himp r hr

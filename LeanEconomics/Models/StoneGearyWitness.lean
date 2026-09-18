@@ -197,19 +197,20 @@ theorem stoneGeary_positive {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr 
   rw [hM500, IncomeFluctuation.oscSlopeConst, hβ, hmin]
   norm_num
 
-/-- **The cap is slack.** -/
-theorem stoneGeary_slack {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200)) (hrr : stoneGeary.RateOK r)
-    {v : (ℝ × Fin 2) →ᵇ ℝ} (hv : ConcaveSlices (0 : ℝ) 1 v)
-    (hosc : (stoneGeary.withRate r hrr).OscOn v 7) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) 1) (z : Fin 2) :
-    (stoneGeary.withRate r hrr).policyOf v (a, z) < 1 := by
-  refine (stoneGeary.withRate r hrr).hara_policyOf_lt_assetCap (γ := 1) (η := 1 / 1000)
-    (θ := 999 / 1000) (by norm_num) (by norm_num) (by norm_num) (by norm_num) rfl
-    hv (by norm_num) hosc (fun z' b hb => stoneGeary_positive hr hrr v hv hosc z' hb) ?_ ha z
-  · have hβ : ((stoneGeary.withRate r hrr).discount : ℝ) = 1 / 8 := rfl
-    have hinc : (stoneGeary.withRate r hrr).maxIncome = 1 := rfl
-    have hint : (stoneGeary.withRate r hrr).interest = r := rfl
-    rw [hβ, hinc, hint, Real.rpow_one]
-    nlinarith [hr.1, hr.2]
+/-- **The cap is slack**, from one inequality in the primitives. `slack_of_primitives` supplies
+the deviation argument and the reduction to the top rate, so what is left is the arithmetic
+`(βG/θ)(η + maxIncome + (1 + rhi - θ)·assetCap) < assetCap`, which at these numbers is
+`0.876 × 1.007 ≈ 0.882 < 1`. The margin is thin: the oscillation bound `G = 7` is what eats it. -/
+theorem stoneGeary_slack :
+    ∀ r ∈ Icc (0 : ℝ) (1 / 200), ∀ hrr : stoneGeary.RateOK r, ∀ v : (ℝ × Fin 2) →ᵇ ℝ,
+      ConcaveSlices (0 : ℝ) 1 v → (stoneGeary.withRate r hrr).OscOn v 7 →
+      ∀ a ∈ Icc (0 : ℝ) 1, ∀ z : Fin 2, (stoneGeary.withRate r hrr).policyOf v (a, z) < 1 := by
+  refine IncomeFluctuation.slack_of_primitives (γ := 1) (η := 1 / 1000) (θ := 999 / 1000)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) rfl (by norm_num) le_rfl
+    (fun r hr hrr v hv hosc z a ha => stoneGeary_positive hr hrr v hv hosc z ha) ?_
+  have hinc : stoneGeary.maxIncome = 1 := rfl
+  rw [stoneGeary_discount, hinc, Real.rpow_one]
+  norm_num
 
 /-! ### The corner
 
@@ -266,7 +267,7 @@ theorem stoneGeary_calibrated :
   impatient := fun r hr => by rw [stoneGeary_discount]; nlinarith [hr.1, hr.2]
   osc_nonneg := by norm_num
   osc_le := fun r hr hrr => stoneGeary_oscSpread_le hr hrr
-  slack := fun r hr hrr v hv hosc a ha z => stoneGeary_slack hr hrr hv hosc ha z
+  slack := stoneGeary_slack
   a₀_pos := by norm_num
   a₀_le := by norm_num
   corner := fun r hr hrr a ha => stoneGeary_corner r hr hrr a ha
