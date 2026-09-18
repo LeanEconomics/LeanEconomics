@@ -268,6 +268,47 @@ theorem crra_policy_lt_self_of_minMPC {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crr
   refine P.policy_lt_self_of_consumption_lower_bound (ε := P.minMPC γ) ha ?_ (by linarith)
   simpa using P.crra_minMPC_mul_le_consumptionFn hγ0 hu rfl hint hβ hβR hpos hcap z ha
 
+/-! ### The exhaustion data, without `IidIncome`
+
+`exists_exhaust_of_impatient` (Açıkgöz Proposition 4) also supplies the decline half from
+impatience, but it gets there by comparing income states: consumption is lowest where income is
+lowest, which needs `IidIncome` so that the continuation does not depend on today's state. The
+minimal-MPC route compares nothing. It is a statement about the budget and the Euler inequality
+at ONE state, so it holds whatever the income process does.
+
+What it costs instead is the two iterate-level hypotheses, which the Açıkgöz route asks for only
+at the fixed point. -/
+
+/-- **The Doeblin exhaustion data from the minimal MPC.** Only the corner condition and one
+threshold inequality are left to the calibration — and no assumption is made about the income
+process. -/
+theorem crra_exists_exhaust_of_minMPC {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hfl : assetFloor = 0) (hint : 0 ≤ P.interest) (hβ : 0 < (P.discount : ℝ))
+    (hβR : (P.discount : ℝ) * (1 + P.interest) < 1)
+    (hpos : ∀ n : ℕ, ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap,
+      0 < P.consumptionFnOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) z a)
+    (hcap : ∀ n : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
+      P.policyOf ((P.toExtended.bellman)^[n] (0 : (ℝ × Z) →ᵇ ℝ)) (a, z) < assetCap)
+    {z₀ : Z} {a₀ : ℝ} (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
+    (hzero : ∀ a ∈ Icc (0 : ℝ) a₀, P.policy (a, z₀) = 0)
+    (hthr : (1 - P.minMPC γ) * P.income z₀
+      < (1 - (1 - P.minMPC γ) * (1 + P.interest)) * a₀) :
+    ∃ N : ℕ, (P.gBad z₀)^[N] P.topState = P.botState := by
+  subst hfl
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  -- the decline threshold only has to be cleared once: the gap grows with assets
+  have hslope : (0 : ℝ) < 1 - (1 - P.minMPC γ) * (1 + P.interest) := by
+    rw [one_sub_minMPC_mul (P := P)]
+    have := patience_lt_one (P := P) hγ0 hβR
+    linarith
+  refine P.exists_exhaust_of_decline ha₀ hle hzero fun a ha => ?_
+  refine P.crra_policy_lt_self_of_minMPC hγ0 hu rfl hint hβ hβR hpos hcap z₀
+    ⟨le_trans ha₀.le ha.1, ha.2⟩ ?_
+  have hmono : (1 - (1 - P.minMPC γ) * (1 + P.interest)) * a₀
+      ≤ (1 - (1 - P.minMPC γ) * (1 + P.interest)) * a :=
+    mul_le_mul_of_nonneg_left ha.1 hslope.le
+  linarith
+
 end IncomeFluctuation
 
 

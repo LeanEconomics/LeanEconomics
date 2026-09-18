@@ -121,4 +121,54 @@ theorem nearLog_exists_equilibrium_of_technology' :
     (le_capitalDemand_of_sq (by norm_num) (by norm_num))
     (capitalDemand_le_of_sq (by norm_num) (by norm_num))
 
+/-! ### Exhaustion without the income process
+
+`nearLog_calibrated.exhausts` gets the decline half from Açıkgöz Proposition 4, which compares
+income states and therefore needs `IidIncome`. The minimal-MPC route compares nothing, so the
+same data comes out with no assumption about the transition matrix at all — only the corner
+condition and one threshold inequality.
+
+At these numbers the threshold is `0.00111 < 0.0178`, clear by a factor of sixteen: the
+household's consumption share is so high that assets fall from just above `1/800`, well below the
+`1/50` the corner condition already covers. -/
+
+/-- **The Doeblin exhaustion data for `nearLog`, with nothing assumed about the income process.**
+-/
+theorem nearLog_exists_exhaust_of_minMPC {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) :
+    ∃ N : ℕ, ((nearLog.withRate r hrr).gBad 0)^[N] (nearLog.withRate r hrr).topState
+      = (nearLog.withRate r hrr).botState := by
+  have hone : 1 - (nearLog.withRate r hrr).minMPC (15 / 16) ≤ 111 / 1000 :=
+    nearLog_one_sub_minMPC_le hr hrr
+  have hzero : (0 : ℝ) ≤ 1 - (nearLog.withRate r hrr).minMPC (15 / 16) := by
+    have := IncomeFluctuation.minMPC_le_one (P := nearLog.withRate r hrr) (γ := 15 / 16)
+      (by norm_num)
+      (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
+    linarith
+  refine (nearLog.withRate r hrr).crra_exists_exhaust_of_minMPC (γ := 15 / 16) (z₀ := 0)
+    (a₀ := 1 / 50) (by norm_num) rfl rfl hr.1
+    (by rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl]; norm_num)
+    (by
+      rw [show ((nearLog.withRate r hrr).discount : ℝ) = 1 / 8 from rfl,
+        show (nearLog.withRate r hrr).interest = r from rfl]
+      linarith [hr.2])
+    (fun n z' b hb => nearLog_calibrated.positive_iterate hr hrr hr hrr n hb z')
+    (fun n b hb z' => nearLog_calibrated.policyOf_iterate_lt_cap hr hrr hr hrr n hb z')
+    (by norm_num) (by norm_num) (fun a ha => nearLog_corner_uniform hr hrr ha) ?_
+  rw [show (nearLog.withRate r hrr).income 0 = 1 / 100 from rfl,
+    show (nearLog.withRate r hrr).interest = r from rfl]
+  nlinarith [hone, hzero, hr.1, hr.2]
+
+/-- **A unique stationary distribution for `nearLog`, with the income process assumed only to
+reach the worst state.** The class proves the same thing, but its route to the decline half runs
+through Açıkgöz Proposition 4 and so needs the income process to be iid. Here the only thing
+asked of the transition matrix is `0 < transitionMatrix z 0` — that the worst income state is
+reachable from everywhere, which is what the Doeblin argument itself needs and cannot avoid. -/
+theorem nearLog_existsUnique_of_minMPC {r : ℝ} (hr : r ∈ Icc (0 : ℝ) (1 / 200))
+    (hrr : nearLog.RateOK r) :
+    ∃! μ : ProbabilityMeasure nearLog.State, (nearLog.withRate r hrr).IsStationary μ := by
+  obtain ⟨N, hN⟩ := nearLog_exists_exhaust_of_minMPC hr hrr
+  exact (nearLog.withRate r hrr).existsUnique_isStationary (z₀ := 0) (N := N)
+    (fun z => by norm_num) hN
+
 end LeanEconomics
