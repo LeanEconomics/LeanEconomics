@@ -57,7 +57,7 @@ theorem aggregateCapital_le_of_neg_rate (hr : P.interest < 0) {μ : ProbabilityM
   have h := P.aggregateCapital_le_of_consumption_bound_mean hμ (ε := 0) (by norm_num)
     (by linarith) (fun z a _ => by
       rw [zero_mul]
-      show (0 : ℝ) ≤ P.consumption (a, z) (P.policy (a, z))
+      change (0 : ℝ) ≤ P.consumption (a, z) (P.policy (a, z))
       exact P.consumption_nonneg (P.policy_mem _))
   rw [show (1 : ℝ) - (1 - 0) * (1 + P.interest) = -P.interest by ring, sub_zero, one_mul] at h
   exact h
