@@ -108,3 +108,6 @@ import LeanEconomics.Models.Tauchen
 import LeanEconomics.Models.ColemanReffett
 import LeanEconomics.Equilibrium.HomotheticDistribution
 import LeanEconomics.Equilibrium.RateRange
+import LeanEconomics.Analysis.StronglyMonotone
+import LeanEconomics.Equilibrium.LasryLions
+import LeanEconomics.Equilibrium.Bisection
