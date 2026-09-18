@@ -73,37 +73,43 @@ variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
 /-- **Saving rises with the rate on `[0, rhi]`**, for log utility. Local comparisons from
 `crra_policy_mono_withRate_of_minMPC` chained by `monotoneOn_of_local`. For log the minimal MPC is
 `1 - β` at every rate, so every cap condition collapses to the one on `hcap`. -/
-theorem log_policy_mono_rateFamily {rhi ε : ℝ} (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
-    (hβ : 0 < (P.discount : ℝ)) (hrhi : 0 ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
+theorem log_policy_mono_rateFamily {rlo rhi ε : ℝ} (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
+    (hβ : 0 < (P.discount : ℝ)) (hβ1 : (P.discount : ℝ) < 1) (hrlo : 0 < 1 + rlo)
+    (hlohi : rlo ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hε : 0 < ε)
     (hcap : (P.discount : ℝ) * P.maxIncome
       + ((P.discount : ℝ) * (1 + rhi) + ε) * assetCap < assetCap) :
-    ∀ r ∈ Icc (0 : ℝ) rhi, ∀ r' ∈ Icc (0 : ℝ) rhi, r ≤ r' →
+    ∀ r ∈ Icc rlo rhi, ∀ r' ∈ Icc rlo rhi, r ≤ r' →
       ∀ s : ℝ × Z, s.1 ∈ Icc (0 : ℝ) assetCap →
-        (P.rateFamily (by norm_num) hrhi r).policy s
-          ≤ (P.rateFamily (by norm_num) hrhi r').policy s := by
+        (P.rateFamily hrlo hlohi r).policy s
+          ≤ (P.rateFamily hrlo hlohi r').policy s := by
   intro r hr r' hr' hle s hs
   have hcap0 : (0 : ℝ) ≤ assetCap := P.assetCap_nonneg
-  have hmono : MonotoneOn (fun x => (P.rateFamily (by norm_num) hrhi x).policy s)
-      (Icc (0 : ℝ) rhi) := by
+  have hmono : MonotoneOn (fun x => (P.rateFamily hrlo hlohi x).policy s)
+      (Icc rlo rhi) := by
     refine monotoneOn_of_local hε ?_
     intro x hx y hy hxy hgapxy
     have hxok : P.RateOK x := rateOK_of_floor_zero (by linarith [hx.1])
     have hyok : P.RateOK y := rateOK_of_floor_zero (by linarith [hy.1])
-    show (P.rateFamily (by norm_num) hrhi x).policy s
-      ≤ (P.rateFamily (by norm_num) hrhi y).policy s
+    show (P.rateFamily hrlo hlohi x).policy s
+      ≤ (P.rateFamily hrlo hlohi y).policy s
     rw [P.rateFamily_eq _ _ hx hxok, P.rateFamily_eq _ _ hy hyok]
     obtain ⟨a, z⟩ := s
     have hκx : 1 - (P.withRate x hxok).minMPC 1 = (P.discount : ℝ) := by
       rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; ring
     have hκy : 1 - (P.withRate y hyok).minMPC 1 = (P.discount : ℝ) := by
       rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; ring
+    have hκxpos : 0 < (P.withRate x hxok).minMPC 1 := by
+      rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; linarith
+    have hκypos : 0 < (P.withRate y hyok).minMPC 1 := by
+      rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; linarith
     have hx_le : (P.discount : ℝ) * (1 + x) ≤ (P.discount : ℝ) * (1 + rhi) :=
       mul_le_mul_of_nonneg_left (by linarith [hx.2]) hβ.le
     have hy_le : (P.discount : ℝ) * (1 + y) ≤ (P.discount : ℝ) * (1 + rhi) :=
       mul_le_mul_of_nonneg_left (by linarith [hy.2]) hβ.le
     have hεcap : (0 : ℝ) ≤ ε * assetCap := mul_nonneg hε.le hcap0
-    refine P.crra_policy_mono_withRate_of_minMPC (γ := 1) one_pos le_rfl hu hxok hyok hxy hx.1 hβ
+    refine P.crra_policy_mono_withRate_of_minMPC (γ := 1) one_pos le_rfl hu hxok hyok hxy hκxpos
+      hκypos hβ
       (by linarith) ((P.withRate x hxok).positiveConsumptionAll_of_unbounded hunb)
       ((P.withRate y hyok).positiveConsumptionAll_of_unbounded hunb) ?_ ?_ ?_ hs z
     · rw [hκx]
@@ -127,22 +133,22 @@ variable [MeasurableSpace Z] [BorelSpace Z]
 
 /-- The per-rate corner test, from its worst case at the top of the interval. For log the test
 at rate `r` is `β(1+r)(income z₀ + (1+r) a₀) < minIncome`, increasing in `r`. -/
-theorem log_corner_of_top {rhi a₀ : ℝ} {z₀ : Z} (hβ : 0 < (P.discount : ℝ)) (ha₀ : 0 < a₀)
+theorem log_corner_of_top {rlo rhi a₀ : ℝ} {z₀ : Z} (hβ : 0 < (P.discount : ℝ)) (ha₀ : 0 < a₀)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
-    {r : ℝ} (hr : r ∈ Icc (0 : ℝ) rhi) (hrr : P.RateOK r) :
+    {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) :
     ((P.withRate r hrr).discount : ℝ) * (1 + (P.withRate r hrr).interest)
         * (P.withRate r hrr).minIncome ^ (-(1 : ℝ))
       < ((P.withRate r hrr).income z₀ + (1 + (P.withRate r hrr).interest) * a₀) ^ (-(1 : ℝ)) := by
   have hy : 0 < P.income z₀ := lt_of_lt_of_le P.minIncome_pos (P.minIncome_le z₀)
   have hmin : 0 < P.minIncome := P.minIncome_pos
-  have hq : 0 < P.income z₀ + (1 + r) * a₀ := by nlinarith [hr.1]
+  have hq : 0 < P.income z₀ + (1 + r) * a₀ := by nlinarith [hrr.1]
   have hstep : (P.discount : ℝ) * (1 + r) * (P.income z₀ + (1 + r) * a₀)
       ≤ (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) := by
     have h1 : (P.discount : ℝ) * (1 + r) ≤ (P.discount : ℝ) * (1 + rhi) :=
       mul_le_mul_of_nonneg_left (by linarith [hr.2]) hβ.le
     have h2 : P.income z₀ + (1 + r) * a₀ ≤ P.income z₀ + (1 + rhi) * a₀ := by
       nlinarith [hr.2]
-    exact mul_le_mul h1 h2 hq.le (mul_nonneg hβ.le (by linarith [hr.1, hr.2]))
+    exact mul_le_mul h1 h2 hq.le (mul_nonneg hβ.le (by linarith [hrr.1, hr.2]))
   simp only [IncomeFluctuation.withRate_discount, IncomeFluctuation.withRate_interest,
     IncomeFluctuation.withRate_minIncome, IncomeFluctuation.withRate_income,
     Real.rpow_neg_one]
@@ -150,20 +156,21 @@ theorem log_corner_of_top {rhi a₀ : ℝ} {z₀ : Z} (hβ : 0 < (P.discount : �
   linarith
 
 /-- **A unique stationary distribution at every rate in `[0, rhi]`**, for log utility. -/
-theorem log_existsUnique_isStationary {rhi a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
-    (hβ : 0 < (P.discount : ℝ)) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
+theorem log_existsUnique_isStationary {rlo rhi a₀ : ℝ} (hu : P.u = crraUtility 1)
+    (hunb : P.Unbounded)
+    (hβ : 0 < (P.discount : ℝ)) (hβ1 : (P.discount : ℝ) < 1)
+    (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hcap : (P.discount : ℝ) * (P.maxIncome + (1 + rhi) * assetCap) < assetCap)
     (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hreach : ∀ z, 0 < P.transitionMatrix z z₀) (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
-    {r : ℝ} (hr : r ∈ Icc (0 : ℝ) rhi) (hrr : P.RateOK r) :
+    {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) :
     ∃! μ : ProbabilityMeasure P.State, (P.withRate r hrr).IsStationary μ := by
   have hcap0 : (0 : ℝ) ≤ assetCap := P.assetCap_nonneg
   have hκ : 1 - (P.withRate r hrr).minMPC 1 = (P.discount : ℝ) := by
     rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; ring
   have hκpos : 0 < (P.withRate r hrr).minMPC 1 := by
-    rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]
-    nlinarith [hr.1, hr.2, hβ]
+    rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; linarith
   refine (P.withRate r hrr).crra_existsUnique_isStationary_of_euler_corner_monotone (γ := 1)
     one_pos hu rfl hκpos hβ (by simpa using
         (show (P.discount : ℝ) * (1 + r) < 1 by nlinarith [hr.2, hβ]))
@@ -177,13 +184,14 @@ theorem log_existsUnique_isStationary {rhi a₀ : ℝ} (hu : P.u = crraUtility 1
   nlinarith
 
 /-- **Convergence to it from any start**, at every rate in `[0, rhi]`. -/
-theorem log_tendsto_pushProb {rhi a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
-    (hβ : 0 < (P.discount : ℝ)) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
+theorem log_tendsto_pushProb {rlo rhi a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
+    (hβ : 0 < (P.discount : ℝ)) (hβ1 : (P.discount : ℝ) < 1)
+    (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hcap : (P.discount : ℝ) * (P.maxIncome + (1 + rhi) * assetCap) < assetCap)
     (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hreach : ∀ z, 0 < P.transitionMatrix z z₀) (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
-    {r : ℝ} (hr : r ∈ Icc (0 : ℝ) rhi) (hrr : P.RateOK r)
+    {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r)
     (μ₀ : ProbabilityMeasure P.State) {μ : ProbabilityMeasure P.State}
     (hμ : (P.withRate r hrr).IsStationary μ) :
     Tendsto (fun m => (P.withRate r hrr).pushProb^[m] μ₀) atTop (𝓝 μ) := by
@@ -191,8 +199,7 @@ theorem log_tendsto_pushProb {rhi a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb :
   have hκ : 1 - (P.withRate r hrr).minMPC 1 = (P.discount : ℝ) := by
     rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; ring
   have hκpos : 0 < (P.withRate r hrr).minMPC 1 := by
-    rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]
-    nlinarith [hr.1, hr.2, hβ]
+    rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; linarith
   refine (P.withRate r hrr).crra_tendsto_pushProb_of_euler_corner_monotone (γ := 1)
     one_pos hu rfl hκpos hβ (by simpa using
         (show (P.discount : ℝ) * (1 + r) < 1 by nlinarith [hr.2, hβ]))
@@ -209,8 +216,10 @@ theorem log_tendsto_pushProb {rhi a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb :
 
 /-- **Capital supply rises with the rate on `[0, rhi]`**, for log utility, along any selection of
 stationary distributions. Light's Theorems 1 and 2. -/
-theorem log_monotoneOn_capitalSupply {rhi ε a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
-    (hβ : 0 < (P.discount : ℝ)) (hrhi : 0 ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
+theorem log_monotoneOn_capitalSupply {rlo rhi ε a₀ : ℝ} (hu : P.u = crraUtility 1)
+    (hunb : P.Unbounded)
+    (hβ : 0 < (P.discount : ℝ)) (hβ1 : (P.discount : ℝ) < 1) (hrlo : 0 < 1 + rlo)
+    (hlohi : rlo ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hε : 0 < ε)
     (hcap : (P.discount : ℝ) * P.maxIncome
       + ((P.discount : ℝ) * (1 + rhi) + ε) * assetCap < assetCap)
@@ -218,20 +227,20 @@ theorem log_monotoneOn_capitalSupply {rhi ε a₀ : ℝ} (hu : P.u = crraUtility
     (hreach : ∀ z, 0 < P.transitionMatrix z z₀) (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
     (ν : ℝ → ProbabilityMeasure P.State)
-    (hν : ∀ r ∈ Icc (0 : ℝ) rhi, ∀ hrr : P.RateOK r, (P.withRate r hrr).IsStationary (ν r)) :
-    MonotoneOn (fun r => P.aggregateCapital (ν r)) (Icc (0 : ℝ) rhi) := by
+    (hν : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, (P.withRate r hrr).IsStationary (ν r)) :
+    MonotoneOn (fun r => P.aggregateCapital (ν r)) (Icc rlo rhi) := by
   have hcap0 : (0 : ℝ) ≤ assetCap := P.assetCap_nonneg
   have hcap' : (P.discount : ℝ) * (P.maxIncome + (1 + rhi) * assetCap) < assetCap := by
     have := mul_nonneg hε.le hcap0
     nlinarith
-  refine P.monotoneOn_capitalSupply_of_policy_mono (P.rateFamily (by norm_num) hrhi)
+  refine P.monotoneOn_capitalSupply_of_policy_mono (P.rateFamily hrlo hlohi)
     (fun r r' z z' => rfl)
-    (P.log_policy_mono_rateFamily hu hunb hβ hrhi hβR hε hcap)
+    (P.log_policy_mono_rateFamily hu hunb hβ hβ1 hrlo hlohi hβR hε hcap)
     ⟨Measure.dirac (Classical.ofNonempty : P.State), inferInstance⟩ ν ?_
   intro r hr
   have hrr : P.RateOK r := rateOK_of_floor_zero (by linarith [hr.1])
   rw [P.rateFamily_eq _ _ hr hrr]
-  exact P.log_tendsto_pushProb hu hunb hβ hβR hcap' hmono hz₀ hreach ha₀ hle hcorn hr hrr _
+  exact P.log_tendsto_pushProb hu hunb hβ hβ1 hβR hcap' hmono hz₀ hreach ha₀ hle hcorn hr hrr _
     (hν r hr hrr)
 
 /-! ### Theorem 3: single crossing -/
@@ -239,16 +248,18 @@ theorem log_monotoneOn_capitalSupply {rhi ε a₀ : ℝ} (hu : P.u = crraUtility
 /-- **The equilibrium rate is unique on `[0, rhi]`**, for a log economy against the normalised
 Cobb--Douglas firm. Two equilibria — a rate and a stationary distribution whose aggregate
 capital is `k(r)/w(r)` — have the same rate. -/
-theorem log_equilibriumRate_unique {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α) (hα1 : α < 1) (hδ : 0 < δ)
+theorem log_equilibriumRate_unique {rlo rhi ε a₀ α δ : ℝ} (hα0 : 0 < α) (hα1 : α < 1)
+    (hδ : 0 < rlo + δ)
     (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
-    (hβ : 0 < (P.discount : ℝ)) (hrhi : 0 ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
+    (hβ : 0 < (P.discount : ℝ)) (hβ1 : (P.discount : ℝ) < 1) (hrlo : 0 < 1 + rlo)
+    (hlohi : rlo ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hε : 0 < ε)
     (hcap : (P.discount : ℝ) * P.maxIncome
       + ((P.discount : ℝ) * (1 + rhi) + ε) * assetCap < assetCap)
     (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hreach : ∀ z, 0 < P.transitionMatrix z z₀) (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
-    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc (0 : ℝ) rhi) (h₂ : r₂ ∈ Icc (0 : ℝ) rhi)
+    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc rlo rhi) (h₂ : r₂ ∈ Icc rlo rhi)
     (hrr₁ : P.RateOK r₁) (hrr₂ : P.RateOK r₂)
     {μ₁ μ₂ : ProbabilityMeasure P.State}
     (hμ₁ : (P.withRate r₁ hrr₁).IsStationary μ₁) (hμ₂ : (P.withRate r₂ hrr₂).IsStationary μ₂)
@@ -261,28 +272,29 @@ theorem log_equilibriumRate_unique {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α) (h�
     nlinarith
   -- the selection of stationary distributions, defined through the clamped rate
   have hE : ∀ r : ℝ, ∃! μ : ProbabilityMeasure P.State,
-      (P.withRate (clampRate 0 rhi r)
-        (rateOK_of_floor_zero (one_add_clampRate_pos (by norm_num) hrhi r))).IsStationary μ :=
-    fun r => P.log_existsUnique_isStationary hu hunb hβ hβR hcap' hmono hz₀ hreach ha₀ hle hcorn
-      (clampRate_mem hrhi r) _
+      (P.withRate (clampRate rlo rhi r)
+        (rateOK_of_floor_zero (one_add_clampRate_pos hrlo hlohi r))).IsStationary μ :=
+    fun r => P.log_existsUnique_isStationary hu hunb hβ hβ1 hβR hcap' hmono hz₀ hreach ha₀ hle
+      hcorn (clampRate_mem hlohi r) _
   set ν : ℝ → ProbabilityMeasure P.State := fun r => (hE r).choose with hνdef
-  have hν : ∀ r ∈ Icc (0 : ℝ) rhi, ∀ hrr : P.RateOK r, (P.withRate r hrr).IsStationary (ν r) := by
+  have hν : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, (P.withRate r hrr).IsStationary (ν r) := by
     intro r hr hrr
-    have hc : clampRate 0 rhi r = r := clampRate_eq hr
+    have hc : clampRate rlo rhi r = r := clampRate_eq hr
     rw [← P.withRate_congr hc _ hrr]
     exact (hE r).choose_spec.1
-  have hid : ∀ r ∈ Icc (0 : ℝ) rhi, ∀ hrr : P.RateOK r, ∀ μ : ProbabilityMeasure P.State,
+  have hid : ∀ r ∈ Icc rlo rhi, ∀ hrr : P.RateOK r, ∀ μ : ProbabilityMeasure P.State,
       (P.withRate r hrr).IsStationary μ → μ = ν r := by
     intro r hr hrr μ hμ
-    have hc : clampRate 0 rhi r = r := clampRate_eq hr
+    have hc : clampRate rlo rhi r = r := clampRate_eq hr
     refine (hE r).choose_spec.2 μ ?_
     rw [P.withRate_congr hc _ hrr]
     exact hμ
   rw [hid r₁ h₁ hrr₁ μ₁ hμ₁] at he₁
   rw [hid r₂ h₂ hrr₂ μ₂ hμ₂] at he₂
   exact eq_of_monotoneOn_of_strictAntiOn
-    (P.log_monotoneOn_capitalSupply hu hunb hβ hrhi hβR hε hcap hmono hz₀ hreach ha₀ hle hcorn ν hν)
-    (normalisedDemand_strictAntiOn hα0 hα1 (by linarith : (0 : ℝ) < 0 + δ)) h₁ h₂ he₁ he₂
+    (P.log_monotoneOn_capitalSupply hu hunb hβ hβ1 hrlo hlohi hβR hε hcap hmono hz₀ hreach ha₀ hle
+      hcorn ν hν)
+    (normalisedDemand_strictAntiOn hα0 hα1 hδ) h₁ h₂ he₁ he₂
 
 /-! ### With the constants constructed
 
@@ -291,13 +303,15 @@ the cap clears `2β · maxIncome / (1 - β(1+rhi))`, choose the step as half the
 the corner level as small as the corner test needs. -/
 
 /-- **Uniqueness from one inequality on the cap.** -/
-theorem log_equilibriumRate_unique_of_cap {rhi α δ : ℝ} (hα0 : 0 < α) (hα1 : α < 1) (hδ : 0 < δ)
+theorem log_equilibriumRate_unique_of_cap {rlo rhi α δ : ℝ} (hα0 : 0 < α) (hα1 : α < 1)
+    (hδ : 0 < rlo + δ)
     (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
-    (hβ : 0 < (P.discount : ℝ)) (hrhi : 0 ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
+    (hβ : 0 < (P.discount : ℝ)) (hβ1 : (P.discount : ℝ) < 1) (hrlo : 0 < 1 + rlo)
+    (hlohi : rlo ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hcap : 2 * (P.discount : ℝ) * P.maxIncome < (1 - (P.discount : ℝ) * (1 + rhi)) * assetCap)
     (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hmin : P.income z₀ = P.minIncome) (hreach : ∀ z, 0 < P.transitionMatrix z z₀)
-    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc (0 : ℝ) rhi) (h₂ : r₂ ∈ Icc (0 : ℝ) rhi)
+    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc rlo rhi) (h₂ : r₂ ∈ Icc rlo rhi)
     (hrr₁ : P.RateOK r₁) (hrr₂ : P.RateOK r₂)
     {μ₁ μ₂ : ProbabilityMeasure P.State}
     (hμ₁ : (P.withRate r₁ hrr₁).IsStationary μ₁) (hμ₂ : (P.withRate r₂ hrr₂).IsStationary μ₂)
@@ -305,7 +319,7 @@ theorem log_equilibriumRate_unique_of_cap {rhi α δ : ℝ} (hα0 : 0 < α) (hα
     (he₂ : P.aggregateCapital μ₂ = normalisedDemand α δ r₂) : r₁ = r₂ := by
   set β : ℝ := (P.discount : ℝ) with hβdef
   set R : ℝ := 1 + rhi with hRdef
-  have hR : 0 < R := by rw [hRdef]; linarith
+  have hR : 0 < R := by rw [hRdef]; linarith [hrlo, hlohi]
   have hroom : 0 < 1 - β * R := by rw [hβdef, hRdef]; linarith
   have hmaxpos : 0 < P.maxIncome := lt_of_lt_of_le P.minIncome_pos P.minIncome_le_maxIncome
   have hcap0 : 0 < assetCap := by
@@ -338,8 +352,8 @@ theorem log_equilibriumRate_unique_of_cap {rhi α δ : ℝ} (hα0 : 0 < α) (hα
     have : β * R * (P.minIncome + R * a₀) = β * R * P.minIncome + β * R * (R * a₀) := by ring
     rw [this]
     nlinarith [hkey, hmono, hroom, hminpos]
-  exact P.log_equilibriumRate_unique hα0 hα1 hδ hu hunb hβ hrhi hβR hε hcapε hmono hz₀ hreach ha₀
-    hle hcorn h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
+  exact P.log_equilibriumRate_unique hα0 hα1 hδ hu hunb hβ hβ1 hrlo hlohi hβR hε hcapε hmono hz₀
+    hreach ha₀ hle hcorn h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
 
 /-! ### Negative rates
 
@@ -396,30 +410,53 @@ theorem log_no_equilibrium_of_ceiling {α δ r : ℝ} (hu : P.u = crraUtility 1)
 
 /-! ### Aiyagari (1994), `μ = 1`
 
-`β = 0.96`, `α = 0.36`, `δ = 0.08`, log utility, no borrowing, and an iid labour endowment
-process about which nothing else is assumed. The time-preference rate is `λ = 1/0.96 - 1 = 1/24`,
-and the theorem covers every interval `[0, rhi]` with `rhi < 1/24`; his reported equilibrium
-rates at `μ = 1` lie between `3.3%` and `4.17%`, all inside. -/
+`β = 0.96`, `α = 0.36`, `δ = 0.08`, log utility, no borrowing, and a labour endowment process
+with monotone transitions about which nothing else is assumed. The time-preference rate is
+`λ = 1/0.96 - 1 = 1/24`, and the theorem covers every interval `[rlo, rhi]` with
+`-δ < rlo ≤ rhi < 1/24` — so the whole of `(-δ, λ)`, the range on which Cobb--Douglas demand is
+finite and the household impatient; his reported equilibrium rates at `μ = 1` lie between `3.3%`
+and `4.17%`. -/
 
-/-- **Aiyagari (1994) at `μ = 1`: the equilibrium interest rate is unique** on `[0, rhi]` for
-every `rhi` below the time-preference rate `1/24`, for any economy with his preferences and
-technology and any earnings process with monotone transitions, provided the asset cap clears
-`(48/25) · maxIncome / (1 - (24/25)(1+rhi))`. -/
-theorem aiyagari1994_log_equilibriumRate_unique {rhi : ℝ}
+/-- **Aiyagari (1994) at `μ = 1`: the equilibrium interest rate is unique** on `[rlo, rhi]` for
+every `-δ < rlo ≤ rhi` below the time-preference rate `1/24`, for any economy with his
+preferences and technology and any earnings process with monotone transitions, provided the
+asset cap clears `(48/25) · maxIncome / (1 - (24/25)(1+rhi))`. -/
+theorem aiyagari1994_log_equilibriumRate_unique {rlo rhi : ℝ}
     (hu : P.u = crraUtility 1) (hunb : P.Unbounded) (hβ : (P.discount : ℝ) = 24 / 25)
-    (hrhi : 0 ≤ rhi) (hlam : rhi < 1 / 24)
+    (hrlo : -2 / 25 < rlo) (hlohi : rlo ≤ rhi) (hlam : rhi < 1 / 24)
     (hcap : 2 * (24 / 25) * P.maxIncome < (1 - 24 / 25 * (1 + rhi)) * assetCap)
     (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hmin : P.income z₀ = P.minIncome) (hreach : ∀ z, 0 < P.transitionMatrix z z₀)
-    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc (0 : ℝ) rhi) (h₂ : r₂ ∈ Icc (0 : ℝ) rhi)
+    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc rlo rhi) (h₂ : r₂ ∈ Icc rlo rhi)
     (hrr₁ : P.RateOK r₁) (hrr₂ : P.RateOK r₂)
     {μ₁ μ₂ : ProbabilityMeasure P.State}
     (hμ₁ : (P.withRate r₁ hrr₁).IsStationary μ₁) (hμ₂ : (P.withRate r₂ hrr₂).IsStationary μ₂)
     (he₁ : P.aggregateCapital μ₁ = normalisedDemand (9 / 25) (2 / 25) r₁)
     (he₂ : P.aggregateCapital μ₂ = normalisedDemand (9 / 25) (2 / 25) r₂) : r₁ = r₂ :=
-  P.log_equilibriumRate_unique_of_cap (by norm_num) (by norm_num) (by norm_num) hu hunb
-    (by rw [hβ]; norm_num) hrhi (by rw [hβ]; linarith) (by rw [hβ]; exact hcap) hmono hz₀ hmin
-    hreach h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
+  P.log_equilibriumRate_unique_of_cap (by norm_num) (by norm_num) (by linarith) hu hunb
+    (by rw [hβ]; norm_num) (by rw [hβ]; norm_num) (by linarith) hlohi (by rw [hβ]; linarith)
+    (by rw [hβ]; exact hcap) hmono hz₀ hmin hreach h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
+
+/-- **Aiyagari (1994) at `μ = 1`: two equilibrium rates in `(-δ, λ)` coincide.** The interval
+version applied to `[min r₁ r₂, max r₁ r₂]`; the cap condition is the one at the larger rate.
+Together with `aiyagari1994_log_no_equilibrium_of_ceiling` below `-δ + ε` and
+`log_no_equilibrium_of_patient_risk` above `λ + ε`, this is uniqueness of the equilibrium rate
+for his log calibration, up to two thin bands the cap forces. -/
+theorem aiyagari1994_log_equilibriumRate_unique_Ioo
+    (hu : P.u = crraUtility 1) (hunb : P.Unbounded) (hβ : (P.discount : ℝ) = 24 / 25)
+    (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
+    (hmin : P.income z₀ = P.minIncome) (hreach : ∀ z, 0 < P.transitionMatrix z z₀)
+    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Ioo (-2 / 25 : ℝ) (1 / 24)) (h₂ : r₂ ∈ Ioo (-2 / 25 : ℝ) (1 / 24))
+    (hcap : 2 * (24 / 25) * P.maxIncome < (1 - 24 / 25 * (1 + max r₁ r₂)) * assetCap)
+    (hrr₁ : P.RateOK r₁) (hrr₂ : P.RateOK r₂)
+    {μ₁ μ₂ : ProbabilityMeasure P.State}
+    (hμ₁ : (P.withRate r₁ hrr₁).IsStationary μ₁) (hμ₂ : (P.withRate r₂ hrr₂).IsStationary μ₂)
+    (he₁ : P.aggregateCapital μ₁ = normalisedDemand (9 / 25) (2 / 25) r₁)
+    (he₂ : P.aggregateCapital μ₂ = normalisedDemand (9 / 25) (2 / 25) r₂) : r₁ = r₂ :=
+  P.aiyagari1994_log_equilibriumRate_unique hu hunb hβ (rlo := min r₁ r₂) (rhi := max r₁ r₂)
+    (lt_min h₁.1 h₂.1) min_le_max (max_lt h₁.2 h₂.2) hcap hmono hz₀ hmin hreach
+    ⟨min_le_left _ _, le_max_left _ _⟩ ⟨min_le_right _ _, le_max_right _ _⟩
+    hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
 
 /-- **Aiyagari (1994) at `μ = 1`: no equilibrium at a negative rate where the ceiling is below
 demand.** The condition is the ceiling–demand inequality written out with his numbers: it is

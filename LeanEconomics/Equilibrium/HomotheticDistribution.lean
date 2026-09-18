@@ -246,16 +246,17 @@ variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
 /-- **Uniqueness of the equilibrium rate in Aiyagari's own form.** Two rates in `[0, rhi]`, each
 with a stationary distribution of the wage-`w(r)` economy whose aggregate capital is the firm's
 `k(r)`, coincide. -/
-theorem log_equilibriumRate_unique_wage {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α) (hα1 : α < 1)
-    (hδ : 0 < δ) (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
-    (hβ : 0 < (P.discount : ℝ)) (hrhi : 0 ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
+theorem log_equilibriumRate_unique_wage {rlo rhi ε a₀ α δ : ℝ} (hα0 : 0 < α) (hα1 : α < 1)
+    (hδ : 0 < rlo + δ) (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
+    (hβ : 0 < (P.discount : ℝ)) (hβ1 : (P.discount : ℝ) < 1) (hrlo : 0 < 1 + rlo)
+    (hlohi : rlo ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hε : 0 < ε)
     (hcap : (P.discount : ℝ) * P.maxIncome
       + ((P.discount : ℝ) * (1 + rhi) + ε) * assetCap < assetCap)
     (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hreach : ∀ z, 0 < P.transitionMatrix z z₀) (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
-    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc (0 : ℝ) rhi) (h₂ : r₂ ∈ Icc (0 : ℝ) rhi)
+    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc rlo rhi) (h₂ : r₂ ∈ Icc rlo rhi)
     (hrr₁ : P.RateOK r₁) (hrr₂ : P.RateOK r₂)
     (hw₁ : 0 < cobbDouglasWage α δ r₁) (hw₂ : 0 < cobbDouglasWage α δ r₂)
     {μ₁ : ProbabilityMeasure ((P.withRate r₁ hrr₁).scale hw₁).State}
@@ -272,12 +273,12 @@ theorem log_equilibriumRate_unique_wage {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α
   have hmin : 0 < P.minIncome := P.minIncome_pos
   have hy₀ : 0 < P.income z₀ := lt_of_lt_of_le hmin (P.minIncome_le z₀)
   -- the scaled economy at rate `r` has a unique stationary distribution, by the same chain
-  have key : ∀ {r : ℝ} (hr : r ∈ Icc (0 : ℝ) rhi) (hrr : P.RateOK r) {w : ℝ} (hw : 0 < w),
+  have key : ∀ {r : ℝ} (hr : r ∈ Icc rlo rhi) (hrr : P.RateOK r) {w : ℝ} (hw : 0 < w),
       ∃! μ : ProbabilityMeasure ((P.withRate r hrr).scale hw).State,
         ((P.withRate r hrr).scale hw).IsStationary μ := by
     intro r hr hrr w hw
     set Q := (P.withRate r hrr).scale hw with hQ
-    have hR : (0 : ℝ) < 1 + r := by linarith [hr.1]
+    have hR : (0 : ℝ) < 1 + r := hrr.1
     have hβR' : (P.discount : ℝ) * (1 + r) < 1 := by nlinarith [hr.2, hβ]
     have hQκ : 1 - Q.minMPC 1 = (P.discount : ℝ) := by
       rw [IncomeFluctuation.minMPC_one]
@@ -286,7 +287,7 @@ theorem log_equilibriumRate_unique_wage {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α
     have hQκpos : 0 < Q.minMPC 1 := by
       rw [IncomeFluctuation.minMPC_one]
       change 0 < 1 - (P.discount : ℝ)
-      nlinarith [hr.1, hβ]
+      linarith
     refine Q.crra_existsUnique_isStationary_of_euler_corner_monotone (γ := 1) one_pos
       (show Q.u = crraUtility 1 from hu) (mul_zero w) hQκpos hβ hβR'
       ((P.withRate r hrr).monotoneTransitions_scale hw hmono)
@@ -307,26 +308,27 @@ theorem log_equilibriumRate_unique_wage {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α
     · -- the corner test, scaled by `w`
       change (P.discount : ℝ) * (1 + r) * (w * P.minIncome) ^ (-(1 : ℝ))
         < (w * P.income z₀ + (1 + r) * (w * a₀)) ^ (-(1 : ℝ))
-      have hq : 0 < w * P.income z₀ + (1 + r) * (w * a₀) := by positivity
+      have hq : 0 < w * P.income z₀ + (1 + r) * (w * a₀) :=
+        add_pos (mul_pos hw hy₀) (mul_pos hR (mul_pos hw ha₀))
       have hbase : (P.discount : ℝ) * (1 + r) * (P.income z₀ + (1 + r) * a₀) < P.minIncome := by
         have h1 : (P.discount : ℝ) * (1 + r) ≤ (P.discount : ℝ) * (1 + rhi) :=
           mul_le_mul_of_nonneg_left (by linarith [hr.2]) hβ.le
         have h2 : P.income z₀ + (1 + r) * a₀ ≤ P.income z₀ + (1 + rhi) * a₀ := by
           nlinarith [hr.2]
-        have h0 : 0 < P.income z₀ + (1 + r) * a₀ := by positivity
+        have h0 : 0 < P.income z₀ + (1 + r) * a₀ := add_pos hy₀ (mul_pos hR ha₀)
         calc (P.discount : ℝ) * (1 + r) * (P.income z₀ + (1 + r) * a₀)
             ≤ (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) :=
-              mul_le_mul h1 h2 h0.le (by positivity)
+              mul_le_mul h1 h2 h0.le (mul_nonneg hβ.le (by linarith [hR, hr.2]))
           _ < P.minIncome := hcorn
       rw [Real.rpow_neg_one, Real.rpow_neg_one, mul_inv_lt_iff₀ (by positivity),
         inv_mul_eq_div, lt_div_iff₀ hq]
       have := mul_lt_mul_of_pos_left hbase hw
       nlinarith
   -- the unit-wage stationary distributions, and their pushforwards
-  obtain ⟨ν₁, hν₁, -⟩ := P.log_existsUnique_isStationary hu hunb hβ hβR hcap' hmono hz₀ hreach ha₀
-    hle hcorn h₁ hrr₁
-  obtain ⟨ν₂, hν₂, -⟩ := P.log_existsUnique_isStationary hu hunb hβ hβR hcap' hmono hz₀ hreach ha₀
-    hle hcorn h₂ hrr₂
+  obtain ⟨ν₁, hν₁, -⟩ := P.log_existsUnique_isStationary hu hunb hβ hβ1 hβR hcap' hmono hz₀ hreach
+    ha₀ hle hcorn h₁ hrr₁
+  obtain ⟨ν₂, hν₂, -⟩ := P.log_existsUnique_isStationary hu hunb hβ hβ1 hβR hcap' hmono hz₀ hreach
+    ha₀ hle hcorn h₂ hrr₂
   have hs₁ : ((P.withRate r₁ hrr₁).scale hw₁).IsStationary
       ((P.withRate r₁ hrr₁).scaleProb hw₁ ν₁) :=
     (P.withRate r₁ hrr₁).isStationary_scaleProb_log hw₁ hunb hu hν₁
@@ -343,25 +345,25 @@ theorem log_equilibriumRate_unique_wage {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α
   rw [hid₁, (P.withRate r₁ hrr₁).aggregateCapital_scaleProb hw₁ ν₁] at he₁
   rw [hid₂, (P.withRate r₂ hrr₂).aggregateCapital_scaleProb hw₂ ν₂] at he₂
   have hn₁ : P.aggregateCapital ν₁ = normalisedDemand α δ r₁ := by
-    rw [← cobbDouglasCapital_div_wage hα0 hα1 (by linarith [h₁.1]), eq_div_iff hw₁.ne',
+    rw [← cobbDouglasCapital_div_wage hα0 hα1 (by linarith [h₁.1, hδ]), eq_div_iff hw₁.ne',
       mul_comm]
     exact he₁
   have hn₂ : P.aggregateCapital ν₂ = normalisedDemand α δ r₂ := by
-    rw [← cobbDouglasCapital_div_wage hα0 hα1 (by linarith [h₂.1]), eq_div_iff hw₂.ne',
+    rw [← cobbDouglasCapital_div_wage hα0 hα1 (by linarith [h₂.1, hδ]), eq_div_iff hw₂.ne',
       mul_comm]
     exact he₂
-  exact P.log_equilibriumRate_unique hα0 hα1 hδ hu hunb hβ hrhi hβR hε hcap hmono hz₀ hreach ha₀
-    hle hcorn h₁ h₂ hrr₁ hrr₂ hν₁ hν₂ hn₁ hn₂
+  exact P.log_equilibriumRate_unique hα0 hα1 hδ hu hunb hβ hβ1 hrlo hlohi hβR hε hcap hmono hz₀
+    hreach ha₀ hle hcorn h₁ h₂ hrr₁ hrr₂ hν₁ hν₂ hn₁ hn₂
 
 /-- **Aiyagari (1994) at `μ = 1`, in his own form**: `K(r) = Ea(r)` at the wage `w(r)`, with the
 constants constructed from one inequality on the cap. -/
-theorem aiyagari1994_equilibriumRate_unique_wage {rhi : ℝ}
+theorem aiyagari1994_equilibriumRate_unique_wage {rlo rhi : ℝ}
     (hu : P.u = crraUtility 1) (hunb : P.Unbounded) (hβ : (P.discount : ℝ) = 24 / 25)
-    (hrhi : 0 ≤ rhi) (hlam : rhi < 1 / 24)
+    (hrlo : -2 / 25 < rlo) (hlohi : rlo ≤ rhi) (hlam : rhi < 1 / 24)
     (hcap : 2 * (24 / 25) * P.maxIncome < (1 - 24 / 25 * (1 + rhi)) * assetCap)
     (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hmin : P.income z₀ = P.minIncome) (hreach : ∀ z, 0 < P.transitionMatrix z z₀)
-    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc (0 : ℝ) rhi) (h₂ : r₂ ∈ Icc (0 : ℝ) rhi)
+    {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc rlo rhi) (h₂ : r₂ ∈ Icc rlo rhi)
     (hrr₁ : P.RateOK r₁) (hrr₂ : P.RateOK r₂)
     (hw₁ : 0 < cobbDouglasWage (9 / 25) (2 / 25) r₁) (hw₂ : 0 < cobbDouglasWage (9 / 25)
         (2 / 25) r₂)
@@ -375,6 +377,7 @@ theorem aiyagari1994_equilibriumRate_unique_wage {rhi : ℝ}
       = cobbDouglasCapital (9 / 25) (2 / 25) r₂) : r₁ = r₂ := by
   have hβ' : 0 < (P.discount : ℝ) := by rw [hβ]; norm_num
   have hβR : (P.discount : ℝ) * (1 + rhi) < 1 := by rw [hβ]; linarith
+  have hR : (0 : ℝ) < 1 + rhi := by linarith
   have hroom : (0 : ℝ) < 1 - 24 / 25 * (1 + rhi) := by linarith
   have hmaxpos : 0 < P.maxIncome := lt_of_lt_of_le P.minIncome_pos P.minIncome_le_maxIncome
   have hcap0 : 0 < assetCap := by
@@ -388,7 +391,8 @@ theorem aiyagari1994_equilibriumRate_unique_wage {rhi : ℝ}
   have hε : 0 < ε := by rw [hεdef]; linarith
   set A : ℝ := P.minIncome * (1 - 24 / 25 * (1 + rhi)) / (2 * (24 / 25) * (1 + rhi) ^ 2)
     with hAdef
-  have hA : 0 < A := by rw [hAdef]; positivity
+  have hA : 0 < A := by
+    rw [hAdef]; exact div_pos (mul_pos hminpos hroom) (mul_pos (by norm_num) (pow_pos hR 2))
   set a₀ : ℝ := min assetCap A with ha₀def
   have ha₀ : 0 < a₀ := lt_min hcap0 hA
   have hle : a₀ ≤ assetCap := min_le_left _ _
@@ -399,18 +403,18 @@ theorem aiyagari1994_equilibriumRate_unique_wage {rhi : ℝ}
     nlinarith [hcap]
   have hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome := by
     rw [hβ, hmin]
-    have hR : (0 : ℝ) < 1 + rhi := by linarith
     have hkey : 24 / 25 * (1 + rhi) * ((1 + rhi) * A)
         = P.minIncome * (1 - 24 / 25 * (1 + rhi)) / 2 := by
       rw [hAdef]; field_simp; try ring
     have hmono' : 24 / 25 * (1 + rhi) * ((1 + rhi) * a₀) ≤ 24 / 25 * (1 + rhi) * ((1 + rhi) * A) :=
-      mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left ha₀A hR.le) (by positivity)
+      mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left ha₀A hR.le) (by linarith)
     have : 24 / 25 * (1 + rhi) * (P.minIncome + (1 + rhi) * a₀)
         = 24 / 25 * (1 + rhi) * P.minIncome + 24 / 25 * (1 + rhi) * ((1 + rhi) * a₀) := by ring
     rw [this]
     nlinarith [hkey, hmono', hroom, hminpos]
-  exact P.log_equilibriumRate_unique_wage (by norm_num) (by norm_num) (by norm_num) hu hunb hβ'
-    hrhi hβR hε hcapε hmono hz₀ hreach ha₀ hle hcorn h₁ h₂ hrr₁ hrr₂ hw₁ hw₂ hμ₁ hμ₂ he₁ he₂
+  exact P.log_equilibriumRate_unique_wage (by norm_num) (by norm_num) (by linarith) hu hunb hβ'
+    (by rw [hβ]; norm_num) (by linarith) hlohi hβR hε hcapε hmono hz₀ hreach ha₀ hle hcorn h₁ h₂
+    hrr₁ hrr₂ hw₁ hw₂ hμ₁ hμ₂ he₁ he₂
 
 end Bridge
 

@@ -73,12 +73,14 @@ theorem aiyagariLog_iid : aiyagariLog.IidIncome := fun _ _ _ => rfl
 theorem aiyagariLog_mean_income :
     (1 / 2 : ℝ) * aiyagariLog.income 0 + 1 / 2 * aiyagariLog.income 1 = 1 := by norm_num
 
-/-- **The equilibrium rate is unique on `[0, 4.1666%]`** — an interval containing every
+/-- **The equilibrium rate is unique on `[-7%, 4.1666%]`** — an interval containing every
 equilibrium rate Aiyagari reports at `μ = 1` (Table II: `4.1666%` and `4.0649%` for the iid
-columns, and between `3.3%` and `4.0%` for the persistent ones). All hypotheses of
+columns, and between `3.3%` and `4.0%` for the persistent ones), and reaching down to within
+one percentage point of `-δ = -8%`, where capital demand is unbounded. All hypotheses of
 `aiyagari1994_log_equilibriumRate_unique` are discharged by `rfl` and `norm_num`. -/
 theorem aiyagariLog_equilibriumRate_unique {r₁ r₂ : ℝ}
-    (h₁ : r₁ ∈ Icc (0 : ℝ) (416665 / 10000000)) (h₂ : r₂ ∈ Icc (0 : ℝ) (416665 / 10000000))
+    (h₁ : r₁ ∈ Icc (-7 / 100 : ℝ) (416665 / 10000000))
+    (h₂ : r₂ ∈ Icc (-7 / 100 : ℝ) (416665 / 10000000))
     (hrr₁ : aiyagariLog.RateOK r₁) (hrr₂ : aiyagariLog.RateOK r₂)
     {μ₁ μ₂ : ProbabilityMeasure aiyagariLog.State}
     (hμ₁ : (aiyagariLog.withRate r₁ hrr₁).IsStationary μ₁)
@@ -87,7 +89,7 @@ theorem aiyagariLog_equilibriumRate_unique {r₁ r₂ : ℝ}
     (he₂ : aiyagariLog.aggregateCapital μ₂ = normalisedDemand (9 / 25) (2 / 25) r₂) :
     r₁ = r₂ :=
   aiyagariLog.aiyagari1994_log_equilibriumRate_unique rfl aiyagariLog_unbounded rfl
-    (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num)
     (IncomeFluctuation.monotoneTransitions_of_iid _ aiyagariLog_iid) (z₀ := 0)
     (fun z => by fin_cases z <;> norm_num) rfl (fun z => by norm_num)
     h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
@@ -141,10 +143,11 @@ theorem aiyagariPersistent_monotone : aiyagariPersistent.MonotoneTransitions :=
   IncomeFluctuation.monotoneTransitions_of_two_states _ (by norm_num [aiyagariPersistent])
     (by norm_num [aiyagariPersistent])
 
-/-- **The equilibrium rate is unique on `[0, 4.1666%]` with persistent income.** The first
+/-- **The equilibrium rate is unique on `[-7%, 4.1666%]` with persistent income.** The first
 uniqueness result in this development for an economy whose income process is not iid. -/
 theorem aiyagariPersistent_equilibriumRate_unique {r₁ r₂ : ℝ}
-    (h₁ : r₁ ∈ Icc (0 : ℝ) (416665 / 10000000)) (h₂ : r₂ ∈ Icc (0 : ℝ) (416665 / 10000000))
+    (h₁ : r₁ ∈ Icc (-7 / 100 : ℝ) (416665 / 10000000))
+    (h₂ : r₂ ∈ Icc (-7 / 100 : ℝ) (416665 / 10000000))
     (hrr₁ : aiyagariPersistent.RateOK r₁) (hrr₂ : aiyagariPersistent.RateOK r₂)
     {μ₁ μ₂ : ProbabilityMeasure aiyagariPersistent.State}
     (hμ₁ : (aiyagariPersistent.withRate r₁ hrr₁).IsStationary μ₁)
@@ -153,7 +156,8 @@ theorem aiyagariPersistent_equilibriumRate_unique {r₁ r₂ : ℝ}
     (he₂ : aiyagariPersistent.aggregateCapital μ₂ = normalisedDemand (9 / 25) (2 / 25) r₂) :
     r₁ = r₂ :=
   aiyagariPersistent.aiyagari1994_log_equilibriumRate_unique rfl aiyagariPersistent_unbounded rfl
-    (by norm_num) (by norm_num) (by norm_num [aiyagariPersistent]) aiyagariPersistent_monotone
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num [aiyagariPersistent])
+    aiyagariPersistent_monotone
     (z₀ := 0)
     (fun z => by fin_cases z <;> norm_num [aiyagariPersistent]) rfl
     (fun z => by fin_cases z <;> norm_num [aiyagariPersistent])
