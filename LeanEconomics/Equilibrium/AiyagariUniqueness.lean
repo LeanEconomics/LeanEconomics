@@ -30,10 +30,13 @@ that the latter has at most one solution.
 
 ## What is assumed of the income process
 
-That it is iid, and that the worst state has income `minIncome` and is reachable from
-everywhere. Nothing else — no transition probabilities are named. That is why the theorem can be
-stated for Aiyagari's calibration without reproducing his seven-state Tauchen chain: at `μ = 1`
-his `ρ = 0` columns are covered whatever the chain was.
+That its transitions are MONOTONE — a higher-income state's row first-order stochastically
+dominates a lower one's (`MonotoneTransitions`; iid is the trivial case) — and that the worst
+state has income `minIncome` and is reachable from everywhere. Nothing else: no transition
+probabilities are named. That is why the theorem can be stated for Aiyagari's calibration
+without reproducing his seven-state Tauchen chains: a Tauchen discretisation of an AR(1) with
+positive persistence has monotone transitions by construction, so at `μ = 1` every column of his
+Table II is covered, `ρ = 0` and `ρ > 0` alike.
 
 ## What is assumed of the cap
 
@@ -150,7 +153,7 @@ theorem log_corner_of_top {rhi a₀ : ℝ} {z₀ : Z} (hβ : 0 < (P.discount : �
 theorem log_existsUnique_isStationary {rhi a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
     (hβ : 0 < (P.discount : ℝ)) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hcap : (P.discount : ℝ) * (P.maxIncome + (1 + rhi) * assetCap) < assetCap)
-    (hiid : P.IidIncome) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
+    (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hreach : ∀ z, 0 < P.transitionMatrix z z₀) (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
     {r : ℝ} (hr : r ∈ Icc (0 : ℝ) rhi) (hrr : P.RateOK r) :
@@ -158,9 +161,10 @@ theorem log_existsUnique_isStationary {rhi a₀ : ℝ} (hu : P.u = crraUtility 1
   have hcap0 : (0 : ℝ) ≤ assetCap := P.assetCap_nonneg
   have hκ : 1 - (P.withRate r hrr).minMPC 1 = (P.discount : ℝ) := by
     rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; ring
-  refine (P.withRate r hrr).crra_existsUnique_isStationary_of_euler_corner (γ := 1) one_pos hu
+  refine (P.withRate r hrr).crra_existsUnique_isStationary_of_euler_corner_monotone (γ := 1) one_pos hu
     hr.1 hβ (by simpa using (show (P.discount : ℝ) * (1 + r) < 1 by nlinarith [hr.2, hβ]))
-    hiid ((P.withRate r hrr).positiveConsumptionAll_of_unbounded hunb) ?_ hz₀ hreach ha₀ hle
+    (P.monotoneTransitions_withRate hmono hrr)
+    ((P.withRate r hrr).positiveConsumptionAll_of_unbounded hunb) ?_ hz₀ hreach ha₀ hle
     (P.log_corner_of_top hβ ha₀ hcorn hr hrr)
   rw [hκ]
   simp only [IncomeFluctuation.withRate_maxIncome, IncomeFluctuation.withRate_interest]
@@ -172,7 +176,7 @@ theorem log_existsUnique_isStationary {rhi a₀ : ℝ} (hu : P.u = crraUtility 1
 theorem log_tendsto_pushProb {rhi a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
     (hβ : 0 < (P.discount : ℝ)) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hcap : (P.discount : ℝ) * (P.maxIncome + (1 + rhi) * assetCap) < assetCap)
-    (hiid : P.IidIncome) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
+    (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hreach : ∀ z, 0 < P.transitionMatrix z z₀) (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
     {r : ℝ} (hr : r ∈ Icc (0 : ℝ) rhi) (hrr : P.RateOK r)
@@ -182,9 +186,10 @@ theorem log_tendsto_pushProb {rhi a₀ : ℝ} (hu : P.u = crraUtility 1) (hunb :
   have hcap0 : (0 : ℝ) ≤ assetCap := P.assetCap_nonneg
   have hκ : 1 - (P.withRate r hrr).minMPC 1 = (P.discount : ℝ) := by
     rw [IncomeFluctuation.minMPC_one, IncomeFluctuation.withRate_discount]; ring
-  refine (P.withRate r hrr).crra_tendsto_pushProb_of_euler_corner (γ := 1) one_pos hu
+  refine (P.withRate r hrr).crra_tendsto_pushProb_of_euler_corner_monotone (γ := 1) one_pos hu
     hr.1 hβ (by simpa using (show (P.discount : ℝ) * (1 + r) < 1 by nlinarith [hr.2, hβ]))
-    hiid ((P.withRate r hrr).positiveConsumptionAll_of_unbounded hunb) ?_ hz₀ hreach ha₀ hle
+    (P.monotoneTransitions_withRate hmono hrr)
+    ((P.withRate r hrr).positiveConsumptionAll_of_unbounded hunb) ?_ hz₀ hreach ha₀ hle
     (P.log_corner_of_top hβ ha₀ hcorn hr hrr) μ₀ hμ
   rw [hκ]
   simp only [IncomeFluctuation.withRate_maxIncome, IncomeFluctuation.withRate_interest]
@@ -201,7 +206,7 @@ theorem log_monotoneOn_capitalSupply {rhi ε a₀ : ℝ} (hu : P.u = crraUtility
     (hε : 0 < ε)
     (hcap : (P.discount : ℝ) * P.maxIncome
       + ((P.discount : ℝ) * (1 + rhi) + ε) * assetCap < assetCap)
-    (hiid : P.IidIncome) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
+    (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hreach : ∀ z, 0 < P.transitionMatrix z z₀) (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
     (ν : ℝ → ProbabilityMeasure P.State)
@@ -218,7 +223,7 @@ theorem log_monotoneOn_capitalSupply {rhi ε a₀ : ℝ} (hu : P.u = crraUtility
   intro r hr
   have hrr : P.RateOK r := rateOK_of_floor_zero (by linarith [hr.1])
   rw [P.rateFamily_eq _ _ hr hrr]
-  exact P.log_tendsto_pushProb hu hunb hβ hβR hcap' hiid hz₀ hreach ha₀ hle hcorn hr hrr _
+  exact P.log_tendsto_pushProb hu hunb hβ hβR hcap' hmono hz₀ hreach ha₀ hle hcorn hr hrr _
     (hν r hr hrr)
 
 /-! ### Theorem 3: single crossing -/
@@ -232,7 +237,7 @@ theorem log_equilibriumRate_unique {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α) (h�
     (hε : 0 < ε)
     (hcap : (P.discount : ℝ) * P.maxIncome
       + ((P.discount : ℝ) * (1 + rhi) + ε) * assetCap < assetCap)
-    (hiid : P.IidIncome) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
+    (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hreach : ∀ z, 0 < P.transitionMatrix z z₀) (ha₀ : 0 < a₀) (hle : a₀ ≤ assetCap)
     (hcorn : (P.discount : ℝ) * (1 + rhi) * (P.income z₀ + (1 + rhi) * a₀) < P.minIncome)
     {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc (0 : ℝ) rhi) (h₂ : r₂ ∈ Icc (0 : ℝ) rhi)
@@ -250,7 +255,7 @@ theorem log_equilibriumRate_unique {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α) (h�
   have hE : ∀ r : ℝ, ∃! μ : ProbabilityMeasure P.State,
       (P.withRate (clampRate 0 rhi r)
         (rateOK_of_floor_zero (one_add_clampRate_pos (by norm_num) hrhi r))).IsStationary μ :=
-    fun r => P.log_existsUnique_isStationary hu hunb hβ hβR hcap' hiid hz₀ hreach ha₀ hle hcorn
+    fun r => P.log_existsUnique_isStationary hu hunb hβ hβR hcap' hmono hz₀ hreach ha₀ hle hcorn
       (clampRate_mem hrhi r) _
   set ν : ℝ → ProbabilityMeasure P.State := fun r => (hE r).choose with hνdef
   have hν : ∀ r ∈ Icc (0 : ℝ) rhi, ∀ hrr : P.RateOK r, (P.withRate r hrr).IsStationary (ν r) := by
@@ -268,7 +273,7 @@ theorem log_equilibriumRate_unique {rhi ε a₀ α δ : ℝ} (hα0 : 0 < α) (h�
   rw [hid r₁ h₁ hrr₁ μ₁ hμ₁] at he₁
   rw [hid r₂ h₂ hrr₂ μ₂ hμ₂] at he₂
   exact eq_of_monotoneOn_of_strictAntiOn
-    (P.log_monotoneOn_capitalSupply hu hunb hβ hrhi hβR hε hcap hiid hz₀ hreach ha₀ hle hcorn ν hν)
+    (P.log_monotoneOn_capitalSupply hu hunb hβ hrhi hβR hε hcap hmono hz₀ hreach ha₀ hle hcorn ν hν)
     (normalisedDemand_strictAntiOn hα0 hα1 (by linarith : (0 : ℝ) < 0 + δ)) h₁ h₂ he₁ he₂
 
 /-! ### With the constants constructed
@@ -282,7 +287,7 @@ theorem log_equilibriumRate_unique_of_cap {rhi α δ : ℝ} (hα0 : 0 < α) (hα
     (hu : P.u = crraUtility 1) (hunb : P.Unbounded)
     (hβ : 0 < (P.discount : ℝ)) (hrhi : 0 ≤ rhi) (hβR : (P.discount : ℝ) * (1 + rhi) < 1)
     (hcap : 2 * (P.discount : ℝ) * P.maxIncome < (1 - (P.discount : ℝ) * (1 + rhi)) * assetCap)
-    (hiid : P.IidIncome) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
+    (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hmin : P.income z₀ = P.minIncome) (hreach : ∀ z, 0 < P.transitionMatrix z z₀)
     {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc (0 : ℝ) rhi) (h₂ : r₂ ∈ Icc (0 : ℝ) rhi)
     (hrr₁ : P.RateOK r₁) (hrr₂ : P.RateOK r₂)
@@ -325,7 +330,7 @@ theorem log_equilibriumRate_unique_of_cap {rhi α δ : ℝ} (hα0 : 0 < α) (hα
     have : β * R * (P.minIncome + R * a₀) = β * R * P.minIncome + β * R * (R * a₀) := by ring
     rw [this]
     nlinarith [hkey, hmono, hroom, hminpos]
-  exact P.log_equilibriumRate_unique hα0 hα1 hδ hu hunb hβ hrhi hβR hε hcapε hiid hz₀ hreach ha₀
+  exact P.log_equilibriumRate_unique hα0 hα1 hδ hu hunb hβ hrhi hβR hε hcapε hmono hz₀ hreach ha₀
     hle hcorn h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
 
 /-! ### Aiyagari (1994), `μ = 1`
@@ -337,13 +342,13 @@ rates at `μ = 1` lie between `3.3%` and `4.17%`, all inside. -/
 
 /-- **Aiyagari (1994) at `μ = 1`: the equilibrium interest rate is unique** on `[0, rhi]` for
 every `rhi` below the time-preference rate `1/24`, for any economy with his preferences and
-technology and any iid earnings process, provided the asset cap clears
+technology and any earnings process with monotone transitions, provided the asset cap clears
 `(48/25) · maxIncome / (1 - (24/25)(1+rhi))`. -/
 theorem aiyagari1994_log_equilibriumRate_unique {rhi : ℝ}
     (hu : P.u = crraUtility 1) (hunb : P.Unbounded) (hβ : (P.discount : ℝ) = 24 / 25)
     (hrhi : 0 ≤ rhi) (hlam : rhi < 1 / 24)
     (hcap : 2 * (24 / 25) * P.maxIncome < (1 - 24 / 25 * (1 + rhi)) * assetCap)
-    (hiid : P.IidIncome) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
+    (hmono : P.MonotoneTransitions) {z₀ : Z} (hz₀ : ∀ z : Z, P.income z₀ ≤ P.income z)
     (hmin : P.income z₀ = P.minIncome) (hreach : ∀ z, 0 < P.transitionMatrix z z₀)
     {r₁ r₂ : ℝ} (h₁ : r₁ ∈ Icc (0 : ℝ) rhi) (h₂ : r₂ ∈ Icc (0 : ℝ) rhi)
     (hrr₁ : P.RateOK r₁) (hrr₂ : P.RateOK r₂)
@@ -352,7 +357,7 @@ theorem aiyagari1994_log_equilibriumRate_unique {rhi : ℝ}
     (he₁ : P.aggregateCapital μ₁ = normalisedDemand (9 / 25) (2 / 25) r₁)
     (he₂ : P.aggregateCapital μ₂ = normalisedDemand (9 / 25) (2 / 25) r₂) : r₁ = r₂ :=
   P.log_equilibriumRate_unique_of_cap (by norm_num) (by norm_num) (by norm_num) hu hunb
-    (by rw [hβ]; norm_num) hrhi (by rw [hβ]; linarith) (by rw [hβ]; exact hcap) hiid hz₀ hmin
+    (by rw [hβ]; norm_num) hrhi (by rw [hβ]; linarith) (by rw [hβ]; exact hcap) hmono hz₀ hmin
     hreach h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
 
 end Measure

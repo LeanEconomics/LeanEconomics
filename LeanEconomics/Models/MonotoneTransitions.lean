@@ -5,6 +5,7 @@ Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuationEuler
 import LeanEconomics.Models.ImpatientDecline
+import LeanEconomics.Models.IncomeFluctuationRate
 
 /-!
 # Persistent income: the decline condition from monotone transitions
@@ -61,6 +62,11 @@ def MonotoneTransitions : Prop :=
 theorem monotoneTransitions_of_iid (hiid : P.IidIncome) : P.MonotoneTransitions := by
   intro z₁ z₂ _ f _
   exact le_of_eq (Finset.sum_congr rfl fun z' _ => by rw [hiid z₂ z₁ z'])
+
+/-- Changing the rate leaves the income process, hence monotonicity, untouched. -/
+theorem monotoneTransitions_withRate {assetCap : ℝ} {P : IncomeFluctuation Z 0 assetCap}
+    (hmono : P.MonotoneTransitions) {r : ℝ} (hrr : P.RateOK r) :
+    (P.withRate r hrr).MonotoneTransitions := hmono
 
 /-- **Increments of `v` in assets are antitone in income**: the secant form of Huggett's
 `v'(a, e_h) ≤ v'(a, e_l)`. -/

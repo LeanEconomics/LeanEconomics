@@ -87,8 +87,76 @@ theorem aiyagariLog_equilibriumRate_unique {r₁ r₂ : ℝ}
     (he₂ : aiyagariLog.aggregateCapital μ₂ = normalisedDemand (9 / 25) (2 / 25) r₂) :
     r₁ = r₂ :=
   aiyagariLog.aiyagari1994_log_equilibriumRate_unique rfl aiyagariLog_unbounded rfl
-    (by norm_num) (by norm_num) (by norm_num) aiyagariLog_iid (z₀ := 0)
+    (by norm_num) (by norm_num) (by norm_num)
+    (IncomeFluctuation.monotoneTransitions_of_iid _ aiyagariLog_iid) (z₀ := 0)
     (fun z => by fin_cases z <;> norm_num) rfl (fun z => by norm_num)
+    h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
+
+/-! ### Persistent income
+
+The same economy with Huggett's persistence: employed households stay employed with probability
+`9/10`, the unemployed find work with probability `1/2`. `π(h|h) = 9/10 ≥ 1/2 = π(h|l)`, so the
+transitions are monotone, and everything else is unchanged. -/
+
+/-- Aiyagari's preferences and technology with a persistent two-state earnings process. -/
+noncomputable def aiyagariPersistent : IncomeFluctuation (Fin 2) 0 100000000 where
+  income z := if z = 0 then 1 / 2 else 3 / 2
+  transitionMatrix z z' := if z = 0 then (if z' = 0 then 1 / 2 else 1 / 2)
+    else (if z' = 0 then 1 / 10 else 9 / 10)
+  interest := 0
+  discount := 24 / 25
+  u := crraUtility 1
+  minIncome := 1 / 2
+  maxIncome := 3 / 2
+  minIncome_pos := by norm_num
+  minIncome_le z := by fin_cases z <;> norm_num
+  le_maxIncome z := by fin_cases z <;> norm_num
+  transitionMatrix_nonneg z z' := by fin_cases z <;> fin_cases z' <;> norm_num
+  transitionMatrix_sum z := by fin_cases z <;> simp <;> norm_num
+  interest_gt_neg_one := by norm_num
+  assetFloor_le_assetCap := by norm_num
+  assetCap_nonneg := by norm_num
+  minConsumption_pos := by norm_num
+  minConsumption_le_floor := le_rfl
+  discount_lt_one := by norm_num
+  dom := Ioi 0
+  Ioi_subset_dom := subset_rfl
+  dom_subset_Ici := Ioi_subset_Ici_self
+  continuousOn_u_dom := continuousOn_crraUtility 1
+  monotoneOn_u_dom := monotoneOn_crraUtility 1
+  strictConcaveOn_u_dom := strictConcaveOn_crraUtility one_pos
+  continuousOn_extendDom :=
+    continuousOn_extendDom_Ioi (continuousOn_crraUtility 1) (tendsto_atBot_crraUtility le_rfl)
+
+theorem aiyagariPersistent_unbounded : aiyagariPersistent.Unbounded := rfl
+
+/-- Not iid: the rows differ. -/
+theorem aiyagariPersistent_not_iid : ¬ aiyagariPersistent.IidIncome := by
+  intro h
+  have := h 0 1 1
+  norm_num [aiyagariPersistent] at this
+
+/-- Huggett's condition holds, so the transitions are monotone. -/
+theorem aiyagariPersistent_monotone : aiyagariPersistent.MonotoneTransitions :=
+  IncomeFluctuation.monotoneTransitions_of_two_states _ (by norm_num [aiyagariPersistent])
+    (by norm_num [aiyagariPersistent])
+
+/-- **The equilibrium rate is unique on `[0, 4.1666%]` with persistent income.** The first
+uniqueness result in this development for an economy whose income process is not iid. -/
+theorem aiyagariPersistent_equilibriumRate_unique {r₁ r₂ : ℝ}
+    (h₁ : r₁ ∈ Icc (0 : ℝ) (416665 / 10000000)) (h₂ : r₂ ∈ Icc (0 : ℝ) (416665 / 10000000))
+    (hrr₁ : aiyagariPersistent.RateOK r₁) (hrr₂ : aiyagariPersistent.RateOK r₂)
+    {μ₁ μ₂ : ProbabilityMeasure aiyagariPersistent.State}
+    (hμ₁ : (aiyagariPersistent.withRate r₁ hrr₁).IsStationary μ₁)
+    (hμ₂ : (aiyagariPersistent.withRate r₂ hrr₂).IsStationary μ₂)
+    (he₁ : aiyagariPersistent.aggregateCapital μ₁ = normalisedDemand (9 / 25) (2 / 25) r₁)
+    (he₂ : aiyagariPersistent.aggregateCapital μ₂ = normalisedDemand (9 / 25) (2 / 25) r₂) :
+    r₁ = r₂ :=
+  aiyagariPersistent.aiyagari1994_log_equilibriumRate_unique rfl aiyagariPersistent_unbounded rfl
+    (by norm_num) (by norm_num) (by norm_num [aiyagariPersistent]) aiyagariPersistent_monotone
+    (z₀ := 0)
+    (fun z => by fin_cases z <;> norm_num [aiyagariPersistent]) rfl
+    (fun z => by fin_cases z <;> norm_num [aiyagariPersistent])
     h₁ h₂ hrr₁ hrr₂ hμ₁ hμ₂ he₁ he₂
 
 end LeanEconomics
