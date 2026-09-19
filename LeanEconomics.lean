@@ -114,3 +114,4 @@ import LeanEconomics.Equilibrium.Bisection
 import LeanEconomics.Equilibrium.SlackEuler
 import LeanEconomics.Equilibrium.SavingPropensity
 import LeanEconomics.Models.ConsumptionSandwich
+import LeanEconomics.Equilibrium.LasryLionsIteration
