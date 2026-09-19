@@ -12,8 +12,10 @@ The picture is not a theorem. \citet{Acikgoz2018} proved existence and gave cond
 uniqueness that do not cover Aiyagari's parameters; \citet{Light2020} proved uniqueness for
 relative risk aversion at most one, again under conditions on the discount factor and the earnings
 process that his own statement does not verify at $\beta=0.96$; \citet{Light2022} put the argument
-in a general mean-field framework; \citet{YoungWalsh2025} showed by computation that at high risk
-aversion the supply curve can bend backward and the equilibrium can fail to be unique. The survey
+in a general mean-field framework; \citet{Kirkby2019} computed the Aiyagari equilibrium with a discretisation proved to converge to
+the true solution, found numerically that it is almost certainly unique, and recorded that
+uniqueness remained open theoretically; \citet{YoungWalsh2025} showed by computation that at high
+risk aversion the supply curve can bend backward and the equilibrium can fail to be unique. The survey
 of \citet{TodaWalsh2024} lists uniqueness in the Aiyagari model with its actual calibration as
 open.
 
@@ -139,7 +141,7 @@ documented by \citet{YoungWalsh2025}. The consumption-function theory we lean on
 \citet{CarrollKimball1996} for concavity, \citet{MaToda2022} for asymptotic linearity and the
 minimal MPC, \citet{CarrollShanker2026} for the buffer-stock bounds, and \citet{LiStachurski2014}
 for the contraction in marginal-utility space that gives sufficiency of the Euler equation.
-Continuous-time counterparts are in \citet{AchdouEtAl2022}. The formalisation uses the fixed-point
+The formalisation uses the fixed-point
 and monotone-operator results of \citet{SargentStachurski2024}, several of which we formalised
 along the way (Section~\ref{sec:aux}). On formal verification in economics we know of no prior
 formalisation of a recursive macroeconomic equilibrium; the closest work is the mean-field-games
