@@ -160,6 +160,32 @@ $\rho=R_2/R_1$, roughly $c(a)\lesssim\frac{\mu}{\mu-1}c(0)$ (\lean{policy\_mono\
 It is weaker than $\mu\le1$ but fails at moderate wealth. And Theorem 1 holds at equal cash on
 hand for all $a$: $g_1(a,z)\le g_2(ta,z)$ with $t=R_1/R_2$ (\lean{policy\_le\_policy\_scaled\_withRate\_of\_marginal\_at}).
 
+\subsection{Lasry--Lions with the start supplied by the iteration}\label{sec:lliter}
+
+Section~\ref{sec:aux} notes that the Lasry--Lions argument needs a common initial distribution,
+which two stationary equilibria lack. The stationary distribution is, however, the limit of the
+iteration from any $\mu_0$, and running both economies from the same $\mu_0$ with their stationary
+policies restores the common start. Each value function satisfies its Bellman identity along its
+own policy; a household at either rate may follow the other economy's policy for $T$ periods and
+then behave optimally; adding the two inequalities and integrating against $\mu_0$, the initial
+terms cancel and
+\begin{equation}\label{eq:lliter}
+  \sum_{t<T}\beta^t\Bigl[\int\Delta(\cdot,g_1)\,d(T_1^t\mu_0)-\int\Delta(\cdot,g_2)\,d(T_2^t\mu_0)\Bigr]
+  \ \le\ \beta^T\Bigl[\int(V_1-V_2)\,d(T_1^T\mu_0)-\int(V_1-V_2)\,d(T_2^T\mu_0)\Bigr],
+\end{equation}
+with $\Delta(a,a')=u(y+R_2a-a')-u(y+R_1a-a')$ the utility gain from the higher rate at a given
+saving decision; the right side is at most $2\beta^T\|V_1-V_2\|$, so the discounted series is at
+most zero (\lean{lasryLions\_iteration\_sum\_le}, \lean{lasryLions\_iteration\_tsum\_nonpos}). The
+one extra hypothesis is that the higher-rate policy is affordable at the lower rate, which holds
+for rates close together.
+
+This is a Lasry--Lions pairing inequality between two stationary equilibria, valid for every
+$\mu_0$. It does not give uniqueness by itself: the pairing is marginal-utility weighted, and
+its monotonicity in the distribution, $\Delta$ increasing in $a$, is exactly the elasticity
+condition \eqref{eq:EC}. What it adds is an integrated and discounted constraint where the Euler
+chain needs a pointwise one; whether the integrated form tolerates failure of \eqref{eq:EC} on
+the thin tail is open.
+
 \subsection{The invariant-interval form}\label{sec:invariant}
 
 Since Theorem 1 uses the condition only at tomorrow's assets and the coupling only along coupled

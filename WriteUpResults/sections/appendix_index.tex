@@ -51,6 +51,10 @@ Proposition~\ref{prop:homog}, eventual form & \lean{crra\_slack\_elasticity\_hol
 Uniqueness under \eqref{eq:SEC} & \lean{crra\_equilibriumRate\_unique\_of\_slack\_on} & Equilibrium/\allowbreak SlackEuler\\
 Range condition & \lean{policy\_mono\_withRate\_crra\_of\_range} & Models/\allowbreak IncomeFluctuationRateStep\\
 Equal cash on hand & \lean{policy\_le\_policy\_scaled\_withRate\_of\_marginal\_at} & Equilibrium/\allowbreak DebtorRate\\
+Consumption sandwich & \lean{crra\_consumption\_sandwich} & Models/\allowbreak ConsumptionSandwich\\
+Asymptotic linearity & \lean{crra\_abs\_consumptionFn\_div\_sub\_minMPC\_le} & Models/\allowbreak ConsumptionSandwich\\
+Lasry--Lions along the iteration \eqref{eq:lliter} & \lean{lasryLions\_iteration\_sum\_le} & Equilibrium/\allowbreak LasryLionsIteration\\
+Discounted series nonpositive & \lean{lasryLions\_iteration\_tsum\_nonpos} & Equilibrium/\allowbreak LasryLionsIteration\\
 \midrule
 Huggett single crossing & \lean{huggett\_equilibriumRate\_unique} & Equilibrium/\allowbreak Huggett\\
 Strict Theorem 1, creditors & \lean{policy\_lt\_policy\_withRate\_of\_marginal\_at} & Equilibrium/\allowbreak DebtorRate\\
