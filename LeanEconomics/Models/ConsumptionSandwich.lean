@@ -87,7 +87,7 @@ theorem crra_consumptionFn_le_of_minMPC {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = c
   have hbdd : BddAbove (Set.range f) := by
     refine ⟨P.maxIncome + (1 + P.interest) * assetCap, ?_⟩
     rintro _ ⟨⟨⟨b, hb⟩, w⟩, rfl⟩
-    show P.consumptionFn w b - κ * P.resources (b, w) ≤ _
+    change P.consumptionFn w b - κ * P.resources (b, w) ≤ _
     have hpol : 0 ≤ P.policy (b, w) := (P.policy_mem_region (b, w)).1
     have hc : P.consumptionFn w b = P.resources (b, w) - P.policy (b, w) := rfl
     have hres := P.resources_eq_of_mem hb w
@@ -155,7 +155,7 @@ theorem crra_consumptionFn_le_of_minMPC {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = c
   have hs : s ≤ (κ * P.maxIncome + s) / (1 + P.interest) := by
     refine ciSup_le fun p => ?_
     have := hstate p.2 p.1 p.1.2
-    show P.consumptionFn p.2 p.1 - κ * P.resources ((p.1 : ℝ), p.2) ≤ _
+    change P.consumptionFn p.2 p.1 - κ * P.resources ((p.1 : ℝ), p.2) ≤ _
     linarith
   have hs' : s ≤ κ * P.maxIncome / P.interest := by
     rw [le_div_iff₀ hR] at hs
