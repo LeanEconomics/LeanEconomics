@@ -401,6 +401,152 @@ theorem zeroFloorIter_le {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
     · simp only [zeroFloorIter, zeroFloorStep]
       exact P.crra_consumptionFn_zero_ge hγ0 hu hβ hpc hslack ih.1 ih.2 hσ0 hslope z (hτ n z)
 
+/-! ### Bounds at any wealth: the one-step lemmas of a certified iteration
+
+The zero-wealth floor is the case `a = 0` of a general fact: a monotone lower bound `L` on the
+consumption function, fed through the Euler inequality above the floor, gives a new lower bound
+at every state; a monotone upper bound `U`, fed through the Euler inequality under the cap, gives
+a new upper bound. Together with concavity of the true consumption function (which makes linear
+interpolation of grid lower bounds valid) and monotonicity in wealth (which makes step upper
+bounds valid), these two lemmas are all a certified two-sided time iteration needs. Numerically
+(`WriteUpResults/numerics/twosided.m`, log utility, Rouwenhorst chain) fifty to a hundred
+iterations from the primitive sub- and super-solutions bring the bounds within `0.003` (below)
+and `0.02` (above) of the true consumption function on `[0, 6]`. -/
+
+/-- **A lower bound propagates**: if `L` is a positive lower bound on consumption, monotone in
+wealth, then for every `t ≤ m(a, z)`,
+`min t (Þ⁻¹ (∑ π(z,z') L(m - t, z')^{-γ})^{-1/γ}) ≤ c(a, z)`. -/
+theorem crra_consumptionFn_ge_of_lower {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hpc : P.PositiveConsumption)
+    (hslack : ∀ s : ℝ × Z, s.1 ∈ Icc (0 : ℝ) assetCap → P.policy s < assetCap)
+    {L : ℝ → Z → ℝ} (hLpos : ∀ z, ∀ a, 0 ≤ a → 0 < L a z)
+    (hLmono : ∀ z, ∀ a b, 0 ≤ a → a ≤ b → L a z ≤ L b z)
+    (hL : ∀ z, ∀ a ∈ Icc (0 : ℝ) assetCap, L a z ≤ P.consumptionFn z a)
+    (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) {t : ℝ} (ht : t ≤ P.resources (a, z)) :
+    min t (((P.discount : ℝ) * (1 + P.interest)) ^ (-(1 / γ))
+      * (∑ z', P.transitionMatrix z z' * (L (P.resources (a, z) - t) z') ^ (-γ)) ^ (-(1 / γ)))
+      ≤ P.consumptionFn z a := by
+  classical
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hβR0 : (0 : ℝ) < (P.discount : ℝ) * (1 + P.interest) := mul_pos hβ hR
+  set c : ℝ := P.consumptionFn z a with hcdef
+  set A : ℝ := P.policy (a, z) with hAdef
+  set m : ℝ := P.resources (a, z) with hmdef
+  have hcA : c = m - A := rfl
+  have hAmem : A ∈ Icc (0 : ℝ) assetCap := P.policy_mem_region (a, z)
+  have hc0 : 0 < c := P.consumptionFn_pos hpc ha z
+  rcases eq_or_lt_of_le hAmem.1 with hA0 | hA0
+  · have : c = m := by rw [hcA, ← hA0, sub_zero]
+    rw [this]
+    exact (min_le_left _ _).trans ht
+  rcases le_or_gt t c with htc | htc
+  · exact (min_le_left _ _).trans htc
+  refine (min_le_right _ _).trans ?_
+  have hmt0 : 0 ≤ m - t := by linarith
+  have hAt : m - t ≤ A := by rw [hcA] at htc; linarith
+  have hc' : ∀ z' : Z, 0 < P.consumptionFn z' A := fun z' => P.consumptionFn_pos hpc hAmem z'
+  have hderiv : ∀ x : ℝ, 0 < x → HasDerivAt P.u (x ^ (-γ)) x := fun x hx => by
+    rw [hu]; exact hasDerivAt_crraUtility γ hx
+  have hbv := P.toExtended.bellman_valueFunction
+  have hslackA : ∀ z' : Z, P.policyOf P.toExtended.valueFunction (A, z')
+      < P.maxSaving (A, z') := by
+    intro z'
+    rw [P.policyOf_valueFunction, maxSaving_eq]
+    refine lt_min (hslack _ hAmem) ?_
+    have := hc' z'
+    change 0 < P.resources (A, z') - P.policy (A, z') at this
+    linarith
+  have hE := P.euler_ge (v := P.toExtended.valueFunction) (z := z) (a := a) (A := A)
+    (du := c ^ (-γ)) (du' := fun z' => (P.consumptionFn z' A) ^ (-γ))
+    ha (by rw [hbv]; exact congrFun P.policyOf_valueFunction _) hA0 hslackA
+    (by rw [hbv]; exact hc0) (by rw [hbv]; exact hderiv _ hc0)
+    (fun z' => hc' z') (fun z' => hderiv _ (hc' z'))
+  have hb0 : ∀ z', 0 < L (m - t) z' := fun z' => hLpos z' _ hmt0
+  have hbc : ∀ z', L (m - t) z' ≤ P.consumptionFn z' A := fun z' =>
+    (hLmono z' _ _ hmt0 hAt).trans (hL z' A hAmem)
+  set S : ℝ := ∑ z', P.transitionMatrix z z' * (L (m - t) z') ^ (-γ) with hSdef
+  have hsum : ∑ z', P.transitionMatrix z z' * (P.consumptionFn z' A) ^ (-γ) ≤ S :=
+    Finset.sum_le_sum fun z' _ =>
+      mul_le_mul_of_nonneg_left (rpow_neg_antitone hγ0 (hb0 z') (hbc z'))
+        (P.transitionMatrix_nonneg z z')
+  have hcle : c ^ (-γ) ≤ (P.discount : ℝ) * (1 + P.interest) * S := by
+    have := hE.trans (mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hsum hR.le) hβ.le)
+    linarith [this]
+  have hS0 : 0 < S := by
+    have hcγ : 0 < c ^ (-γ) := Real.rpow_pos_of_pos hc0 _
+    by_contra hcon
+    push Not at hcon
+    have : (P.discount : ℝ) * (1 + P.interest) * S ≤ 0 :=
+      mul_nonpos_of_nonneg_of_nonpos hβR0.le hcon
+    linarith
+  have hγ' : (0 : ℝ) < 1 / γ := by positivity
+  have h := rpow_neg_antitone hγ' (Real.rpow_pos_of_pos hc0 _) hcle
+  rw [← Real.rpow_mul hc0.le, show -γ * -(1 / γ) = 1 by field_simp, Real.rpow_one,
+    Real.mul_rpow hβR0.le hS0.le] at h
+  exact h
+
+/-- **An upper bound propagates**: if `U` is a positive upper bound on consumption, monotone in
+wealth, and `t` satisfies `Þ⁻¹ (∑ π(z,z') U(m - t, z')^{-γ})^{-1/γ} ≤ t`, then
+`c(a, z) ≤ t`. -/
+theorem crra_consumptionFn_le_of_upper {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hpc : P.PositiveConsumption)
+    (hslack : ∀ s : ℝ × Z, s.1 ∈ Icc (0 : ℝ) assetCap → P.policy s < assetCap)
+    {U : ℝ → Z → ℝ} (hUpos : ∀ z, ∀ a, 0 ≤ a → 0 < U a z)
+    (hUmono : ∀ z, ∀ a b, 0 ≤ a → a ≤ b → U a z ≤ U b z)
+    (hU : ∀ z, ∀ a ∈ Icc (0 : ℝ) assetCap, P.consumptionFn z a ≤ U a z)
+    (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) {t : ℝ}
+    (hcert : ((P.discount : ℝ) * (1 + P.interest)) ^ (-(1 / γ))
+      * (∑ z', P.transitionMatrix z z' * (U (P.resources (a, z) - t) z') ^ (-γ)) ^ (-(1 / γ))
+      ≤ t) :
+    P.consumptionFn z a ≤ t := by
+  classical
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hβR0 : (0 : ℝ) < (P.discount : ℝ) * (1 + P.interest) := mul_pos hβ hR
+  set c : ℝ := P.consumptionFn z a with hcdef
+  set A : ℝ := P.policy (a, z) with hAdef
+  set m : ℝ := P.resources (a, z) with hmdef
+  have hcA : c = m - A := rfl
+  have hAmem : A ∈ Icc (0 : ℝ) assetCap := P.policy_mem_region (a, z)
+  have hc0 : 0 < c := P.consumptionFn_pos hpc ha z
+  by_contra hcon
+  push Not at hcon
+  have hAt : A ≤ m - t := by rw [hcA] at hcon; linarith
+  have hmt0 : 0 ≤ m - t := hAmem.1.trans hAt
+  have hc' : ∀ z' : Z, 0 < P.consumptionFn z' A := fun z' => P.consumptionFn_pos hpc hAmem z'
+  have hderiv : ∀ x : ℝ, 0 < x → HasDerivAt P.u (x ^ (-γ)) x := fun x hx => by
+    rw [hu]; exact hasDerivAt_crraUtility γ hx
+  have hroom : A < P.maxSaving (a, z) := by
+    rw [maxSaving_eq]
+    refine lt_min (hslack _ ha) ?_
+    have := hc0
+    rw [hcA] at this
+    linarith
+  have hbv := P.toExtended.bellman_valueFunction
+  have hE := P.euler_le (v := P.toExtended.valueFunction) (z := z) (a := a) (A := A)
+    (du := c ^ (-γ)) (du' := fun z' => (P.consumptionFn z' A) ^ (-γ))
+    ha (by rw [hbv]; exact congrFun P.policyOf_valueFunction _) hroom
+    (by rw [hbv]; exact hc0) (by rw [hbv]; exact hderiv _ hc0)
+    (fun z' => hc' z') (fun z' => hderiv _ (hc' z'))
+  have hbc : ∀ z', P.consumptionFn z' A ≤ U (m - t) z' := fun z' =>
+    (hU z' A hAmem).trans (hUmono z' _ _ hAmem.1 hAt)
+  set S : ℝ := ∑ z', P.transitionMatrix z z' * (U (m - t) z') ^ (-γ) with hSdef
+  have hsum : S ≤ ∑ z', P.transitionMatrix z z' * (P.consumptionFn z' A) ^ (-γ) :=
+    Finset.sum_le_sum fun z' _ =>
+      mul_le_mul_of_nonneg_left (rpow_neg_antitone hγ0 (hc' z') (hbc z'))
+        (P.transitionMatrix_nonneg z z')
+  have hS0 : 0 < S :=
+    sum_rpow_pos (p := -γ) (P.transitionMatrix_nonneg z) (P.transitionMatrix_sum z)
+      fun z' => hUpos z' _ hmt0
+  have hchain : (P.discount : ℝ) * (1 + P.interest) * S ≤ c ^ (-γ) := by
+    have := le_trans (mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hsum hR.le) hβ.le) hE
+    linarith [this]
+  -- so `c ≤ (βR S)^{-1/γ} ≤ t`
+  have hγ' : (0 : ℝ) < 1 / γ := by positivity
+  have h := rpow_neg_antitone hγ' (mul_pos hβR0 hS0) hchain
+  rw [← Real.rpow_mul hc0.le, show -γ * -(1 / γ) = 1 by field_simp, Real.rpow_one,
+    Real.mul_rpow hβR0.le hS0.le] at h
+  linarith [h.trans hcert]
+
 end Floor
 
 /-! ### From a consumption gap to the capital floor -/

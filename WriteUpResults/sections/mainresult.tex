@@ -211,6 +211,37 @@ Theorem~\ref{thm:main} the equilibrium so obtained is the only one on $(-\delta,
 the numbers above say is that the two displayed inequalities can be met only with $r_{hi}$
 within about $10^{-27}$ of $\lambda$ and a cap of the order of $10^{30}$ mean incomes.
 
+\paragraph{The moderate-wealth bound.} The constants are bad because the primitive bounds
+certify the consumption gap only for the extreme pair of income states. We looked for a
+consumption bound at moderate wealth accurate to a few hundredths of mean income, which would
+certify adjacent pairs. No analytic route gives it: every bound of sandwich or minimal-MPC type
+is off by $0.15$ to $0.35$ mean incomes on $[1,4]$, because the precautionary component of
+consumption decays on the scale of a few mean incomes while any argument through the
+minimal-MPC floors sees only the human-wealth scale $y/r\approx25$. What does give it is a
+certified two-sided time iteration. A monotone lower bound $L$ on consumption, fed through the
+Euler inequality above the floor, is a lower bound again, $c(a,z)\ge\min\{t,\Thorn^{-1}
+(\sum_{z'}\pi(z,z')L(m-t,z')^{-\mu})^{-1/\mu}\}$ for every $t\le m$
+(\lean{crra\_consumptionFn\_ge\_of\_lower}); a monotone upper bound $U$ fed through the Euler
+inequality under the cap is an upper bound again, $c(a,z)\le t$ whenever
+$\Thorn^{-1}(\sum_{z'}\pi(z,z')U(m-t,z')^{-\mu})^{-1/\mu}\le t$
+(\lean{crra\_consumptionFn\_le\_of\_upper}). Concavity of the true consumption function makes
+linear interpolation of grid lower bounds valid, monotonicity in wealth makes step upper bounds
+valid, and at log utility with a rational earnings chain every step is rational arithmetic.
+Numerically (\texttt{numerics/twosided.m}, Rouwenhorst chain, grid step $0.05$ on $[0,16]$),
+fifty to a hundred iterations from the primitive sub- and super-solutions bring the bounds
+within $0.003$ below and $0.02$ above the true consumption function on $[0,6]$, and certify the
+adjacent pairs with $p_0\approx0.23$.
+
+But the payoff is capped by the identity itself, not by the bound. With the certified pairs the
+floor needs $1-\beta R\lesssim10^{-6}$, and with the exact policy it would need about
+$5\cdot10^{-6}$: the conditional variance of marginal utility between adjacent income states at
+five mean incomes is of the order of $10^{-3}$, and inequality \eqref{eq:condvar} multiplies it
+by $\|M\|^2\approx14$. So a certified iteration would move $r_{hi}$ from $\lambda-10^{-27}$ to
+$\lambda-10^{-6}$ and the cap from $10^{30}$ to $10^{7}$, at the cost of a few hundred thousand
+verified rational inequalities in Lean. We record the two lemmas and the numbers and stop
+there: the existence question at $\mu=1$ is answered, and its constants are a property of the
+variance route rather than of anything left unproved about the household.
+
 \subsection{Computation}
 
 \begin{theorem}[Bisection converges to the equilibrium rate]\label{thm:bisect}
