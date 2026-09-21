@@ -356,6 +356,51 @@ theorem crra_consumptionFn_zero_ge {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUt
     Real.mul_rpow hβR0.le hS0.le] at h
   exact h
 
+omit [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z] in
+/-- One step of the zero-wealth floor operator: the bound of `crra_consumptionFn_zero_ge` with
+its free parameter chosen by `τ`. -/
+noncomputable def zeroFloorStep (π : Z → Z → ℝ) (y : Z → ℝ) (βR γ σ : ℝ) (τ f : Z → ℝ) :
+    Z → ℝ :=
+  fun z => min (τ z)
+    (βR ^ (-(1 / γ)) * (∑ z', π z z' * (f z' + σ * (y z - τ z)) ^ (-γ)) ^ (-(1 / γ)))
+
+omit [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z] in
+/-- The iterated zero-wealth floor, started from the constant `y₀`. -/
+noncomputable def zeroFloorIter (π : Z → Z → ℝ) (y : Z → ℝ) (βR γ σ y₀ : ℝ) (τ : ℕ → Z → ℝ) :
+    ℕ → Z → ℝ
+  | 0 => fun _ => y₀
+  | n + 1 => zeroFloorStep π y βR γ σ (τ n) (zeroFloorIter π y βR γ σ y₀ τ n)
+
+/-- **Every iterate of the zero-wealth floor operator is a floor**, starting from `y_min`. -/
+theorem zeroFloorIter_le {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hpc : P.PositiveConsumption)
+    (hslack : ∀ s : ℝ × Z, s.1 ∈ Icc (0 : ℝ) assetCap → P.policy s < assetCap)
+    {σ : ℝ} (hσ0 : 0 ≤ σ)
+    (hslope : ∀ z, ∀ A ∈ Icc (0 : ℝ) P.maxIncome,
+      P.consumptionFn z 0 + σ * A ≤ P.consumptionFn z A)
+    (hbase : ∀ z, P.minIncome ≤ P.consumptionFn z 0)
+    (τ : ℕ → Z → ℝ) (hτ0 : ∀ k z, 0 < τ k z) (hτ : ∀ k z, τ k z ≤ P.income z) (n : ℕ) :
+    (∀ z, 0 < zeroFloorIter P.transitionMatrix P.income ((P.discount : ℝ) * (1 + P.interest))
+        γ σ P.minIncome τ n z)
+      ∧ ∀ z, zeroFloorIter P.transitionMatrix P.income ((P.discount : ℝ) * (1 + P.interest))
+        γ σ P.minIncome τ n z ≤ P.consumptionFn z 0 := by
+  induction n with
+  | zero => exact ⟨fun _ => P.minIncome_pos, hbase⟩
+  | succ n ih =>
+    refine ⟨fun z => ?_, fun z => ?_⟩
+    · have hb : ∀ z', 0 < zeroFloorIter P.transitionMatrix P.income
+          ((P.discount : ℝ) * (1 + P.interest)) γ σ P.minIncome τ n z'
+          + σ * (P.income z - τ n z) := fun z' => by
+        have h1 := ih.1 z'
+        have h2 : 0 ≤ σ * (P.income z - τ n z) := mul_nonneg hσ0 (by linarith [hτ n z])
+        linarith
+      have hS := sum_rpow_pos (p := -γ) (P.transitionMatrix_nonneg z) (P.transitionMatrix_sum z) hb
+      simp only [zeroFloorIter, zeroFloorStep]
+      exact lt_min (hτ0 n z) (mul_pos
+        (Real.rpow_pos_of_pos (mul_pos hβ P.interest_gt_neg_one) _) (Real.rpow_pos_of_pos hS _))
+    · simp only [zeroFloorIter, zeroFloorStep]
+      exact P.crra_consumptionFn_zero_ge hγ0 hu hβ hpc hslack ih.1 ih.2 hσ0 hslope z (hτ n z)
+
 end Floor
 
 /-! ### From a consumption gap to the capital floor -/
@@ -364,6 +409,18 @@ section Assembly
 
 variable [MeasurableSpace Z] [BorelSpace Z]
 variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
+
+omit [MeasurableSpace Z] [BorelSpace Z] in
+/-- A consumption floor bounds the marginal-utility function in norm. -/
+theorem norm_marginalState_le_of_floor {du : ℝ → ℝ} (hdu : ContinuousOn du (Ioi (0 : ℝ)))
+    (hpc : P.PositiveConsumption) (hanti : AntitoneOn du (Ioi (0 : ℝ)))
+    (hdupos : ∀ c : ℝ, 0 < c → 0 ≤ du c) {cmin : ℝ} (hcmin : 0 < cmin)
+    (hfloor : ∀ z, ∀ a ∈ Icc (0 : ℝ) assetCap, cmin ≤ P.consumptionFn z a) :
+    ‖P.marginalState du hdu hpc‖ ≤ du cmin := by
+  refine (norm_le (hdupos cmin hcmin)).2 fun s => ?_
+  have hc : 0 < P.consumptionFn s.2 (s.1 : ℝ) := P.consumptionFn_pos hpc s.1.2 s.2
+  rw [marginalState_apply, Real.norm_eq_abs, abs_of_nonneg (hdupos _ hc)]
+  exact hanti hcmin hc (hfloor s.2 _ s.1.2)
 
 omit [MeasurableSpace Z] [BorelSpace Z] in
 /-- **A consumption gap is a variance floor.** If tomorrow's consumption in state `z₁` is at most

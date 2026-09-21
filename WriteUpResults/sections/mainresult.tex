@@ -177,10 +177,39 @@ differ by $0.1$ to $0.2$. The probability of reaching both extreme states is of 
 $10^{-24}$ under Tauchen's discretisation, so the floor is non-vacuous only for $\beta R$ within
 about $10^{-27}$ of one, with an asset cap to match; the true conditional variance at low saving
 is of the order of $10^{-3}$, more than twenty orders of magnitude above what is certified. The
-existence question at $\mu=1$ is thus reduced to instantiating these theorems at the calibration,
-with constants that make the result an existence statement rather than a quantitative one. The
 missing quantity is a consumption bound at moderate wealth accurate to a few tenths of mean
 income, which no MPC-type argument supplies.
+
+The instantiation at the calibration is nevertheless done, and it closes the household side of
+existence.
+
+\begin{theorem}[Existence at the log calibration, from primitives]\label{thm:existprim}
+Let $-\delta<r_{lo}<r_{hi}<\lambda$ with $r_{hi}>0$, assume \ref{E1}, \ref{E2}, \eqref{eq:cap}
+at $r_{hi}$ and $y_{\max}<\bar a$, and let the first inequality of Theorem~\ref{thm:exist} hold.
+Let $H\ge0$ satisfy $\sum_{z'}\pi(z,z')(y_{z'}+H_{z'})\le(1+r_{hi})H_z$, let
+$0\le\sigma\le\kappa R-\kappa y_{\max}/(r_{hi}(\bar a-y_{\max}))$ with $\kappa=1-\beta$, let
+$f$ be any iterate of the zero-wealth floor operator started from $y_{\min}$ with thresholds
+$0<\tau\le y$, and let $z_1,z_2$ be reached from every state with probability at least $p_0>0$.
+If
+\begin{gather*}
+  U:=\kappa\bigl((1+r_{hi})A_0+y_{z_1}+H_{z_1}\bigr)<f_{z_2}=:L,\\
+  D(r_{hi})\le A_0-\frac{A_0}{\tfrac{p_0}{2}(U^{-1}-L^{-1})^2}\cdot
+    \frac{2\bigl(1-\beta(1+r_{hi})\bigr)}{y_{\min}^2},
+\end{gather*}
+then there is an equilibrium rate in $[r_{lo},r_{hi}]$.
+\formal{IncomeFluctuation.aiyagari1994\_log\_exists\_equilibrium}
+\end{theorem}
+
+Every hypothesis is an inequality between explicit expressions in $\beta$, $r_{hi}$, the income
+vector, the transition matrix and the cap; nothing about the policy or the value function remains.
+The proof discharges, at $r_{hi}$, positive consumption and cap slack from primitives, concavity
+of the consumption function, the two sandwiches, the slope floor, the corner floor $y_{\min}\le c$
+and the iterated zero-wealth floor (\lean{zeroFloorIter\_le}), bounds $\|u'(c)\|_\infty\le
+1/y_{\min}$ (\lean{norm\_marginalState\_le\_of\_floor}), and feeds the capital floor of
+\lean{crra\_aggregateCapital\_ge\_of\_primitives} into Theorem~\ref{thm:exist}. With
+Theorem~\ref{thm:main} the equilibrium so obtained is the only one on $(-\delta,\lambda)$. What
+the numbers above say is that the two displayed inequalities can be met only with $r_{hi}$
+within about $10^{-27}$ of $\lambda$ and a cap of the order of $10^{30}$ mean incomes.
 
 \subsection{Computation}
 
