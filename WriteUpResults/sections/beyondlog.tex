@@ -160,9 +160,27 @@ $c_2(a,z)\le (R_1/R_2)^{1/\mu}\,c_1(a,z)\,(1+X/c_{\min})$ (\lean{consumption\_tr
 factor $(R_1/R_2)^{1/\mu}\le1-\Delta r/(\mu R_2)$ is the substitution margin the induction lives
 on; the factor $c_1(a,z)/c_{\min}$ is the amplification, about $1/\Thorn_1$ at high wealth, where
 the induction closes exactly when $\alpha\ge1-(1-\kappa)/\mu$, and as large as the fall in
-consumption from a high-income state today to the lowest tomorrow at moderate wealth. Whether the
-margin covers that amplification on the middle of the wealth range is the open quantitative
-question.
+consumption from a high-income state today to the lowest tomorrow at moderate wealth.
+
+We settled the quantitative question numerically at Aiyagari's $\mu=3$ ($\beta=0.96$, seven-state
+Tauchen chain with $\rho=0.9$ and $\sigma=0.4$, zero borrowing limit, rates $4.0\%$ and $4.1\%$;
+the scripts are in \texttt{WriteUpResults/\allowbreak numerics}). The target inequality is true:
+with $\alpha=1-(1-\kappa)/\mu=0.680$ the intercept needed is $0.007$ mean incomes, far inside the
+$0.09$ that \eqref{eq:SEC} tolerates at zero wealth; the slope of the gap at high wealth is
+$\alpha$ to four digits; and at zero wealth the gap is nonpositive in every income state, down to
+$-2\Delta r$ in the middle states, where the higher rate raises saving. The induction cannot see
+this. Applying the transfer step to the affine bound, with the exact Euler weighting over
+tomorrow's income in place of the minimum and with an intercept for each income state, gives a
+monotone map on intercepts whose linearisation has every row sum above one ($1.01$ to $1.07$,
+spectral radius $1.057$), and iterating it diverges instead of settling. This is not a numerical
+accident. At a state where the lower-rate household saves its Euler equation holds with equality,
+and the multiplier of the step is $c_1\,\mathbb{E}[c_1'^{\,-\mu-1}]/\mathbb{E}[c_1'^{\,-\mu}]$,
+the expectation over tomorrow's income, which by the power-mean inequality and the Euler equation
+is at least $(\beta R_1)^{-1/\mu}=1/\Thorn_1>1$. Impatience makes every step of a supremum
+induction expansive, just as it made the Lipschitz-in-rate recursion neutral. The affine
+one-sided bound is therefore true but not provable by induction along the Euler equation. What
+would be needed is a majorant that carries the dip at zero wealth, or an argument in which the
+steps are discounted, since $\beta/\Thorn_1<1$; neither is in hand.
 
 Two further reductions are recorded for completeness. The rescaling proof of Section~\ref{sec:thm1}
 uses relative risk aversion at most one only through a range condition on the true consumption

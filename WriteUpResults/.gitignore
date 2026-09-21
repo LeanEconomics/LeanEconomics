@@ -8,3 +8,5 @@
 *.synctex.gz
 *.toc
 build.log
+numerics/*.mat
+numerics/*.png
