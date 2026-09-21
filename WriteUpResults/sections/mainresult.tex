@@ -125,6 +125,26 @@ quantitative question about the policy that the qualitative theory does not answ
 supplied, existence follows by the intermediate value theorem, because capital supply along the
 unique stationary distribution is continuous in the rate (Section~\ref{sec:cont}).
 
+The floor has been reduced to one quantitative input, by two identities that hold at every
+stationary distribution. Write $M=u'(c)$ and let the \emph{slack} be
+$M(s)-\beta R\,\E[M(s')\mid s]\ge0$, zero at interior choices. Integrating the Euler inequality
+against the stationary distribution, $\int \mathrm{slack}\,d\mu=(1-\beta R)\int M\,d\mu$; doing the
+same with $M^2$,
+\begin{equation}\label{eq:condvar}
+  \int \operatorname{Var}\bigl(M(s')\mid s\bigr)\,d\mu\ \le\ 2(1-\beta R)\,\|M\|_\infty^2
+\end{equation}
+(\lean{integral\_slack}, \lean{integral\_condVar\_le}). The conditional variance of next
+period's marginal utility is the precautionary channel: a household at low wealth cannot smooth an
+income shock. Inequality \eqref{eq:condvar} says the stationary distribution cannot keep mass
+where that happens once the household is nearly patient, and if every household saving at most
+$A_0$ faces conditional variance at least $v_0$ then $K(\mu)\ge A_0(1-2(1-\beta R)\|M\|^2/v_0)$
+(\lean{aggregateCapital\_ge\_of\_condVar}). This is the divergence of capital supply at the rate
+of time preference, inside the capped model, with no martingale convergence and no uncapped
+limit. The remaining input is the variance floor: a gap in marginal utility between the best and
+worst income states at low wealth, uniform as $\beta R\to1$, which needs a lower bound on the
+consumption of high-income households beyond the minimal-MPC share. The crude bound the Euler
+equation gives, $c(0,z_{\max})\ge y_{\min}/(\beta R)$, vanishes at the wrong rate.
+
 \subsection{Computation}
 
 \begin{theorem}[Bisection converges to the equilibrium rate]\label{thm:bisect}

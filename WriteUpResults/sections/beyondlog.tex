@@ -153,6 +153,17 @@ absolute, that is, comparative statics of $c$ in $r$ uniform on the support. We 
 result. The status of $\mu\in\{3,5\}$ is therefore: reduced to an inequality on two consumption
 functions that is numerically true everywhere, with an explicit margin, and unproved.
 
+The inductive step of such a bound is proved: at a state where the lower-rate household saves,
+if $X$ bounds tomorrow's consumption gap in every income state and $c_{\min}$ bounds the
+lower-rate household's consumption tomorrow from below, then
+$c_2(a,z)\le (R_1/R_2)^{1/\mu}\,c_1(a,z)\,(1+X/c_{\min})$ (\lean{consumption\_transfer}). The
+factor $(R_1/R_2)^{1/\mu}\le1-\Delta r/(\mu R_2)$ is the substitution margin the induction lives
+on; the factor $c_1(a,z)/c_{\min}$ is the amplification, about $1/\Thorn_1$ at high wealth, where
+the induction closes exactly when $\alpha\ge1-(1-\kappa)/\mu$, and as large as the fall in
+consumption from a high-income state today to the lowest tomorrow at moderate wealth. Whether the
+margin covers that amplification on the middle of the wealth range is the open quantitative
+question.
+
 Two further reductions are recorded for completeness. The rescaling proof of Section~\ref{sec:thm1}
 uses relative risk aversion at most one only through a range condition on the true consumption
 function of the higher-rate economy, $(1-c_2(0)/c_2(ta))(\rho-1)\le\rho^{1/\mu}-1$ with
