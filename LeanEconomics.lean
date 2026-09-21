@@ -115,3 +115,4 @@ import LeanEconomics.Equilibrium.SlackEuler
 import LeanEconomics.Equilibrium.SavingPropensity
 import LeanEconomics.Models.ConsumptionSandwich
 import LeanEconomics.Equilibrium.LasryLionsIteration
+import LeanEconomics.Equilibrium.EulerVariance

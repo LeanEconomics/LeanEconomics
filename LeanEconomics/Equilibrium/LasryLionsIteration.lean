@@ -148,6 +148,14 @@ theorem le_iterate_of_le_markovOp {D G : P.State →ᵇ ℝ} {β : ℝ} (hβ : 0
     have h3 := mul_le_mul_of_nonneg_left h2 (pow_nonneg hβ T)
     linarith [ih, h3]
 
+omit [BorelSpace Z] in
+/-- A bounded continuous function integrates to at most its norm against a probability measure. -/
+theorem abs_integral_le_norm (ν : ProbabilityMeasure P.State) (h : P.State →ᵇ ℝ) :
+    |∫ s, h s ∂(ν : Measure P.State)| ≤ ‖h‖ := by
+  have := norm_integral_le_of_norm_le_const (μ := (ν : Measure P.State)) (f := fun s => h s)
+    (C := ‖h‖) (Filter.Eventually.of_forall fun s => h.norm_coe_le_norm s)
+  simpa [Real.norm_eq_abs] using this
+
 end Operator
 
 /-! ### Two rates, one household, and the value functions on the state space -/
@@ -396,14 +404,6 @@ theorem lasryLions_iteration_sum_le {r₁ r₂ : ℝ} (h₁ : P.RateOK r₁) (h�
     exact Finset.sum_congr rfl fun t _ => by ring
   rw [hsum]
   linarith [hI₁, hI₂]
-
-omit [BorelSpace Z] in
-/-- A bounded continuous function integrates to at most its norm against a probability measure. -/
-theorem abs_integral_le_norm (ν : ProbabilityMeasure P.State) (h : P.State →ᵇ ℝ) :
-    |∫ s, h s ∂(ν : Measure P.State)| ≤ ‖h‖ := by
-  have := norm_integral_le_of_norm_le_const (μ := (ν : Measure P.State)) (f := fun s => h s)
-    (C := ‖h‖) (Filter.Eventually.of_forall fun s => h.norm_coe_le_norm s)
-  simpa [Real.norm_eq_abs] using this
 
 /-- **The discounted Lasry–Lions series is at most zero.** The finite-horizon inequality has right
 side at most `2 β^T ‖V₁ - V₂‖`, which vanishes; the series converges absolutely. -/
