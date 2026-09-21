@@ -176,9 +176,14 @@ spectral radius $1.057$), and iterating it diverges instead of settling. This is
 accident. At a state where the lower-rate household saves its Euler equation holds with equality,
 and the multiplier of the step is $c_1\,\mathbb{E}[c_1'^{\,-\mu-1}]/\mathbb{E}[c_1'^{\,-\mu}]$,
 the expectation over tomorrow's income, which by the power-mean inequality and the Euler equation
-is at least $(\beta R_1)^{-1/\mu}=1/\Thorn_1>1$. Impatience makes every step of a supremum
-induction expansive, just as it made the Lipschitz-in-rate recursion neutral. The affine
-one-sided bound is therefore true but not provable by induction along the Euler equation. What
+is at least $(\beta R_1)^{-1/\mu}=1/\Thorn_1>1$ (\lean{euler\_amplification\_ge}); with the
+substitution factor included the multiplier is at least $1/\Thorn_2$
+(\lean{transfer\_multiplier\_ge}), so it exceeds one whenever the higher-rate household is
+impatient (\lean{one\_lt\_transfer\_multiplier}), and it is the derivative at a zero gap of the
+transfer bound written with the exact Euler weighting (\lean{hasDerivAt\_transferBound}).
+Impatience makes every step of a supremum induction expansive, just as it made the
+Lipschitz-in-rate recursion neutral. The affine one-sided bound is therefore true but not
+provable by induction along the Euler equation, and the rate-response programme is closed. What
 would be needed is a majorant that carries the dip at zero wealth, or an argument in which the
 steps are discounted, since $\beta/\Thorn_1<1$; neither is in hand.
 

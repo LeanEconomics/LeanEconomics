@@ -59,6 +59,10 @@ Corner-slack identity & \lean{integral\_slack} & Equilibrium/\allowbreak EulerVa
 Variance bound \eqref{eq:condvar} & \lean{integral\_condVar\_le} & Equilibrium/\allowbreak EulerVariance\\
 Capital floor from a variance floor & \lean{aggregateCapital\_ge\_of\_condVar} & Equilibrium/\allowbreak EulerVariance\\
 Transfer lemma & \lean{consumption\_transfer} & Equilibrium/\allowbreak RateResponse\\
+Euler-weighted amplification $\ge1/\Thorn_1$ & \lean{euler\_amplification\_ge} & Equilibrium/\allowbreak RateResponse\\
+Step multiplier $\ge1/\Thorn_2$ & \lean{transfer\_multiplier\_ge} & Equilibrium/\allowbreak RateResponse\\
+Multiplier exceeds one under impatience & \lean{one\_lt\_transfer\_multiplier} & Equilibrium/\allowbreak RateResponse\\
+Multiplier is the derivative of the transfer bound & \lean{hasDerivAt\_transferBound} & Equilibrium/\allowbreak RateResponse\\
 \midrule
 Huggett single crossing & \lean{huggett\_equilibriumRate\_unique} & Equilibrium/\allowbreak Huggett\\
 Strict Theorem 1, creditors & \lean{policy\_lt\_policy\_withRate\_of\_marginal\_at} & Equilibrium/\allowbreak DebtorRate\\
