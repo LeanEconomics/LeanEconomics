@@ -140,10 +140,47 @@ where that happens once the household is nearly patient, and if every household 
 $A_0$ faces conditional variance at least $v_0$ then $K(\mu)\ge A_0(1-2(1-\beta R)\|M\|^2/v_0)$
 (\lean{aggregateCapital\_ge\_of\_condVar}). This is the divergence of capital supply at the rate
 of time preference, inside the capped model, with no martingale convergence and no uncapped
-limit. The remaining input is the variance floor: a gap in marginal utility between the best and
-worst income states at low wealth, uniform as $\beta R\to1$, which needs a lower bound on the
-consumption of high-income households beyond the minimal-MPC share. The crude bound the Euler
-equation gives, $c(0,z_{\max})\ge y_{\min}/(\beta R)$, vanishes at the wrong rate.
+limit.
+
+The variance floor is a gap in marginal utility between two income states at tomorrow's assets,
+and both sides of the gap are now bounded from primitives (\lean{Equilibrium/ExistenceFloor}).
+The upper side is a state-dependent sandwich: for any nonnegative super-solution $H$ of the
+human-wealth equation $\sum_{z'}\pi(z,z')(y_{z'}+H_{z'})\le RH_z$,
+$c(a,z)\le\kappa(m+H_z)$ (\lean{crra\_consumptionFn\_le\_of\_humanWealth}), which keeps the
+income state where the sandwich of Section~\ref{sec:frontier} used $y_{\max}$; the proof is the
+same one supremum, with Jensen for the negative power. The lower side is a floor on consumption at
+zero wealth in a high-income state. Concavity of the consumption function (Carroll--Kimball) and
+the two sandwiches give it slope at least $\kappa R-\kappa y_{\max}/(r(\bar a-b))$ on $[0,b]$
+(\lean{crra\_consumptionFn\_sub\_ge}), and at zero wealth the household either sits at the corner
+and consumes its income or saves $y_z-c$, so that the Euler inequality above the floor, with the
+slope bound on tomorrow's consumption, gives for every $t\le y_z$ and every floor $f$ on
+$c(0,\cdot)$
+\[
+  \min\Bigl\{t,\ \Thorn^{-1}\Bigl(\textstyle\sum_{z'}\pi(z,z')\bigl(f_{z'}+\sigma(y_z-t)\bigr)^{-\mu}\Bigr)^{-1/\mu}\Bigr\}
+  \ \le\ c(0,z)
+\]
+(\lean{crra\_consumptionFn\_zero\_ge}). Iterating from $f=y_{\min}$ produces a floor that is the
+fixed point of an explicit operator on the primitives. The capital floor then rests on one
+inequality, $\kappa(RA_0+y_{z_1}+H_{z_1})<f_{z_2}$, for a pair of states reached from every state
+with probability at least $p_0$ (\lean{crra\_aggregateCapital\_ge\_of\_primitives}, through
+\lean{condVar\_ge\_of\_gap} and \lean{aggregateCapital\_ge\_of\_gap}), with
+$v_0=\tfrac{p_0}{2}(u'(U)-u'(L))^2$.
+
+What this does and does not give. At Aiyagari's numbers (scripts in
+\texttt{WriteUpResults/\allowbreak numerics}) the inequality holds for the extreme pair
+$(z_{\min},z_{\max})$ up to $A_0\approx12$ mean incomes at $\mu=1$, above capital demand, so the
+floor is a genuine existence argument for rates close enough to $\lambda$. But the primitive
+bounds certify the gap only for pairs far apart in the income chain: at zero wealth adjacent
+states are separated only among the four lowest, because the upper bound is loose by up to $0.3$
+mean incomes at low wealth and the zero-wealth floor by up to $0.15$, while adjacent consumptions
+differ by $0.1$ to $0.2$. The probability of reaching both extreme states is of the order of
+$10^{-24}$ under Tauchen's discretisation, so the floor is non-vacuous only for $\beta R$ within
+about $10^{-27}$ of one, with an asset cap to match; the true conditional variance at low saving
+is of the order of $10^{-3}$, more than twenty orders of magnitude above what is certified. The
+existence question at $\mu=1$ is thus reduced to instantiating these theorems at the calibration,
+with constants that make the result an existence statement rather than a quantitative one. The
+missing quantity is a consumption bound at moderate wealth accurate to a few tenths of mean
+income, which no MPC-type argument supplies.
 
 \subsection{Computation}
 

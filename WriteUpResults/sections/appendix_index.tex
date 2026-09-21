@@ -58,6 +58,13 @@ Discounted series nonpositive & \lean{lasryLions\_iteration\_tsum\_nonpos} & Equ
 Corner-slack identity & \lean{integral\_slack} & Equilibrium/\allowbreak EulerVariance\\
 Variance bound \eqref{eq:condvar} & \lean{integral\_condVar\_le} & Equilibrium/\allowbreak EulerVariance\\
 Capital floor from a variance floor & \lean{aggregateCapital\_ge\_of\_condVar} & Equilibrium/\allowbreak EulerVariance\\
+State-dependent sandwich $c\le\kappa(m+H_z)$ & \lean{crra\_consumptionFn\_le\_of\_humanWealth} & Equilibrium/\allowbreak ExistenceFloor\\
+Secant floor on a bounded interval & \lean{secant\_ge\_of\_concaveOn\_Icc} & Equilibrium/\allowbreak ExistenceFloor\\
+Slope floor of consumption & \lean{crra\_consumptionFn\_sub\_ge} & Equilibrium/\allowbreak ExistenceFloor\\
+Floor at zero wealth & \lean{crra\_consumptionFn\_zero\_ge} & Equilibrium/\allowbreak ExistenceFloor\\
+Consumption gap is a variance floor & \lean{condVar\_ge\_of\_gap} & Equilibrium/\allowbreak ExistenceFloor\\
+Capital floor from a consumption gap & \lean{aggregateCapital\_ge\_of\_gap} & Equilibrium/\allowbreak ExistenceFloor\\
+CRRA capital floor from one inequality & \lean{crra\_aggregateCapital\_ge\_of\_primitives} & Equilibrium/\allowbreak ExistenceFloor\\
 Transfer lemma & \lean{consumption\_transfer} & Equilibrium/\allowbreak RateResponse\\
 Euler-weighted amplification $\ge1/\Thorn_1$ & \lean{euler\_amplification\_ge} & Equilibrium/\allowbreak RateResponse\\
 Step multiplier $\ge1/\Thorn_2$ & \lean{transfer\_multiplier\_ge} & Equilibrium/\allowbreak RateResponse\\
