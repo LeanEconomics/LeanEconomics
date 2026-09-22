@@ -41,7 +41,7 @@ then a household with more assets saves strictly less: at assets `1` it saves `1
 and it lives in the budget, not in the value function.
 -/
 
-open Set
+open Set BoundedContinuousFunction
 
 namespace LeanEconomics
 
@@ -281,5 +281,102 @@ theorem exists_saving_decrease_in_assets :
   · rw [h₂]; exact isOptimalSaving_threeHalves
 
 end OLG
+
+/-! ### The same statement in the `(a, z)` state space
+
+The household's state is assets `a` and the income shock `z`. In that language the positive
+result reads: **next period's assets rise with this period's assets, at each `z`**, and it needs
+no concavity of the continuation value at all. The repository already has this
+(`policyOf_mono`), but with concave slices of the continuation as a hypothesis, which a
+means-tested pension destroys. The Topkis argument removes the hypothesis: only strict concavity
+of period utility is used, and the continuation cancels between the two optimality inequalities.
+
+The dividing line is therefore exactly whether cash on hand rises with assets. It does whenever
+the pension does not fall faster than the gross return, and the policy is then monotone in assets
+for every continuation; it does not under a cliff or a taper steeper than the gross return, and
+then the policy is not monotone, as `exists_saving_decrease_in_assets` shows. -/
+
+namespace IncomeFluctuation
+
+variable {Z : Type*} [Fintype Z] [Nonempty Z] [TopologicalSpace Z] [DiscreteTopology Z]
+variable {assetFloor assetCap : ℝ} (P : IncomeFluctuation Z assetFloor assetCap)
+
+/-- **Next period's assets rise with this period's assets, whatever the continuation.** No
+concavity of `v` is assumed: the continuation cancels, and the only structure used is strict
+concavity of period utility. This is `policyOf_mono` with its hypothesis removed, at the cost of
+requiring the two asset levels to be distinct. -/
+theorem policyOf_mono_of_lt {v : (ℝ × Z) →ᵇ ℝ} {a a' : ℝ} {z : Z}
+    (ha : a ∈ Icc assetFloor assetCap) (ha' : a' ∈ Icc assetFloor assetCap) (hlt : a < a') :
+    P.policyOf v (a, z) ≤ P.policyOf v (a', z) := by
+  by_contra hcon
+  rw [not_le] at hcon
+  -- cash on hand rises strictly
+  have hres : P.resources (a, z) < P.resources (a', z) := by
+    simp only [resources, max_eq_right ha.1, max_eq_right ha'.1]
+    have := mul_lt_mul_of_pos_left hlt P.interest_gt_neg_one
+    linarith
+  -- both choices are feasible at both states
+  have hys : P.policyOf v (a, z) ∈ P.toExtended.feasible (a, z) := P.policyOf_mem v _
+  have hys' : P.policyOf v (a, z) ∈ P.toExtended.feasible (a', z) :=
+    P.feasible_mono hlt.le hys
+  have hy's' : P.policyOf v (a', z) ∈ P.toExtended.feasible (a', z) := P.policyOf_mem v _
+  have hy's : P.policyOf v (a', z) ∈ P.toExtended.feasible (a, z) := by
+    rw [P.feasible_eq] at hys ⊢
+    rw [P.feasible_eq] at hy's'
+    exact ⟨hy's'.1, le_trans hcon.le hys.2⟩
+  -- the four consumption levels, all in the domain of utility
+  have hcsy : P.consumption (a, z) (P.policyOf v (a, z)) ∈ P.dom :=
+    P.consumption_policyOf_mem_dom v ha
+  have hcs'y' : P.consumption (a', z) (P.policyOf v (a', z)) ∈ P.dom :=
+    P.consumption_policyOf_mem_dom v ha'
+  have hcsy' : P.consumption (a, z) (P.policyOf v (a', z)) ∈ P.dom := by
+    refine P.dom_upward hcsy ?_
+    simp only [consumption]; linarith
+  have hcs'y : P.consumption (a', z) (P.policyOf v (a, z)) ∈ P.dom := by
+    refine P.dom_upward hcsy ?_
+    simp only [consumption]; linarith
+  set p : ℝ := P.resources (a, z) - P.policyOf v (a, z) with hp
+  set q : ℝ := P.resources (a', z) - P.policyOf v (a', z) with hq
+  set r : ℝ := P.resources (a, z) - P.policyOf v (a', z) with hr
+  have hpr : p < r := by rw [hp, hr]; linarith
+  have hrq : r < q := by rw [hr, hq]; linarith
+  have hdne : q - p ≠ 0 := by intro h; rw [sub_eq_zero] at h; linarith
+  have hd0 : 0 < q - p := by linarith
+  set lam : ℝ := (q - r) / (q - p) with hlam
+  set mu : ℝ := (r - p) / (q - p) with hmu
+  have hlam0 : 0 < lam := div_pos (by linarith) hd0
+  have hmu0 : 0 < mu := div_pos (by linarith) hd0
+  have hsum : lam + mu = 1 := by
+    have hadd : (q - r) + (r - p) = q - p := by ring
+    rw [hlam, hmu, ← add_div, hadd, div_self hdne]
+  have hcomb1 : lam * p + mu * q = r := by
+    rw [hlam, hmu, div_mul_eq_mul_div, div_mul_eq_mul_div, ← add_div, div_eq_iff hdne]; ring
+  have hcomb2 : mu * p + lam * q = P.resources (a', z) - P.policyOf v (a, z) := by
+    rw [hlam, hmu, div_mul_eq_mul_div, div_mul_eq_mul_div, ← add_div, div_eq_iff hdne]
+    rw [hp, hq, hr]; ring
+  have hpq : p ≠ q := ne_of_lt (by linarith)
+  have hpdom : p ∈ P.dom := by rw [hp]; exact hcsy
+  have hqdom : q ∈ P.dom := by rw [hq]; exact hcs'y'
+  have k1 := P.strictConcaveOn_u_dom.2 hpdom hqdom hpq hlam0 hmu0 hsum
+  have k2 := P.strictConcaveOn_u_dom.2 hpdom hqdom hpq hmu0 hlam0 (by linarith)
+  simp only [smul_eq_mul, hcomb1, hcomb2] at k1 k2
+  -- the two optimality inequalities; the continuation cancels
+  have e₁ := P.objROf_le_of_mem v ha hy's hcsy'
+  have e₂ := P.objROf_le_of_mem v ha' hys' hcs'y
+  simp only [objROf, consumption, contOf] at e₁ e₂
+  have hid : lam * P.u p + mu * P.u q + (mu * P.u p + lam * P.u q) = P.u p + P.u q := by
+    linear_combination (P.u p + P.u q) * hsum
+  rw [← hp, ← hr] at e₁
+  rw [← hq] at e₂
+  linarith [e₁, e₂, k1, k2, hid]
+
+/-- **Consumption is different.** The same argument does not carry over to consumption, and it
+cannot: `exists_consumption_decrease` is a household whose consumption falls as cash on hand
+rises. Monotone consumption genuinely needs concavity of the continuation, which is what
+`consumptionFnOf_mono` assumes; monotone saving does not. -/
+theorem consumptionFnOf_eq_sub (v : (ℝ × Z) →ᵇ ℝ) (z : Z) (a : ℝ) :
+    P.consumptionFnOf v z a = P.resources (a, z) - P.policyOf v (a, z) := rfl
+
+end IncomeFluctuation
 
 end LeanEconomics

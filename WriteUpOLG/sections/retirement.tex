@@ -86,6 +86,39 @@ monotone in assets no matter how badly the test distorts the value function; a t
 the gross return, or a cliff, makes a richer household poorer in the only sense that matters for
 today's decision.
 
+\subsection{Which policy, and in which variable}
+
+The two non-monotonicity results are about different objects, and it is worth separating them in
+the household's own state space, assets $a$ and the Markov income shock $z$.
+
+Next period's assets are monotone. For each $z$, the optimal $a'$ is nondecreasing in $a$
+whatever the continuation value, with no concavity assumed of it:
+
+\begin{theorem}[$a'$ rises with $a$, at each $z$]\label{thm:azmono}
+Let $a<a'$ both lie in the asset region. Then for every continuation $v$ and every $z$,
+$g_v(a,z)\le g_v(a',z)$.
+\formal{IncomeFluctuation.policyOf\_mono\_of\_lt}
+\end{theorem}
+
+This is Theorem~\ref{thm:topkis} read in the state space: cash on hand rises with assets, so
+optimal saving does. The repository already had this statement (\lean{policyOf\_mono}) but with
+concave slices of the continuation as a hypothesis, which is exactly what a means test destroys;
+the Topkis argument removes the hypothesis, at the cost of requiring the two asset levels to be
+distinct. The continuation cancels between the two optimality inequalities and only strict
+concavity of period utility survives.
+
+Consumption is not monotone, and the contrast is sharp rather than an artefact of proof
+technique. Consumption is $m(a)-g_v(a,z)$, and both terms rise with $a$; when the continuation is
+non-concave the second can rise faster, which is exactly Theorem~\ref{thm:cons}. So monotone
+consumption genuinely requires concavity of the continuation, while monotone saving does not.
+
+Two things follow for the means test. Where the pension enters only next period's problem, so
+that today's cash on hand is unaffected, Theorem~\ref{thm:azmono} applies verbatim: next period's
+assets still rise with this period's, and only consumption misbehaves. Where the test is assessed
+on the assets currently held, the hypothesis of Theorem~\ref{thm:azmono} is the one that fails:
+cash on hand is no longer increasing in $a$, and with it the policy. That is the whole of
+Theorem~\ref{thm:taper}, and the dividing line is $\tau$ against $R$.
+
 \subsection{At realistic parameters}
 
 The three theorems predict exactly which of the two channels operates for which schedule, and a
