@@ -1,0 +1,79 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1.1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% A formal name, as it appears in the Lean development.
+\newcommand{\leanunderscore}{\char`\_\hskip 0pt plus 0.4pt\relax}
+\newcommand{\lean}[1]{\begingroup\ttfamily\small\let\_\leanunderscore #1\endgroup}
+% The Lean name attached to a stated result.
+\newcommand{\formal}[1]{\par\noindent\begingroup\footnotesize\raggedright\emph{Formal statement:} \lean{#1}.\par\endgroup}
+\newcommand{\Thorn}{\text{\th}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator{\supp}{supp}
+
+\onehalfspacing
+\tolerance=600 \emergencystretch=1.5em
+
+\title{Overlapping Generations in Lean:\\ The Life-Cycle Household}
+\author{LeanEconomics Org [mostly Claude]\thanks{The Lean development described here is at
+\url{https://github.com/LeanEconomics/LeanEconomics}. It was written mostly by Claude (Anthropic),
+an AI coding model, working under the direction of Robert Kirkby (Victoria University of
+Wellington); every result reported was checked by the Lean kernel. This is the companion to the
+write-up on Aiyagari (1994) in the same repository. Comments welcome.}}
+\date{September 2026\\[0.5em]\small Draft, in progress}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This is the record of a programme to formalise overlapping-generations economies in Lean 4, and
+of its first stage: the life-cycle household. A household that lives $J$ periods against
+uninsurable earnings risk and a borrowing constraint solves a finite backward induction, and
+everything proved for the infinite-horizon Bellman operator with an arbitrary continuation applies
+stage by stage with no fixed point. Beyond that we prove the finite-horizon sandwich: with $k$
+periods still to come, consumption lies between $\kappa_k m$ and $\kappa_k(m+H_k(z))$, where
+$1/\kappa_k=\sum_{i\le k}(\Thorn/R)^i$ is the consumption share of a household with no future
+income and $H_k$ is the expected present value of the next $k$ incomes; the propensities decrease
+in the horizon towards the infinite-horizon $\kappa=1-\Thorn/R$. The programme's target is
+uniqueness of the stationary equilibrium at relative risk aversion above one, which the infinite
+horizon could not close: in a life cycle every comparative static is a finite induction, wealth is
+bounded, and the age-one distribution is common to every rate.
+\end{abstract}
+
+\noindent\emph{JEL:} C63, D52, E21. \quad \emph{Keywords:} overlapping generations, life cycle,
+Bewley models, formal verification, Lean.
+
+\input{sections/intro}
+\input{sections/lifecycle}
+\input{sections/programme}
+
+\bibliographystyle{ecta}
+\bibliography{refs}
+
+\appendix
+\input{sections/appendix_index}
+
+\end{document}

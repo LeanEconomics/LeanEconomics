@@ -1,0 +1,25 @@
+\section{Introduction}
+
+The companion write-up in this repository proved that the stationary equilibrium of
+\citet{Aiyagari1994} is unique at his logarithmic calibration, and located exactly what stands in
+the way for relative risk aversion $\mu\in\{3,5\}$. Every obstacle it met traces to the fixed point
+of the infinite-horizon problem: a condition on the response of consumption to the interest rate
+fails in a tail of wealth that the stationary distribution reaches; an induction that would prove
+the response bound has a step multiplier $1/\Thorn>1$, so it cannot close as a supremum argument;
+and the only floor on capital supply comes from an ergodic identity that loses a factor
+$\|u'\|^2/\operatorname{Var}$. Overlapping generations remove all three at once. A household
+that lives $J$ periods solves a finite backward induction from an explicit terminal condition, so
+a multiplier $1/\Thorn$ per step compounds to $\Thorn^{-J}$, which at Aiyagari's numbers is about
+$1.03$. Wealth is bounded by $J$ periods of accumulation, so any condition needs checking on a
+known bounded region. And the distribution of the youngest cohort is common to every interest
+rate, so an ordering of policies pushes forward to an ordering of the whole age profile of
+distributions by induction on age, with no Doeblin atom and no uniqueness of a stationary
+distribution.
+
+The target of the programme is uniqueness of the stationary equilibrium of a stochastic
+life-cycle economy in the manner of \citet{Huggett1996} at $\mu\in\{3,5\}$. Section~\ref{sec:lc}
+records the first stage, the life-cycle household, which is formalised. Section~\ref{sec:prog}
+records the rest of the programme, the classical results of \citet{Diamond1965} included, and
+what each stage needs. As in the companion, every result stated with a formal name has been
+checked by the Lean kernel against Mathlib; the development is at
+\url{https://github.com/LeanEconomics/LeanEconomics}, directory \texttt{LeanEconomics/OLG}.

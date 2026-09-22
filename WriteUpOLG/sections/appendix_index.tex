@@ -1,0 +1,30 @@
+\section{Index of formal results}\label{app:index}
+
+All in the namespace \lean{LeanEconomics.IncomeFluctuation}, directory \lean{LeanEconomics/OLG}.
+Every result depends only on the three standard axioms (\lean{propext}, \lean{Classical.choice},
+\lean{Quot.sound}) and none uses \lean{sorry}.
+
+\begingroup\footnotesize
+\begin{longtable}{@{}p{0.38\textwidth}p{0.40\textwidth}p{0.16\textwidth}@{}}
+\toprule
+Result & Lean name & Module \\
+\midrule
+\endhead
+Stage value, policy, consumption & \lean{stageValue}, \lean{stagePolicy}, \lean{stageConsumption} & OLG/\allowbreak LifeCycle\\
+Last period: no saving & \lean{stagePolicy\_zero} & OLG/\allowbreak LifeCycle\\
+Last period: consume cash on hand & \lean{stageConsumption\_zero} & OLG/\allowbreak LifeCycle\\
+Positive consumption at every stage & \lean{stageConsumption\_pos} & OLG/\allowbreak LifeCycle\\
+Saving and consumption rise with wealth & \lean{stagePolicy\_mono}, \lean{stageConsumption\_mono} & OLG/\allowbreak LifeCycle\\
+Carroll--Kimball at every stage & \lean{concaveOn\_stageConsumption} & OLG/\allowbreak LifeCycle\\
+Euler under the cap, by stage & \lean{stage\_euler\_le} & OLG/\allowbreak LifeCycle\\
+Euler above the floor, by stage & \lean{stage\_euler\_ge} & OLG/\allowbreak LifeCycle\\
+Finite-horizon propensities, human wealth & \lean{stageMPC}, \lean{stageHumanWealth} & OLG/\allowbreak LifeCycle\\
+Propensities in $(0,1]$, above $\kappa$ & \lean{stageMPC\_pos}, \lean{stageMPC\_le\_one}, \lean{minMPC\_le\_stageMPC} & OLG/\allowbreak LifeCycle\\
+Lower Euler step & \lean{crra\_stageMPC\_step} & OLG/\allowbreak LifeCycle\\
+Upper Euler step & \lean{crra\_stageUpper\_step} & OLG/\allowbreak LifeCycle\\
+Theorem~\ref{thm:sandwich}, lower & \lean{stageMPC\_mul\_le\_stageConsumption} & OLG/\allowbreak LifeCycle\\
+Theorem~\ref{thm:sandwich}, upper & \lean{stageConsumption\_le\_stageHumanWealth} & OLG/\allowbreak LifeCycle\\
+One-step saving bound & \lean{stagePolicy\_le} & OLG/\allowbreak LifeCycle\\
+\bottomrule
+\end{longtable}
+\endgroup

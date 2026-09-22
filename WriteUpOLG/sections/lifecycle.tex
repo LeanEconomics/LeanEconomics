@@ -1,0 +1,78 @@
+\section{The life-cycle household}\label{sec:lc}
+
+\subsection{Stages}
+
+The household of the companion write-up is kept: earnings $y(z)$ follow a finite Markov chain
+$\pi$, the gross return is $R=1+r$, cash on hand is $m=Ra+y(z)$, saving $a'\in[0,\bar a]$ is
+bounded below by the borrowing limit and above by an artefactual cap, utility is CRRA with
+$u'(c)=c^{-\mu}$ and $\beta\in(0,1)$. What changes is the horizon: the household lives $J$
+periods and leaves nothing behind. Count periods from the end. With $k$ periods still to come
+after today, the continuation value is the $k$-th Bellman iterate from zero,
+\[
+  V_k=T^k 0,\qquad (Tv)(a,z)=\max_{a'}\ \bigl\{u(m-a')+\beta\textstyle\sum_{z'}\pi(z,z')v(a',z')\bigr\},
+\]
+and the household with $k$ periods to come saves $g_k=\operatorname{policyOf}V_k$ and consumes
+$c_k=m-g_k$ (\lean{stageValue}, \lean{stagePolicy}, \lean{stageConsumption}). Age $j$ of a
+$J$-period life is stage $k=J-1-j$. In the last period the household saves nothing and consumes
+its cash on hand (\lean{stagePolicy\_zero}, \lean{stageConsumption\_zero}).
+
+This is the finite-horizon problem with a flat age profile of earnings: the same income process at
+every age. An age profile, retirement and survival risk need income to be a parameter of the
+Bellman step rather than a field of the structure, and are deferred to the next stage of the
+programme.
+
+\subsection{What transfers without a fixed point}
+
+The companion development proved its household results for the Bellman operator applied to an
+arbitrary continuation $v$, and only then passed to the fixed point. Here there is no fixed point
+to pass to, and each result is read at $v=V_k$:
+
+\begin{itemize}[leftmargin=1.5em]
+\item consumption is positive at every stage when marginal utility is unbounded at zero
+  (\lean{stageConsumption\_pos});
+\item the stage value has concave slices, so the optimal action is unique and both saving and
+  consumption rise with wealth (\lean{stagePolicy\_mono}, \lean{stageConsumption\_mono});
+\item Carroll--Kimball: consumption is concave in wealth at every stage
+  (\lean{concaveOn\_stageConsumption});
+\item the Euler inequality under the cap, $\beta R\,\E[u'(c_k(a',z'))\mid z]\le u'(c_{k+1}(a,z))$,
+  at every state (\lean{stage\_euler\_le}), and the Euler inequality above the floor, the reverse,
+  at every state where the household saves (\lean{stage\_euler\_ge}).
+\end{itemize}
+
+\subsection{The finite-horizon sandwich}
+
+Let $\Thorn=(\beta R)^{1/\mu}$ and define the finite-horizon minimal propensities to consume by
+\[
+  \kappa_0=1,\qquad \kappa_{k+1}=\frac{\kappa_kR}{\Thorn+\kappa_kR},\qquad\text{so that}\qquad
+  \frac1{\kappa_k}=\sum_{i=0}^{k}\Bigl(\frac{\Thorn}{R}\Bigr)^{i}
+\]
+(\lean{stageMPC}): the share of cash on hand consumed by a household with $k$ periods to come and
+no future income. Let $H_0=0$ and $RH_{k+1}(z)=\sum_{z'}\pi(z,z')\bigl(y(z')+H_k(z')\bigr)$, the
+expected present value of the next $k$ incomes (\lean{stageHumanWealth}).
+
+\begin{theorem}[The finite-horizon sandwich]\label{thm:sandwich}
+Assume CRRA utility with marginal utility unbounded at zero, and that the cap is slack at every
+stage. Then for every $k$, every $z$ and every $a\in[0,\bar a]$,
+\[
+  \kappa_k\,m\ \le\ c_k(a,z)\ \le\ \kappa_k\bigl(m+H_k(z)\bigr).
+\]
+\formal{IncomeFluctuation.stageMPC\_mul\_le\_stageConsumption,
+IncomeFluctuation.stageConsumption\_le\_stageHumanWealth}
+\end{theorem}
+
+Each bound is one Euler step, applied $k$ times. The lower bound: if consumption against $v$ is at
+least $\kappa m$, the Euler inequality above the floor at a state where the household saves gives
+$c^{-\mu}\le\beta R\,\E[(\kappa Ra')^{-\mu}]$ with $a'=m-c$, hence $\kappa R(m-c)\le\Thorn c$ and
+$c\ge\kappa R(\Thorn+\kappa R)^{-1}m$; at a corner $c=m$ (\lean{crra\_stageMPC\_step}). The upper
+bound: if consumption against $v$ is at most $\kappa(m+H(z))$, the Euler inequality under the cap
+and Jensen for the negative power give $c^{-\mu}\ge\beta R\,(\E[c'])^{-\mu}$ with
+$\E[c']\le\kappa R(a'+H'(z))$, hence $c\le\kappa R(\Thorn+\kappa R)^{-1}(m+H'(z))$
+(\lean{crra\_stageUpper\_step}). The recursion for $\kappa$ is the same on both sides, which is
+why the sandwich is exact in the homogeneous case.
+
+The propensities decrease in the horizon towards the infinite-horizon $\kappa=1-\Thorn/R$ of the
+companion write-up: $\kappa\le\kappa_k$ for every $k$ (\lean{minMPC\_le\_stageMPC}), so a
+household with less life left consumes a larger share of its cash, and the infinite-horizon bounds
+are the limiting case. A first consequence for the programme is an explicit bound on saving,
+$g_k(a,z)\le(1-\kappa_k)(Ra+y_{\max})$ (\lean{stagePolicy\_le}), which iterated from zero wealth
+at the start of life bounds the wealth of every cohort.

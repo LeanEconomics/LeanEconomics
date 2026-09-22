@@ -1,0 +1,40 @@
+\section{The programme}\label{sec:prog}
+
+The stages, in the order we intend to take them. The first is done (Section~\ref{sec:lc}).
+
+\paragraph{Equilibrium.} A stationary overlapping-generations equilibrium: the distribution
+$\mu_1$ of the youngest cohort is given (zero wealth, earnings drawn from the invariant law),
+$\mu_{j+1}$ is the pushforward of $\mu_j$ under the age-$j$ policy and the earnings chain,
+capital supply is $K(r)=\sum_j\omega_j\int a\,d\mu_j$ with cohort weights $\omega_j$, labour is
+exogenous, and the firm is Aiyagari's. Targets: continuity of $K$ in the rate, a finite composition
+of continuous pushforwards; existence by the intermediate value theorem against the firm's demand,
+with the floor at the top of the interval from explicit accumulation over the life rather than from
+an ergodic identity; Light's Theorem 2 by induction on age, an ordering of policies at every age
+giving first-order stochastic dominance of every $\mu_j$ and so of $K$; and single crossing
+against a decreasing demand.
+
+\paragraph{Theorem 1 by backward induction.} The research core: saving rises with the rate at
+every age, for $\mu\in\{3,5\}$. The reduction of the companion write-up applies stage by stage,
+Theorem 1 at stage $k+1$ following from the slack elasticity condition on the stage-$k$
+consumption functions at the pivot; the transfer lemma propagates an affine bound on the response
+of consumption to the rate backward from the terminal condition $c_0=m$, where the response is
+exactly $\Delta r\cdot a$; and the slack condition at each stage is a finite check on the
+constants so obtained. The obstruction of the infinite horizon, a step multiplier of at least
+$1/\Thorn$, does not bite in $J$ steps. The first session is numerical: a life-cycle economy with
+$J=60$, Aiyagari's earnings chain and $\mu\in\{3,5\}$, checking the slack condition at every age
+and wealth and running the recursion for the constants. If it holds the argument is formalised;
+if it fails only at moderate ages and wealth we look for the age-dependent refinement; if it fails
+badly, log utility is the fallback, where Theorem 1 at each stage follows from the rescaling proof
+of the companion, which is already an induction on Bellman iterates.
+
+\paragraph{Diamond (1965) and Samuelson.} The two-period economy without risk: a unique steady
+state and monotone global convergence for logarithmic utility and Cobb--Douglas production,
+existence under Inada conditions and a multiplicity witness in general, dynamic inefficiency of a
+steady state with $r<n$ by an explicit Pareto-improving transfer, the golden rule, and the
+autarkic and monetary steady states of the pure-exchange economy. These are standalone results
+and will be the classical sections of this write-up.
+
+\paragraph{Extensions.} An age profile of earnings, retirement with a pension and a government
+budget, survival risk with accidental bequests as a second fixed point, population growth, and
+Lasry--Lions with age as time, whose finite-horizon core is already formalised and whose
+monotonicity is again the elasticity condition.
