@@ -1,0 +1,83 @@
+\section{Stationary equilibrium}\label{sec:eqm}
+
+Every cohort is born with no assets and an earnings state drawn from a fixed law $\nu$, lives $J$
+periods, and is replaced; cohorts have equal weight. The distribution of the youngest cohort is
+therefore the same at every interest rate, and the distribution of every older cohort is that law
+pushed forward by the policies of the ages in between. This is the structural advantage of the
+life cycle over the infinite horizon, and it removes most of the machinery the stationary case
+needed.
+
+\subsection{The aggregate is a finite composition}
+
+Because assets at birth are degenerate at zero, no measure theory is required. Let
+\[
+  (\mathcal{S}_k h)(a,z)=\sum_{z'}\pi(z,z')\,h\bigl(g_k(a,z),z'\bigr)
+\]
+be the expectation of $h$ next period for a household with $k$ periods still to come
+(\lean{stageStep}). The assets a household holds over the rest of its life, summed across ages
+and seen from its current state, satisfy
+\[
+  A_0(a,z)=a,\qquad A_{k+1}(a,z)=a+(\mathcal{S}_{k+1}A_k)(a,z)
+\]
+(\lean{cohortAssets}), and aggregate capital per head is
+$K=\frac1J\sum_z\nu(z)\,A_{J-1}(0,z)$ (\lean{olgCapital}). There is no pushforward measure, no
+Feller property, no stationary distribution, no Doeblin condition and no uniqueness of an
+invariant law: the equilibrium object is a finite sum of finite sums, and the recursion above is
+its definition.
+
+\subsection{The chain}
+
+\begin{theorem}[Light's Theorem 2 for the life cycle]\label{thm:thm2}
+Suppose two economies share the earnings chain and their policies are ordered at every age,
+$g^{(1)}_k\le g^{(2)}_k$ on the asset region. Then $A^{(1)}_k\le A^{(2)}_k$ for every $k$, and
+aggregate capital is ordered, $K^{(1)}\le K^{(2)}$.
+\formal{IncomeFluctuation.cohortAssets\_le,
+IncomeFluctuation.olgCapital\_le\_of\_stagePolicy\_le}
+\end{theorem}
+
+The proof is an induction on age with two ingredients, and both are already available. The class
+of functions increasing in assets is preserved by $\mathcal{S}_k$
+(\lean{monoRegion\_stageStep}), because next period's assets rise with this period's at each
+earnings state and for any continuation, which is Theorem~\ref{thm:azmono}. And ordered policies
+keep ordered functions ordered (\lean{stageStep\_le\_stageStep}): the higher-rate economy
+evaluates a larger function at a larger asset level. Note what is \emph{not} needed. The
+infinite-horizon version of this step required monotone transitions, a coupling argument and
+first-order stochastic dominance of the stationary distributions; here the whole statement is an
+inequality between two functions on the same finite state space, because the distribution the two
+economies start from is literally the same.
+
+\subsection{A floor on saving from primitives}
+
+Existence needs capital supply at the top of the rate interval to exceed demand. In the infinite
+horizon the only floor available came from an ergodic identity that loses a factor
+$\|u'\|_\infty^2/\operatorname{Var}$, with the consequences for the constants reported in the
+companion write-up. The life cycle needs nothing of the kind: the upper sandwich of
+Theorem~\ref{thm:sandwich} bounds consumption at every age, and what is not consumed is saved.
+
+\begin{proposition}[Affine floor on saving]\label{prop:floor}
+At every age and every state in the region,
+\[
+  g_k(a,z)\ \ge\ (1-\kappa_k)\bigl(y_{\min}+Ra\bigr)-\kappa_k H_k(z).
+\]
+\formal{IncomeFluctuation.le\_stagePolicy}
+\end{proposition}
+
+Iterated from zero assets at birth this is an explicit floor on the assets of every cohort, in
+the primitives alone: the discount factor, the rate, the earnings bounds and the horizon.
+
+\subsection{Uniqueness}
+
+\begin{theorem}[Single crossing]\label{thm:thm3}
+A capital supply that never falls with the rate meets a strictly falling demand at most once.
+\formal{IncomeFluctuation.olgEquilibriumRate\_unique}
+\end{theorem}
+
+With Theorem~\ref{thm:thm2} this reduces uniqueness of the stationary equilibrium to Light's
+Theorem 1, that saving rises with the rate at every age, which is the subject of
+Section~\ref{sec:thm1}: it holds at Aiyagari's calibration for relative risk aversion up to about
+$3.4$, so the chain closes at his $\mu=3$ and not at his $\mu=5$.
+
+What is still missing for existence is continuity of capital supply in the rate. In the
+infinite horizon that was a substantial development, because the stationary distribution had to
+be shown to move continuously; here it is continuity of finitely many policies in the rate,
+composed. That is the next piece.
