@@ -232,6 +232,118 @@ theorem finiteConsumption_le_of_floor_le {γ : ℝ} (hγ0 : 0 < γ)
     have := le_of_rpow_neg_le hcQ0 hcP0 hγ0 hchain
     linarith
 
+/-- **The modulus: relaxing the limit by `Δ` is worth at most `Δ` of extra wealth.** The
+household that may borrow down to `f₂`, holding `x`, consumes no more than the household that may
+only borrow down to `f₁` would holding `x + (f₁ - f₂)`. With
+`finiteConsumption_le_of_floor_le` this sandwiches the looser household's consumption between the
+tighter one's at `x` and at `x + Δ`, so the whole effect of the limit on consumption is worth less
+than the relaxation itself. -/
+theorem finiteConsumption_le_shift {γ : ℝ} (hγ0 : 0 < γ)
+    (hu : P.u = crraUtility γ) (huQ : Q.u = crraUtility γ)
+    (hdP : P.Unbounded) (hdQ : Q.Unbounded)
+    (hinc : Q.income = P.income) (hpi : Q.transitionMatrix = P.transitionMatrix)
+    (hr : Q.interest = P.interest) (hβ : Q.discount = P.discount)
+    (hint : 0 ≤ P.interest) (hf : f₂ ≤ f₁)
+    (hcapP : ∀ j : ℕ, ∀ b ∈ Icc f₁ assetCap, ∀ w : Z, P.finitePolicy j (b, w) < assetCap)
+    (hcapQ : ∀ j : ℕ, ∀ b ∈ Icc f₂ assetCap, ∀ w : Z, Q.finitePolicy j (b, w) < assetCap)
+    (k : ℕ) (z : Z) {x : ℝ} (hx : x ∈ Icc f₂ (assetCap - (f₁ - f₂))) :
+    Q.finiteConsumption k z x ≤ P.finiteConsumption k z (x + (f₁ - f₂)) := by
+  classical
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hΔ : (0 : ℝ) ≤ f₁ - f₂ := by linarith
+  induction k generalizing x z with
+  | zero =>
+    have hxQ : x ∈ Icc f₂ assetCap := ⟨hx.1, by linarith [hx.2]⟩
+    have hxP : x + (f₁ - f₂) ∈ Icc f₁ assetCap := ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    rw [Q.finiteConsumption_zero hxQ z, P.finiteConsumption_zero hxP z]
+    simp only [hinc, hr]
+    nlinarith [mul_nonneg hR.le hΔ]
+  | succ k ih =>
+    have hxQ : x ∈ Icc f₂ assetCap := ⟨hx.1, by linarith [hx.2]⟩
+    have hxP : x + (f₁ - f₂) ∈ Icc f₁ assetCap := ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    by_contra hcon
+    rw [not_le] at hcon
+    set aQ : ℝ := Q.finitePolicy (k + 1) (x, z) with haQ
+    set aP : ℝ := P.finitePolicy (k + 1) (x + (f₁ - f₂), z) with haP
+    have haQmem : aQ ∈ Icc f₂ assetCap := Q.finitePolicy_mem_region _ _
+    have haPmem : aP ∈ Icc f₁ assetCap := P.finitePolicy_mem_region _ _
+    have hcQ0 : 0 < Q.finiteConsumption (k + 1) z x := Q.finiteConsumption_pos hdQ _ z hxQ
+    have hcP0 : 0 < P.finiteConsumption (k + 1) z (x + (f₁ - f₂)) :=
+      P.finiteConsumption_pos hdP _ z hxP
+    -- the failure says the tighter household saves much more
+    have hresQ : Q.resources (x, z) = P.income z + (1 + P.interest) * x := by
+      simp only [resources, hinc, hr, max_eq_right hx.1]
+    have hresP : P.resources (x + (f₁ - f₂), z)
+        = P.income z + (1 + P.interest) * (x + (f₁ - f₂)) := by
+      simp only [resources, max_eq_right hxP.1]
+    have hgap : aQ + (1 + P.interest) * (f₁ - f₂) < aP := by
+      have e₁ : Q.finiteConsumption (k + 1) z x = Q.resources (x, z) - aQ := rfl
+      have e₂ : P.finiteConsumption (k + 1) z (x + (f₁ - f₂))
+          = P.resources (x + (f₁ - f₂), z) - aP := rfl
+      rw [hresQ] at e₁
+      rw [hresP] at e₂
+      nlinarith [hcon, e₁, e₂]
+    have hgapΔ : aQ + (f₁ - f₂) < aP := by nlinarith [hgap, mul_nonneg hint hΔ]
+    have haPf : f₁ < aP := by linarith [haQmem.1]
+    -- the induction hypothesis at tomorrow's assets, then monotonicity
+    have haQrange : aQ ∈ Icc f₂ (assetCap - (f₁ - f₂)) :=
+      ⟨haQmem.1, by linarith [haPmem.2]⟩
+    have hstep : ∀ w : Z, Q.finiteConsumption k w aQ ≤ P.finiteConsumption k w aP := by
+      intro w
+      calc Q.finiteConsumption k w aQ ≤ P.finiteConsumption k w (aQ + (f₁ - f₂)) := ih w haQrange
+        _ ≤ P.finiteConsumption k w aP :=
+            P.finiteConsumption_mono k ⟨by linarith [haQmem.1], by linarith [haPmem.2]⟩
+              haPmem hgapΔ.le
+    -- the two Euler inequalities
+    have hcQ' : ∀ w : Z, 0 < Q.finiteConsumption k w aQ := fun w =>
+      Q.finiteConsumption_pos hdQ k w haQmem
+    have hcP' : ∀ w : Z, 0 < P.finiteConsumption k w aP := fun w =>
+      P.finiteConsumption_pos hdP k w haPmem
+    have hderP : ∀ c : ℝ, 0 < c → HasDerivAt P.u (c ^ (-γ)) c := fun c hc => by
+      rw [hu]; exact hasDerivAt_crraUtility γ hc
+    have hderQ : ∀ c : ℝ, 0 < c → HasDerivAt Q.u (c ^ (-γ)) c := fun c hc => by
+      rw [huQ]; exact hasDerivAt_crraUtility γ hc
+    have hroomQ : aQ < Q.maxSaving (x, z) := by
+      rw [maxSaving_eq]
+      refine lt_min (hcapQ (k + 1) x hxQ z) ?_
+      have h0 : 0 < Q.resources (x, z) - aQ := hcQ0
+      linarith
+    have hEQ := Q.euler_le (v := Q.finiteValue k) (z := z) (a := x) (A := aQ)
+      (du := (Q.finiteConsumption (k + 1) z x) ^ (-γ))
+      (du' := fun w => (Q.finiteConsumption k w aQ) ^ (-γ))
+      hxQ (by rw [← Q.finiteValue_succ]; rfl) hroomQ
+      (by rw [← Q.finiteValue_succ]; exact hcQ0)
+      (by rw [← Q.finiteValue_succ]; exact hderQ _ hcQ0)
+      (fun w => hcQ' w) (fun w => hderQ _ (hcQ' w))
+    have hslackP : ∀ w : Z, P.policyOf (P.finiteValue k) (aP, w) < P.maxSaving (aP, w) := by
+      intro w
+      rw [maxSaving_eq]
+      refine lt_min (hcapP k aP haPmem w) ?_
+      have h0 : 0 < P.consumptionFnOf (P.finiteValue k) w aP := hcP' w
+      change 0 < P.resources (aP, w) - P.policyOf (P.finiteValue k) (aP, w) at h0
+      linarith
+    have hEP := P.euler_ge (v := P.finiteValue k) (z := z) (a := x + (f₁ - f₂)) (A := aP)
+      (du := (P.finiteConsumption (k + 1) z (x + (f₁ - f₂))) ^ (-γ))
+      (du' := fun w => (P.finiteConsumption k w aP) ^ (-γ))
+      hxP (by rw [← P.finiteValue_succ]; rfl) haPf hslackP
+      (by rw [← P.finiteValue_succ]; exact hcP0)
+      (by rw [← P.finiteValue_succ]; exact hderP _ hcP0)
+      (fun w => hcP' w) (fun w => hderP _ (hcP' w))
+    -- chain them
+    have hsum : ∑ w, P.transitionMatrix z w * (P.finiteConsumption k w aP) ^ (-γ)
+        ≤ ∑ w, P.transitionMatrix z w * (Q.finiteConsumption k w aQ) ^ (-γ) :=
+      Finset.sum_le_sum fun w _ =>
+        mul_le_mul_of_nonneg_left (rpow_neg_antitone hγ0 (hcQ' w) (hstep w))
+          (P.transitionMatrix_nonneg z w)
+    rw [hpi, hr, hβ] at hEQ
+    have hβ0 : (0 : ℝ) ≤ (P.discount : ℝ) := P.discount.coe_nonneg
+    have hchain : (P.finiteConsumption (k + 1) z (x + (f₁ - f₂))) ^ (-γ)
+        ≤ (Q.finiteConsumption (k + 1) z x) ^ (-γ) := by
+      refine hEP.trans (le_trans ?_ hEQ)
+      exact mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hsum hR.le) hβ0
+    have := le_of_rpow_neg_le hcP0 hcQ0 hγ0 hchain
+    linarith
+
 /-- **A tighter borrowing limit means more saving.** -/
 theorem le_finitePolicy_of_floor_le {γ : ℝ} (hγ0 : 0 < γ)
     (hu : P.u = crraUtility γ) (huQ : Q.u = crraUtility γ)

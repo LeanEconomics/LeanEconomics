@@ -341,6 +341,33 @@ better behaved than the rate channel rather than merely different. What it does 
 \emph{size}: Theorem~\ref{thm:limit} orders the two consumption functions without bounding the
 distance between them, and it is the distance that turns into the $0.9$ units of risk aversion
 between the constrained and certainty-equivalent thresholds. The natural next object is therefore
-a modulus for Theorem~\ref{thm:limit} --- a bound on $c^{f_2}-c^{f_1}$ in terms of $f_1-f_2$ and
-the chance of reaching the limit --- after which the certainty-equivalent criterion and its
-correction would both be theorems rather than one theorem and one measurement.
+a modulus for Theorem~\ref{thm:limit}, and it has a clean form.
+
+\begin{theorem}[The modulus: a relaxation of $\Delta$ is worth at most $\Delta$ of wealth]
+\label{thm:modulus}
+Let $\Delta=f_1-f_2\ge0$ and $r\ge0$. Then at every age and every state,
+\[
+  c^{f_1}_k(x)\ \le\ c^{f_2}_k(x)\ \le\ c^{f_1}_k(x+\Delta) .
+\]
+\formal{IncomeFluctuation.finiteConsumption\_le\_of\_floor\_le,
+IncomeFluctuation.finiteConsumption\_le\_shift}
+\end{theorem}
+
+The household that may borrow down to $f_2$ therefore behaves, at wealth $x$, no more freely than
+the household confined to $f_1$ would at wealth $x+\Delta$: the entire value of the extra
+borrowing capacity is bounded by the capacity itself. The proof is the same backward induction,
+carried out at shifted arguments, and the shift pays for itself twice. The terminal stage holds
+with slack, since the looser household gains $\Delta$ by running down further while the shifted
+comparison gives it $(1+r)\Delta$; and the interiority the step needs comes free, because the
+failure hypothesis forces the tighter household's saving to exceed the looser one's by more than
+$\Delta$, hence to exceed $f_2+\Delta=f_1$.
+
+Two consequences. Since saving never falls with wealth, the sandwich gives the plain bound
+$0\le c^{f_2}_k(x)-c^{f_1}_k(x)\le(1+r)\Delta$, so the effect of the limit on consumption is at
+most the relaxation, up to one period's interest. And because the bound is stated as a shift in
+wealth rather than as an additive constant, it composes with the minimal propensity to consume:
+whatever upper bound on the propensity to consume out of wealth one has at age $k$, the modulus
+turns it directly into a bound on the consumption gap, and it is that product which becomes the
+gap between the constrained and certainty-equivalent thresholds. Supplying the missing upper bound
+on the propensity to consume is now the only step between the measurement of
+Section~\ref{sec:thm1} and a theorem.
