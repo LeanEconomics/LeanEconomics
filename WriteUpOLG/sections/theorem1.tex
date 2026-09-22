@@ -271,3 +271,43 @@ is not proved. And both are statements at zero wealth in the highest earnings st
 where the life-cycle model binds; the reduction of Theorem~\ref{thm:reduction} is what would carry
 them to the rest of the state space, and its own condition fails, so this is a sharp description
 of where the truth lies rather than a proof of it.
+
+\subsection{The channel is the borrowing constraint}
+
+The first-order scaling points at the constraint rather than at precaution, and the point can be
+tested directly: loosen the borrowing limit and watch the threshold. If the constraint is the
+channel, the risky threshold should walk back to the certainty-equivalent one as the limit
+approaches the natural one, $y_{\min}/r$. At Aiyagari's calibration it does
+(\texttt{numerics/borrow.m}), and it does so almost linearly:
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+Borrowing limit & $0$ & $0.5$ & $1$ & $2$ & $3$ & $4$ & $5$ & $6$\\
+\midrule
+Threshold $\mu$ & $3.42$ & $3.50$ & $3.58$ & $3.74$ & $3.89$ & $4.05$ & $4.21$ & $4.38$\\
+Share of the gap closed & $0\%$ & $11\%$ & $21\%$ & $40\%$ & $57\%$ & $74\%$ & $90\%$ & $104\%$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+The natural limit here is $y_{\min}/r=6.75$, and by a limit of $6$ the gap is gone: the risky
+household's threshold, $4.38$, is the certainty-equivalent household's, $4.33$. So at this
+calibration the borrowing constraint accounts for the whole of the correction, and precaution
+accounts for none of it. Precaution is certainly present --- at the loose limit the risky
+household still saves $1.62$ against the certainty-equivalent $1.46$, a precautionary excess of
+eleven per cent --- but it moves the level of saving without moving the sign of its response to
+the interest rate. Across the other calibrations we ran (\texttt{numerics/borrow3.m}) loosening
+the limit always closes the gap and sometimes overshoots it, so the constraint is the dominant
+channel rather than an exact decomposition: with ample borrowing, risk can make Theorem 1 easier
+than certainty equivalence rather than harder.
+
+For the programme this is the useful part. The missing ingredient for $\mu=3$ is not a
+precautionary bound but a bound on what the borrowing constraint does to the comparative static,
+and that is a more tractable object: without a binding constraint the household's Euler equation
+holds with equality at every state and Theorem 1 at zero wealth reduces to the duration criterion,
+which is proved outright for $\mu\le1$ and is an explicit finite computation in the primitives
+otherwise. What remains is the constrained states, which at this calibration are about eight per
+cent of the state space at every age.
