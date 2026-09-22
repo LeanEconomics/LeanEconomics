@@ -368,6 +368,46 @@ most the relaxation, up to one period's interest. And because the bound is state
 wealth rather than as an additive constant, it composes with the minimal propensity to consume:
 whatever upper bound on the propensity to consume out of wealth one has at age $k$, the modulus
 turns it directly into a bound on the consumption gap, and it is that product which becomes the
-gap between the constrained and certainty-equivalent thresholds. Supplying the missing upper bound
-on the propensity to consume is now the only step between the measurement of
-Section~\ref{sec:thm1} and a theorem.
+gap between the constrained and certainty-equivalent thresholds. \subsection{The upper bound on the propensity to consume, and what it is worth}
+
+The missing piece is an upper bound on the propensity to consume out of wealth. The repository has
+the minimal propensity, which is a lower bound; the upper one follows by the same two-point Euler
+comparison, with no derivative taken. Write the bound as a secant slope in assets, so that $s_k$
+bounds $c_k(a_2)-c_k(a_1)$ by $s_k(a_2-a_1)$.
+
+\begin{theorem}[The propensity to consume falls with the horizon]\label{thm:mpc}
+In the last period the slope is exactly $R$ (\lean{stageConsumption\_sub\_zero}). If at stage $k$
+the slope is at most $s$ and consumption is at least $c_{\min}$, then at a state where the poorer
+household saves, the slope at stage $k+1$ is at most
+\[
+  R\cdot\frac{\nu}{1+\nu},\qquad \nu=\frac{c\,s}{c_{\min}},
+\]
+with $c$ the poorer household's consumption.
+\formal{IncomeFluctuation.stageConsumption\_sub\_le\_of\_slope}
+\end{theorem}
+
+The step is the two Euler inequalities at the two wealth levels: the induction hypothesis bounds
+the rise in tomorrow's consumption by $s\delta$ with $\delta$ the difference in saving, which
+bounds the fall in marginal utility by the factor $(1+s\delta/c_{\min})^{-\mu}$, and the budget
+identity $c_2-c_1=R(a_2-a_1)-\delta$ turns that into the stated slope. Since $\nu\mapsto\nu/(1+\nu)$
+is a contraction towards $1-1/\nu$, the slope falls from $R$ towards $R(1-c_{\min}/(c\,s))$ as the
+horizon lengthens: the longer the life, the less of an extra unit of wealth is spent at once,
+which is the qualitative fact one wants.
+
+It is not sharp enough. At Aiyagari's calibration, read at zero wealth in the highest earnings
+state, consumption is about $1.32$ and the worst consumption next period about $0.88$, so
+$\nu\approx1.5\,s$ and the recursion settles at a propensity of about $0.36$, against a true
+propensity there of about $0.04$. Fed through Theorem~\ref{thm:modulus} it bounds the effect of
+the borrowing limit on consumption by about $2.5$ where the truth is about $0.04$, a factor of
+sixty. The loss is the ratio of consumption today to the worst consumption tomorrow, and that
+ratio is where the sandwich's slack of order human wealth enters --- the same obstruction that
+closed the infinite-horizon routes in the companion write-up, met here for the fourth time and in
+the same form.
+
+So the chain now has every link proved except its sharpness. Theorem~\ref{thm:ce} gives the
+criterion without risk, Theorem~\ref{thm:limit} signs the constraint's effect,
+Theorem~\ref{thm:modulus} bounds it by a shift in wealth, and Theorem~\ref{thm:mpc} converts a
+shift in wealth into consumption. What none of them supplies is a bound on consumption that is
+tight to a few per cent rather than to a factor of ten, and every route we have tried reduces to
+exactly that. It is the one quantitative fact about a single household that the whole programme,
+in both horizons, now turns on.

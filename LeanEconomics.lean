@@ -127,3 +127,4 @@ import LeanEconomics.OLG.Continuity
 import LeanEconomics.OLG.RateMonotone
 import LeanEconomics.OLG.CertaintyEquivalent
 import LeanEconomics.OLG.BorrowingLimit
+import LeanEconomics.OLG.MPCBound
