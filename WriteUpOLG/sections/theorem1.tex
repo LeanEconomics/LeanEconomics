@@ -311,3 +311,36 @@ holds with equality at every state and Theorem 1 at zero wealth reduces to the d
 which is proved outright for $\mu\le1$ and is an explicit finite computation in the primitives
 otherwise. What remains is the constrained states, which at this calibration are about eight per
 cent of the state space at every age.
+
+\subsection{The constraint channel is monotone, and needs no condition}
+
+The comparative static in the borrowing limit itself is a theorem, and unlike the one in the
+interest rate it needs nothing beyond the standing assumptions.
+
+\begin{theorem}[A tighter limit means less consumption and more saving]\label{thm:limit}
+Two households share every primitive and differ only in the borrowing limit, $f_2\le f_1$. Then at
+every age and every state in the tighter household's region it consumes less and saves more.
+\formal{IncomeFluctuation.finiteConsumption\_le\_of\_floor\_le,
+IncomeFluctuation.le\_finitePolicy\_of\_floor\_le}
+\end{theorem}
+
+The induction is the one of Theorem~\ref{thm:reduction} with the interest rate held fixed, and
+that is exactly what removes the difficulty. Suppose the claim holds with $k$ periods to come and
+fails at $k+1$, so the tighter household consumes strictly more and therefore saves strictly less.
+Its Euler inequality under the cap, the looser household's Euler inequality above its floor ---
+available because the looser household saves strictly more than the tighter one and hence strictly
+more than either floor --- the induction hypothesis, and monotonicity of consumption in wealth
+chain into $u'(c_1)\ge u'(c_2)$, contradicting $c_1>c_2$. The gross return appears on both sides
+and cancels, so there is no substitution term to control and no analogue of
+\eqref{eq:stageslack} is needed. Tightening the limit raises the marginal value of saving
+unambiguously, and the terminal stage is again free: a household with a lower floor runs down
+further in its last period.
+
+That is the one-sided half of what the numbers showed, and it says the constraint channel is
+better behaved than the rate channel rather than merely different. What it does not yet give is a
+\emph{size}: Theorem~\ref{thm:limit} orders the two consumption functions without bounding the
+distance between them, and it is the distance that turns into the $0.9$ units of risk aversion
+between the constrained and certainty-equivalent thresholds. The natural next object is therefore
+a modulus for Theorem~\ref{thm:limit} --- a bound on $c^{f_2}-c^{f_1}$ in terms of $f_1-f_2$ and
+the chance of reaching the limit --- after which the certainty-equivalent criterion and its
+correction would both be theorems rather than one theorem and one measurement.
