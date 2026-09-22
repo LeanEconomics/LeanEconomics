@@ -145,3 +145,68 @@ every degree of risk aversion. What is missing is an argument at zero wealth tha
 through a pointwise comparison of the two Euler equations. The same zero-wealth state is where the
 infinite-horizon slack condition was tightest, which suggests the two problems share a single
 missing ingredient rather than two.
+
+\subsection{It is not precautionary saving}
+
+A household at zero wealth in the highest earnings state saves heavily, and the obvious diagnosis
+is precautionary: it is insuring against the fall in earnings it expects. If that were the
+mechanism, precautionary-saving theory would be the place to look for the missing argument. It is
+not the mechanism. The same reversal happens in the \emph{certainty-equivalent} household, which
+faces the conditional mean earnings path and no risk at all, and there everything is in closed
+form (\texttt{numerics/precaut2.m}, \texttt{durcheck.m}).
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+$\mathrm{d}(\text{saving})/\mathrm{d}r$ at zero wealth & $\mu=1$ & $\mu=3$ & $\mu=5$ & $\mu=8$\\
+\midrule
+Certainty equivalent (mean path, no risk) & $+21.3$ & $+2.81$ & $-0.85$ & $-2.91$\\
+With risk & $+17.1$ & $+0.92$ & $-2.05$ & $-3.43$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+The sign flips between $\mu=3$ and $\mu=5$ in both columns. Bisecting, the certainty-equivalent
+threshold is $\mu=4.33$ against $\mu=3.39$ with risk: risk moves the threshold by about one unit
+of risk aversion and does not create the effect.
+
+Without risk the mechanism is exact. A household with $J$ periods, no borrowing constraint and
+CRRA utility has $c_{t+1}=(\beta R)^{1/\mu}c_t$ and a lifetime budget, so
+\[
+  c_0=\frac{W(R)}{D(R)},\qquad
+  W(R)=\sum_t y_tR^{-t},\qquad
+  D(R)=\sum_t\beta^{t/\mu}R^{t/\mu-t}
+\]
+(\lean{consumption\_mul\_pathPrice}), and saving at zero wealth rises with the rate exactly when
+$W(R_2)D(R_1)\le W(R_1)D(R_2)$ (\lean{consumption\_antitone\_iff}). Both terms fall with the rate,
+$W$ because future earnings are discounted harder and $D$ because the optimal path gets cheaper,
+and the comparison is between the two elasticities. Differentiating,
+\[
+  \frac{\mathrm{d}\log c_0}{\mathrm{d}\log R}=-T_y+\Bigl(1-\frac1\mu\Bigr)T_c ,
+\]
+with $T_y$ and $T_c$ the Macaulay durations of the two streams, so $c_0$ falls, and saving rises,
+exactly when $T_y>(1-1/\mu)T_c$. The predicted elasticity matches the exact one to three decimals
+at every $\mu$ we checked. At Aiyagari's numbers $T_y=14.31$ and $T_c\approx18.6$, nearly
+independent of $\mu$, so the condition is $1-1/\mu<0.769$, that is $\mu<4.33$.
+
+The economics is then plain, and has nothing to do with risk. A higher interest rate discounts
+future earnings more heavily, which makes the household poorer and pushes consumption down; it
+also makes a rising consumption path cheaper, which pushes consumption today down only to the
+extent that the household is willing to tilt its path. A more risk averse household will not
+tilt, so the second force weakens as $\mu$ grows while the first does not, and past $\mu\approx4$
+the household responds to a higher rate by consuming more today. The income stream simply has to
+be longer than the consumption weights, discounted by the strength of the tilt.
+
+\begin{theorem}[No risk, and risk aversion at most one]\label{thm:ce}
+If $\mu\le1$ the comparison holds term by term, whatever the earnings profile: the
+certainty-equivalent household always saves more at a higher rate.
+\formal{CertaintyEquivalent.humanWealth\_mul\_pathPrice\_le\_of\_le\_one,
+CertaintyEquivalent.consumption\_antitone\_of\_le\_one}
+\end{theorem}
+
+For $\mu>1$ it is the duration comparison, which is a finite computation in the primitives. So a
+precautionary argument near zero wealth would be aimed at the wrong target: what has to be
+controlled is the elasticity of human wealth against the elasticity of the price of the
+consumption path, and risk enters only as a correction to it.

@@ -65,6 +65,11 @@ Condition \eqref{eq:stageslack} & \lean{StageSlack} & OLG/\allowbreak RateMonoto
 Theorem~\ref{thm:reduction}, step & \lean{stagePolicy\_mono\_step} & OLG/\allowbreak RateMonotone\\
 Theorem~\ref{thm:reduction}, induction & \lean{stagePolicy\_mono\_of\_stageSlack} & OLG/\allowbreak RateMonotone\\
 Theorem~\ref{thm:reduction}, aggregate & \lean{olgCapital\_le\_of\_stageSlack} & OLG/\allowbreak RateMonotone\\
+\midrule
+Human wealth, price of the path & \lean{humanWealth}, \lean{pathPrice} & OLG/\allowbreak Certainty\allowbreak Equivalent\\
+Closed form $c_0=W/D$ & \lean{consumption\_mul\_pathPrice} & OLG/\allowbreak Certainty\allowbreak Equivalent\\
+Saving rises iff the cross product falls & \lean{consumption\_antitone\_iff} & OLG/\allowbreak Certainty\allowbreak Equivalent\\
+Theorem~\ref{thm:ce} & \lean{consumption\_antitone\_of\_le\_one} & OLG/\allowbreak Certainty\allowbreak Equivalent\\
 \bottomrule
 \end{longtable}
 \endgroup
