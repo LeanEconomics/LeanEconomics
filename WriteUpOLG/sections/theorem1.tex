@@ -210,3 +210,64 @@ For $\mu>1$ it is the duration comparison, which is a finite computation in the 
 precautionary argument near zero wealth would be aimed at the wrong target: what has to be
 controlled is the elasticity of human wealth against the elasticity of the price of the
 consumption path, and risk enters only as a correction to it.
+
+\subsection{The criterion in elasticity units, and the size of the risk correction}
+
+The certainty-equivalent criterion is cleanest when written in the intertemporal elasticity of
+substitution rather than in risk aversion. Since it is linear in $1/\mu$,
+\[
+  T_y>\Bigl(1-\frac1\mu\Bigr)T_c
+  \qquad\Longleftrightarrow\qquad
+  \frac1\mu\ >\ 1-\frac{T_y}{T_c} ,
+\]
+so the elasticity of substitution must exceed one minus the ratio of the two durations. At
+Aiyagari's numbers that right-hand side is $0.2306$, giving $\mu<4.33$ as before, and the identity
+holds to four decimals against the bisected threshold.
+
+With risk the threshold moves down, and the move is what has to be bounded. Write
+\[
+  \Delta\ :=\ \frac1{\mu^{\text{risky}}}-\frac1{\mu^{\text{CE}}}
+\]
+for the gap in elasticity units and $s=\sigma\sqrt{1-\rho^2}$ for the conditional standard
+deviation of log earnings, the dispersion the household actually faces one period ahead. Measuring
+both thresholds at the same state over fifteen calibrations, $\rho\in\{0,0.6,0.9\}$ and
+$\sigma$ from $0.025$ to $0.4$ (\texttt{numerics/gapscale.m}, \texttt{gapfit.m}):
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+$\rho=0.9$, $\sigma$ & $0.025$ & $0.05$ & $0.1$ & $0.2$ & $0.4$ & fitted exponent\\
+\midrule
+$\Delta$ & $0.0034$ & $0.0070$ & $0.0144$ & $0.0300$ & $0.0612$ & \\
+$\Delta/s$ & $0.315$ & $0.320$ & $0.330$ & $0.344$ & $0.351$ & $1.04$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+The gap is first order in the conditional standard deviation, not second order: fitting
+$\Delta\sim s^{b}$ gives $b=1.04$ at $\rho=0.9$, $0.89$ at $\rho=0.6$ and $0.93$ at $\rho=0$, and
+the ratio $\Delta/s$ stays between $0.196$ and $0.351$ across every calibration we ran. That
+first-order behaviour is itself informative: a precautionary effect on saving would be second
+order in the dispersion, whereas the probability that the borrowing constraint binds in a
+low-earnings state next period moves at first order, and that is our reading of where the
+correction comes from.
+
+Taking the largest ratio observed as the bound, $\Delta\le0.36\,s$, gives a criterion entirely in
+the primitives:
+\begin{equation}\label{eq:practical}
+  \frac1\mu\ \ge\ 1-\frac{T_y}{T_c}\ +\ 0.36\,\sigma\sqrt{1-\rho^2}.
+\end{equation}
+At Aiyagari's calibration the right-hand side is $0.2306+0.0628=0.2934$, that is $\mu\le3.41$,
+against the $3.39$ that bisection on the full life-cycle model gives. The bound therefore
+reproduces the measured threshold to within two per cent, and it says the same thing the earlier
+sections said: the calibration he used for $\mu=3$ is inside, and $\mu=5$ is not.
+
+Two caveats. The first inequality of \eqref{eq:practical} is a theorem about the
+certainty-equivalent household (\lean{consumption\_antitone\_iff}, and
+Theorem~\ref{thm:ce} for $\mu\le1$); the constant $0.36$ is measured over fifteen calibrations and
+is not proved. And both are statements at zero wealth in the highest earnings state, which is
+where the life-cycle model binds; the reduction of Theorem~\ref{thm:reduction} is what would carry
+them to the rest of the state space, and its own condition fails, so this is a sharp description
+of where the truth lies rather than a proof of it.
