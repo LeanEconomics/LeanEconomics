@@ -77,7 +77,43 @@ Theorem 1, that saving rises with the rate at every age, which is the subject of
 Section~\ref{sec:thm1}: it holds at Aiyagari's calibration for relative risk aversion up to about
 $3.4$, so the chain closes at his $\mu=3$ and not at his $\mu=5$.
 
-What is still missing for existence is continuity of capital supply in the rate. In the
-infinite horizon that was a substantial development, because the stationary distribution had to
-be shown to move continuously; here it is continuity of finitely many policies in the rate,
-composed. That is the next piece.
+\subsection{Continuity, and existence}
+
+The last input is continuity of capital supply in the rate. In the infinite horizon this was a
+substantial development, because the stationary distribution itself had to be shown to move
+continuously. Here there is no stationary distribution: capital supply is a finite composition of
+finitely many policies, so all that is needed is that each policy moves continuously with the
+rate, and that continuity composes.
+
+We take the route of the companion write-up and put the interest rate into the state, so that
+Berge's theorem gives continuity in assets and the rate jointly rather than continuity in a
+parameter. That device was used there at the fixed point, but everything it rests on --- that the
+feasible sets and the objectives agree on the slice --- holds for an arbitrary continuation. So
+it works stage by stage, and here it is easier, because the slice of the augmented Bellman
+iterate is the iterate of the sliced programme by a plain induction, with no fixed point to
+identify (\lean{sliceAt\_bellman}, \lean{sliceAt\_augStageValue}). The augmented argmax at each
+stage is then a singleton, since the sliced one is by Carroll--Kimball concavity of the iterates
+(\lean{argmax\_aug\_stage\_eq\_singleton}), so the stage policy is jointly continuous
+(\lean{continuousOn\_augStagePolicy}) and agrees with the sliced one
+(\lean{augStagePolicy\_eq}). Running the cohort recursion in the augmented state
+(\lean{augCohortAssets}) gives a composition of continuous maps that reads, at a rate in range, as
+capital supply at that rate (\lean{augCohortAssets\_eq}, \lean{olgSupply\_eq}).
+
+\begin{theorem}[Capital supply is continuous]\label{thm:cont}
+$r\mapsto K(r)$ is continuous on $[r_{lo},r_{hi}]$.
+\formal{IncomeFluctuation.continuousOn\_olgSupply}
+\end{theorem}
+
+\begin{theorem}[Existence]\label{thm:exist}
+If capital supply lies below demand at the bottom of the interval and above it at the top, and
+demand is continuous, then the two meet: there is a rate in $[r_{lo},r_{hi}]$ at which the capital
+the cohorts accumulate equals the capital the firm demands.
+\formal{IncomeFluctuation.exists\_olgEquilibrium}
+\end{theorem}
+
+With Theorem~\ref{thm:thm2} and Theorem~\ref{thm:thm3} the life-cycle economy therefore has the
+same three-part structure as the stationary one --- existence, monotone supply, single crossing
+--- with every piece proved and only Light's Theorem 1 assumed. The two inequalities
+Theorem~\ref{thm:exist} needs are the ceiling at the bottom of the interval, which the budget
+gives, and the floor at the top, which Proposition~\ref{prop:floor} gives in the primitives,
+with none of the constants that the ergodic route forced on the stationary case.

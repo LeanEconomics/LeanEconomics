@@ -123,3 +123,4 @@ import LeanEconomics.OLG.LifeCycle
 import LeanEconomics.OLG.Retirement
 import LeanEconomics.OLG.MeansTest
 import LeanEconomics.OLG.Equilibrium
+import LeanEconomics.OLG.Continuity
