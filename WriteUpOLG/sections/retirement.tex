@@ -1,0 +1,87 @@
+\section{Retirement, a pension, and the means test}\label{sec:ret}
+
+\subsection{Retirement with a lump-sum pension}
+
+The household works until age $J_r$ and is retired after it, receiving a pension in place of its
+labour earnings. With a \emph{lump-sum} pension $p$ the retired household faces the same problem
+as the working one with income replaced by the constant $p$, so the retired phase is itself an
+income-fluctuation problem (\lean{withPension}) and everything in Section~\ref{sec:lc} applies to
+it unchanged. The life-cycle value is assembled by iterating the working Bellman operator on the
+retired value: $\mathrm{lifeValue}(n_r,n_w)$ is the value of a household with $n_w$ working and
+$n_r$ retired periods still to come (\lean{lifeValue}), so a household of age $j<J_r$ in a life of
+$J$ periods sits at $n_w=J_r-j$ and $n_r=J-J_r$. Saving and consumption rise with wealth at every
+age (\lean{lifePolicy\_mono}, \lean{lifeConsumption\_mono}).
+
+Two facts about the pension itself are worth recording. A retiree's human wealth is the same in
+every earnings state, because the pension does not depend on the earnings shock
+(\lean{stageHumanWealth\_withPension\_const}), and it never exceeds the perpetuity value of the
+pension, $H_k\le p/r$ (\lean{stageHumanWealth\_withPension\_le}). With Theorem~\ref{thm:sandwich}
+the retiree's consumption therefore satisfies
+\[
+  \kappa_k\,m\ \le\ c_k(a)\ \le\ \kappa_k\Bigl(m+\frac{p}{r}\Bigr)
+\]
+at every retired age. And cash on hand is strictly increasing in assets
+(\lean{withPension\_resources\_strictMono}). Both of these fail once the pension is means-tested.
+
+\subsection{Means testing}
+
+A pension is means-tested when the amount paid falls with the recipient's assets. We write the
+schedule as a function $p(\cdot)$ of assets and cash on hand as $m(a)=Ra+p(a)$ (\lean{cash}),
+and consider three schedules (\lean{lumpSum}, \lean{tapered}, \lean{cliff}): a lump sum; a taper,
+withdrawn at rate $\tau$ per unit of assets above a threshold and never negative; and a cliff,
+withdrawn entirely above the threshold.
+
+It is often argued that a means test makes the household's policy function non-monotone, and the
+reason usually given is that the test makes the value function non-concave. The argument as
+usually given is wrong, and the conclusion is nevertheless true, for a different reason. Three
+results separate the two.
+
+\begin{theorem}[Monotonicity in cash on hand is never lost]\label{thm:topkis}
+Let period utility be strictly concave on the positive half-line and let $W$ be \emph{any}
+continuation value. If $m_1<m_2$ and $x_i$ is optimal at $m_i$, then $x_1\le x_2$.
+\formal{OLG.isOptimalSaving\_mono}
+\end{theorem}
+
+The proof is Topkis. Adding the two optimality inequalities gives
+$u(m_1-x_1)+u(m_2-x_2)\ge u(m_1-x_2)+u(m_2-x_1)$; if $x_2<x_1$ the two right-hand consumptions are
+strict convex combinations of the two left-hand ones with the same sum, so strict concavity makes
+the reverse inequality strict, a contradiction. The continuation enters only through terms that
+cancel. So a non-concave value function --- which a means test certainly produces --- cannot by
+itself make saving fall with cash on hand, whatever the shape of $W$.
+
+What a non-concave continuation does produce is a jump, and the jump falls on consumption.
+
+\begin{theorem}[Consumption falls when wealth rises]\label{thm:cons}
+There are a continuation value arising from a means-tested pension and two levels of cash on hand,
+the second larger, at which optimal consumption is strictly smaller. With log utility, a unit
+gross return, and a pension of one withdrawn entirely above assets of one: at $m=6$ the household
+saves exactly $1$ and consumes $5$; at $m=8$ it saves $4$ and consumes $4$.
+\formal{OLG.exists\_consumption\_decrease}
+\end{theorem}
+
+At $m=6$ the household keeps the pension, saving the most it can without losing it; at $m=8$ the
+pension is no longer worth keeping, so the household gives it up and saves the proceeds. Saving
+rises from $1$ to $4$, as Theorem~\ref{thm:topkis} says it must, and since it rises by more than
+wealth does, consumption falls. Both optima are exact: the objective is $\log$ of a quadratic on
+each side of the threshold, and the comparison is checked by the kernel.
+
+The third result is the genuine non-monotonicity of the saving policy, and it comes from the
+budget rather than from the value function. A retiree's pension is assessed each period on the
+assets then held, so the schedule enters cash on hand directly.
+
+\begin{theorem}[A gentle taper is harmless; a cliff is not]\label{thm:taper}
+If $0\le\tau<R$ then $a\mapsto Ra+p(a)$ is strictly increasing under the taper
+(\lean{cash\_strictMono\_tapered}), and so, by Theorem~\ref{thm:topkis}, saving is monotone in
+assets (\lean{isOptimalSaving\_mono\_assets}). Under a cliff it is not: if $a\le\bar a<b$ and
+$R(b-a)<p$ then cash on hand is strictly smaller at $b$ (\lean{cash\_lt\_cash\_of\_cliff}), and
+there are two asset levels, the second larger, at which the household saves strictly less: with a
+concave continuation, at assets $1$ it saves $1/2$ and at assets $3/2$ only $1/4$.
+\formal{OLG.exists\_saving\_decrease\_in\_assets}
+\end{theorem}
+
+The continuation in the second half of Theorem~\ref{thm:taper} is $\log(x+1)$, which is concave:
+nothing is hidden in it. The non-monotonicity is entirely the budget's, and the threshold is
+sharp, $\tau$ against $R$. A taper gentler than the gross return leaves the household's saving
+monotone in assets no matter how badly the test distorts the value function; a taper steeper than
+the gross return, or a cliff, makes a richer household poorer in the only sense that matters for
+today's decision.

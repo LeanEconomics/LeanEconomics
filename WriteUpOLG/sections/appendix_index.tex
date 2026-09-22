@@ -25,6 +25,22 @@ Upper Euler step & \lean{crra\_stageUpper\_step} & OLG/\allowbreak LifeCycle\\
 Theorem~\ref{thm:sandwich}, lower & \lean{stageMPC\_mul\_le\_stageConsumption} & OLG/\allowbreak LifeCycle\\
 Theorem~\ref{thm:sandwich}, upper & \lean{stageConsumption\_le\_stageHumanWealth} & OLG/\allowbreak LifeCycle\\
 One-step saving bound & \lean{stagePolicy\_le} & OLG/\allowbreak LifeCycle\\
+\midrule
+Retired household (lump-sum pension) & \lean{withPension} & OLG/\allowbreak Retirement\\
+Cash on hand rises with assets & \lean{withPension\_resources\_strictMono} & OLG/\allowbreak Retirement\\
+Human wealth is state-independent & \lean{stageHumanWealth\_withPension\_const} & OLG/\allowbreak Retirement\\
+Perpetuity bound $H_k\le p/r$ & \lean{stageHumanWealth\_withPension\_le} & OLG/\allowbreak Retirement\\
+Life-cycle value with retirement & \lean{lifeValue} & OLG/\allowbreak Retirement\\
+Saving, consumption rise with wealth & \lean{lifePolicy\_mono}, \lean{lifeConsumption\_mono} & OLG/\allowbreak Retirement\\
+\midrule
+Pension schedules & \lean{lumpSum}, \lean{tapered}, \lean{cliff} & OLG/\allowbreak MeansTest\\
+Cash on hand & \lean{cash} & OLG/\allowbreak MeansTest\\
+Theorem~\ref{thm:topkis} & \lean{isOptimalSaving\_mono} & OLG/\allowbreak MeansTest\\
+Monotone in assets when cash is & \lean{isOptimalSaving\_mono\_assets} & OLG/\allowbreak MeansTest\\
+Gentle taper keeps cash rising & \lean{cash\_strictMono\_tapered} & OLG/\allowbreak MeansTest\\
+A cliff reverses cash on hand & \lean{cash\_lt\_cash\_of\_cliff} & OLG/\allowbreak MeansTest\\
+Theorem~\ref{thm:cons} & \lean{exists\_consumption\_decrease} & OLG/\allowbreak MeansTest\\
+Theorem~\ref{thm:taper}, cliff & \lean{exists\_saving\_decrease\_in\_assets} & OLG/\allowbreak MeansTest\\
 \bottomrule
 \end{longtable}
 \endgroup

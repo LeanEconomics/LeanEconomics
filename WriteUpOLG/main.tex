@@ -57,7 +57,14 @@ stage by stage with no fixed point. Beyond that we prove the finite-horizon sand
 periods still to come, consumption lies between $\kappa_k m$ and $\kappa_k(m+H_k(z))$, where
 $1/\kappa_k=\sum_{i\le k}(\Thorn/R)^i$ is the consumption share of a household with no future
 income and $H_k$ is the expected present value of the next $k$ incomes; the propensities decrease
-in the horizon towards the infinite-horizon $\kappa=1-\Thorn/R$. The programme's target is
+in the horizon towards the infinite-horizon $\kappa=1-\Thorn/R$. We then add retirement and a
+pension. With a lump-sum pension the retired phase is an income-fluctuation problem in its own
+right and everything survives. With a means-tested pension we settle a claim often made
+informally: a means test does make the policy non-monotone, but not for the reason usually given.
+Optimal saving rises with cash on hand whatever the continuation, by Topkis, so a value function
+made non-concave by the test cannot by itself reverse it; what the test reverses is consumption,
+which jumps down at the wealth where the household gives the pension up, and cash on hand itself,
+once the taper is steeper than the gross return. The programme's target is
 uniqueness of the stationary equilibrium at relative risk aversion above one, which the infinite
 horizon could not close: in a life cycle every comparative static is a finite induction, wealth is
 bounded, and the age-one distribution is common to every rate.
@@ -68,6 +75,7 @@ Bewley models, formal verification, Lean.
 
 \input{sections/intro}
 \input{sections/lifecycle}
+\input{sections/retirement}
 \input{sections/programme}
 
 \bibliographystyle{ecta}
