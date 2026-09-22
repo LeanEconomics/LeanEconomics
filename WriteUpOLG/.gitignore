@@ -10,3 +10,5 @@
 build.log
 numerics/*.mat
 numerics/*.png
+numerics/*.mat
+numerics/*.png
