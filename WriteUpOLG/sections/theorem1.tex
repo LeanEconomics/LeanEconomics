@@ -91,9 +91,57 @@ times the size of the hypothetical violation, bounds the violation by a multiple
 rather than eliminating it, which is not enough: the aggregate difference the equilibrium argument
 must sign is itself of order $\Delta r$.
 
+\subsection{The reduction, formalised, and its verdict}
+
+The backward induction above is proved in Lean, in the form the life cycle makes natural.
+Because the budget constraint makes the two statements identical
+(\lean{stagePolicy\_le\_iff\_consumption\_le}), the terminal stage needs no hypothesis at all: in
+the last period both households consume their cash on hand and save nothing
+(\lean{stagePolicy\_mono\_zero}). Corners need none either: if the lower-rate household saves
+nothing there is nothing to violate. What the step needs is one inequality per age and state,
+which we call the \emph{age-indexed slack condition}: writing $b$ for the lower-rate household's
+saving at that state and $C'(z')$ for its consumption next period,
+\begin{equation}\label{eq:stageslack}
+  R_1\sum_{z'}\pi(z,z')C'(z')^{-\mu}\ \le\
+  R_2\sum_{z'}\pi(z,z')\bigl(C'(z')+\Delta r\,b\bigr)^{-\mu}
+  \Bigl(1+\frac{\Delta r\,a}{c}\Bigr)^{\mu}
+\end{equation}
+(\lean{StageSlack}).
+
+\begin{theorem}[The reduction]\label{thm:reduction}
+If \eqref{eq:stageslack} holds at every age and every state in the region, then saving rises with
+the rate at every age, and aggregate capital rises with the rate.
+\formal{IncomeFluctuation.stagePolicy\_mono\_step,
+IncomeFluctuation.stagePolicy\_mono\_of\_stageSlack,
+IncomeFluctuation.olgCapital\_le\_of\_stageSlack}
+\end{theorem}
+
+With Theorem~\ref{thm:thm3} this closes the chain: \eqref{eq:stageslack} at every age gives a
+unique equilibrium rate. The question is therefore whether \eqref{eq:stageslack} is true, and the
+answer is the one reported above, now stated sharply. Condition \eqref{eq:stageslack} is exactly
+the margin tabulated in the previous subsection. At $\mu=3$ it holds for the last three or four
+periods of life, with margins $+0.68$, $+0.42$ and $+0.18$ per unit of the rate gap, and fails
+from about the fifth-to-last, at $-0.23$, deteriorating to $-2.86$ at birth. At $\mu=1$ it holds
+for most of the life and still fails for the youngest ages, at $-0.12$ at birth.
+
+That last observation is the important one. The condition fails even at logarithmic utility,
+where Theorem 1 is certainly true. So the failure is not a symptom of high risk aversion: the
+pointwise Euler comparison is simply the wrong instrument in a life cycle, and no sharpening of
+it that we could find repairs the young ages. Keeping the term the step discards, the marginal
+propensity to consume times the size of the hypothetical violation, only bounds the violation by
+a multiple of $\Delta r$, and both refinements we tried --- an upper bound on the propensity to
+consume from concavity and the sandwich, and a self-improving bootstrap on the size of the
+violation --- converge to a positive bound rather than to zero.
+
+So $\mu=3$ is not delivered by this route, and $\mu=1$ is not either, although the companion
+write-up proves the latter by the rescaling argument, which is an induction on Bellman iterates
+and so carries over to the life cycle unchanged. What the reduction does deliver is the end of
+life, and the exact inequality that any proof must beat.
+
 So the state of the programme is this. Theorem 1 is true in the life cycle for $\mu=3$, and the
-statement to prove has the cleanest possible form, its own terminal condition propagated. What is
-missing is an argument at zero wealth, where the pointwise Euler comparison is far from holding
-and the truth is delivered by the expectation over income states rather than by any single one.
-The same zero-wealth state is where the infinite-horizon slack condition was tightest, which
-suggests the two problems share a single missing ingredient rather than two.
+statement to prove has the cleanest possible form, its own terminal condition propagated; the
+reduction to one inequality per age is proved; and that inequality is false for the young, at
+every degree of risk aversion. What is missing is an argument at zero wealth that does not go
+through a pointwise comparison of the two Euler equations. The same zero-wealth state is where the
+infinite-horizon slack condition was tightest, which suggests the two problems share a single
+missing ingredient rather than two.
