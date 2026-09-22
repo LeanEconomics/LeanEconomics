@@ -1,0 +1,99 @@
+\section{Theorem 1 in the life cycle: how far it goes}\label{sec:thm1}
+
+The programme of Section~\ref{sec:prog} rests on Light's Theorem 1, that saving rises with the
+interest rate at every state. In the infinite horizon this is open above logarithmic utility. The
+life cycle was the reason for hope: a finite backward induction from an explicit terminal
+condition, with the per-step loss compounding only $J$ times instead of to a fixed point. This
+section reports what the numbers say, at $\beta=0.96$, a seven-state Tauchen chain with
+$\rho=0.9$ and $\sigma=0.4$, a zero borrowing limit, $J=60$, and a flat earnings profile
+(\texttt{numerics/lc\_check.m}, \texttt{lc\_robust.m}, \texttt{lc\_induct.m},
+\texttt{lc\_verify.m}, \texttt{lc\_bound.m}, \texttt{lc\_crit.m}).
+
+\subsection{The statement is its own terminal condition}
+
+The budget constraint makes two statements identical. Since $a'=Ra+y(z)-c$ at either rate,
+\[
+  g_k(a,z;r_2)\ \ge\ g_k(a,z;r_1)
+  \qquad\Longleftrightarrow\qquad
+  c_k(a,z;r_2)-c_k(a,z;r_1)\ \le\ (r_2-r_1)\,a ,
+\]
+so Theorem 1 \emph{is} the affine bound on the rate response of consumption with slope one and
+zero intercept. That bound holds with equality in the last period of life, where $c_0=y(z)+Ra$.
+The question is therefore whether the terminal condition propagates backward, and it is a
+question about one inequality rather than about a pair of constants to be chosen.
+
+\subsection{It propagates, up to a critical risk aversion}
+
+At $\mu=1$ and $\mu=3$ it propagates exactly. Over all sixty stages and the whole wealth region
+reachable from zero wealth at birth, the largest violation of $g_k^{(1)}\le g_k^{(2)}$ is zero,
+and the consumption bound holds to five parts in $10^{14}$; refining the asset grid from $2000$
+to $16000$ points changes nothing. At $\mu=5$ it fails. The failure is a genuine feature of the
+household's problem, not of the solution method: the violation is identical at every grid size,
+and endogenous-grid and value-function iteration with a pure grid search agree on it to the
+resolution of the grid. Saving at zero wealth in the highest income state, in the first period of
+a sixty-period life, falls as the rate rises:
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+$r$ & $2\%$ & $3\%$ & $4\%$ & $5\%$ & $6\%$ \\
+\midrule
+$g(0,z_{\max})$, endogenous grid & $1.7783$ & $1.7638$ & $1.7452$ & $1.7234$ & $1.6993$ \\
+$g(0,z_{\max})$, value iteration & $1.7806$ & $1.7606$ & $1.7406$ & $1.7206$ & $1.7006$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+Between the two lies a critical degree of risk aversion, and it is sharp. Bisecting on $\mu$ for
+the largest violation over all stages gives:
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Horizon $J$ & $r=2\%$ & $r=4\%$ & $r=\lambda=4.17\%$ \\
+\midrule
+$20$ & $3.79$ & $3.53$ & $3.51$ \\
+$40$ & $3.77$ & $3.39$ & $3.36$ \\
+$60$ & $3.77$ & $3.39$ & $3.36$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+Theorem 1 holds throughout the life cycle below the critical value and fails above it. The value
+is stable in the horizon beyond about forty periods, and falls as the rate rises towards the rate
+of time preference. Aiyagari's $\mu=3$ is inside it with little room, at $\mu=3.39$ against
+$3$; his $\mu=5$ is well outside. So the life cycle buys one of the two open cases and not the
+other, and it buys $\mu=3$ only at rates below the rate of time preference, which is where the
+equilibrium lies.
+
+\subsection{Why the natural induction does not close}
+
+The backward induction that the transfer lemma suggests compares the two Euler equations at a
+state where the lower-rate household saves. Writing $b=g^{(1)}_{k+1}(a,z)$ for the pivot, the
+induction hypothesis and monotonicity of $c_k$ give
+$c^{(2)}_k(b')\le c^{(1)}_k(b)+\Delta r\,b$ at the relevant points, and the step closes provided
+\[
+  R_2\,\E\bigl[(c^{(1)}_k(b)+\Delta r\,b)^{-\mu}\bigr]\ \ge\
+  R_1\,\E\bigl[c^{(1)}_k(b)^{-\mu}\bigr]\Bigl(1+\frac{\Delta r\,a}{c^{(1)}_{k+1}(a,z)}\Bigr)^{-\mu}.
+\]
+To first order this asks $\mu\bigl(b/c^{(1)}_k(b)-a/c^{(1)}_{k+1}(a,z)\bigr)\le1/R$: the ratio of
+assets to consumption may rise from one age to the next by at most $1/(\mu R)$. It does not. At
+zero wealth in the highest income state the left-hand side is large, because such a household
+saves a great deal against a certain fall in income, while the right-hand side is about one. The
+margin is negative from the third stage of life onward for every degree of risk aversion we tried,
+logarithmic utility included, at $-0.12$ for $\mu=1$, $-2.86$ for $\mu=3$ and $-6.29$ for $\mu=5$
+per unit of the rate gap. Keeping the term the step discards, the marginal propensity to consume
+times the size of the hypothetical violation, bounds the violation by a multiple of $\Delta r$
+rather than eliminating it, which is not enough: the aggregate difference the equilibrium argument
+must sign is itself of order $\Delta r$.
+
+So the state of the programme is this. Theorem 1 is true in the life cycle for $\mu=3$, and the
+statement to prove has the cleanest possible form, its own terminal condition propagated. What is
+missing is an argument at zero wealth, where the pointwise Euler comparison is far from holding
+and the truth is delivered by the expectation over income states rather than by any single one.
+The same zero-wealth state is where the infinite-horizon slack condition was tightest, which
+suggests the two problems share a single missing ingredient rather than two.
