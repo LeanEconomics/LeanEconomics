@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.OLG.Continuity
+import LeanEconomics.OLG.Incidence
 
 /-!
 # Both ends of the rate interval
@@ -85,6 +86,78 @@ theorem olgCapital_le_of_invariant {B : ℝ} (hB0 : 0 ≤ B) (hBcap : B ≤ asse
       ≤ ∑ z, ν z * (((K : ℝ) + 1) * B) :=
         Finset.sum_le_sum fun z _ => mul_le_mul_of_nonneg_left
           (P.cohortAssets_le_of_invariant hBcap hinv K z ⟨le_rfl, hB0⟩) (hν z)
+    _ = ((K : ℝ) + 1) * B := by rw [← Finset.sum_mul, hν1, one_mul]
+    _ = B * ((K : ℝ) + 1) := by ring
+
+/-! ### A sharper ceiling, from the incidence bound
+
+Feasibility says a household cannot carry forward more than its cash on hand. The
+constraint-incidence bound of `OLG.Incidence` says it will not want to: it consumes at least
+`κ_k(m + H_k(z))`, so it saves at most `(1 - κ_k)(y_z + Ra) - κ_k H_k(z)`. The forward-invariant
+level that follows is roughly half the one feasibility gives, which widens the margin at the
+bottom of the rate interval and lets that endpoint be taken closer to zero.
+
+At Aiyagari's calibration (`numerics/ceiling.m`): at `r = -7%` feasibility gives `42.52` and the
+incidence bound `22.17`, against a capital demand of `56.25`; and the highest low endpoint for
+which the ceiling stays under demand rises from `-6.73%` to `-5.85%`.
+-/
+
+/-- **A forward-invariant level for the incidence bound.** The condition is that no household, at
+any age or earnings state, saves past `B` when it starts there. -/
+theorem cohortAssets_le_of_incidence {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
+    (hslack : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z, P.stagePolicy j (b, w) < assetCap)
+    {B : ℝ} (hBcap : B ≤ assetCap)
+    (hinv : ∀ j : ℕ, ∀ w : Z, (1 - P.stageMPC γ j) * (P.income w + (1 + P.interest) * B)
+      - P.stageMPC γ j * P.riskHumanWealth γ j w ≤ B)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) B) :
+    P.cohortAssets k (a, z) ≤ ((k : ℝ) + 1) * B := by
+  induction k generalizing z a with
+  | zero => simpa [cohortAssets_zero] using ha.2
+  | succ k ih =>
+    have hmem : a ∈ Icc (0 : ℝ) assetCap := ⟨ha.1, le_trans ha.2 hBcap⟩
+    have hR := P.interest_gt_neg_one
+    have hκle := P.stageMPC_le_one hγ0 hβ (k + 1)
+    have hgmem : P.stagePolicy (k + 1) (a, z) ∈ Icc (0 : ℝ) B := by
+      refine ⟨(P.stagePolicy_mem_region _ _).1, ?_⟩
+      have hb := P.riskHumanWealth_le_stageConsumption hγ0 hu hβ hd hslack (k + 1) z hmem
+      rw [P.stageConsumption_eq, P.resources_eq_of_mem hmem z] at hb
+      have hstep : P.stagePolicy (k + 1) (a, z)
+          ≤ (1 - P.stageMPC γ (k + 1)) * (P.income z + (1 + P.interest) * a)
+            - P.stageMPC γ (k + 1) * P.riskHumanWealth γ (k + 1) z := by nlinarith [hb]
+      have hmono : (1 - P.stageMPC γ (k + 1)) * (P.income z + (1 + P.interest) * a)
+          ≤ (1 - P.stageMPC γ (k + 1)) * (P.income z + (1 + P.interest) * B) :=
+        mul_le_mul_of_nonneg_left
+          (by nlinarith [ha.2, hR]) (sub_nonneg.2 hκle)
+      linarith [hstep, hmono, hinv (k + 1) z]
+    have hB0 : 0 ≤ B := le_trans hgmem.1 hgmem.2
+    have hsum : ∑ z', P.transitionMatrix z z'
+          * P.cohortAssets k (P.stagePolicy (k + 1) (a, z), z')
+        ≤ ((k : ℝ) + 1) * B := by
+      calc ∑ z', P.transitionMatrix z z'
+              * P.cohortAssets k (P.stagePolicy (k + 1) (a, z), z')
+          ≤ ∑ z', P.transitionMatrix z z' * (((k : ℝ) + 1) * B) :=
+            Finset.sum_le_sum fun z' _ =>
+              mul_le_mul_of_nonneg_left (ih z' hgmem) (P.transitionMatrix_nonneg z z')
+        _ = ((k : ℝ) + 1) * B := by
+            rw [← Finset.sum_mul, P.transitionMatrix_sum z, one_mul]
+    rw [cohortAssets_succ, stageStep]
+    push_cast
+    linarith [ha.2, hsum]
+
+/-- **The sharper ceiling on aggregate capital.** -/
+theorem olgCapital_le_of_incidence {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
+    (hslack : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z, P.stagePolicy j (b, w) < assetCap)
+    {B : ℝ} (hB0 : 0 ≤ B) (hBcap : B ≤ assetCap)
+    (hinv : ∀ j : ℕ, ∀ w : Z, (1 - P.stageMPC γ j) * (P.income w + (1 + P.interest) * B)
+      - P.stageMPC γ j * P.riskHumanWealth γ j w ≤ B)
+    (K : ℕ) {ν : Z → ℝ} (hν : ∀ z, 0 ≤ ν z) (hν1 : ∑ z, ν z = 1) : P.olgCapital K ν ≤ B := by
+  rw [olgCapital, div_le_iff₀ (by positivity)]
+  calc ∑ z, ν z * P.cohortAssets K (0, z)
+      ≤ ∑ z, ν z * (((K : ℝ) + 1) * B) :=
+        Finset.sum_le_sum fun z _ => mul_le_mul_of_nonneg_left
+          (P.cohortAssets_le_of_incidence hγ0 hu hβ hd hslack hBcap hinv K z ⟨le_rfl, hB0⟩) (hν z)
     _ = ((K : ℝ) + 1) * B := by rw [← Finset.sum_mul, hν1, one_mul]
     _ = B * ((K : ℝ) + 1) := by ring
 
@@ -580,6 +653,48 @@ theorem exists_olgEquilibrium_of_geomBounds {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u
   refine le_trans hDgeom ?_
   refine div_le_div_of_nonneg_right ?_ (by positivity)
   exact (P.withRate rhi hhi).geomFloor_le_sum_mul_cohortFloor hγ0 hβ hT hq hν hst K
+
+/-- **Existence with the sharper ceiling.** The same statement as
+`exists_olgEquilibrium_of_bounds`, with the bottom of the interval handled by the
+constraint-incidence bound rather than by feasibility. The household's behaviour enters only
+through `κ` and `H`, both explicit recursions in the primitives, and the reward is a
+forward-invariant level about half the size, which is what lets the low endpoint be taken closer
+to zero.
+
+The extra hypothesis is that the artefactual cap is slack at the low rate. Unlike at the top of
+the interval that is not a vacuous demand: below the rate of time preference the capped interval
+is forward invariant, which is exactly the case `OLG.Reachable` describes. -/
+theorem exists_olgEquilibrium_of_sharpBounds {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) {rlo rhi : ℝ}
+    (hlo : P.RateOK rlo) (hhi : P.RateOK rhi) (hle : rlo ≤ rhi)
+    (K : ℕ) {ν : Z → ℝ} (hν : ∀ z, 0 ≤ ν z) (hν1 : ∑ z, ν z = 1)
+    {D : ℝ → ℝ} (hD : ContinuousOn D (Icc rlo rhi))
+    (hslo : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z,
+      (P.withRate rlo hlo).stagePolicy j (b, w) < assetCap)
+    {B : ℝ} (hB0 : 0 ≤ B) (hBcap : B ≤ assetCap)
+    (hinv : ∀ j : ℕ, ∀ w : Z, (1 - (P.withRate rlo hlo).stageMPC γ j)
+        * (P.income w + (1 + rlo) * B)
+      - (P.withRate rlo hlo).stageMPC γ j * (P.withRate rlo hlo).riskHumanWealth γ j w ≤ B)
+    (hBD : B ≤ D rlo)
+    (hcap : (P.withRate rhi hhi).reach (K + 1) < assetCap)
+    (hDfloor : D rhi ≤ (∑ z, ν z * (P.withRate rhi hhi).cohortFloor γ K z) / (K + 1)) :
+    ∃ r, ∃ hr : r ∈ Icc rlo rhi,
+      (P.withRate r (P.rateOK_of_mem_Icc hlo hhi hr)).olgCapital K ν = D r := by
+  have hmain : ∃ r ∈ Icc rlo rhi,
+      (∑ z, ν z * P.augCohortAssets hlo.one_add_pos hle K ((0, r), z)) / (K + 1) = D r := by
+    refine P.exists_olgEquilibrium hlo.one_add_pos hle K ν hD ?_ ?_
+    · rw [P.olgSupply_eq hlo.one_add_pos hle (left_mem_Icc.2 hle) hlo K ν]
+      exact le_trans ((P.withRate rlo hlo).olgCapital_le_of_incidence hγ0 hu hβ hd hslo hB0
+        hBcap hinv K hν hν1) hBD
+    · rw [P.olgSupply_eq hlo.one_add_pos hle (right_mem_Icc.2 hle) hhi K ν]
+      refine le_trans hDfloor ?_
+      refine (P.withRate rhi hhi).le_olgCapital hγ0 hu hβ hd
+        ((P.withRate rhi hhi).reachRegions K hcap) K ?_ hν
+      exact (P.withRate rhi hhi).mem_reachRegion (le_refl K) (by simp)
+  obtain ⟨r, hr, heq⟩ := hmain
+  refine ⟨r, hr, ?_⟩
+  rw [← P.olgSupply_eq hlo.one_add_pos hle hr (P.rateOK_of_mem_Icc hlo hhi hr) K ν]
+  exact heq
 
 end IncomeFluctuation
 
