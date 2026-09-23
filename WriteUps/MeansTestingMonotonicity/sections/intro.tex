@@ -1,0 +1,40 @@
+\section{Introduction}
+
+A pension that is withdrawn as the recipient's assets rise gives the household a reason to hold
+fewer assets, and it is often said that this makes the household's policy function non-monotone.
+The claim is usually supported by an appeal to the value function: the means test puts a kink, or
+a cliff, into the reward from saving, the value function is no longer concave, and monotone
+comparative statics are said to fail with it.
+
+The conclusion is right and the reason is wrong. Monotonicity of the saving policy in cash on hand
+survives \emph{any} continuation value whatever --- concave, kinked, discontinuous, or produced by
+a means test of any shape --- because the only structure the comparison needs is strict concavity
+of period utility, and the continuation cancels between the two optimality inequalities. This is
+Topkis's argument \citep{Topkis1978,MilgromShannon1994} applied to the household's problem, and it
+does not care what the continuation looks like.
+
+What a non-concave continuation does produce is a jump. At the wealth where the household stops
+protecting its pension and starts saving past the test, optimal saving jumps up, and because it
+jumps by more than wealth has risen, consumption jumps \emph{down}. So the non-monotonicity is
+real, it is in consumption, and it coexists with a perfectly monotone saving policy. We give an
+exact two-period example, with the optimum at each of two wealth levels computed and verified.
+
+Which policy misbehaves also depends on which state space one works in, and the two are not
+equivalent under a means test. In the household's own state space --- assets $a$ and the earnings
+shock $z$ --- next period's assets rise with this period's at each $z$, again for every
+continuation. The Lean development that this paper draws on already had that statement, but with
+concavity of the continuation as a hypothesis; a means test is exactly what removes that
+hypothesis's premise, so we prove it without. Monotone saving in assets then fails in one case
+only: when the test is assessed on the assets currently held and withdraws the pension faster than
+the gross return, cash on hand itself falls as assets rise, and the policy follows it down. The
+threshold is sharp, the taper rate against the gross return, and Australia's asset test sits on
+the benign side of it.
+
+Section~\ref{sec:model} sets out the retired household and the three pension schedules.
+Section~\ref{sec:cash} gives the two results in the cash-on-hand state space: saving monotone
+always, consumption not. Section~\ref{sec:assets} gives the result in the $(a,z)$ state space and
+the exception. Section~\ref{sec:num} calibrates a retiree and checks each case. Every result
+stated with a formal name has been checked by the Lean 4 proof assistant \citep{Lean4} against
+Mathlib \citep{Mathlib}; the development is at
+\url{https://github.com/LeanEconomics/LeanEconomics}, files
+\texttt{LeanEconomics/OLG/MeansTest.lean} and \texttt{Retirement.lean}.

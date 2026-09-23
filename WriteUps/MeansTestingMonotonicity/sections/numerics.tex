@@ -1,0 +1,47 @@
+\section{A calibrated retiree}\label{sec:num}
+
+The theorems predict exactly which of the two channels operates for which schedule, and a
+calibration confirms it case by case. We solve a deterministic retiree of $25$ years by backward
+induction with a global search over a grid of $6001$ asset levels --- the value function is not
+concave, so a first-order condition cannot be used --- at $r=4\%$, $\beta=0.96$, relative risk
+aversion $3$, a full pension of $0.40$ of mean earnings and a free area of $3$ mean-earnings units
+(\texttt{numerics/meanstest.m}). The test is assessed on assets currently held, so all three
+channels are live. The taper of $0.078$ per unit of assets is Australia's asset test, three dollars
+a fortnight per thousand dollars.
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Pension schedule & Cash on hand & Saving & Consumption \\
+\midrule
+Lump sum & increasing & increasing & increasing \\
+Taper $0.078$ (Australia) & increasing & increasing & falls by $0.025$--$0.046$ \\
+Taper $0.50$ & increasing & increasing & falls by $0.13$--$0.24$ \\
+Taper $1.20$ (above $R$) & falls & falls by $0.004$ & falls by $0.55$--$0.70$ \\
+Cliff & falls by $0.40$ & falls by $0.32$--$0.37$ & falls by $0.55$--$0.70$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+Every entry is what the theorems require. Saving falls with assets in exactly the two rows where
+cash on hand does, which are exactly the two rows whose taper exceeds the gross return, as
+Theorem~\ref{thm:taper} says; in the other three it rises, as Theorem~\ref{thm:azmono} says it
+must. Consumption falls in every row with a test of any kind, as Theorem~\ref{thm:cons} says it
+can, and only in the lump-sum row is every policy monotone.
+
+The consumption drop sits exactly at the free area and grows with age, from $0.025$ of mean
+earnings at the start of retirement to $0.046$ twenty years in under the Australian taper. The
+mechanism is the one the witness of Section~\ref{sec:cash} isolates: just above the free area the
+effective return to saving is only $R-\tau$ until the pension is exhausted, so the household jumps
+its saving towards the far side of the taper range and cuts consumption to pay for it. Under the
+Australian schedule the borrowing constraint binds at about eight per cent of the state space at
+every age.
+
+The effect is not confined to retirees. A worker in the last year before retirement, facing the
+Australian taper for the whole of retirement, has a monotone saving policy and a consumption policy
+that falls by $0.025$ of mean earnings at the same threshold: the non-concavity is inherited
+through the continuation value, and it is again consumption that carries it. That is
+Theorem~\ref{thm:topkis} at work --- the continuation is as badly behaved as one likes, and saving
+is monotone anyway.

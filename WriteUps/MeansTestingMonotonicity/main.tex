@@ -1,0 +1,84 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1.1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% A formal name, as it appears in the Lean development.
+\newcommand{\leanunderscore}{\char`\_\hskip 0pt plus 0.4pt\relax}
+\newcommand{\lean}[1]{\begingroup\ttfamily\small\let\_\leanunderscore #1\endgroup}
+% The Lean name attached to a stated result.
+\newcommand{\formal}[1]{\par\noindent\begingroup\footnotesize\raggedright\emph{Formal statement:} \lean{#1}.\par\endgroup}
+\newcommand{\Thorn}{\text{\th}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator{\supp}{supp}
+
+\onehalfspacing
+\tolerance=600 \emergencystretch=1.5em
+
+\title{Means-Tested Pensions and Monotone Policies:\\ Saving Rises, Consumption Need Not}
+\author{LeanEconomics Org [mostly Claude]\thanks{The Lean development described here is at
+\url{https://github.com/LeanEconomics/LeanEconomics}. It was written mostly by Claude (Anthropic),
+an AI coding model, working under the direction of Robert Kirkby (Victoria University of
+Wellington); every result reported was checked by the Lean kernel. Comments welcome.}}
+\date{September 2026\\[0.5em]\small Draft}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+A pension that is withdrawn as the recipient's assets rise is widely said to make the household's
+policy function non-monotone, and the reason usually given is that the means test makes the value
+function non-concave. We show that the conclusion is right, the reason is wrong, and that which
+policy misbehaves depends on the state space. With cash on hand as the state, optimal saving rises
+with the state for \emph{every} continuation value, concave or not: only strict concavity of
+period utility is used, and the continuation cancels. What a non-concave continuation produces is
+a jump, and the jump falls on consumption, which drops discretely at the wealth where the
+household gives the pension up. With assets and the earnings shock as the state, next period's
+assets rise with this period's at each shock, again for every continuation; the repository's
+earlier version of that statement assumed concavity, which is exactly what a means test destroys.
+Monotone saving fails only when the test is assessed on assets currently held and withdraws the
+pension faster than the gross return, because then cash on hand itself falls as assets rise. A
+calibrated retiree confirms each case, and Australia's asset test sits on the benign side of the
+threshold with a non-monotone consumption function. Every result is checked by the Lean 4 proof
+assistant.
+\end{abstract}
+
+\noindent\emph{JEL:} D15, H55, C63. \quad \emph{Keywords:} means testing, monotone comparative
+statics, consumption, borrowing constraints, formal verification, Lean.
+
+\input{sections/intro}
+\input{sections/model}
+\input{sections/cashonhand}
+\input{sections/assets}
+\input{sections/numerics}
+\input{sections/conclusion}
+
+\bibliographystyle{ecta}
+\bibliography{refs}
+
+\appendix
+\input{sections/appendix_index}
+
+\end{document}

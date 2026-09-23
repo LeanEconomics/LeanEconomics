@@ -1,0 +1,84 @@
+\section{Cash on hand as the state}\label{sec:cash}
+
+\subsection{Saving is monotone, whatever the continuation}
+
+\begin{theorem}[Monotone saving in cash on hand]\label{thm:topkis}
+Let period utility be strictly concave on the positive half-line and let $W$ be \emph{any}
+continuation value. If $m_1<m_2$ and $x_i$ is optimal at $m_i$ in \eqref{eq:step}, then
+$x_1\le x_2$.
+\formal{OLG.isOptimalSaving\_mono}
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Suppose $x_2<x_1$. Both choices are feasible at both states, so adding the two optimality
+inequalities,
+\[
+  u(m_1-x_1)+u(m_2-x_2)\ \ge\ u(m_1-x_2)+u(m_2-x_1),
+\]
+the continuation terms cancelling. Write $p=m_1-x_1$ and $q=m_2-x_2$. Since $x_2<x_1$ and
+$m_1<m_2$ we have $p<m_1-x_2<q$, and $m_2-x_1=p+q-(m_1-x_2)$ also lies strictly between $p$ and
+$q$. The two right-hand arguments are therefore strict convex combinations of $p$ and $q$ with
+complementary weights, so strict concavity gives $u(m_1-x_2)+u(m_2-x_1)>u(p)+u(q)$, contradicting
+the display.
+\end{proof}
+
+The proof uses nothing about $W$: it enters both optimality inequalities once and cancels. So a
+value function made non-concave by a means test --- or by anything else --- cannot by itself make
+saving fall with cash on hand. Note also what the hypotheses do \emph{not} include: no
+differentiability, no interiority, no uniqueness of the optimum. The conclusion holds for arbitrary
+optimal selections, which matters here, because at the switch point the optimum is genuinely
+multi-valued.
+
+\subsection{Consumption is not monotone}
+
+What a non-concave continuation does produce is a jump in saving, and the jump is larger than the
+increase in wealth that caused it.
+
+\begin{theorem}[Consumption falls when wealth rises]\label{thm:cons}
+There are a continuation value arising from a means-tested pension and two levels of cash on hand,
+the second larger, at which optimal consumption is strictly smaller.
+\formal{OLG.exists\_consumption\_decrease}
+\end{theorem}
+
+The witness is exact. Take logarithmic utility, a unit gross return, and a pension of one
+withdrawn entirely above assets of one, so that next period's cash on hand is
+\[
+  N(x)=x+\mathbf{1}\{x\le1\},
+\]
+which jumps down by one as $x$ crosses the threshold, and let $W=\log N$. Then:
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Cash on hand $m$ & optimal saving $x$ & consumption $m-x$ & next period's cash $N(x)$\\
+\midrule
+$6$ & $1$ & $5$ & $2$\\
+$8$ & $4$ & $4$ & $4$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+At $m=6$ the household keeps the pension, saving the most it can without losing it; at $m=8$ the
+pension is no longer worth protecting, so the household gives it up and saves the proceeds. Saving
+rises from $1$ to $4$, as Theorem~\ref{thm:topkis} says it must, and since it rises by more than
+wealth does, consumption falls from $5$ to $4$.
+
+Both optima are verified rather than asserted. Because utility is logarithmic, comparing
+$\log(m-x)+\log N(x)$ across $x$ is comparing the product $(m-x)N(x)$, which is a quadratic on each
+side of the threshold. At $m=6$ the product is $-x^2+5x+6$ below the threshold, increasing there
+and equal to $10$ at $x=1$, and $(6-x)x\le9$ above it. At $m=8$ it is $-x^2+7x+8\le14$ below and
+$(8-x)x\le16$ above, attained at $x=4$. The comparisons are checked by the kernel
+(\lean{isOptimalSaving\_six}, \lean{isOptimalSaving\_eight}).
+
+\subsection{The two policies come apart}
+
+The contrast is not an artefact of proof technique. Consumption is $m-x$ with both terms rising in
+$m$, and when the continuation is non-concave the second can rise faster. Monotone consumption
+therefore genuinely requires concavity of the continuation, while monotone saving does not; the
+Lean development records the identity $c=m-x$ for exactly this purpose
+(\lean{consumptionFnOf\_eq\_sub}) and derives consumption monotonicity only under concave slices.
+So in the cash-on-hand state space the means test leaves the saving policy alone and breaks the
+consumption policy, and the informal argument quoted in the introduction gets the object wrong as
+well as the reason.

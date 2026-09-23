@@ -1,0 +1,69 @@
+\section{Assets and the earnings shock as the state}\label{sec:assets}
+
+The household's own state space is the pair $(a,z)$, assets and the earnings shock, with $z$
+following a finite Markov chain and cash on hand $m(a,z)=y(z)+Ra$ in the absence of a means test
+on current holdings. The question is then about $g_v(a,z)$, next period's assets.
+
+\subsection{Next period's assets rise with this period's}
+
+\begin{theorem}[Monotone saving in assets]\label{thm:azmono}
+Let $a<a'$ both lie in the asset region. Then for every continuation $v$ and every $z$,
+$g_v(a,z)\le g_v(a',z)$.
+\formal{IncomeFluctuation.policyOf\_mono\_of\_lt}
+\end{theorem}
+
+This is Theorem~\ref{thm:topkis} read in the household's state space: cash on hand rises strictly
+with assets, so optimal saving does. The development already contained this statement
+(\lean{policyOf\_mono}) but with concave slices of the continuation as a hypothesis, and a means
+test is precisely what destroys concavity, so the hypothesis had to go. The Topkis argument removes
+it, at the cost of requiring the two asset levels to be distinct, which is harmless. As in
+Section~\ref{sec:cash}, the continuation cancels and only strict concavity of period utility
+survives.
+
+Consumption does not inherit it, for the same reason as before: $c=m(a,z)-g_v(a,z)$ with both
+terms rising in $a$, and the witness of Theorem~\ref{thm:cons} transfers directly, since at fixed
+$z$ cash on hand is an increasing affine function of assets.
+
+\subsection{When saving in assets does fail}
+
+Theorem~\ref{thm:azmono} has one hypothesis that a means test can remove: that cash on hand rises
+with assets. Where the test is assessed on assets carried forward, today's budget is untouched and
+the theorem applies verbatim. Where it is assessed on assets currently held, the schedule enters
+cash on hand directly, and whether it still rises is a question about the taper rate.
+
+\begin{theorem}[A gentle taper is harmless; a cliff is not]\label{thm:taper}
+If $0\le\tau<R$ then $a\mapsto Ra+p(a)$ is strictly increasing under the taper
+(\lean{cash\_strictMono\_tapered}), and hence, by Theorem~\ref{thm:topkis}, saving is monotone in
+assets (\lean{isOptimalSaving\_mono\_assets}). Under a cliff it is not: if $a\le\bar a<b$ and
+$R(b-a)<p$ then cash on hand is strictly smaller at $b$ (\lean{cash\_lt\_cash\_of\_cliff}), and
+there are two asset levels, the second larger, at which the household saves strictly less.
+\formal{OLG.exists\_saving\_decrease\_in\_assets}
+\end{theorem}
+
+The threshold is sharp and it is the taper rate against the gross return. A pension withdrawn more
+slowly than assets earn leaves cash on hand rising, and then no amount of damage to the value
+function can make saving fall; a pension withdrawn faster makes a household with more assets poorer
+in the only sense that matters for today's decision, and saving falls with it. The proof of the
+first half is that the positive part is one-Lipschitz, so the pension falls by at most $\tau$ per
+unit of assets while gross assets rise by $R$ (\lean{max\_zero\_sub\_le}).
+
+The witness for the second half is again exact, and deliberately built on a \emph{concave}
+continuation so that nothing is hidden in it. With a unit gross return, a pension of one withdrawn
+above assets of one, and continuation $\log(x+1)$:
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Assets $a$ & cash on hand $Ra+p(a)$ & optimal saving & consumption\\
+\midrule
+$1$ & $2$ & $1/2$ & $3/2$\\
+$3/2$ & $3/2$ & $1/4$ & $5/4$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+The household with more assets has less to spend, saves less and consumes less. The
+non-monotonicity here lives in the budget constraint, not in the shape of the value function, and
+that is the whole difference between this case and Section~\ref{sec:cash}.

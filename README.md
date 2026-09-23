@@ -65,7 +65,10 @@ These live in `DynamicProgramming/`, `Models/ColemanReffett.lean`,
 | `Distribution/` | Stationary distributions on the compact state space: existence, Doeblin uniqueness, convergence |
 | `Equilibrium/` | Capital supply and demand, Light's theorems, the Aiyagari and Huggett theorems, reductions for higher risk aversion, multiplicity, Lasry–Lions and mean-field uniqueness |
 | `Analysis/` | Real-analysis lemmas the above need |
-| `WriteUps/WriteUpBIHA/` | The paper on the first target |
+| `OLG/` | Overlapping generations: the life-cycle household, retirement and pensions, stationary equilibrium, and the frontier for higher risk aversion |
+| `WriteUps/WriteUpBIHA/` | The paper on the first target, Bewley–Imrohoroglu–Huggett–Aiyagari |
+| `WriteUps/WriteUpOLG/` | The paper on overlapping generations |
+| `WriteUps/MeansTestingMonotonicity/` | Means-tested pensions and the monotonicity of policy functions |
 
 Two conventions run through everything. Borrowing limits and asset caps are type
 parameters, so a theorem proved once serves Aiyagari's economy and Huggett's alike. And

@@ -1,0 +1,36 @@
+\section{Index of formal results}\label{app:index}
+
+All in the namespaces \lean{LeanEconomics.OLG} and \lean{LeanEconomics.IncomeFluctuation}, files
+\lean{LeanEconomics/OLG/MeansTest.lean} and \lean{Retirement.lean}. Every result depends only on
+the three standard axioms (\lean{propext}, \lean{Classical.choice}, \lean{Quot.sound}) and none
+uses \lean{sorry}.
+
+\begingroup\footnotesize
+\begin{longtable}{@{}p{0.38\textwidth}p{0.40\textwidth}p{0.16\textwidth}@{}}
+\toprule
+Result & Lean name & File \\
+\midrule
+\endhead
+Retired household, lump-sum pension & \lean{withPension} & Retirement\\
+Human wealth is shock-independent & \lean{stageHumanWealth\_withPension\_const} & Retirement\\
+Perpetuity bound $H_k\le p/r$ & \lean{stageHumanWealth\_withPension\_le} & Retirement\\
+Cash on hand rises with assets & \lean{withPension\_resources\_strictMono} & Retirement\\
+\midrule
+Pension schedules & \lean{lumpSum}, \lean{tapered}, \lean{cliff} & MeansTest\\
+Cash on hand & \lean{cash} & MeansTest\\
+One period of the problem & \lean{IsOptimalSaving} & MeansTest\\
+Theorem~\ref{thm:topkis} & \lean{isOptimalSaving\_mono} & MeansTest\\
+Monotone in assets when cash is & \lean{isOptimalSaving\_mono\_assets} & MeansTest\\
+Theorem~\ref{thm:cons}, the two optima & \lean{isOptimalSaving\_six}, \lean{isOptimalSaving\_eight} & MeansTest\\
+Theorem~\ref{thm:cons} & \lean{exists\_consumption\_decrease} & MeansTest\\
+Consumption is cash less saving & \lean{consumptionFnOf\_eq\_sub} & MeansTest\\
+Lump sum keeps cash rising & \lean{cash\_strictMono\_lumpSum} & MeansTest\\
+Positive part is one-Lipschitz & \lean{max\_zero\_sub\_le} & MeansTest\\
+Theorem~\ref{thm:taper}, gentle taper & \lean{cash\_strictMono\_tapered} & MeansTest\\
+Theorem~\ref{thm:taper}, cliff reverses cash & \lean{cash\_lt\_cash\_of\_cliff} & MeansTest\\
+Theorem~\ref{thm:taper}, the two optima & \lean{isOptimalSaving\_two}, \lean{isOptimalSaving\_threeHalves} & MeansTest\\
+Theorem~\ref{thm:taper} & \lean{exists\_saving\_decrease\_in\_assets} & MeansTest\\
+Theorem~\ref{thm:azmono} & \lean{policyOf\_mono\_of\_lt} & MeansTest\\
+\bottomrule
+\end{longtable}
+\endgroup
