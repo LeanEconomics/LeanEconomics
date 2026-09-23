@@ -263,6 +263,26 @@ theorem riskHumanWealth_le_stageConsumption {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u
       rw [stageMPC_succ, div_mul_eq_mul_div, div_le_iff₀ hD]
       nlinarith [hXTc, hcapN, hκ, hR, hT0, hc0]
 
+/-- **The cap is necessary, not conservative.** Wherever a household at zero assets is against
+the borrowing limit, every affine lower bound of the form `κ_k (m + H)` valid at that state must
+obey the cap. So `riskHumanWealth` is the largest human wealth any bound of this shape may claim,
+and the bound of Theorem `riskHumanWealth_le_stageConsumption` cannot be sharpened within the
+affine class: a sharper bound must let human wealth depend on assets, which needs a lower bound on
+the household's own asset path. -/
+theorem cap_necessary_of_corner {γ : ℝ} (k : ℕ) (z : Z) {H : ℝ}
+    (hκ : 0 < P.stageMPC γ k) (hcorner : P.stagePolicy k (0, z) = 0)
+    (hbound : P.stageMPC γ k * (P.resources (0, z) + H) ≤ P.stageConsumption k z 0) :
+    H ≤ (1 / P.stageMPC γ k - 1) * P.income z := by
+  have hres : P.resources (0, z) = P.income z := P.resources_zero rfl z
+  have hc : P.stageConsumption k z 0 = P.resources (0, z) - P.stagePolicy k (0, z) := rfl
+  rw [hcorner, sub_zero, hres] at hc
+  rw [hres, hc] at hbound
+  have hdiv : P.income z + H ≤ P.income z / P.stageMPC γ k := by
+    rw [le_div_iff₀ hκ]; linarith [hbound]
+  have he : (1 / P.stageMPC γ k - 1) * P.income z
+      = P.income z / P.stageMPC γ k - P.income z := by field_simp
+  rw [he]; linarith
+
 end IncomeFluctuation
 
 end LeanEconomics
