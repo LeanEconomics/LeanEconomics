@@ -51,7 +51,7 @@ into a variance floor, and `aggregateCapital_ge_of_gap` into the capital floor. 
 instantiation `crra_aggregateCapital_ge_of_primitives` takes `U = κ (R A₀ + y_{z₁} + H_{z₁})` and
 `L = f_{z₂}`: the whole floor rests on ONE primitive inequality,
 `κ (R A₀ + y_{z₁} + H_{z₁}) < f_{z₂}`, together with positive transition probabilities into `z₁`
-and `z₂` from every state. Numerically (Aiyagari's numbers, `WriteUpResults/numerics`) it
+and `z₂` from every state. Numerically (Aiyagari's numbers, `WriteUps/WriteUpBIHA/numerics`) it
 holds for the extreme pair up to `A₀ ≈ 12` mean
 incomes at `μ = 1`, well above capital demand, but the transition probabilities into the extreme
 states are tiny, so the floor is non-vacuous only for `βR` within about `10^{-27}` of one: an
@@ -409,7 +409,7 @@ at every state; a monotone upper bound `U`, fed through the Euler inequality und
 a new upper bound. Together with concavity of the true consumption function (which makes linear
 interpolation of grid lower bounds valid) and monotonicity in wealth (which makes step upper
 bounds valid), these two lemmas are all a certified two-sided time iteration needs. Numerically
-(`WriteUpResults/numerics/twosided.m`, log utility, Rouwenhorst chain) fifty to a hundred
+(`WriteUps/WriteUpBIHA/numerics/twosided.m`, log utility, Rouwenhorst chain) fifty to a hundred
 iterations from the primitive sub- and super-solutions bring the bounds within `0.003` (below)
 and `0.02` (above) of the true consumption function on `[0, 6]`. -/
 

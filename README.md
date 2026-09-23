@@ -33,7 +33,7 @@ consumption functions that holds numerically at every wealth level with an expli
 margin, and is not yet proved from primitives (`Equilibrium/SlackEuler.lean`). For Huggett
 (1993) the obstruction is the borrowers, and the sharpest available bound on their effect
 is in `Equilibrium/ShiftedDominance.lean` and `Equilibrium/SavingPropensity.lean`. The paper
-in [`WriteUpResults/`](WriteUpResults/main.pdf) states the results in full, explains the
+in [`WriteUps/WriteUpBIHA/`](WriteUps/WriteUpBIHA/main.pdf) states the results in full, explains the
 proof, and lists every theorem with its Lean name.
 
 Getting there required formalising the theory underneath: the principle of optimality with
@@ -65,7 +65,7 @@ These live in `DynamicProgramming/`, `Models/ColemanReffett.lean`,
 | `Distribution/` | Stationary distributions on the compact state space: existence, Doeblin uniqueness, convergence |
 | `Equilibrium/` | Capital supply and demand, Light's theorems, the Aiyagari and Huggett theorems, reductions for higher risk aversion, multiplicity, Lasry–Lions and mean-field uniqueness |
 | `Analysis/` | Real-analysis lemmas the above need |
-| `WriteUpResults/` | The paper on the first target |
+| `WriteUps/WriteUpBIHA/` | The paper on the first target |
 
 Two conventions run through everything. Borrowing limits and asset caps are type
 parameters, so a theorem proved once serves Aiyagari's economy and Huggett's alike. And

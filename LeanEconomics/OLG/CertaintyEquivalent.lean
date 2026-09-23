@@ -44,7 +44,7 @@ reverses. That is the whole mechanism, and there is no risk in it.
 `saving_mono_of_le_one`: for `γ ≤ 1` the comparison holds term by term, so the certainty-equivalent
 household always saves more at a higher rate, whatever the income profile. For `γ > 1` it is the
 duration comparison above, and at Aiyagari's numbers it reverses at `γ ≈ 4.33`, against `γ ≈ 3.39`
-in the economy with risk (`WriteUpOLG/numerics/precaut2.m`, `durcheck.m`). So risk moves the
+in the economy with risk (`WriteUps/WriteUpOLG/numerics/precaut2.m`, `durcheck.m`). So risk moves the
 threshold by about one unit of risk aversion; it does not create the effect. A precautionary
 argument near zero wealth would therefore be aimed at the wrong target.
 -/

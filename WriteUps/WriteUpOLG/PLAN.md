@@ -1,6 +1,6 @@
 # Overlapping generations in Lean: the programme
 
-Companion write-up to `WriteUpResults/` (separate PDF, same repository). Drafted 2026-09-22,
+Companion write-up to `WriteUps/WriteUpBIHA/` (separate PDF, same repository). Drafted 2026-09-22,
 before any OLG Lean exists. Status lines are updated as work lands.
 
 ## Why OLG, and what it can give that the infinite horizon could not
@@ -97,7 +97,7 @@ proof of uniqueness rather than a new route).
 
 ## The write-up
 
-`WriteUpOLG/main.tex`, same style and macros as `WriteUpResults/` (`\lean{}`, `\formal{}`,
+`WriteUps/WriteUpOLG/main.tex`, same style and macros as `WriteUps/WriteUpBIHA/` (`\lean{}`, `\formal{}`,
 index appendix), own bibliography, sections: introduction; Diamond; the life-cycle household;
 equilibrium; Theorem 1 (with the numerics); frontier; index of formal results. Started once
 Phase 0 has content.
