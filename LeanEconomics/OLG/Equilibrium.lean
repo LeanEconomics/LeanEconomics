@@ -174,20 +174,31 @@ on the assets of every cohort.
 The floor is what the equilibrium argument needs at a high interest rate, and a high interest rate
 is exactly where the artefactual cap cannot be slack everywhere. Stating it on a `StageRegions` is
 what keeps it from being vacuous there. -/
+theorem le_stagePolicy_state_on {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (G : P.StageRegions)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ G.region k) :
+    (1 - P.stageMPC γ k) * (P.income z + (1 + P.interest) * a)
+        - P.stageMPC γ k * P.stageHumanWealth k z
+      ≤ P.stagePolicy k (a, z) := by
+  have hup := P.stageConsumption_le_stageHumanWealth_on hγ0 hu hβ hd G k z ha
+  have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a :=
+    P.resources_eq_of_mem (G.subset k ha) z
+  have hc : P.stageConsumption k z a = P.resources (a, z) - P.stagePolicy k (a, z) :=
+    P.stageConsumption_eq k z a
+  rw [hres] at hup hc
+  nlinarith [hup, hc]
+
+/-- The same floor read down to the worst earnings state, which is what a bound uniform in `z`
+needs. It is far too weak to carry an aggregate: see `OLG/Existence`. -/
 theorem le_stagePolicy_on {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
     (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (G : P.StageRegions)
     (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ G.region k) :
     (1 - P.stageMPC γ k) * (P.minIncome + (1 + P.interest) * a)
         - P.stageMPC γ k * P.stageHumanWealth k z
       ≤ P.stagePolicy k (a, z) := by
-  have hup := P.stageConsumption_le_stageHumanWealth_on hγ0 hu hβ hd G k z ha
-  have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a :=
-    P.resources_eq_of_mem (G.subset k ha) z
+  have h := P.le_stagePolicy_state_on hγ0 hu hβ hd G k z ha
   have hy : P.minIncome ≤ P.income z := P.minIncome_le z
   have hκ1 : P.stageMPC γ k ≤ 1 := P.stageMPC_le_one hγ0 hβ k
-  have hc : P.stageConsumption k z a = P.resources (a, z) - P.stagePolicy k (a, z) :=
-    P.stageConsumption_eq k z a
-  rw [hres] at hup hc
   nlinarith [mul_le_mul_of_nonneg_left hy (sub_nonneg.2 hκ1)]
 
 /-- **The affine floor on saving when the cap is slack everywhere.** -/
