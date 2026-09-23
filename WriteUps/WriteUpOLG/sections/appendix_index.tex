@@ -96,6 +96,15 @@ Crude reachable bound & \lean{reach}, \lean{reach\_mono} & OLG/\allowbreak Reach
 Proposition~\ref{prop:reach} & \lean{reachRegions} & OLG/\allowbreak Reachable\\
 Sandwich along a cohort's path & \lean{stageConsumption\_le\_stageHumanWealth\_reach} & OLG/\allowbreak Reachable\\
 Floor along a cohort's path & \lean{le\_stagePolicy\_reach} & OLG/\allowbreak Equilibrium\\
+Floor at the household's own state & \lean{le\_stagePolicy\_state\_on} & OLG/\allowbreak Equilibrium\\
+\midrule
+Proposition~\ref{prop:ceiling} & \lean{olgCapital\_le\_of\_invariant} & OLG/\allowbreak Existence\\
+Affine coefficients & \lean{cohortSlope}, \lean{cohortFloor} & OLG/\allowbreak Existence\\
+Proposition~\ref{prop:affine} & \lean{cohortFloor\_add\_mul\_le\_cohortAssets}, \lean{le\_olgCapital} & OLG/\allowbreak Existence\\
+Mean human wealth recursion & \lean{sum\_mul\_stageHumanWealth\_succ} & OLG/\allowbreak Existence\\
+Theorem~\ref{thm:patient} & \lean{stageMPC\_mul\_sum\_stageHumanWealth\_le} & OLG/\allowbreak Existence\\
+The aggregate floor climbs & \lean{sum\_mul\_cohortFloor\_mono}, \lean{sum\_mul\_cohortFloor\_nonneg} & OLG/\allowbreak Existence\\
+Theorem~\ref{thm:exist2} & \lean{exists\_olgEquilibrium\_of\_bounds}, \lean{exists\_olgEquilibrium\_rate} & OLG/\allowbreak Existence\\
 \bottomrule
 \end{longtable}
 \endgroup

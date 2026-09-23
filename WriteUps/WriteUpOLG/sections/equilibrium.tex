@@ -170,20 +170,100 @@ the cohorts accumulate equals the capital the firm demands.
 \formal{IncomeFluctuation.exists\_olgEquilibrium}
 \end{theorem}
 
-With Theorem~\ref{thm:thm2} and Theorem~\ref{thm:thm3} the life-cycle economy therefore has the
-same three-part structure as the stationary one --- existence, monotone supply, single crossing
---- with every piece proved and only Light's Theorem 1 assumed. The two inequalities
-Theorem~\ref{thm:exist} needs are the ceiling at the bottom of the interval, which the budget
-gives, and the floor at the top, which Proposition~\ref{prop:floor} gives in the primitives,
-with none of the constants that the ergodic route forced on the stationary case.
+Both hypotheses of Theorem~\ref{thm:exist} are about the solved model. The rest of this section
+replaces them with inequalities that never mention the household's policy or value function.
 
-Both inequalities have to be read on a reachable family rather than on the whole capped interval,
-for the reason of Section~\ref{sec:reach}, and Proposition~\ref{prop:reach} supplies one. What
-remains to make Theorem~\ref{thm:exist} unconditional is arithmetic rather than structure:
-iterate the floor of Proposition~\ref{prop:floor} across ages to a lower bound on aggregate
-capital at the top of the interval, take the ceiling at the bottom from $\rho_j$, and check the
-two against a stated demand curve. The numerical work in Section~\ref{sec:num2} says the margins
-are comfortable at $r_{lo}=-7\%$ and $r_{hi}=10\%$.
+\subsection{The ceiling, from the budget alone}
+
+\begin{proposition}[A forward-invariant level caps supply]\label{prop:ceiling}
+If $0\le B\le\bar a$ and $RB+y_{\max}\le B$, then capital per head is at most $B$.
+\formal{IncomeFluctuation.olgCapital\_le\_of\_invariant}
+\end{proposition}
+
+A household starting below $B$ cannot carry forward more than its cash on hand, which is at most
+$RB+y_{\max}\le B$, so it never leaves $[0,B]$ and over $K+1$ periods holds at most $(K+1)B$. No
+optimality, no sandwich, no slackness. Such a $B$ exists whenever $R<1$, taking $B\ge
+y_{\max}/(1-R)$, which is exactly where a Cobb--Douglas demand curve is large.
+
+\subsection{The floor, as an affine bound on accumulated assets}
+
+Iterating Proposition~\ref{prop:floor} is not a matter of tracking a distribution over assets.
+An affine lower bound suffices:
+\[
+  F_k(z)+G_k\,a\ \le\ A_k(a,z),
+\]
+with a slope $G$ common to all earnings states and an intercept $F$ carrying one value per state,
+\[
+  G_0=1,\qquad G_{k+1}=1+G_k(1-\kappa_{k+1})R,
+\]
+\[
+  F_0=0,\qquad F_{k+1}(z)=\textstyle\sum_{z'}\pi(z,z')F_k(z')
+    +G_k\bigl[(1-\kappa_{k+1})y_z-\kappa_{k+1}H_{k+1}(z)\bigr].
+\]
+
+\begin{proposition}[Affine floor on accumulated assets]\label{prop:affine}
+On any reachable family, $F_k(z)+G_ka\le A_k(a,z)$; hence capital per head is at least
+$\sum_z\nu_zF_K(z)/(K+1)$.
+\formal{IncomeFluctuation.cohortFloor\_add\_mul\_le\_cohortAssets},
+\lean{IncomeFluctuation.le\_olgCapital}
+\end{proposition}
+
+The state dependence of $F$ is the whole content of the bound, not a refinement. Reading
+Proposition~\ref{prop:floor} at the worst earnings state instead, which is the only way to get a
+bound uniform in $z$, gives a floor that is identically zero at every rate in the calibration of
+Section~\ref{sec:num2}, while the state-dependent one reaches $4.75$ at $r=10\%$ against a demand
+of $3.13$.
+
+Averaging against earnings weights that the chain leaves alone collapses the vector recursion to a
+scalar one, and then the sign of each increment has an exact answer.
+
+\begin{theorem}[The floor rises exactly when the household is patient]\label{thm:patient}
+Let $\bar y$ and $\bar H_k$ be the averages of earnings and of human wealth under weights $\nu$
+satisfying $\nu\pi=\nu$. If $\text{\th}\ge1$, equivalently $\beta R\ge1$, then
+$\kappa_k\bar H_k\le(1-\kappa_k)\bar y$ at every age, so the aggregate floor never falls and is
+never negative.
+\formal{IncomeFluctuation.stageMPC\_mul\_sum\_stageHumanWealth\_le},
+\lean{IncomeFluctuation.sum\_mul\_cohortFloor\_mono}
+\end{theorem}
+
+The increment of the aggregate floor at each age is $G_k\kappa_{k+1}\bar y$ times the slack in
+that inequality, and the inequality reverses below $\text{\th}=1$. So the provable floor is flat
+under the rate of time preference and climbs above it, which is what Section~\ref{sec:num2} shows
+and why the upper endpoint of the rate interval has to be taken above $1/\beta-1$. The proof is
+one induction: writing $v_k=(1-\kappa_k)/\kappa_k$ and $u_k=\bar H_k/\bar y$, both satisfy
+first-order recursions, $v_{k+1}=(\text{\th}/R)(1+v_k)$ and $u_{k+1}=(1+u_k)/R$, from the same
+starting point, and $\text{\th}\ge1$ keeps the first above the second.
+
+\subsection{Existence, with both ends discharged}
+
+\begin{theorem}[Existence from primitives]\label{thm:exist2}
+Fix a rate interval and continuous demand $D$. Suppose there is a $B$ with $0\le B\le\bar a$,
+$(1+r_{lo})B+y_{\max}\le B$ and $B\le D(r_{lo})$; and suppose $\rho_{K+1}<\bar a$ and
+$D(r_{hi})\le\sum_z\nu_zF_K(z)/(K+1)$ at $r_{hi}$. Then there is a rate in the interval at which
+the capital the cohorts accumulate equals the capital the firm demands.
+\formal{IncomeFluctuation.exists\_olgEquilibrium\_rate}
+\end{theorem}
+
+Nothing in those hypotheses refers to the household's decisions. They are inequalities among the
+discount factor, the interest rate, the earnings process, the horizon and the demand curve, with
+$\rho$, $F$ and $G$ explicit finite recursions in those primitives. With
+Theorem~\ref{thm:thm2} and Theorem~\ref{thm:thm3} the life-cycle economy therefore has the same
+three-part structure as the stationary one --- existence, monotone supply, single crossing ---
+with every piece proved and only Light's Theorem 1 assumed.
+
+What is \emph{not} claimed is a closed form for the last hypothesis. The floor can be bounded
+below in closed form, by dropping $G_k\ge1$ and bounding the slack in Theorem~\ref{thm:patient} by
+$(\text{\th}-1)/R$, which gives
+\[
+  \frac{\sum_z\nu_zF_K(z)}{K+1}\ \ge\ \frac{K}{K+1}\,\bar y\,\Bigl(1-\frac{\text{\th}}{R}\Bigr)
+    \frac{\text{\th}-1}{R}.
+\]
+That bound is far too lossy to be useful: it first exceeds Cobb--Douglas demand at $r\approx610\%$,
+where the reachable bound $\rho_{K+1}$ is about $6\times10^{50}$
+(\texttt{numerics/closedform.m}). The loss is in $G_k$, which reaches about $105$ over sixty
+periods, and in the slack, which reaches about $2.5$; recovering either needs the geometric rate
+at which $\kappa_k$ falls to $1-\text{\th}/R$. At $r_{hi}=10\%$ the finite recursion itself is what
+has to be evaluated, and Section~\ref{sec:num2} evaluates it.
 
 \subsection{What the numbers say}\label{sec:num2}
 
