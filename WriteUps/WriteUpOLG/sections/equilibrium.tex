@@ -251,19 +251,53 @@ Theorem~\ref{thm:thm2} and Theorem~\ref{thm:thm3} the life-cycle economy therefo
 three-part structure as the stationary one --- existence, monotone supply, single crossing ---
 with every piece proved and only Light's Theorem 1 assumed.
 
-What is \emph{not} claimed is a closed form for the last hypothesis. The floor can be bounded
-below in closed form, by dropping $G_k\ge1$ and bounding the slack in Theorem~\ref{thm:patient} by
-$(\text{\th}-1)/R$, which gives
-\[
-  \frac{\sum_z\nu_zF_K(z)}{K+1}\ \ge\ \frac{K}{K+1}\,\bar y\,\Bigl(1-\frac{\text{\th}}{R}\Bigr)
-    \frac{\text{\th}-1}{R}.
-\]
-That bound is far too lossy to be useful: it first exceeds Cobb--Douglas demand at $r\approx610\%$,
-where the reachable bound $\rho_{K+1}$ is about $6\times10^{50}$
-(\texttt{numerics/closedform.m}). The loss is in $G_k$, which reaches about $105$ over sixty
-periods, and in the slack, which reaches about $2.5$; recovering either needs the geometric rate
-at which $\kappa_k$ falls to $1-\text{\th}/R$. At $r_{hi}=10\%$ the finite recursion itself is what
-has to be evaluated, and Section~\ref{sec:num2} evaluates it.
+\subsection{The propensity in closed form, and the floor with it}\label{sec:geom}
+
+The last hypothesis can be put in closed form too, and doing so turns on knowing not just that
+$\kappa_k$ exceeds its infinite-horizon limit but how fast it settles.
+
+\begin{proposition}[The finite-horizon propensity]\label{prop:kappa}
+Write $q=\text{\th}/R$. Then $\kappa_k\sum_{i\le k}q^i=1$, and hence
+$\kappa_k\bigl(1-q^{k+1}\bigr)=1-q$: the propensity exceeds $1-q$ by exactly $\kappa_kq^{k+1}$.
+\formal{IncomeFluctuation.stageMPC\_mul\_mpcSum},
+\lean{IncomeFluctuation.stageMPC\_mul\_one\_sub\_pow}
+\end{proposition}
+
+The defining recursion $\kappa_{k+1}=\kappa_kR/(\text{\th}+\kappa_kR)$ is exactly
+$1/\kappa_{k+1}=1+q/\kappa_k$, so the reciprocal accumulates the geometric series and nothing
+else. The same sum tames the slope. Writing $S_k=\sum_{i\le k}q^i$, the recursion
+$G_{k+1}=1+G_k(1-\kappa_{k+1})R$ has an age-dependent coefficient, but $W_k=G_kS_k$ obeys
+$W_{k+1}=S_{k+1}+\text{\th}W_k$, which does not. Then $S_{k+1}\ge1$ and $(1-q)S_k\le1$ give the
+bound that matters.
+
+\begin{proposition}[A slope that grows]\label{prop:slope}
+$G_k\ \ge\ (1-q)\sum_{j\le k}\text{\th}^{\,j}$.
+\formal{IncomeFluctuation.mul\_geomSum\_le\_cohortSlope}
+\end{proposition}
+
+Average human wealth is a geometric sum as well, $\bar H_{k+1}=\bar yR^{-1}\sum_{i\le k}R^{-i}$,
+so every factor in the increment of Theorem~\ref{thm:patient} is explicit and the aggregate floor
+becomes a closed-form expression in the discount factor, the interest rate, average earnings and
+the horizon, with no recursion in the model left to run
+(\lean{IncomeFluctuation.geomFloor\_le\_sum\_mul\_cohortFloor}).
+
+\begin{theorem}[Existence with both ends in closed form]\label{thm:exist3}
+Under the conditions of Theorem~\ref{thm:exist2}, with the floor hypothesis replaced by the
+closed-form expression and with $1\le\text{\th}\le R$ at $r_{hi}$, a stationary equilibrium
+exists.
+\formal{IncomeFluctuation.exists\_olgEquilibrium\_of\_geomBounds}
+\end{theorem}
+
+The two conditions on $\text{\th}$ say the household is patient enough for the floor to climb and
+impatient enough for its propensity to settle. Knowing the rate is worth a great deal. Using only
+$\kappa_k\ge1-q$ and $G_k\ge1$, the resulting bound first exceeds Cobb--Douglas demand at
+$r\approx610\%$, where a lifetime of feasible saving reaches $6\times10^{50}$; using
+Proposition~\ref{prop:slope} it does so at $r\approx18\%$, where the same quantity is
+$3.8\times10^{5}$ (\texttt{numerics/closedform.m}, \texttt{numerics/bisectC.m}). What is still
+given away is the exact propensity inside the increment and the exact slope: at $r_{hi}=10\%$ the
+closed form gives $0.48$ against a true floor of $4.75$ and a demand of $3.13$, so at a
+calibrated rate it is the finite recursion of Section~\ref{sec:num2} that has to be evaluated, not
+the closed form.
 
 \subsection{What the numbers say}\label{sec:num2}
 

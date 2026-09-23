@@ -105,6 +105,14 @@ Mean human wealth recursion & \lean{sum\_mul\_stageHumanWealth\_succ} & OLG/\all
 Theorem~\ref{thm:patient} & \lean{stageMPC\_mul\_sum\_stageHumanWealth\_le} & OLG/\allowbreak Existence\\
 The aggregate floor climbs & \lean{sum\_mul\_cohortFloor\_mono}, \lean{sum\_mul\_cohortFloor\_nonneg} & OLG/\allowbreak Existence\\
 Theorem~\ref{thm:exist2} & \lean{exists\_olgEquilibrium\_of\_bounds}, \lean{exists\_olgEquilibrium\_rate} & OLG/\allowbreak Existence\\
+\midrule
+Proposition~\ref{prop:kappa} & \lean{stageMPC\_mul\_mpcSum}, \lean{stageMPC\_mul\_one\_sub\_pow} & OLG/\allowbreak Life\allowbreak Cycle\\
+The geometric sum is bounded & \lean{sub\_mul\_mpcSum\_le\_one} & OLG/\allowbreak Life\allowbreak Cycle\\
+Constant-coefficient slope & \lean{cohortSlope\_mul\_mpcSum\_succ} & OLG/\allowbreak Existence\\
+Proposition~\ref{prop:slope} & \lean{mul\_geomSum\_le\_cohortSlope} & OLG/\allowbreak Existence\\
+Human wealth in closed form & \lean{sum\_mul\_stageHumanWealth\_eq} & OLG/\allowbreak Existence\\
+The floor in closed form & \lean{geomFloor\_le\_sum\_mul\_cohortFloor} & OLG/\allowbreak Existence\\
+Theorem~\ref{thm:exist3} & \lean{exists\_olgEquilibrium\_of\_geomBounds} & OLG/\allowbreak Existence\\
 \bottomrule
 \end{longtable}
 \endgroup
