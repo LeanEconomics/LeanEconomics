@@ -447,5 +447,57 @@ forever really would consume this little. What the programme needs is a lower bo
 \emph{expected} human wealth, and that is not available from any chain of Euler inequalities,
 because the Euler inequality at a constrained state is exactly the statement that expected future
 earnings cannot be borrowed against. That is the one quantitative fact about a single household
-on which the whole programme, in both horizons, now turns, and it is now identified precisely
-rather than merely met repeatedly.
+on which the whole programme turns, and identifying it precisely is what makes it attackable.
+
+\subsection{The constraint-incidence bound}
+
+Both halves can be carried at once. Accumulate human wealth by the \emph{risk-adjusted}
+expectation --- the power mean with exponent $-\mu$, which is what the Euler equation itself
+produces --- and then \emph{cap} it state by state at the level the borrowing constraint permits:
+\[
+  H_0=0,\qquad
+  H_{k+1}(z)=\min\Bigl\{\tfrac1R\,M^z_{-\mu}\bigl(y_w+H_k(w)\bigr),\
+  \Bigl(\tfrac1{\kappa_{k+1}}-1\Bigr)y_z\Bigr\}
+\]
+(\lean{riskHumanWealth}), with $\kappa$ the propensity of Theorem~\ref{thm:sandwich}.
+
+\begin{theorem}[The constraint-incidence bound]\label{thm:incidence}
+$\kappa_k\bigl(m+H_k(z)\bigr)\le c_k(a,z)$ at every age and state.
+\formal{IncomeFluctuation.riskHumanWealth\_le\_stageConsumption}
+\end{theorem}
+
+The two ingredients meet exactly where they should. The power mean is what the Euler inequality
+delivers, and the step needs only that it is superadditive under a shift, which follows from its
+concavity and homogeneity (\lean{powerMean\_add\_const\_le}). The cap is the constraint's
+incidence: at a corner the household consumes its cash on hand, which is at least $y_z$, and the
+cap is precisely the largest human wealth the bound may claim without exceeding that. No extra
+patience factor is needed, because the cap does the work the patience factor did in
+Theorem~\ref{thm:lower}.
+
+At Aiyagari's calibration, in the first period of a sixty-period life
+(\texttt{numerics/incidence.m}), the cap binds at the two lowest earnings states and nowhere else,
+which is where a household at zero assets is against the limit. The bound reaches
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+At zero wealth & lowest earnings & middle & highest\\
+\midrule
+Bound as a fraction of the truth & $1.000$ & $0.890$ & $0.877$\\
+Minimum-earnings bound, for comparison & $1.010$ & $0.409$ & $0.295$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+and over the whole grid it never exceeds the truth, touching it exactly at the constrained corner.
+So the consumption bound is now within about twelve per cent where the life cycle binds, against a
+factor of three before. That is the sharpest bound in the development, and it was reached by
+bounding where the constraint binds rather than by another Euler chain.
+
+It does not improve the propensity bound of Theorem~\ref{thm:mpc}, because that bound is driven by
+the worst earnings state next period, which is exactly where the cap binds. Closing the threshold
+argument would need the same sharpening on the worst state, and the worst state is the one the
+constraint genuinely pins. Whether that is a limitation of the method or of the statement we do
+not know.
