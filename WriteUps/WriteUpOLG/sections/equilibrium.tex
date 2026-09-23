@@ -185,6 +185,40 @@ $RB+y_{\max}\le B$, so it never leaves $[0,B]$ and over $K+1$ periods holds at m
 optimality, no sandwich, no slackness. Such a $B$ exists whenever $R<1$, taking $B\ge
 y_{\max}/(1-R)$, which is exactly where a Cobb--Douglas demand curve is large.
 
+That is the cheapest ceiling, and it is not the sharpest. The constraint-incidence bound of
+Theorem~\ref{thm:incidence} says the household will not want to carry that much: consuming at
+least $\kappa_k(m+H_k(z))$ it saves at most $(1-\kappa_k)(y_z+Ra)-\kappa_kH_k(z)$, and the
+forward-invariant level that follows is about half the size.
+
+\begin{proposition}[The sharper ceiling]\label{prop:ceiling2}
+If $B\le\bar a$ and, at every age and earnings state,
+$(1-\kappa_j)(y_w+RB)-\kappa_jH_j(w)\le B$, then capital per head is at most $B$.
+\formal{IncomeFluctuation.olgCapital\_le\_of\_incidence}
+\end{proposition}
+
+At Aiyagari's calibration (\texttt{numerics/ceiling.m}):
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+& $r=-7\%$ & $r=-6\%$ & highest $r_{lo}$ that works\\
+\midrule
+Capital demand & $56.25$ & $28.13$ & \\
+Ceiling from the budget & $42.52$ & $49.61$ & $-6.73\%$\\
+Ceiling from the incidence bound & $22.17$ & $25.62$ & $-5.85\%$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+So the margin roughly doubles at a fixed endpoint, and the endpoint can be taken nearly a point
+closer to zero. The household still enters only through $\kappa$ and $H$, both explicit recursions
+in the primitives, so Theorem~\ref{thm:exist2} keeps its character; the price is one extra
+hypothesis, that the artefactual cap is slack at the low rate, which by Section~\ref{sec:reach} is
+not vacuous below the rate of time preference
+(\lean{IncomeFluctuation.exists\_olgEquilibrium\_of\_sharpBounds}).
+
 \subsection{The floor, as an affine bound on accumulated assets}
 
 Iterating Proposition~\ref{prop:floor} is not a matter of tracking a distribution over assets.
