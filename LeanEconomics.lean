@@ -126,6 +126,7 @@ import LeanEconomics.OLG.MeansTest
 import LeanEconomics.OLG.Equilibrium
 import LeanEconomics.OLG.Continuity
 import LeanEconomics.OLG.Existence
+import LeanEconomics.OLG.AssetIncidence
 import LeanEconomics.OLG.RateMonotone
 import LeanEconomics.OLG.CertaintyEquivalent
 import LeanEconomics.OLG.BorrowingLimit
