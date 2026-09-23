@@ -365,3 +365,72 @@ Theorem~\ref{thm:exist} and $r_{hi}=8\%$ does not. The optimal path reaches asse
 $r=10\%$, against the crude reachable bound of $9{,}044$ and a demand of $3.13$; the constants are
 ordinary, unlike the stationary case, where the corresponding instantiation put $r_{hi}$ within
 $10^{-27}$ of $\lambda$.
+
+\subsection{The theorem checked, hypothesis by hypothesis}\label{sec:sharpnum}
+
+Theorem~\ref{thm:exist2} and its sharper sibling are only worth as much as the hypotheses they
+carry, so it is worth checking every one at a calibration. Take the calibration of
+Section~\ref{sec:num2} with $r_{lo}=-7\%$, $r_{hi}=10\%$, artefactual cap $\bar a=10^4$ and
+$B=30$. Every hypothesis holds, with the margin shown (\texttt{numerics/sharpcheck.m}).
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}llr@{}}
+\toprule
+Hypothesis & What it asks & Margin\\
+\midrule
+$0<1+r_{lo}$, $0<1+r_{hi}$, $r_{lo}\le r_{hi}$ & the rates are admissible and ordered
+  & $0.93$, $1.10$, $0.17$\\
+$r_{lo}+\delta>0$ & demand is continuous on the interval & $0.010$\\
+$\nu\ge0$, $\sum\nu=1$ & the earnings weights are a distribution & $0.014$, exact\\
+cap slack at $r_{lo}$ & $\bar a>y_{\max}+R_{lo}\bar a$ & $697$\\
+$0\le B\le\bar a$ & the ceiling level is admissible & $30$, $9970$\\
+forward invariance & $(1-\kappa_j)(y_w+R_{lo}B)-\kappa_jH_j(w)\le B$ & $0.585$\\
+$B\le D(r_{lo})$ & the ceiling is below demand & $26.25$\\
+$\rho_{K+1}<\bar a$ & a lifetime of feasible saving fits & $967$\\
+$D(r_{hi})\le\sum_z\nu_zF_K(z)/(K+1)$ & the floor is above demand & $1.628$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+The constants behind them are: a reachable bound $\rho_{K+1}=9{,}033$, a ceiling fixed point
+$29.42$ against a demand of $56.25$ at the bottom, and a provable floor of $4.75$ against a demand
+of $3.13$ at the top. The equilibrium the theorem then asserts is real: solving the model, capital
+supply crosses demand at $r=5.09\%$, comfortably inside the interval.
+
+\subsection{How far the hypotheses reach}
+
+Sweeping the endpoints (\texttt{numerics/sharpsweep.m}) shows where each side gives way.
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+$r_{lo}$ & $-7.9\%$ & $-7.0\%$ & $-6.5\%$ & $-6.0\%$ & $-5.5\%$\\
+\midrule
+Capital demand & $562.50$ & $56.25$ & $37.50$ & $28.13$ & $22.50$\\
+Ceiling & $19.54$ & $22.17$ & $23.81$ & $25.62$ & $27.59$\\
+Room for $B$ & $542.96$ & $34.09$ & $13.69$ & $2.51$ & none\\
+\midrule
+$r_{hi}$ & $6\%$ & $8\%$ & $9\%$ & $10\%$ & $15\%$\\
+\midrule
+Capital demand & $4.018$ & $3.516$ & $3.309$ & $3.125$ & $2.446$\\
+Provable floor & $1.524$ & $3.129$ & $3.934$ & $4.753$ & $9.397$\\
+Reachable bound & $1.6\!\times\!10^{3}$ & $3.7\!\times\!10^{3}$ & $5.8\!\times\!10^{3}$
+  & $9.0\!\times\!10^{3}$ & $8.7\!\times\!10^{4}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+So the widest interval the hypotheses cover is $[-5.85\%,\,8.38\%]$, and the cap it needs is
+$4.4\times10^3$. The true equilibrium at $5.09\%$ sits inside it with room on both sides. With the
+budget ceiling in place of the incidence one the low endpoint would have to be $-6.73\%$ or below,
+which is the whole of what Proposition~\ref{prop:ceiling2} buys.
+
+Two features of the calibration decide the endpoints, and they are different. At the bottom it is
+the demand curve's pole at $r=-\delta$ that makes demand large, and the ceiling grows slowly enough
+to stay under it. At the top it is the patience criterion of Theorem~\ref{thm:patient}: below the
+rate of time preference the provable floor does not move at all, so the upper endpoint cannot be
+anywhere near $\lambda=4.17\%$, and it in fact has to be about twice that.
