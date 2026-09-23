@@ -406,6 +406,81 @@ theorem crra_stageUpper_step {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility 
   rw [hcA]
   nlinarith [hTc, hSR, hR]
 
+/-! ### The finite-horizon propensity in closed form
+
+`κ_k` is not merely above its infinite-horizon limit; it is a geometric sum away from it, and the
+gap closes at rate `Þ/R`. Writing `q = Þ/R` and `S_k = ∑_{i ≤ k} q^i`, the defining recursion
+`κ_{k+1} = κ_k R/(Þ + κ_k R)` is exactly `1/κ_{k+1} = 1 + q/κ_k`, so `κ_k S_k = 1`. Everything
+else follows: `κ_k (1 - q^{k+1}) = 1 - q`, so `κ_k` exceeds `1 - q` by exactly `κ_k q^{k+1}`.
+
+The rate matters quantitatively. Bounds that use only `κ_k ≥ 1 - q` throw away how quickly the
+propensity settles, and in the equilibrium floor of `OLG.Existence` that loss is the difference
+between an interest rate of ten per cent and one of six hundred.
+-/
+
+/-- The geometric sum whose reciprocal is the finite-horizon propensity, `∑_{i ≤ k} (Þ/R)^i`. -/
+noncomputable def mpcSum (γ : ℝ) (k : ℕ) : ℝ :=
+  ∑ i ∈ Finset.range (k + 1), (P.patience γ / (1 + P.interest)) ^ i
+
+theorem mpcSum_succ (γ : ℝ) (k : ℕ) :
+    P.mpcSum γ (k + 1)
+      = P.patience γ / (1 + P.interest) * P.mpcSum γ k + 1 := by
+  simp only [mpcSum]
+  exact geom_sum_succ
+
+theorem one_le_mpcSum {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (k : ℕ) :
+    1 ≤ P.mpcSum γ k := by
+  have hq : 0 ≤ P.patience γ / (1 + P.interest) :=
+    div_nonneg (P.patience_pos' hγ0 hβ).le P.interest_gt_neg_one.le
+  induction k with
+  | zero => simp [mpcSum]
+  | succ k ih => rw [P.mpcSum_succ]; nlinarith
+
+/-- **The finite-horizon propensity in closed form**: `κ_k` is the reciprocal of
+`∑_{i ≤ k} (Þ/R)^i`. Everything about how fast it settles is read off this. -/
+theorem stageMPC_mul_mpcSum {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (k : ℕ) :
+    P.stageMPC γ k * P.mpcSum γ k = 1 := by
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hT := P.patience_pos' hγ0 hβ
+  induction k with
+  | zero => simp [mpcSum, stageMPC]
+  | succ k ih =>
+    have hκ := P.stageMPC_pos hγ0 hβ k
+    have hden : 0 < P.patience γ + P.stageMPC γ k * (1 + P.interest) := by positivity
+    rw [stageMPC_succ, P.mpcSum_succ]
+    field_simp
+    nlinarith [ih, hR, hT, hκ]
+
+/-- The gap to the infinite-horizon propensity closes geometrically:
+`κ_k (1 - (Þ/R)^{k+1}) = 1 - Þ/R`. -/
+theorem stageMPC_mul_one_sub_pow {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (k : ℕ) :
+    P.stageMPC γ k * (1 - (P.patience γ / (1 + P.interest)) ^ (k + 1))
+      = 1 - P.patience γ / (1 + P.interest) := by
+  have h := P.stageMPC_mul_mpcSum hγ0 hβ k
+  have hg : (1 - P.patience γ / (1 + P.interest)) * P.mpcSum γ k
+      = 1 - (P.patience γ / (1 + P.interest)) ^ (k + 1) := by
+    simpa [mpcSum] using
+      (mul_neg_geom_sum (P.patience γ / (1 + P.interest)) (k + 1))
+  calc P.stageMPC γ k * (1 - (P.patience γ / (1 + P.interest)) ^ (k + 1))
+      = P.stageMPC γ k
+          * ((1 - P.patience γ / (1 + P.interest)) * P.mpcSum γ k) := by rw [hg]
+    _ = (P.stageMPC γ k * P.mpcSum γ k) * (1 - P.patience γ / (1 + P.interest)) := by ring
+    _ = 1 - P.patience γ / (1 + P.interest) := by rw [h, one_mul]
+
+/-- **The geometric sum is bounded when the household is impatient enough to settle**, which is
+`Þ < R`. This is what turns the closed form into a usable lower bound on `κ_k`. -/
+theorem sub_mul_mpcSum_le_one {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (k : ℕ) :
+    (1 - P.patience γ / (1 + P.interest)) * P.mpcSum γ k ≤ 1 := by
+  have hq : 0 ≤ P.patience γ / (1 + P.interest) :=
+    div_nonneg (P.patience_pos' hγ0 hβ).le P.interest_gt_neg_one.le
+  have hg : (1 - P.patience γ / (1 + P.interest)) * P.mpcSum γ k
+      = 1 - (P.patience γ / (1 + P.interest)) ^ (k + 1) := by
+    simpa [mpcSum] using
+      (mul_neg_geom_sum (P.patience γ / (1 + P.interest)) (k + 1))
+  rw [hg]
+  have : 0 ≤ (P.patience γ / (1 + P.interest)) ^ (k + 1) := pow_nonneg hq _
+  linarith
+
 /-! ### Reachable families
 
 The sandwich below needs the artefactual asset cap to be slack where the household actually is,

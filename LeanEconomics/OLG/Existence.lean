@@ -174,6 +174,63 @@ theorem le_olgCapital {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
   have h := P.cohortFloor_add_mul_le_cohortAssets hγ0 hu hβ hd Rg K z h0
   simpa using h
 
+/-! ### A closed form for the slope
+
+The slope `G` obeys `G_{k+1} = 1 + G_k(1-κ_{k+1})R`, whose coefficient depends on the age through
+`κ`. Multiplying by the geometric sum `S_k = ∑_{i ≤ k} (Þ/R)^i` removes that dependence entirely:
+since `κ_k S_k = 1` and `S_{k+1} = (Þ/R)S_k + 1`, the product `W_k = G_k S_k` satisfies
+`W_{k+1} = S_{k+1} + Þ W_k`, a recursion with a constant coefficient. Then `S_{k+1} ≥ 1` gives
+`W_k ≥ ∑_{j ≤ k} Þ^j`, and `(1 - Þ/R)S_k ≤ 1` turns that into a lower bound on `G_k` itself.
+
+This is where the closed form for `κ_k` pays. Using only `κ_k ≥ 1 - Þ/R` and `G_k ≥ 1` the
+resulting floor first exceeds Cobb-Douglas demand at an interest rate of about six hundred per
+cent; using the bound below it does so at about eighteen.
+-/
+
+/-- Multiplying the slope by the geometric sum turns its recursion into one with a constant
+coefficient, `W_{k+1} = S_{k+1} + Þ W_k`. -/
+theorem cohortSlope_mul_mpcSum_succ {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (k : ℕ) :
+    P.cohortSlope γ (k + 1) * P.mpcSum γ (k + 1)
+      = P.mpcSum γ (k + 1) + P.patience γ * (P.cohortSlope γ k * P.mpcSum γ k) := by
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hκ := P.stageMPC_mul_mpcSum hγ0 hβ (k + 1)
+  have hS := P.mpcSum_succ γ k
+  have hqR : P.patience γ / (1 + P.interest) * (1 + P.interest) = P.patience γ :=
+    div_mul_cancel₀ _ hR.ne'
+  rw [P.cohortSlope_succ]
+  linear_combination (-(P.cohortSlope γ k) * (1 + P.interest)) * hκ
+    + (P.cohortSlope γ k * (1 + P.interest)) * hS
+    + (P.cohortSlope γ k * P.mpcSum γ k) * hqR
+
+/-- The constant-coefficient recursion is bounded below by the plain geometric sum in `Þ`. -/
+theorem geomSum_le_cohortSlope_mul_mpcSum {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ))
+    (k : ℕ) :
+    (∑ j ∈ Finset.range (k + 1), P.patience γ ^ j) ≤ P.cohortSlope γ k * P.mpcSum γ k := by
+  induction k with
+  | zero => simp [cohortSlope, mpcSum]
+  | succ k ih =>
+    rw [P.cohortSlope_mul_mpcSum_succ hγ0 hβ k, geom_sum_succ]
+    have h1 := P.one_le_mpcSum hγ0 hβ (k + 1)
+    have hT := (P.patience_pos' hγ0 hβ).le
+    nlinarith [mul_le_mul_of_nonneg_left ih hT]
+
+/-- **A closed-form lower bound on the slope**, `G_k ≥ (1 - Þ/R) ∑_{j ≤ k} Þ^j`. It is the rate at
+which `κ_k` settles that makes this available: the bound grows geometrically in `Þ`, where the
+crude `G_k ≥ 1` does not grow at all. -/
+theorem mul_geomSum_le_cohortSlope {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (k : ℕ) :
+    (1 - P.patience γ / (1 + P.interest)) * (∑ j ∈ Finset.range (k + 1), P.patience γ ^ j)
+      ≤ P.cohortSlope γ k := by
+  have hG := P.cohortSlope_pos hγ0 hβ k
+  have hT0 : (0 : ℝ) ≤ ∑ j ∈ Finset.range (k + 1), P.patience γ ^ j :=
+    Finset.sum_nonneg fun j _ => pow_nonneg (P.patience_pos' hγ0 hβ).le j
+  have hTW := P.geomSum_le_cohortSlope_mul_mpcSum hγ0 hβ k
+  have hcS := P.sub_mul_mpcSum_le_one hγ0 hβ k
+  rcases le_or_gt (1 - P.patience γ / (1 + P.interest)) 0 with hc | hc
+  · nlinarith
+  · have h1 := mul_le_mul_of_nonneg_left hTW hc.le
+    have h2 := mul_le_mul_of_nonneg_left hcS hG.le
+    nlinarith [h1, h2]
+
 /-! ### Why the floor needs a patient household
 
 Aggregating the floor against earnings weights that the chain leaves alone turns the vector
@@ -315,6 +372,128 @@ theorem sum_mul_cohortFloor_nonneg {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.disc
   | zero => simp
   | succ k ih => exact le_trans ih (P.sum_mul_cohortFloor_mono hγ0 hβ hT hν hst k)
 
+/-! ### The floor in closed form
+
+Everything in the increment now has a closed form. Average human wealth is `ȳ` times a geometric
+sum in `R^{-1}`, the propensity is the reciprocal of a geometric sum in `Þ/R`, and the slope is
+bounded below by a geometric sum in `Þ`. Putting them together turns the aggregate floor into an
+explicit expression in the discount factor, the interest rate, average earnings and the horizon,
+with no reference to the household's decisions and no recursion left to run.
+-/
+
+/-- The geometric sum in the gross return, `∑_{i ≤ k} R^{-i}`. -/
+noncomputable def rateSum (k : ℕ) : ℝ := ∑ i ∈ Finset.range (k + 1), (1 + P.interest)⁻¹ ^ i
+
+/-- **Average human wealth in closed form**: `H̄_{k+1} = ȳ R^{-1} ∑_{i ≤ k} R^{-i}`. -/
+theorem sum_mul_stageHumanWealth_eq
+    (hst : ∀ z', ∑ z, ν z * P.transitionMatrix z z' = ν z') (k : ℕ) :
+    (∑ z, ν z * P.stageHumanWealth (k + 1) z)
+      = (∑ z, ν z * P.income z) * ((1 + P.interest)⁻¹ * P.rateSum k) := by
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  induction k with
+  | zero =>
+    have h := P.sum_mul_stageHumanWealth_succ hst 0
+    have h0 : (∑ z, ν z * P.stageHumanWealth 0 z) = 0 :=
+      Finset.sum_eq_zero fun z _ => mul_zero (ν z)
+    rw [h0, add_zero] at h
+    have hr : P.rateSum 0 = 1 := by simp [rateSum]
+    rw [hr, mul_one]
+    field_simp
+    linear_combination h
+  | succ k ih =>
+    have h := P.sum_mul_stageHumanWealth_succ hst (k + 1)
+    rw [ih] at h
+    have hgs : P.rateSum (k + 1) = (1 + P.interest)⁻¹ * P.rateSum k + 1 := by
+      simp only [rateSum]; exact geom_sum_succ
+    rw [hgs]
+    field_simp at h ⊢
+    linarith [h]
+
+/-- The increment of the aggregate floor, with the propensity and human wealth eliminated:
+`(1-κ_{k+1})ȳ - κ_{k+1}H̄_{k+1} = κ_{k+1} ȳ ((Þ/R)S_k - R^{-1}U_k)`. -/
+theorem floorStep_eq {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ))
+    (hst : ∀ z', ∑ z, ν z * P.transitionMatrix z z' = ν z') (k : ℕ) :
+    (1 - P.stageMPC γ (k + 1)) * (∑ z, ν z * P.income z)
+        - P.stageMPC γ (k + 1) * (∑ z, ν z * P.stageHumanWealth (k + 1) z)
+      = P.stageMPC γ (k + 1) * (∑ z, ν z * P.income z)
+        * (P.patience γ / (1 + P.interest) * P.mpcSum γ k
+          - (1 + P.interest)⁻¹ * P.rateSum k) := by
+  have hκ := P.stageMPC_mul_mpcSum hγ0 hβ (k + 1)
+  have hS := P.mpcSum_succ γ k
+  rw [P.sum_mul_stageHumanWealth_eq hst k]
+  linear_combination (-(∑ z, ν z * P.income z)) * hκ
+    + ((∑ z, ν z * P.income z) * P.stageMPC γ (k + 1)) * hS
+
+/-- The two geometric sums are ordered when the household is patient, so the increment is
+nonnegative and can be bounded below term by term. -/
+theorem rateSum_le_mpcSum {γ : ℝ} (hT : 1 ≤ P.patience γ) (k : ℕ) :
+    P.rateSum k ≤ P.mpcSum γ k := by
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  refine Finset.sum_le_sum fun i _ => pow_le_pow_left₀ (by positivity) ?_ i
+  rw [div_eq_mul_inv]
+  nlinarith [inv_pos.2 hR]
+
+/-- **The aggregate floor in closed form.** Every factor is explicit in the primitives: the
+geometric sum in `Þ` from the slope, the limiting propensity `1 - Þ/R`, average earnings, and the
+gap between the two geometric sums. -/
+theorem geomFloor_le_sum_mul_cohortFloor {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ))
+    (hT : 1 ≤ P.patience γ) (hq : P.patience γ ≤ 1 + P.interest) (hν : ∀ z, 0 ≤ ν z)
+    (hst : ∀ z', ∑ z, ν z * P.transitionMatrix z z' = ν z') (K : ℕ) :
+    (1 - P.patience γ / (1 + P.interest)) ^ 2 * (∑ z, ν z * P.income z)
+        * (∑ k ∈ Finset.range K, (∑ j ∈ Finset.range (k + 1), P.patience γ ^ j)
+            * (P.patience γ / (1 + P.interest) * P.mpcSum γ k
+              - (1 + P.interest)⁻¹ * P.rateSum k))
+      ≤ ∑ z, ν z * P.cohortFloor γ K z := by
+  have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
+  have hY : 0 ≤ ∑ z, ν z * P.income z :=
+    Finset.sum_nonneg fun z _ =>
+      mul_nonneg (hν z) (lt_of_lt_of_le P.minIncome_pos (P.minIncome_le z)).le
+  induction K with
+  | zero => simp
+  | succ K ih =>
+    have hgap : 0 ≤ P.patience γ / (1 + P.interest) * P.mpcSum γ K
+        - (1 + P.interest)⁻¹ * P.rateSum K := by
+      have h1 := P.rateSum_le_mpcSum hT K
+      have h2 : (1 + P.interest)⁻¹ ≤ P.patience γ / (1 + P.interest) := by
+        rw [div_eq_mul_inv]; nlinarith [inv_pos.2 hR]
+      have h3 : (0 : ℝ) ≤ P.rateSum K :=
+        Finset.sum_nonneg fun i _ => pow_nonneg (by positivity) i
+      nlinarith [h1, h2, h3, inv_pos.2 hR]
+    have hslope := P.mul_geomSum_le_cohortSlope hγ0 hβ K
+    have hκ := P.minMPC_le_stageMPC hγ0 hβ (K + 1)
+    have hmin : P.minMPC γ = 1 - P.patience γ / (1 + P.interest) := by
+      have h : (1 - P.minMPC γ) * (1 + P.interest) = P.patience γ :=
+        one_sub_minMPC_mul (P := P)
+      rw [eq_sub_iff_add_eq, ← h]
+      field_simp
+      ring
+    have hstep := P.floorStep_eq hγ0 hβ hst K
+    have hT0 : (0 : ℝ) ≤ ∑ j ∈ Finset.range (K + 1), P.patience γ ^ j :=
+      Finset.sum_nonneg fun j _ => pow_nonneg (P.patience_pos' hγ0 hβ).le j
+    rw [P.sum_mul_cohortFloor_succ hst γ K, hstep, Finset.sum_range_succ, mul_add]
+    refine add_le_add ih ?_
+    rw [hmin] at hκ
+    have hc : (0 : ℝ) ≤ 1 - P.patience γ / (1 + P.interest) := by
+      have := (div_le_one hR).2 hq
+      linarith
+    calc (1 - P.patience γ / (1 + P.interest)) ^ 2 * (∑ z, ν z * P.income z)
+            * ((∑ j ∈ Finset.range (K + 1), P.patience γ ^ j)
+              * (P.patience γ / (1 + P.interest) * P.mpcSum γ K
+                - (1 + P.interest)⁻¹ * P.rateSum K))
+        = ((1 - P.patience γ / (1 + P.interest))
+              * (∑ j ∈ Finset.range (K + 1), P.patience γ ^ j))
+            * ((1 - P.patience γ / (1 + P.interest)) * (∑ z, ν z * P.income z)
+              * (P.patience γ / (1 + P.interest) * P.mpcSum γ K
+                - (1 + P.interest)⁻¹ * P.rateSum K)) := by ring
+      _ ≤ P.cohortSlope γ K
+            * (P.stageMPC γ (K + 1) * (∑ z, ν z * P.income z)
+              * (P.patience γ / (1 + P.interest) * P.mpcSum γ K
+                - (1 + P.interest)⁻¹ * P.rateSum K)) := by
+          refine mul_le_mul hslope ?_ (mul_nonneg (mul_nonneg hc hY) hgap)
+            (P.cohortSlope_pos hγ0 hβ K).le
+          exact mul_le_mul_of_nonneg_right
+            (mul_le_mul_of_nonneg_right hκ hY) hgap
+
 /-! ### Both ends at once -/
 
 /-- **A stationary life-cycle equilibrium exists**, with both boundary inequalities discharged
@@ -367,6 +546,40 @@ theorem exists_olgEquilibrium_rate {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUt
   refine ⟨r, hr, ?_⟩
   rw [← P.olgSupply_eq hlo.one_add_pos hle hr (P.rateOK_of_mem_Icc hlo hhi hr) K ν]
   exact heq
+
+/-- **Existence with both ends in closed form.** The floor hypothesis is now an inequality between
+the demand curve and an explicit expression in the discount factor, the interest rate, average
+earnings and the horizon: no recursion in the model is left to run, and nothing refers to the
+household's decisions.
+
+The two conditions on the patience factor at the top of the interval, `1 ≤ Þ ≤ R`, say that the
+household is patient enough for the floor to climb and impatient enough for its propensity to
+settle. Both hold on the interval any calibration of interest puts the equilibrium in. -/
+theorem exists_olgEquilibrium_of_geomBounds {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) {rlo rhi : ℝ}
+    (hlo : P.RateOK rlo) (hhi : P.RateOK rhi) (hle : rlo ≤ rhi)
+    (K : ℕ) {ν : Z → ℝ} (hν : ∀ z, 0 ≤ ν z) (hν1 : ∑ z, ν z = 1)
+    (hst : ∀ z', ∑ z, ν z * P.transitionMatrix z z' = ν z')
+    {D : ℝ → ℝ} (hD : ContinuousOn D (Icc rlo rhi))
+    {B : ℝ} (hB0 : 0 ≤ B) (hBcap : B ≤ assetCap)
+    (hinv : (1 + rlo) * B + P.maxIncome ≤ B) (hBD : B ≤ D rlo)
+    (hcap : (P.withRate rhi hhi).reach (K + 1) < assetCap)
+    (hT : 1 ≤ (P.withRate rhi hhi).patience γ)
+    (hq : (P.withRate rhi hhi).patience γ ≤ 1 + rhi)
+    (hDgeom : D rhi
+      ≤ (1 - (P.withRate rhi hhi).patience γ / (1 + rhi)) ^ 2 * (∑ z, ν z * P.income z)
+        * (∑ k ∈ Finset.range K,
+            (∑ j ∈ Finset.range (k + 1), (P.withRate rhi hhi).patience γ ^ j)
+              * ((P.withRate rhi hhi).patience γ / (1 + rhi)
+                  * (P.withRate rhi hhi).mpcSum γ k
+                - (1 + rhi)⁻¹ * (P.withRate rhi hhi).rateSum k)) / (K + 1)) :
+    ∃ r, ∃ hr : r ∈ Icc rlo rhi,
+      (P.withRate r (P.rateOK_of_mem_Icc hlo hhi hr)).olgCapital K ν = D r := by
+  refine P.exists_olgEquilibrium_rate hγ0 hu hβ hd hlo hhi hle K hν hν1 hD hB0 hBcap hinv hBD
+    hcap ?_
+  refine le_trans hDgeom ?_
+  refine div_le_div_of_nonneg_right ?_ (by positivity)
+  exact (P.withRate rhi hhi).geomFloor_le_sum_mul_cohortFloor hγ0 hβ hT hq hν hst K
 
 end IncomeFluctuation
 
