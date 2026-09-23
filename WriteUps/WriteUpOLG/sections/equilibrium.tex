@@ -65,6 +65,65 @@ At every age and every state in the region,
 Iterated from zero assets at birth this is an explicit floor on the assets of every cohort, in
 the primitives alone: the discount factor, the rate, the earnings bounds and the horizon.
 
+\subsection{Where the household can be}\label{sec:reach}
+
+Proposition~\ref{prop:floor} inherits from Theorem~\ref{thm:sandwich} the hypothesis that the
+artefactual cap is slack, and the convenient way to state that is slack everywhere in
+$[0,\bar a]$. That hypothesis is not innocent, and it fails exactly where the floor is wanted.
+
+The one-step bound gives $g_k(a,z)\le(1-\kappa_k)(Ra+y_{\max})$, so $[0,\bar a]$ is carried into
+itself only if $(1-\kappa_k)(R\bar a+y_{\max})\le\bar a$, which needs $(1-\kappa_k)R<1$. As
+$k$ grows $\kappa_k$ falls to $1-\text{\th}/R$, so the requirement is $\text{\th}<1$, that is
+$\beta R<1$: the household must be impatient. Above the rate of time preference no cap is forward
+invariant at any level, because a patient household sitting at the cap wants to save past it. The
+cap then binds, the Euler inequality under it is unavailable, and the slackness hypothesis is
+false rather than merely unverified. A theorem carrying it says nothing there.
+
+This matters because a stationary life-cycle equilibrium sits above the rate of time preference.
+In the calibration of Section~\ref{sec:num2} with $\lambda=1/\beta-1=4.17\%$, capital supply
+crosses demand near $5\%$, and the rate at which the \emph{provable} floor crosses demand is
+near $9\%$. Both are in the region where no cap is slack everywhere.
+
+A cohort that begins life with nothing never visits the top of $[0,\bar a]$. The development
+therefore carries a family of regions, one per stage, that the stage policies map down through,
+and asks for slackness only on those.
+
+\begin{definition}[Reachable family]\label{def:regions}
+A reachable family assigns to each stage $k$ a set of asset levels such that every set sits
+inside $[0,\bar a]$, the stage-$(k+1)$ policy carries the stage-$(k+1)$ set into the stage-$k$
+set, and $g_k<\bar a$ on every set.
+\formal{IncomeFluctuation.StageRegions}
+\end{definition}
+
+The whole interval $[0,\bar a]$ is a reachable family exactly when the cap is slack on it
+(\lean{allRegions}), so nothing is lost: Theorem~\ref{thm:sandwich} and
+Proposition~\ref{prop:floor} are the constant-family instances of statements that hold on any
+reachable family (\lean{stageConsumption\_le\_stageHumanWealth\_on}, \lean{le\_stagePolicy\_on}).
+
+What a cohort visits is bounded by feasibility alone. Set $\rho_0=0$ and
+$\rho_{j+1}=R\rho_j+y_{\max}$: a household that cannot carry forward more than its cash on hand
+holds at most $\rho_j$ after $j$ periods of life, whatever the earnings draws.
+
+\begin{proposition}[A cohort's own regions]\label{prop:reach}
+If $\rho_{K+1}<\bar a$ then the sets $[0,\rho_{K-k}]$, empty for $k>K$, form a reachable family
+for a cohort of length $K+1$ that starts life with nothing.
+\formal{IncomeFluctuation.reachRegions}
+\end{proposition}
+
+The bound is deliberately crude, using none of the damping that optimal saving supplies, and that
+is what keeps it free of the sandwich it is used to prove. Its cost is a larger cap. At $r=10\%$
+over sixty periods $\rho_{K+1}$ is about $9{,}044$ where the optimal path reaches about $82$.
+Since the cap is an artefact of the state space rather than an economic object, a cap of ten
+thousand is as acceptable as a cap of one hundred, and unlike slackness everywhere it is a
+condition that can actually be met. The sandwich and the floor then hold along a cohort's path
+with no hypothesis on the cap beyond $\rho_{K+1}<\bar a$
+(\lean{stageConsumption\_le\_stageHumanWealth\_reach}, \lean{le\_stagePolicy\_reach}).
+
+At the bottom of the rate interval the same crude bound does the other half of the work on its
+own. When $R<1$ the sequence $\rho_j$ converges to $y_{\max}/(1-R)$, so cohort assets are bounded
+without any appeal to optimality: at $r=-7\%$ the bound is $42.1$ against a capital demand of
+$56.3$.
+
 \subsection{Uniqueness}
 
 \begin{theorem}[Single crossing]\label{thm:thm3}
@@ -117,3 +176,44 @@ same three-part structure as the stationary one --- existence, monotone supply, 
 Theorem~\ref{thm:exist} needs are the ceiling at the bottom of the interval, which the budget
 gives, and the floor at the top, which Proposition~\ref{prop:floor} gives in the primitives,
 with none of the constants that the ergodic route forced on the stationary case.
+
+Both inequalities have to be read on a reachable family rather than on the whole capped interval,
+for the reason of Section~\ref{sec:reach}, and Proposition~\ref{prop:reach} supplies one. What
+remains to make Theorem~\ref{thm:exist} unconditional is arithmetic rather than structure:
+iterate the floor of Proposition~\ref{prop:floor} across ages to a lower bound on aggregate
+capital at the top of the interval, take the ceiling at the bottom from $\rho_j$, and check the
+two against a stated demand curve. The numerical work in Section~\ref{sec:num2} says the margins
+are comfortable at $r_{lo}=-7\%$ and $r_{hi}=10\%$.
+
+\subsection{What the numbers say}\label{sec:num2}
+
+The calibration is the one used throughout: $J=60$, $\beta=0.96$, relative risk aversion $3$, the
+Tauchen discretisation of Aiyagari's earnings process with $\rho=0.9$ and $\sigma=0.4$, and a
+Cobb--Douglas technology with $\alpha=9/25$ and $\delta=2/25$, so capital demand is
+$\alpha/((1-\alpha)(r+\delta))$. Capital supply is the average asset holding across the sixty
+cohorts, each born with nothing. The last column is not the solved supply but the floor that
+Proposition~\ref{prop:floor} provably delivers, iterated across ages with the expectation of
+$H_k$ taken under the ergodic distribution and Jensen's inequality applied to the outer maximum
+(\texttt{numerics/olgexist.m}).
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+$r$ & $-4\%$ & $0\%$ & $\lambda=4.17\%$ & $6\%$ & $8\%$ & $10\%$ & $15\%$ \\
+\midrule
+Capital demand & $14.06$ & $7.03$ & $4.62$ & $4.02$ & $3.52$ & $3.13$ & $2.45$ \\
+Capital supply & $1.03$ & $1.98$ & $3.78$ & $4.85$ & $6.18$ & $7.69$ & $12.49$ \\
+Provable floor & $0.00$ & $0.00$ & $0.00$ & $1.52$ & $3.13$ & $4.75$ & $9.40$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+Supply crosses demand between $4.17\%$ and $6\%$, so the equilibrium rate exceeds the rate of
+time preference, which is what Section~\ref{sec:reach} has to accommodate. The provable floor
+crosses between $8\%$ and $10\%$, so $r_{hi}=10\%$ suffices for the upper inequality of
+Theorem~\ref{thm:exist} and $r_{hi}=8\%$ does not. The optimal path reaches assets of $82$ at
+$r=10\%$, against the crude reachable bound of $9{,}044$ and a demand of $3.13$; the constants are
+ordinary, unlike the stationary case, where the corresponding instantiation put $r_{hi}$ within
+$10^{-27}$ of $\lambda$.

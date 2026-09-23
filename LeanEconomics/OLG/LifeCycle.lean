@@ -243,14 +243,15 @@ theorem stageHumanWealth_nonneg (k : ℕ) (z : Z) : 0 ≤ P.stageHumanWealth k z
 /-- **The lower step.** If consumption against `v` is at least `κ m`, then consumption against
 `bellman v` is at least `κ R / (Þ + κ R) · m`. -/
 theorem crra_stageMPC_step {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
-    (hβ : 0 < (P.discount : ℝ)) {v : (ℝ × Z) →ᵇ ℝ}
+    (hβ : 0 < (P.discount : ℝ)) {v : (ℝ × Z) →ᵇ ℝ} {T : Set ℝ}
     (hposv : ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap, 0 < P.consumptionFnOf v z a)
-    (hcapv : ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, P.policyOf v (a, z) < assetCap)
+    (hcapv : ∀ a ∈ T, ∀ z : Z, P.policyOf v (a, z) < assetCap)
     (hposW : ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap,
       0 < P.consumptionFnOf (P.toExtended.bellman v) z a)
     {κ : ℝ} (hκ : 0 < κ)
-    (ih : ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap, κ * P.resources (a, z) ≤ P.consumptionFnOf v z a)
-    (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+    (ih : ∀ z : Z, ∀ a ∈ T, κ * P.resources (a, z) ≤ P.consumptionFnOf v z a)
+    (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap)
+    (hmaps : P.policyOf (P.toExtended.bellman v) (a, z) ∈ T) :
     κ * (1 + P.interest) / (P.patience γ + κ * (1 + P.interest)) * P.resources (a, z)
       ≤ P.consumptionFnOf (P.toExtended.bellman v) z a := by
   have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
@@ -274,7 +275,7 @@ theorem crra_stageMPC_step {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ
     rw [hcm]
     nlinarith [mul_nonneg hT0.le hm0]
   · have hslack : ∀ z' : Z, P.policyOf v (A, z') < P.maxSaving (A, z') := fun z' =>
-      P.policyOf_lt_maxSaving_of_pos (hposv z' A hAmem) (hcapv A hAmem z')
+      P.policyOf_lt_maxSaving_of_pos (hposv z' A hAmem) (hcapv A hmaps z')
     have hc' : ∀ z' : Z, 0 < P.consumptionFnOf v z' A := fun z' => hposv z' A hAmem
     have hder : ∀ z' : Z, HasDerivAt P.u ((P.consumptionFnOf v z' A) ^ (-γ))
         (P.consumptionFnOf v z' A) := by
@@ -285,7 +286,7 @@ theorem crra_stageMPC_step {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ
     have hX0 : 0 < X := by rw [hXdef]; positivity
     have hstep : ∀ z' : Z, X ≤ P.consumptionFnOf v z' A := by
       intro z'
-      refine le_trans ?_ (ih z' A hAmem)
+      refine le_trans ?_ (ih z' A hmaps)
       have hres : P.resources (A, z') = P.income z' + (1 + P.interest) * A :=
         P.resources_eq_of_mem hAmem z'
       have hinc : 0 < P.income z' := lt_of_lt_of_le P.minIncome_pos (P.minIncome_le z')
@@ -315,16 +316,15 @@ theorem crra_stageMPC_step {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ
 against `bellman v` is at most `κ R / (Þ + κ R) · (m + H'(z))` with
 `R H'(z) = ∑ π(z,z') (y_{z'} + H(z'))`. -/
 theorem crra_stageUpper_step {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
-    (hβ : 0 < (P.discount : ℝ)) {v : (ℝ × Z) →ᵇ ℝ}
+    (hβ : 0 < (P.discount : ℝ)) {v : (ℝ × Z) →ᵇ ℝ} {S T : Set ℝ}
     (hposv : ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap, 0 < P.consumptionFnOf v z a)
     (hposW : ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap,
       0 < P.consumptionFnOf (P.toExtended.bellman v) z a)
-    (hcapW : ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
-      P.policyOf (P.toExtended.bellman v) (a, z) < assetCap)
+    (hcapW : ∀ a ∈ S, ∀ z : Z, P.policyOf (P.toExtended.bellman v) (a, z) < assetCap)
     {κ : ℝ} (hκ : 0 < κ) {H : Z → ℝ} (hH0 : ∀ z, 0 ≤ H z)
-    (ih : ∀ z : Z, ∀ a ∈ Icc (0 : ℝ) assetCap,
-      P.consumptionFnOf v z a ≤ κ * (P.resources (a, z) + H z))
-    (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+    (ih : ∀ z : Z, ∀ a ∈ T, P.consumptionFnOf v z a ≤ κ * (P.resources (a, z) + H z))
+    (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) (haS : a ∈ S)
+    (hmaps : P.policyOf (P.toExtended.bellman v) (a, z) ∈ T) :
     P.consumptionFnOf (P.toExtended.bellman v) z a
       ≤ κ * (1 + P.interest) / (P.patience γ + κ * (1 + P.interest))
         * (P.resources (a, z)
@@ -344,7 +344,7 @@ theorem crra_stageUpper_step {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility 
   set c : ℝ := P.consumptionFnOf W z a with hcdef
   have hcA : c = P.resources (a, z) - A := rfl
   have hc0 : 0 < c := hposW z a ha
-  have hroom : A < P.maxSaving (a, z) := P.policyOf_lt_maxSaving_of_pos hc0 (hcapW a ha z)
+  have hroom : A < P.maxSaving (a, z) := P.policyOf_lt_maxSaving_of_pos hc0 (hcapW a haS z)
   have hc' : ∀ z' : Z, 0 < P.consumptionFnOf v z' A := fun z' => hposv z' A hAmem
   have hder : ∀ z' : Z, HasDerivAt P.u ((P.consumptionFnOf v z' A) ^ (-γ))
       (P.consumptionFnOf v z' A) := by
@@ -366,7 +366,7 @@ theorem crra_stageUpper_step {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility 
     have h1 : ∀ z', P.consumptionFnOf v z' A
         ≤ κ * (P.income z' + (1 + P.interest) * A + H z') := by
       intro z'
-      have := ih z' A hAmem
+      have := ih z' A hmaps
       rwa [P.resources_eq_of_mem hAmem z'] at this
     have h2 : ∑ z', P.transitionMatrix z z' * P.consumptionFnOf v z' A
         ≤ ∑ z', P.transitionMatrix z z' * (κ * (P.income z' + (1 + P.interest) * A + H z')) :=
@@ -406,52 +406,99 @@ theorem crra_stageUpper_step {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility 
   rw [hcA]
   nlinarith [hTc, hSR, hR]
 
+/-! ### Reachable families
+
+The sandwich below needs the artefactual asset cap to be slack where the household actually is,
+and the obvious way to say that is to ask for slack everywhere in `Icc 0 assetCap`. That is too
+much to ask. The one-step bound `stagePolicy_le` gives `a' ≤ (1 - κ_k)(R a + y_max)`, so the
+capped interval is carried into itself only when `(1 - κ_k) R < 1`, which is to say only below the
+rate of time preference `1/β - 1`. Above that rate no cap is forward invariant at all: a patient
+household sitting at the cap wants to save past it, so the cap binds and the Euler inequality
+under it is unavailable. Since a stationary overlapping-generations equilibrium in a life-cycle
+economy typically sits *above* the rate of time preference, assuming slack everywhere would make
+the equilibrium theorems vacuous exactly where they are wanted.
+
+A cohort that starts life with nothing never visits the top of the capped interval. What follows
+therefore carries a family of regions, one per stage, that the stage policies map down through,
+and asks for slack only on those.
+-/
+
+/-- **A reachable family**: one region of asset levels per stage, carried into one another by the
+stage policies, with the artefactual cap slack on each. A household with `k + 1` periods left and
+assets in `region (k + 1)` saves into `region k`, and nowhere on any region does the cap bind. -/
+structure StageRegions (Q : IncomeFluctuation Z 0 assetCap) where
+  /-- The asset levels a household with `k` periods still to come can be at. -/
+  region : ℕ → Set ℝ
+  /-- Every region sits inside the capped state space. -/
+  subset : ∀ k, region k ⊆ Icc (0 : ℝ) assetCap
+  /-- The stage-`k + 1` policy carries `region (k + 1)` into `region k`. -/
+  maps : ∀ k, ∀ a ∈ region (k + 1), ∀ z : Z, Q.stagePolicy (k + 1) (a, z) ∈ region k
+  /-- The artefactual asset cap is slack on every region. -/
+  slack : ∀ k, ∀ a ∈ region k, ∀ z : Z, Q.stagePolicy k (a, z) < assetCap
+
+/-- The whole capped state space is a reachable family exactly when the cap is slack on it, which
+is the hypothesis the sandwich used to carry. Impatience buys it; nothing else does. -/
+def allRegions (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
+    P.stagePolicy k (a, z) < assetCap) : P.StageRegions where
+  region := fun _ => Icc (0 : ℝ) assetCap
+  subset := fun _ => subset_rfl
+  maps := fun k a _ z => P.stagePolicy_mem_region (k + 1) (a, z)
+  slack := hslack
+
+@[simp] theorem allRegions_region (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z,
+    P.stagePolicy k (a, z) < assetCap) (k : ℕ) :
+    (P.allRegions hslack).region k = Icc (0 : ℝ) assetCap := rfl
+
 /-! ### The finite-horizon sandwich -/
 
-/-- **The finite-horizon minimal-MPC bound**: `κ_k · m ≤ c_k(a, z)` at every stage. -/
-theorem stageMPC_mul_le_stageConsumption {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
-    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
-    (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, P.stagePolicy k (a, z) < assetCap)
-    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+/-- **The finite-horizon minimal-MPC bound on a reachable family**: `κ_k · m ≤ c_k(a, z)` at every
+stage, at every asset level the family admits. -/
+theorem stageMPC_mul_le_stageConsumption_on {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (G : P.StageRegions)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ G.region k) :
     P.stageMPC γ k * P.resources (a, z) ≤ P.stageConsumption k z a := by
   induction k generalizing z a with
-  | zero => rw [P.stageConsumption_zero ha z]; simp [stageMPC]
+  | zero => rw [P.stageConsumption_zero (G.subset 0 ha) z]; simp [stageMPC]
   | succ k ih =>
-    have h := P.crra_stageMPC_step hγ0 hu hβ (v := P.stageValue k)
-      (fun z a ha => P.stageConsumption_pos hd k z ha) (fun a ha z => hslack k a ha z)
+    have h := P.crra_stageMPC_step hγ0 hu hβ (v := P.stageValue k) (T := G.region k)
+      (fun z a ha => P.stageConsumption_pos hd k z ha)
+      (fun b hb z => G.slack k b hb z)
       (fun z a ha => by rw [← stageValue_succ]; exact P.stageConsumption_pos hd (k + 1) z ha)
-      (P.stageMPC_pos hγ0 hβ k) (fun z a ha => ih z ha) z ha
+      (P.stageMPC_pos hγ0 hβ k) (fun z b hb => ih z hb) z (G.subset (k + 1) ha)
+      (by rw [← stageValue_succ]; exact G.maps k a ha z)
     rw [← stageValue_succ] at h
     rw [stageMPC_succ]
     exact h
 
-/-- **The finite-horizon upper sandwich**: `c_k(a, z) ≤ κ_k · (m + H_k(z))` at every stage. -/
-theorem stageConsumption_le_stageHumanWealth {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
-    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
-    (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, P.stagePolicy k (a, z) < assetCap)
-    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+/-- **The finite-horizon upper sandwich on a reachable family**: `c_k(a, z) ≤ κ_k · (m + H_k(z))`
+at every stage, at every asset level the family admits. -/
+theorem stageConsumption_le_stageHumanWealth_on {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (G : P.StageRegions)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ G.region k) :
     P.stageConsumption k z a
       ≤ P.stageMPC γ k * (P.resources (a, z) + P.stageHumanWealth k z) := by
   induction k generalizing z a with
-  | zero => rw [P.stageConsumption_zero ha z]; simp [stageMPC, stageHumanWealth]
+  | zero =>
+    rw [P.stageConsumption_zero (G.subset 0 ha) z]; simp [stageMPC, stageHumanWealth]
   | succ k ih =>
     have h := P.crra_stageUpper_step hγ0 hu hβ (v := P.stageValue k)
+      (S := G.region (k + 1)) (T := G.region k)
       (fun z a ha => P.stageConsumption_pos hd k z ha)
       (fun z a ha => by rw [← stageValue_succ]; exact P.stageConsumption_pos hd (k + 1) z ha)
-      (fun a ha z => by rw [← stageValue_succ]; exact hslack (k + 1) a ha z)
-      (P.stageMPC_pos hγ0 hβ k) (P.stageHumanWealth_nonneg k) (fun z a ha => ih z ha) z ha
+      (fun b hb z => by rw [← stageValue_succ]; exact G.slack (k + 1) b hb z)
+      (P.stageMPC_pos hγ0 hβ k) (P.stageHumanWealth_nonneg k) (fun z b hb => ih z hb) z
+      (G.subset (k + 1) ha) ha (by rw [← stageValue_succ]; exact G.maps k a ha z)
     rw [← stageValue_succ] at h
     rw [stageMPC_succ, stageHumanWealth_succ]
     exact h
 
-/-- **A one-step saving bound**: `a' ≤ (1 - κ_k)(R a + y_max)` at stage `k`. -/
-theorem stagePolicy_le {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
-    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
-    (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, P.stagePolicy k (a, z) < assetCap)
-    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+/-- **A one-step saving bound on a reachable family**: `a' ≤ (1 - κ_k)(R a + y_max)`. -/
+theorem stagePolicy_le_on {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (G : P.StageRegions)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ G.region k) :
     P.stagePolicy k (a, z) ≤ (1 - P.stageMPC γ k) * ((1 + P.interest) * a + P.maxIncome) := by
-  have h := P.stageMPC_mul_le_stageConsumption hγ0 hu hβ hd hslack k z ha
-  rw [stageConsumption_eq, P.resources_eq_of_mem ha z] at h
+  have h := P.stageMPC_mul_le_stageConsumption_on hγ0 hu hβ hd G k z ha
+  rw [stageConsumption_eq, P.resources_eq_of_mem (G.subset k ha) z] at h
   have hκ1 := P.stageMPC_le_one hγ0 hβ k
   have hy := P.le_maxIncome z
   have h1 : P.stagePolicy k (a, z)
@@ -460,6 +507,38 @@ theorem stagePolicy_le {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
       ≤ (1 - P.stageMPC γ k) * ((1 + P.interest) * a + P.maxIncome) :=
     mul_le_mul_of_nonneg_left (by linarith) (sub_nonneg.2 hκ1)
   linarith
+
+/-! ### The sandwich when the cap is slack everywhere
+
+The original statements, recovered by taking the constant family. They are what an impatient
+household satisfies, and they remain the right form whenever the cap can be shown slack on the
+whole capped interval.
+-/
+
+/-- **The finite-horizon minimal-MPC bound**: `κ_k · m ≤ c_k(a, z)` at every stage. -/
+theorem stageMPC_mul_le_stageConsumption {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
+    (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, P.stagePolicy k (a, z) < assetCap)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+    P.stageMPC γ k * P.resources (a, z) ≤ P.stageConsumption k z a :=
+  P.stageMPC_mul_le_stageConsumption_on hγ0 hu hβ hd (P.allRegions hslack) k z ha
+
+/-- **The finite-horizon upper sandwich**: `c_k(a, z) ≤ κ_k · (m + H_k(z))` at every stage. -/
+theorem stageConsumption_le_stageHumanWealth {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
+    (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, P.stagePolicy k (a, z) < assetCap)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+    P.stageConsumption k z a
+      ≤ P.stageMPC γ k * (P.resources (a, z) + P.stageHumanWealth k z) :=
+  P.stageConsumption_le_stageHumanWealth_on hγ0 hu hβ hd (P.allRegions hslack) k z ha
+
+/-- **A one-step saving bound**: `a' ≤ (1 - κ_k)(R a + y_max)` at stage `k`. -/
+theorem stagePolicy_le {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
+    (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, P.stagePolicy k (a, z) < assetCap)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+    P.stagePolicy k (a, z) ≤ (1 - P.stageMPC γ k) * ((1 + P.interest) * a + P.maxIncome) :=
+  P.stagePolicy_le_on hγ0 hu hβ hd (P.allRegions hslack) k z ha
 
 end IncomeFluctuation
 

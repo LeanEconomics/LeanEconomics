@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.OLG.MeansTest
+import LeanEconomics.OLG.Reachable
 import LeanEconomics.Equilibrium.Bisection
 
 /-!
@@ -165,25 +166,53 @@ In the infinite horizon the only floor on capital supply came from an ergodic id
 loses a factor `‖u'‖²/Var`. The life cycle needs nothing of the kind: the upper sandwich of
 `LifeCycle` bounds consumption above at every age, and what is not consumed is saved. -/
 
-/-- **An affine floor on saving at every age.** From `c_k ≤ κ_k (m + H_k)` and `m ≥ y_min + R a`,
-what the household carries forward is at least `(1 - κ_k)(y_min + R a) - κ_k H_k`. Iterated from
-zero assets at birth this is an explicit floor on the assets of every cohort. -/
-theorem le_stagePolicy {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
-    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
-    (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, P.stagePolicy k (a, z) < assetCap)
-    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+/-- **An affine floor on saving at every age, on a reachable family.** From `c_k ≤ κ_k (m + H_k)`
+and `m ≥ y_min + R a`, what the household carries forward is at least
+`(1 - κ_k)(y_min + R a) - κ_k H_k`. Iterated from zero assets at birth this is an explicit floor
+on the assets of every cohort.
+
+The floor is what the equilibrium argument needs at a high interest rate, and a high interest rate
+is exactly where the artefactual cap cannot be slack everywhere. Stating it on a `StageRegions` is
+what keeps it from being vacuous there. -/
+theorem le_stagePolicy_on {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (G : P.StageRegions)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ G.region k) :
     (1 - P.stageMPC γ k) * (P.minIncome + (1 + P.interest) * a)
         - P.stageMPC γ k * P.stageHumanWealth k z
       ≤ P.stagePolicy k (a, z) := by
-  have hup := P.stageConsumption_le_stageHumanWealth hγ0 hu hβ hd hslack k z ha
+  have hup := P.stageConsumption_le_stageHumanWealth_on hγ0 hu hβ hd G k z ha
   have hres : P.resources (a, z) = P.income z + (1 + P.interest) * a :=
-    P.resources_eq_of_mem ha z
+    P.resources_eq_of_mem (G.subset k ha) z
   have hy : P.minIncome ≤ P.income z := P.minIncome_le z
   have hκ1 : P.stageMPC γ k ≤ 1 := P.stageMPC_le_one hγ0 hβ k
   have hc : P.stageConsumption k z a = P.resources (a, z) - P.stagePolicy k (a, z) :=
     P.stageConsumption_eq k z a
   rw [hres] at hup hc
   nlinarith [mul_le_mul_of_nonneg_left hy (sub_nonneg.2 hκ1)]
+
+/-- **The affine floor on saving when the cap is slack everywhere.** -/
+theorem le_stagePolicy {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
+    (hslack : ∀ k : ℕ, ∀ a ∈ Icc (0 : ℝ) assetCap, ∀ z : Z, P.stagePolicy k (a, z) < assetCap)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+    (1 - P.stageMPC γ k) * (P.minIncome + (1 + P.interest) * a)
+        - P.stageMPC γ k * P.stageHumanWealth k z
+      ≤ P.stagePolicy k (a, z) :=
+  P.le_stagePolicy_on hγ0 hu hβ hd (P.allRegions hslack) k z ha
+
+/-- **The affine floor on saving along a cohort's own path.** A cohort that starts life with
+nothing satisfies the floor at every age it reaches, assuming only that the artefactual cap
+exceeds what a lifetime of feasible saving could reach. Unlike `le_stagePolicy` this says
+something at interest rates above the rate of time preference, where no cap is slack everywhere
+and `le_stagePolicy`'s hypothesis cannot be met. -/
+theorem le_stagePolicy_reach {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) {K : ℕ}
+    (hcap : P.reach (K + 1) < assetCap) {k : ℕ} (hk : k ≤ K) (z : Z) {a : ℝ}
+    (ha : a ∈ Icc (0 : ℝ) (P.reach (K - k))) :
+    (1 - P.stageMPC γ k) * (P.minIncome + (1 + P.interest) * a)
+        - P.stageMPC γ k * P.stageHumanWealth k z
+      ≤ P.stagePolicy k (a, z) :=
+  P.le_stagePolicy_on hγ0 hu hβ hd (P.reachRegions K hcap) k z (P.mem_reachRegion hk ha)
 
 /-! ### Uniqueness -/
 
