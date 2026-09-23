@@ -498,6 +498,50 @@ bounding where the constraint binds rather than by another Euler chain.
 
 It does not improve the propensity bound of Theorem~\ref{thm:mpc}, because that bound is driven by
 the worst earnings state next period, which is exactly where the cap binds. Closing the threshold
-argument would need the same sharpening on the worst state, and the worst state is the one the
-constraint genuinely pins. Whether that is a limitation of the method or of the statement we do
-not know.
+argument would need the same sharpening on the worst state, and that turns out to be impossible
+within this class.
+
+\subsection{The worst state is pinned}
+
+Two facts settle it. The first is that the cap is not conservatism but necessity.
+
+\begin{theorem}[The cap is necessary]\label{thm:cap}
+Wherever a household at zero assets is against the borrowing limit, every affine lower bound
+$\kappa_k(m+H)$ valid at that state obeys $H\le(1/\kappa_k-1)y_z$.
+\formal{IncomeFluctuation.cap\_necessary\_of\_corner}
+\end{theorem}
+
+The proof is one line --- at the corner consumption is exactly $y_z$ --- and the content is that
+Theorem~\ref{thm:incidence} claims the largest human wealth any bound of its shape may claim. It
+cannot be sharpened within the affine class at all.
+
+The second is that dropping the cap does not merely weaken the proof, it makes the bound false.
+Measuring effective human wealth as $c/\kappa-m$ at next-period assets of $1.67$
+(\texttt{numerics/worst.m}):
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Effective human wealth at & truth & capped mean & uncapped mean & expectation\\
+\midrule
+lowest earnings & $10.96$ & $5.99$ & $13.11$ & $16.57$\\
+highest earnings & $27.92$ & $23.90$ & $26.38$ & $32.24$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+At the lowest earnings state the uncapped power mean, $13.11$, \emph{exceeds} the truth, $10.96$,
+so a bound built on it is invalid: the household will be against the limit later, and the uncapped
+recursion cannot see that. The truth sits between the two, and the distance is the price of
+capping at zero assets when the household in fact holds some. A bound that closed it would have to
+let human wealth depend on the assets held, which requires a lower bound on the household's own
+asset path; the one available, from the upper sandwich, is negative at the state that matters.
+
+So the worst state is pinned from both sides: the cap cannot be raised, because the corner forbids
+it, and it cannot be dropped, because the truth is below what dropping it would claim. That closes
+this family of arguments, and with it, for now, the route from a consumption bound to the
+threshold. What the programme has instead is an exact statement of what a sharper argument must
+supply: a lower bound on consumption that is asset-dependent rather than affine, and the asset
+path to support it.
