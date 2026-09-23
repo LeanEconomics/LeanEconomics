@@ -304,6 +304,85 @@ theorem mul_geomSum_le_cohortSlope {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.disc
     have h2 := mul_le_mul_of_nonneg_left hcS hG.le
     nlinarith [h1, h2]
 
+/-! ### The ceiling as an affine bound too
+
+`olgCapital_le_of_incidence` bounds every age's assets by one forward-invariant level and so pays
+`(K+1)B` for a cohort that is at zero when it is born, near zero when it dies, and near `B` only in
+between. The floor does not make that mistake: it carries an affine bound with a slope common to
+all states and an intercept per state, and aggregates once at the end. The ceiling can be built the
+same way, from the same slope, with the saving *ceiling* in place of the saving floor.
+
+The gain is large, because it replaces a worst case over ages by an average over them. At
+`r = -7%` the invariant level is `22.17` and the affine ceiling `1.54`, against a true capital
+supply of `0.64`. The bottom of the rate interval then rises from `-5.85%` to `+2.78%`, against an
+absolute limit of `5.09%`, where capital supply meets demand.
+-/
+
+/-- The intercept of the affine ceiling on a cohort's accumulated assets, one value per earnings
+state. The slope is the same `cohortSlope` the floor uses; only the per-age term differs, taking
+the saving ceiling that the constraint-incidence bound gives rather than the saving floor. -/
+noncomputable def cohortCeil (γ : ℝ) : ℕ → Z → ℝ
+  | 0 => fun _ => 0
+  | k + 1 => fun z => (∑ z', P.transitionMatrix z z' * cohortCeil γ k z')
+      + P.cohortSlope γ k * ((1 - P.stageMPC γ (k + 1)) * P.income z
+        - P.stageMPC γ (k + 1) * P.riskHumanWealth γ (k + 1) z)
+
+@[simp] theorem cohortCeil_zero (γ : ℝ) (z : Z) : P.cohortCeil γ 0 z = 0 := rfl
+
+theorem cohortCeil_succ (γ : ℝ) (k : ℕ) (z : Z) :
+    P.cohortCeil γ (k + 1) z
+      = (∑ z', P.transitionMatrix z z' * P.cohortCeil γ k z')
+        + P.cohortSlope γ k * ((1 - P.stageMPC γ (k + 1)) * P.income z
+          - P.stageMPC γ (k + 1) * P.riskHumanWealth γ (k + 1) z) := rfl
+
+/-- **The affine ceiling on accumulated assets.** -/
+theorem cohortAssets_le_cohortCeil {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
+    (hslack : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z, P.stagePolicy j (b, w) < assetCap)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap) :
+    P.cohortAssets k (a, z) ≤ P.cohortCeil γ k z + P.cohortSlope γ k * a := by
+  induction k generalizing z a with
+  | zero => simp [cohortAssets_zero]
+  | succ k ih =>
+    set A : ℝ := P.stagePolicy (k + 1) (a, z) with hA
+    have hAmem : A ∈ Icc (0 : ℝ) assetCap := P.stagePolicy_mem_region _ _
+    have hslope := P.cohortSlope_pos hγ0 hβ k
+    have hsum : (∑ z', P.transitionMatrix z z' * P.cohortAssets k (A, z'))
+        ≤ (∑ z', P.transitionMatrix z z' * P.cohortCeil γ k z') + P.cohortSlope γ k * A := by
+      have hle : (∑ z', P.transitionMatrix z z' * P.cohortAssets k (A, z'))
+          ≤ ∑ z', P.transitionMatrix z z' * (P.cohortCeil γ k z' + P.cohortSlope γ k * A) :=
+        Finset.sum_le_sum fun z' _ =>
+          mul_le_mul_of_nonneg_left (ih z' hAmem) (P.transitionMatrix_nonneg z z')
+      have hexp : ∑ z', P.transitionMatrix z z'
+            * (P.cohortCeil γ k z' + P.cohortSlope γ k * A)
+          = (∑ z', P.transitionMatrix z z' * P.cohortCeil γ k z')
+            + P.cohortSlope γ k * A := by
+        rw [Finset.sum_congr rfl fun z' _ => mul_add (P.transitionMatrix z z')
+            (P.cohortCeil γ k z') (P.cohortSlope γ k * A),
+          Finset.sum_add_distrib, ← Finset.sum_mul, P.transitionMatrix_sum z, one_mul]
+      linarith [hle, hexp.le, hexp.symm.le]
+    have hceil : A ≤ (1 - P.stageMPC γ (k + 1)) * (P.income z + (1 + P.interest) * a)
+        - P.stageMPC γ (k + 1) * P.riskHumanWealth γ (k + 1) z := by
+      have hb := P.riskHumanWealth_le_stageConsumption hγ0 hu hβ hd hslack (k + 1) z ha
+      rw [P.stageConsumption_eq, P.resources_eq_of_mem ha z] at hb
+      nlinarith [hb]
+    have hprod := mul_le_mul_of_nonneg_left hceil hslope.le
+    rw [cohortAssets_succ, stageStep, P.cohortCeil_succ, P.cohortSlope_succ]
+    nlinarith [hsum, hprod]
+
+/-- **A ceiling on aggregate capital, averaged over ages rather than worst-cased.** -/
+theorem olgCapital_le_cohortCeil {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
+    (hslack : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z, P.stagePolicy j (b, w) < assetCap)
+    (K : ℕ) {ν : Z → ℝ} (hν : ∀ z, 0 ≤ ν z) :
+    P.olgCapital K ν ≤ (∑ z, ν z * P.cohortCeil γ K z) / (K + 1) := by
+  rw [olgCapital]
+  refine div_le_div_of_nonneg_right ?_ (by positivity)
+  refine Finset.sum_le_sum fun z _ => mul_le_mul_of_nonneg_left ?_ (hν z)
+  have h := P.cohortAssets_le_cohortCeil hγ0 hu hβ hd hslack K z
+    (⟨le_rfl, P.assetCap_nonneg⟩ : (0 : ℝ) ∈ Icc (0 : ℝ) assetCap)
+  simpa using h
+
 /-! ### Why the floor needs a patient household
 
 Aggregating the floor against earnings weights that the chain leaves alone turns the vector
@@ -688,6 +767,42 @@ theorem exists_olgEquilibrium_of_sharpBounds {γ : ℝ} (hγ0 : 0 < γ) (hu : P.
         hBcap hinv K hν hν1) hBD
     · rw [P.olgSupply_eq hlo.one_add_pos hle (right_mem_Icc.2 hle) hhi K ν]
       refine le_trans hDfloor ?_
+      refine (P.withRate rhi hhi).le_olgCapital hγ0 hu hβ hd
+        ((P.withRate rhi hhi).reachRegions K hcap) K ?_ hν
+      exact (P.withRate rhi hhi).mem_reachRegion (le_refl K) (by simp)
+  obtain ⟨r, hr, heq⟩ := hmain
+  refine ⟨r, hr, ?_⟩
+  rw [← P.olgSupply_eq hlo.one_add_pos hle hr (P.rateOK_of_mem_Icc hlo hhi hr) K ν]
+  exact heq
+
+/-- **Existence with both ends read the same way.** The two boundary conditions are now the same
+shape: a weighted average over earnings states of an affine bound on a cohort's accumulated
+assets, one built from the saving ceiling and one from the saving floor, sharing a slope. Nothing
+refers to the household's decisions; `κ`, `H` and the two intercepts are explicit finite
+recursions in the discount factor, the interest rate, the earnings process and the horizon.
+
+Each half asks for what it can have. At the bottom the artefactual cap is slack, which holds below
+the rate of time preference; at the top it cannot be, and the reachable family of `OLG.Reachable`
+stands in. -/
+theorem exists_olgEquilibrium_affine {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) {rlo rhi : ℝ}
+    (hlo : P.RateOK rlo) (hhi : P.RateOK rhi) (hle : rlo ≤ rhi)
+    (K : ℕ) {ν : Z → ℝ} (hν : ∀ z, 0 ≤ ν z)
+    {D : ℝ → ℝ} (hD : ContinuousOn D (Icc rlo rhi))
+    (hslo : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z,
+      (P.withRate rlo hlo).stagePolicy j (b, w) < assetCap)
+    (hceil : (∑ z, ν z * (P.withRate rlo hlo).cohortCeil γ K z) / (K + 1) ≤ D rlo)
+    (hcap : (P.withRate rhi hhi).reach (K + 1) < assetCap)
+    (hfloor : D rhi ≤ (∑ z, ν z * (P.withRate rhi hhi).cohortFloor γ K z) / (K + 1)) :
+    ∃ r, ∃ hr : r ∈ Icc rlo rhi,
+      (P.withRate r (P.rateOK_of_mem_Icc hlo hhi hr)).olgCapital K ν = D r := by
+  have hmain : ∃ r ∈ Icc rlo rhi,
+      (∑ z, ν z * P.augCohortAssets hlo.one_add_pos hle K ((0, r), z)) / (K + 1) = D r := by
+    refine P.exists_olgEquilibrium hlo.one_add_pos hle K ν hD ?_ ?_
+    · rw [P.olgSupply_eq hlo.one_add_pos hle (left_mem_Icc.2 hle) hlo K ν]
+      exact le_trans ((P.withRate rlo hlo).olgCapital_le_cohortCeil hγ0 hu hβ hd hslo K hν) hceil
+    · rw [P.olgSupply_eq hlo.one_add_pos hle (right_mem_Icc.2 hle) hhi K ν]
+      refine le_trans hfloor ?_
       refine (P.withRate rhi hhi).le_olgCapital hγ0 hu hβ hd
         ((P.withRate rhi hhi).reachRegions K hcap) K ?_ hν
       exact (P.withRate rhi hhi).mem_reachRegion (le_refl K) (by simp)
