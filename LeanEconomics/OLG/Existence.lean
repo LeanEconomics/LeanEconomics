@@ -5,6 +5,7 @@ Authors: Robert Kirkby
 -/
 import LeanEconomics.OLG.Continuity
 import LeanEconomics.OLG.Incidence
+import LeanEconomics.OLG.AssetIncidence
 
 /-!
 # Both ends of the rate interval
@@ -646,6 +647,82 @@ theorem geomFloor_le_sum_mul_cohortFloor {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (
           exact mul_le_mul_of_nonneg_right
             (mul_le_mul_of_nonneg_right hκ hY) hgap
 
+/-! ### The floor read at the assets held
+
+The affine floor `F_k(z) + G_k a` carries one slope and one intercept per state, and the intercept
+goes badly negative: at the calibration of the write-up, `160` of `413` entries are below zero and
+the worst is `-62`. A cohort's accumulated assets cannot be negative, so all of that is slack the
+aggregate inherits.
+
+Reading the floor as a function of assets rather than as an affine form fixes it, because the
+saving floor can then be clamped at zero where it belongs. The recursion is the same one, with
+`assetFloor` in place of the affine step:
+
+  `Λ_0(z, a) = a`,  `Λ_{k+1}(z, a) = a + ∑ π(z,z') Λ_k(z', Φ_{k+1}(z, a))`,
+
+with `Φ` the clamped saving floor of `OLG.AssetIncidence`. At the calibration this lifts the floor
+from `0.70` to `2.09` at `r = 5%` and from `3.13` to `3.80` at `r = 8%`, and the top of the rate
+interval falls from `8.38%` to `7.67%`.
+-/
+
+/-- The saving floor is below the policy, on a reachable family. -/
+theorem assetFloor_le_stagePolicy_on {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (Rg : P.StageRegions)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Rg.region k) :
+    P.assetFloor γ k z a ≤ P.stagePolicy k (a, z) := by
+  refine max_le (P.stagePolicy_mem_region k (a, z)).1 ?_
+  exact P.le_stagePolicy_state_on hγ0 hu hβ hd Rg k z ha
+
+/-- **The floor on accumulated assets, read at the assets held.** -/
+noncomputable def cohortFloorAt (γ : ℝ) : ℕ → Z → ℝ → ℝ
+  | 0 => fun _ a => a
+  | k + 1 => fun z a => a + ∑ z', P.transitionMatrix z z'
+      * cohortFloorAt γ k z' (P.assetFloor γ (k + 1) z a)
+
+@[simp] theorem cohortFloorAt_zero (γ : ℝ) (z : Z) (a : ℝ) : P.cohortFloorAt γ 0 z a = a := rfl
+
+theorem cohortFloorAt_succ (γ : ℝ) (k : ℕ) (z : Z) (a : ℝ) :
+    P.cohortFloorAt γ (k + 1) z a
+      = a + ∑ z', P.transitionMatrix z z'
+          * P.cohortFloorAt γ k z' (P.assetFloor γ (k + 1) z a) := rfl
+
+theorem cohortFloorAt_mono {γ : ℝ} (hγ0 : 0 < γ) (hβ : 0 < (P.discount : ℝ)) (k : ℕ) (z : Z)
+    {a b : ℝ} (hab : a ≤ b) : P.cohortFloorAt γ k z a ≤ P.cohortFloorAt γ k z b := by
+  induction k generalizing z a b with
+  | zero => simpa using hab
+  | succ k ih =>
+    rw [P.cohortFloorAt_succ, P.cohortFloorAt_succ]
+    refine add_le_add hab (Finset.sum_le_sum fun z' _ => ?_)
+    exact mul_le_mul_of_nonneg_left (ih z' (P.assetFloor_mono hγ0 hβ (k + 1) z hab))
+      (P.transitionMatrix_nonneg z z')
+
+/-- **The clamped floor is below a cohort's accumulated assets.** -/
+theorem cohortFloorAt_le_cohortAssets {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (Rg : P.StageRegions)
+    (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Rg.region k) :
+    P.cohortFloorAt γ k z a ≤ P.cohortAssets k (a, z) := by
+  induction k generalizing z a with
+  | zero => simp [cohortAssets_zero]
+  | succ k ih =>
+    set A : ℝ := P.stagePolicy (k + 1) (a, z) with hA
+    have hAmem : A ∈ Rg.region k := Rg.maps k a ha z
+    have hfl : P.assetFloor γ (k + 1) z a ≤ A :=
+      P.assetFloor_le_stagePolicy_on hγ0 hu hβ hd Rg (k + 1) z ha
+    rw [P.cohortFloorAt_succ, cohortAssets_succ, stageStep]
+    refine add_le_add le_rfl (Finset.sum_le_sum fun z' _ => ?_)
+    refine mul_le_mul_of_nonneg_left ?_ (P.transitionMatrix_nonneg z z')
+    exact le_trans (P.cohortFloorAt_mono hγ0 hβ k z' hfl) (ih z' hAmem)
+
+/-- **A floor on aggregate capital from the clamped floor.** -/
+theorem le_olgCapital_at {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (Rg : P.StageRegions) (K : ℕ)
+    (h0 : (0 : ℝ) ∈ Rg.region K) {ν : Z → ℝ} (hν : ∀ z, 0 ≤ ν z) :
+    (∑ z, ν z * P.cohortFloorAt γ K z 0) / (K + 1) ≤ P.olgCapital K ν := by
+  rw [olgCapital]
+  refine div_le_div_of_nonneg_right ?_ (by positivity)
+  exact Finset.sum_le_sum fun z _ => mul_le_mul_of_nonneg_left
+    (P.cohortFloorAt_le_cohortAssets hγ0 hu hβ hd Rg K z h0) (hν z)
+
 /-! ### Both ends at once -/
 
 /-- **A stationary life-cycle equilibrium exists**, with both boundary inequalities discharged
@@ -804,6 +881,38 @@ theorem exists_olgEquilibrium_affine {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crra
     · rw [P.olgSupply_eq hlo.one_add_pos hle (right_mem_Icc.2 hle) hhi K ν]
       refine le_trans hfloor ?_
       refine (P.withRate rhi hhi).le_olgCapital hγ0 hu hβ hd
+        ((P.withRate rhi hhi).reachRegions K hcap) K ?_ hν
+      exact (P.withRate rhi hhi).mem_reachRegion (le_refl K) (by simp)
+  obtain ⟨r, hr, heq⟩ := hmain
+  refine ⟨r, hr, ?_⟩
+  rw [← P.olgSupply_eq hlo.one_add_pos hle hr (P.rateOK_of_mem_Icc hlo hhi hr) K ν]
+  exact heq
+
+/-- **Existence with both ends read at the assets held.** The ceiling is the affine one, whose
+intercept never goes negative because it is built from the saving ceiling; the floor is the clamped
+one, which is what the affine floor would be if its intercept were not allowed to claim negative
+assets. This is the tightest bracket the development offers. -/
+theorem exists_olgEquilibrium_clamped {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) {rlo rhi : ℝ}
+    (hlo : P.RateOK rlo) (hhi : P.RateOK rhi) (hle : rlo ≤ rhi)
+    (K : ℕ) {ν : Z → ℝ} (hν : ∀ z, 0 ≤ ν z)
+    {D : ℝ → ℝ} (hD : ContinuousOn D (Icc rlo rhi))
+    (hslo : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z,
+      (P.withRate rlo hlo).stagePolicy j (b, w) < assetCap)
+    (hceil : (∑ z, ν z * (P.withRate rlo hlo).cohortCeil γ K z) / (K + 1) ≤ D rlo)
+    (hcap : (P.withRate rhi hhi).reach (K + 1) < assetCap)
+    (hfloor : D rhi
+      ≤ (∑ z, ν z * (P.withRate rhi hhi).cohortFloorAt γ K z 0) / (K + 1)) :
+    ∃ r, ∃ hr : r ∈ Icc rlo rhi,
+      (P.withRate r (P.rateOK_of_mem_Icc hlo hhi hr)).olgCapital K ν = D r := by
+  have hmain : ∃ r ∈ Icc rlo rhi,
+      (∑ z, ν z * P.augCohortAssets hlo.one_add_pos hle K ((0, r), z)) / (K + 1) = D r := by
+    refine P.exists_olgEquilibrium hlo.one_add_pos hle K ν hD ?_ ?_
+    · rw [P.olgSupply_eq hlo.one_add_pos hle (left_mem_Icc.2 hle) hlo K ν]
+      exact le_trans ((P.withRate rlo hlo).olgCapital_le_cohortCeil hγ0 hu hβ hd hslo K hν) hceil
+    · rw [P.olgSupply_eq hlo.one_add_pos hle (right_mem_Icc.2 hle) hhi K ν]
+      refine le_trans hfloor ?_
+      refine (P.withRate rhi hhi).le_olgCapital_at hγ0 hu hβ hd
         ((P.withRate rhi hhi).reachRegions K hcap) K ?_ hν
       exact (P.withRate rhi hhi).mem_reachRegion (le_refl K) (by simp)
   obtain ⟨r, hr, heq⟩ := hmain
