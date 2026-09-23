@@ -545,3 +545,66 @@ this family of arguments, and with it, for now, the route from a consumption bou
 threshold. What the programme has instead is an exact statement of what a sharper argument must
 supply: a lower bound on consumption that is asset-dependent rather than affine, and the asset
 path to support it.
+
+\section{Theorem 1 at logarithmic utility}\label{sec:log}
+
+The slack condition of Section~\ref{sec:eqm} is an Euler condition, and it is worth asking whether
+it settles the one case the stationary model does settle, $\mu=1$. It does not, and the reason is
+instructive. Checking it on the whole grid at $\gamma=1$ (\texttt{numerics/slacklog.m}), it holds
+at $r=0$ and $r=2\%$ and fails at $r=4\%$ and above, by about twelve per cent in elasticity terms,
+at the youngest age with zero assets in the highest earnings state. Since a life-cycle equilibrium
+sits above the rate of time preference, $4.17\%$ here, the Euler reduction says nothing where it
+is wanted, even at logarithmic utility.
+
+\subsection{A condition on the value gap}
+
+A different sufficient condition does hold. Write $V_k(\cdot;R)$ for the stage-$k$ value.
+
+\begin{definition}[Value gap]\label{def:gap}
+The value gap has slope at least $\theta$ at stage $k$ if, for $x\le y$ in $[0,\bar a]$,
+\[
+  \theta\,(y-x)\ \le\ \bigl[V_k(y;R_2)-V_k(y;R_1)\bigr]-\bigl[V_k(x;R_2)-V_k(x;R_1)\bigr].
+\]
+\formal{IncomeFluctuation.ValueGap}
+\end{definition}
+
+By the envelope theorem the slope of the gap is $R_2u'(c_2)-R_1u'(c_1)$, so the condition says the
+marginal value of assets rises with the rate. At $\gamma=1$ that reads $c(R_2)/R_2\le c(R_1)/R_1$:
+consumption rises by proportionally less than the rate does.
+
+\begin{theorem}[Theorem 1 from the value gap]\label{thm:gapmono}
+If the value gap has a positive slope at stage $k$, then saving at stage $k$ rises with the rate,
+at every state. Aggregate capital rises with it.
+\formal{IncomeFluctuation.stagePolicy\_mono\_of\_valueGap},
+\lean{IncomeFluctuation.olgCapital\_le\_of\_valueGap}
+\end{theorem}
+
+Unlike the Euler route this needs no induction over ages. The condition on the continuation gives
+the conclusion for the household that faces it, directly, and the argument is Topkis with two
+continuations: the two households differ only in their cash on hand, which is ordered by the rate,
+and in their continuations, whose difference is increasing, so the higher-rate household cannot
+save less. Only concavity of period utility is used, as in Section~\ref{sec:ret}.
+
+\subsection{Why it holds at $\mu=1$, and only near there}
+
+At $\gamma=1$ the patience factor is $\text{\th}=\beta R$, so $q=\text{\th}/R=\beta$ and the
+propensity $\kappa_k=1/\sum_{i\le k}\beta^i$ of Proposition~\ref{prop:kappa} does not depend on
+the interest rate at all. Human wealth does, and falls as the rate rises. Where the borrowing
+constraint is slack, $c=\kappa_k(\bar y+Ra+H)$ and
+\[
+  R_2c(R_1)-R_1c(R_2)\ =\ \kappa_k\bigl[(R_2-R_1)\bar y+R_2H_1-R_1H_2\bigr]\ >\ 0 ,
+\]
+which is the condition, with room. At a corner, $c=\bar y+Ra$ and the same inequality reduces to
+$R_1\bar y\le R_2\bar y$.
+
+Numerically (\texttt{numerics/condB.m}) the condition holds at $\gamma=1$ at every age, state and
+rate tested, and fails from $\gamma=2$, where between $19\%$ and $51\%$ of states violate it. It is
+therefore sufficient and not necessary: Theorem 1 itself still holds at $\gamma=2$, and up to about
+$3.4$. So this route covers $\mu=1$ and closes nothing above it.
+
+What is proved, then, is the reduction, and it is a reduction to a condition that is true at
+logarithmic utility rather than one that is false there. Discharging the condition itself from
+primitives is not available from the sandwich of Theorem~\ref{thm:sandwich}: the sandwich's width
+is $\kappa_kH_k$, and the rate response of exactly that quantity is what drives the gap, so the
+bounds cannot see it. That is the same obstruction the consumption-bound family ran into above,
+and it is the piece a sharper argument would have to supply.
