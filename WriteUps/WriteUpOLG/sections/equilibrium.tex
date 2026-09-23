@@ -560,3 +560,65 @@ $8.38\%$ to $5.09\%$. The whole of that $3.3$ points is the young household's co
 overstated by a fifth, and that overstatement is a risk effect: the household consumes less than
 permanent income because earnings are risky and the limit may bind. Capturing it needs the power
 mean, and the power mean is what the step cannot carry.
+
+\subsection{The floor read at the assets held}\label{sec:clampfloor}
+
+Section~\ref{sec:affceil} fixed the ceiling by refusing to worst-case over ages. The floor has a
+fault of the same kind, in a different place. Its intercept $F_k(z)$ goes badly negative: at the
+calibration, $160$ of $413$ entries are below zero and the worst is $-62$, with $F_K$ running from
+$-58.8$ at the lowest earnings to $+685$ at the highest
+(\texttt{numerics/floordiag.m}). A cohort's accumulated assets cannot be negative, so all of that
+is slack the aggregate inherits.
+
+An affine form cannot express the clamp. Reading the floor as a function of assets can:
+\[
+  \Lambda_0(z,a)=a,\qquad
+  \Lambda_{k+1}(z,a)=a+\textstyle\sum_{z'}\pi(z,z')\,\Lambda_k\bigl(z',\Phi_{k+1}(z,a)\bigr),
+\]
+with $\Phi$ the saving floor of Section~\ref{sec:assetdep}, clamped at zero. The proof needs only
+that $\Lambda_k$ is increasing in assets, which the clamp preserves.
+
+\begin{proposition}[The clamped floor]\label{prop:clampfloor}
+$\Lambda_k(z,a)\le A_k(a,z)$ on any reachable family, so capital per head is at least
+$\sum_z\nu_z\Lambda_K(z,0)/(K+1)$.
+\formal{IncomeFluctuation.cohortFloorAt\_le\_cohortAssets},
+\lean{IncomeFluctuation.le\_olgCapital\_at}
+\end{proposition}
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+& $r=5\%$ & $r=6\%$ & $r=7\%$ & $r=8\%$ & $r=10\%$\\
+\midrule
+Capital demand & $4.327$ & $4.018$ & $3.750$ & $3.516$ & $3.125$\\
+Affine floor & $0.704$ & $1.524$ & $2.329$ & $3.129$ & $4.753$\\
+Clamped floor & $2.091$ & $2.588$ & $3.169$ & $3.799$ & $5.187$\\
+True capital supply & $4.248$ & $4.848$ & $5.492$ & $6.180$ & $7.691$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+The top of the interval falls from $8.38\%$ to $7.67\%$. Pairing it with the affine ceiling, whose
+intercept never goes negative because it is built from the saving ceiling, gives the tightest
+statement the development offers.
+
+\begin{theorem}[Existence, both ends read at the assets held]\label{thm:exist5}
+With the affine ceiling at $r_{lo}$ and the clamped floor at $r_{hi}$, a stationary equilibrium
+exists.
+\formal{IncomeFluctuation.exists\_olgEquilibrium\_clamped}
+\end{theorem}
+
+Checking every hypothesis at $r_{lo}=2\%$, $r_{hi}=8\%$ and a cap of $10^4$
+(\texttt{numerics/clampcheck.m}), all hold, with the ceiling at $4.81$ against a demand of $5.63$
+and the floor at $3.80$ against a demand of $3.52$. The bracket has come down from the $17$ points
+of Section~\ref{sec:sharpnum} to $6$, and the tightest these bounds can give is
+$[2.78\%,\,7.67\%]$, against an absolute limit of $5.09\%$ on both sides.
+
+The same diagnostic closes the other candidate for the top for good. Re-running the power-mean
+recursion of Section~\ref{sec:topwall} with the \emph{true} saving reproduces the truth exactly, so
+all of its loss is the saving ceiling it has to use instead; and that ceiling is only $1.19$ times
+the truth at birth, yet still produces a worse bound than the arithmetic one, $0.956$ against
+$0.858$. A fifth of an overstatement compounded across fifty-nine steps is what does it. The
+arithmetic relaxation stays the best available.
