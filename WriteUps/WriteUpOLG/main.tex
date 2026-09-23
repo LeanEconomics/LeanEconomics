@@ -49,28 +49,29 @@ write-up on Aiyagari (1994) in the same repository. Comments welcome.}}
 
 \begin{abstract}
 \noindent
-This is the record of a programme to formalise overlapping-generations economies in Lean 4, and
-of its first stage: the life-cycle household. A household that lives $J$ periods against
-uninsurable earnings risk and a borrowing constraint solves a finite backward induction, and
-everything proved for the infinite-horizon Bellman operator with an arbitrary continuation applies
-stage by stage with no fixed point. Beyond that we prove the finite-horizon sandwich: with $k$
-periods still to come, consumption lies between $\kappa_k m$ and $\kappa_k(m+H_k(z))$, where
-$1/\kappa_k=\sum_{i\le k}(\Thorn/R)^i$ is the consumption share of a household with no future
-income and $H_k$ is the expected present value of the next $k$ incomes; the propensities decrease
-in the horizon towards the infinite-horizon $\kappa=1-\Thorn/R$. We then add retirement and a
-pension. With a lump-sum pension the retired phase is an income-fluctuation problem in its own
-right and everything survives. With a means-tested pension we settle a claim often made
-informally: a means test does make the policy non-monotone, but not for the reason usually given.
-Optimal saving rises with cash on hand whatever the continuation, by Topkis, so a value function
-made non-concave by the test cannot by itself reverse it; what the test reverses is consumption,
-which jumps down at the wealth where the household gives the pension up, and cash on hand itself,
-once the taper is steeper than the gross return. Finally we report what the life cycle does for
-Light's Theorem 1, that saving rises with the interest rate: it holds at every age, exactly, below
-a critical degree of relative risk aversion of about $3.4$ at Aiyagari's calibration, and fails
-above it, so the life cycle delivers his $\mu=3$ and not his $\mu=5$. The programme's target is
-uniqueness of the stationary equilibrium at relative risk aversion above one, which the infinite
-horizon could not close: in a life cycle every comparative static is a finite induction, wealth is
-bounded, and the age-one distribution is common to every rate.
+This is the record of a programme to formalise overlapping-generations economies in Lean 4. A
+household that lives $J$ periods against uninsurable earnings risk and a borrowing constraint
+solves a finite backward induction, so everything proved for the infinite-horizon Bellman operator
+with an arbitrary continuation applies stage by stage with no fixed point. On top of that we prove
+the finite-horizon sandwich, $\kappa_k m\le c_k\le\kappa_k(m+H_k(z))$ with
+$1/\kappa_k=\sum_{i\le k}(\Thorn/R)^i$, and then that $\kappa_k$ is exactly the reciprocal of that
+geometric sum, so the gap to its infinite-horizon limit closes at a known rate. Adding retirement
+and a pension, we settle a claim often made informally: a means test does make the policy
+non-monotone, but not for the reason usually given. Saving rises with cash on hand whatever the
+continuation, by Topkis, so a value function made non-concave by the test cannot by itself reverse
+it; what the test reverses is consumption, and cash on hand itself once the taper is steeper than
+the gross return. The main result is existence of a stationary equilibrium with both boundary
+conditions discharged: capital supply is a finite composition, with no stationary distribution,
+no Feller property and no Doeblin condition, and it is bracketed above and below by affine bounds
+on a cohort's accumulated assets whose coefficients are explicit recursions in the discount
+factor, the interest rate, the earnings process and the horizon. Nothing in the hypotheses refers
+to the household's decisions, and at Aiyagari's calibration they hold on an interval of five
+percentage points containing the true equilibrium. We also report what the life cycle does for
+Light's Theorem 1, that saving rises with the interest rate: it holds at every age below a
+critical relative risk aversion of about $3.4$, so the life cycle delivers Aiyagari's $\mu=3$ and
+not his $\mu=5$; at logarithmic utility we give a sufficient condition that is true where the
+Euler condition is false. Where the bounds stop is the same obstruction at both ends, that a power
+mean with negative exponent is superadditive rather than $1$-Lipschitz.
 \end{abstract}
 
 \noindent\emph{JEL:} C63, D52, E21. \quad \emph{Keywords:} overlapping generations, life cycle,

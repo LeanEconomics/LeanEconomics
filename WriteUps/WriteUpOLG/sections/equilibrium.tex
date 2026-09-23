@@ -7,6 +7,11 @@ pushed forward by the policies of the ages in between. This is the structural ad
 life cycle over the infinite horizon, and it removes most of the machinery the stationary case
 needed.
 
+Two of the consumption bounds this section uses are developed in Section~\ref{sec:thm1}, where
+they arise in the hunt for the critical risk aversion: the constraint-incidence bound of
+Theorem~\ref{thm:incidence} and the asset-dependent saving floor of Section~\ref{sec:assetdep}.
+Nothing here depends on the verdict of that section.
+
 \subsection{The aggregate is a finite composition}
 
 Because assets at birth are degenerate at zero, no measure theory is required. Let
@@ -46,24 +51,54 @@ first-order stochastic dominance of the stationary distributions; here the whole
 inequality between two functions on the same finite state space, because the distribution the two
 economies start from is literally the same.
 
-\subsection{A floor on saving from primitives}
+\subsection{Uniqueness}
 
-Existence needs capital supply at the top of the rate interval to exceed demand. In the infinite
-horizon the only floor available came from an ergodic identity that loses a factor
-$\|u'\|_\infty^2/\operatorname{Var}$, with the consequences for the constants reported in the
-companion write-up. The life cycle needs nothing of the kind: the upper sandwich of
-Theorem~\ref{thm:sandwich} bounds consumption at every age, and what is not consumed is saved.
+\begin{theorem}[Single crossing]\label{thm:thm3}
+A capital supply that never falls with the rate meets a strictly falling demand at most once.
+\formal{IncomeFluctuation.olgEquilibriumRate\_unique}
+\end{theorem}
 
-\begin{proposition}[Affine floor on saving]\label{prop:floor}
-At every age and every state in the region,
-\[
-  g_k(a,z)\ \ge\ (1-\kappa_k)\bigl(y_{\min}+Ra\bigr)-\kappa_k H_k(z).
-\]
-\formal{IncomeFluctuation.le\_stagePolicy}
-\end{proposition}
+With Theorem~\ref{thm:thm2} this reduces uniqueness of the stationary equilibrium to Light's
+Theorem 1, that saving rises with the rate at every age, which is the subject of
+Section~\ref{sec:thm1}: it holds at Aiyagari's calibration for relative risk aversion up to about
+$3.4$, so the chain closes at his $\mu=3$ and not at his $\mu=5$.
 
-Iterated from zero assets at birth this is an explicit floor on the assets of every cohort, in
-the primitives alone: the discount factor, the rate, the earnings bounds and the horizon.
+\subsection{Continuity, and existence}
+
+The last input is continuity of capital supply in the rate. In the infinite horizon this was a
+substantial development, because the stationary distribution itself had to be shown to move
+continuously. Here there is no stationary distribution: capital supply is a finite composition of
+finitely many policies, so all that is needed is that each policy moves continuously with the
+rate, and that continuity composes.
+
+We take the route of the companion write-up and put the interest rate into the state, so that
+Berge's theorem gives continuity in assets and the rate jointly rather than continuity in a
+parameter. That device was used there at the fixed point, but everything it rests on --- that the
+feasible sets and the objectives agree on the slice --- holds for an arbitrary continuation. So
+it works stage by stage, and here it is easier, because the slice of the augmented Bellman
+iterate is the iterate of the sliced programme by a plain induction, with no fixed point to
+identify (\lean{sliceAt\_bellman}, \lean{sliceAt\_augStageValue}). The augmented argmax at each
+stage is then a singleton, since the sliced one is by Carroll--Kimball concavity of the iterates
+(\lean{argmax\_aug\_stage\_eq\_singleton}), so the stage policy is jointly continuous
+(\lean{continuousOn\_augStagePolicy}) and agrees with the sliced one
+(\lean{augStagePolicy\_eq}). Running the cohort recursion in the augmented state
+(\lean{augCohortAssets}) gives a composition of continuous maps that reads, at a rate in range, as
+capital supply at that rate (\lean{augCohortAssets\_eq}, \lean{olgSupply\_eq}).
+
+\begin{theorem}[Capital supply is continuous]\label{thm:cont}
+$r\mapsto K(r)$ is continuous on $[r_{lo},r_{hi}]$.
+\formal{IncomeFluctuation.continuousOn\_olgSupply}
+\end{theorem}
+
+\begin{theorem}[Existence]\label{thm:exist}
+If capital supply lies below demand at the bottom of the interval and above it at the top, and
+demand is continuous, then the two meet: there is a rate in $[r_{lo},r_{hi}]$ at which the capital
+the cohorts accumulate equals the capital the firm demands.
+\formal{IncomeFluctuation.exists\_olgEquilibrium}
+\end{theorem}
+
+Both hypotheses of Theorem~\ref{thm:exist} are about the solved model. The rest of this section
+replaces them with inequalities that never mention the household's policy or value function.
 
 \subsection{Where the household can be}\label{sec:reach}
 
@@ -124,114 +159,56 @@ own. When $R<1$ the sequence $\rho_j$ converges to $y_{\max}/(1-R)$, so cohort a
 without any appeal to optimality: at $r=-7\%$ the bound is $42.1$ against a capital demand of
 $56.3$.
 
-\subsection{Uniqueness}
+\subsection{The propensity in closed form}\label{sec:geom}
 
-\begin{theorem}[Single crossing]\label{thm:thm3}
-A capital supply that never falls with the rate meets a strictly falling demand at most once.
-\formal{IncomeFluctuation.olgEquilibriumRate\_unique}
-\end{theorem}
+Both bounds below are built from the finite-horizon propensity $\kappa_k$ and from human wealth,
+and both need to know not just where $\kappa_k$ sits but how fast it settles.
 
-With Theorem~\ref{thm:thm2} this reduces uniqueness of the stationary equilibrium to Light's
-Theorem 1, that saving rises with the rate at every age, which is the subject of
-Section~\ref{sec:thm1}: it holds at Aiyagari's calibration for relative risk aversion up to about
-$3.4$, so the chain closes at his $\mu=3$ and not at his $\mu=5$.
-
-\subsection{Continuity, and existence}
-
-The last input is continuity of capital supply in the rate. In the infinite horizon this was a
-substantial development, because the stationary distribution itself had to be shown to move
-continuously. Here there is no stationary distribution: capital supply is a finite composition of
-finitely many policies, so all that is needed is that each policy moves continuously with the
-rate, and that continuity composes.
-
-We take the route of the companion write-up and put the interest rate into the state, so that
-Berge's theorem gives continuity in assets and the rate jointly rather than continuity in a
-parameter. That device was used there at the fixed point, but everything it rests on --- that the
-feasible sets and the objectives agree on the slice --- holds for an arbitrary continuation. So
-it works stage by stage, and here it is easier, because the slice of the augmented Bellman
-iterate is the iterate of the sliced programme by a plain induction, with no fixed point to
-identify (\lean{sliceAt\_bellman}, \lean{sliceAt\_augStageValue}). The augmented argmax at each
-stage is then a singleton, since the sliced one is by Carroll--Kimball concavity of the iterates
-(\lean{argmax\_aug\_stage\_eq\_singleton}), so the stage policy is jointly continuous
-(\lean{continuousOn\_augStagePolicy}) and agrees with the sliced one
-(\lean{augStagePolicy\_eq}). Running the cohort recursion in the augmented state
-(\lean{augCohortAssets}) gives a composition of continuous maps that reads, at a rate in range, as
-capital supply at that rate (\lean{augCohortAssets\_eq}, \lean{olgSupply\_eq}).
-
-\begin{theorem}[Capital supply is continuous]\label{thm:cont}
-$r\mapsto K(r)$ is continuous on $[r_{lo},r_{hi}]$.
-\formal{IncomeFluctuation.continuousOn\_olgSupply}
-\end{theorem}
-
-\begin{theorem}[Existence]\label{thm:exist}
-If capital supply lies below demand at the bottom of the interval and above it at the top, and
-demand is continuous, then the two meet: there is a rate in $[r_{lo},r_{hi}]$ at which the capital
-the cohorts accumulate equals the capital the firm demands.
-\formal{IncomeFluctuation.exists\_olgEquilibrium}
-\end{theorem}
-
-Both hypotheses of Theorem~\ref{thm:exist} are about the solved model. The rest of this section
-replaces them with inequalities that never mention the household's policy or value function.
-
-\subsection{The ceiling, from the budget alone}
-
-\begin{proposition}[A forward-invariant level caps supply]\label{prop:ceiling}
-If $0\le B\le\bar a$ and $RB+y_{\max}\le B$, then capital per head is at most $B$.
-\formal{IncomeFluctuation.olgCapital\_le\_of\_invariant}
+\begin{proposition}[The finite-horizon propensity]\label{prop:kappa}
+Write $q=\Thorn/R$. Then $\kappa_k\sum_{i\le k}q^i=1$, and hence
+$\kappa_k\bigl(1-q^{k+1}\bigr)=1-q$: the propensity exceeds its infinite-horizon limit $1-q$ by
+exactly $\kappa_kq^{k+1}$.
+\formal{IncomeFluctuation.stageMPC\_mul\_mpcSum},
+\lean{IncomeFluctuation.stageMPC\_mul\_one\_sub\_pow}
 \end{proposition}
 
-A household starting below $B$ cannot carry forward more than its cash on hand, which is at most
-$RB+y_{\max}\le B$, so it never leaves $[0,B]$ and over $K+1$ periods holds at most $(K+1)B$. No
-optimality, no sandwich, no slackness. Such a $B$ exists whenever $R<1$, taking $B\ge
-y_{\max}/(1-R)$, which is exactly where a Cobb--Douglas demand curve is large.
+The defining recursion $\kappa_{k+1}=\kappa_kR/(\Thorn+\kappa_kR)$ is exactly
+$1/\kappa_{k+1}=1+q/\kappa_k$, so the reciprocal accumulates the geometric series and nothing
+else. The same sum tames the slope that both bounds share. Writing $S_k=\sum_{i\le k}q^i$, the
+recursion $G_0=1$, $G_{k+1}=1+G_k(1-\kappa_{k+1})R$ has an age-dependent coefficient, but
+$W_k=G_kS_k$ obeys $W_{k+1}=S_{k+1}+\Thorn W_k$, which does not. Then $S_{k+1}\ge1$ and
+$(1-q)S_k\le1$ give the bound that matters.
 
-That is the cheapest ceiling, and it is not the sharpest. The constraint-incidence bound of
-Theorem~\ref{thm:incidence} says the household will not want to carry that much: consuming at
-least $\kappa_k(m+H_k(z))$ it saves at most $(1-\kappa_k)(y_z+Ra)-\kappa_kH_k(z)$, and the
-forward-invariant level that follows is about half the size.
-
-\begin{proposition}[The sharper ceiling]\label{prop:ceiling2}
-If $B\le\bar a$ and, at every age and earnings state,
-$(1-\kappa_j)(y_w+RB)-\kappa_jH_j(w)\le B$, then capital per head is at most $B$.
-\formal{IncomeFluctuation.olgCapital\_le\_of\_incidence}
+\begin{proposition}[A slope that grows]\label{prop:slope}
+$G_k\ \ge\ (1-q)\sum_{j\le k}\Thorn^{\,j}$.
+\formal{IncomeFluctuation.mul\_geomSum\_le\_cohortSlope}
 \end{proposition}
 
-At Aiyagari's calibration (\texttt{numerics/ceiling.m}):
+Where the crude $G_k\ge1$ does not grow at all, this grows geometrically, and
+Section~\ref{sec:sharpnum} reports what that is worth.
 
-\begingroup\small
-\begin{center}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-& $r=-7\%$ & $r=-6\%$ & highest $r_{lo}$ that works\\
-\midrule
-Capital demand & $56.25$ & $28.13$ & \\
-Ceiling from the budget & $42.52$ & $49.61$ & $-6.73\%$\\
-Ceiling from the incidence bound & $22.17$ & $25.62$ & $-5.85\%$\\
-\bottomrule
-\end{tabular}
-\end{center}
-\endgroup
+\subsection{A floor on capital}\label{sec:clampfloor}
 
-So the margin roughly doubles at a fixed endpoint, and the endpoint can be taken nearly a point
-closer to zero. The household still enters only through $\kappa$ and $H$, both explicit recursions
-in the primitives, so Theorem~\ref{thm:exist2} keeps its character; the price is one extra
-hypothesis, that the artefactual cap is slack at the low rate, which by Section~\ref{sec:reach} is
-not vacuous below the rate of time preference
-(\lean{IncomeFluctuation.exists\_olgEquilibrium\_of\_sharpBounds}).
+Existence needs capital supply above demand at the top of the rate interval. In the infinite
+horizon the only floor available came from an ergodic identity that loses a factor
+$\|u'\|_\infty^2/\operatorname{Var}$. The life cycle needs nothing of the kind: the upper sandwich
+of Theorem~\ref{thm:sandwich} bounds consumption at every age, and what is not consumed is saved.
 
-\subsection{The floor, as an affine bound on accumulated assets}
-
-Iterating Proposition~\ref{prop:floor} is not a matter of tracking a distribution over assets.
-An affine lower bound suffices:
+\begin{proposition}[Affine floor on saving]\label{prop:floor}
+At every age and every state in the region,
 \[
-  F_k(z)+G_k\,a\ \le\ A_k(a,z),
+  g_k(a,z)\ \ge\ (1-\kappa_k)\bigl(y_z+Ra\bigr)-\kappa_k H_k(z).
 \]
-with a slope $G$ common to all earnings states and an intercept $F$ carrying one value per state,
+\formal{IncomeFluctuation.le\_stagePolicy\_on}, \lean{IncomeFluctuation.le\_stagePolicy}
+\end{proposition}
+
+Iterating it is not a matter of tracking a distribution over assets. An affine lower bound on a
+cohort's accumulated assets suffices, $F_k(z)+G_ka\le A_k(a,z)$, with the slope $G$ of
+Section~\ref{sec:geom} common to all earnings states and an intercept carrying one value per
+state:
 \[
-  G_0=1,\qquad G_{k+1}=1+G_k(1-\kappa_{k+1})R,
-\]
-\[
-  F_0=0,\qquad F_{k+1}(z)=\textstyle\sum_{z'}\pi(z,z')F_k(z')
+  F_0=0,\qquad
+  F_{k+1}(z)=\textstyle\sum_{z'}\pi(z,z')F_k(z')
     +G_k\bigl[(1-\kappa_{k+1})y_z-\kappa_{k+1}H_{k+1}(z)\bigr].
 \]
 
@@ -242,207 +219,78 @@ $\sum_z\nu_zF_K(z)/(K+1)$.
 \lean{IncomeFluctuation.le\_olgCapital}
 \end{proposition}
 
-The state dependence of $F$ is the whole content of the bound, not a refinement. Reading
+The state dependence of $F$ is the whole content, not a refinement. Reading
 Proposition~\ref{prop:floor} at the worst earnings state instead, which is the only way to get a
 bound uniform in $z$, gives a floor that is identically zero at every rate in the calibration of
-Section~\ref{sec:num2}, while the state-dependent one reaches $4.75$ at $r=10\%$ against a demand
-of $3.13$.
+Section~\ref{sec:num2}, against $4.75$ at $r=10\%$ for the state-dependent one.
 
-Averaging against earnings weights that the chain leaves alone collapses the vector recursion to a
-scalar one, and then the sign of each increment has an exact answer.
+Averaging against weights the chain leaves alone collapses the vector recursion to a scalar one,
+and the sign of each increment then has an exact answer.
 
 \begin{theorem}[The floor rises exactly when the household is patient]\label{thm:patient}
 Let $\bar y$ and $\bar H_k$ be the averages of earnings and of human wealth under weights $\nu$
-satisfying $\nu\pi=\nu$. If $\text{\th}\ge1$, equivalently $\beta R\ge1$, then
+satisfying $\nu\pi=\nu$. If $\Thorn\ge1$, equivalently $\beta R\ge1$, then
 $\kappa_k\bar H_k\le(1-\kappa_k)\bar y$ at every age, so the aggregate floor never falls and is
 never negative.
 \formal{IncomeFluctuation.stageMPC\_mul\_sum\_stageHumanWealth\_le},
 \lean{IncomeFluctuation.sum\_mul\_cohortFloor\_mono}
 \end{theorem}
 
-The increment of the aggregate floor at each age is $G_k\kappa_{k+1}\bar y$ times the slack in
-that inequality, and the inequality reverses below $\text{\th}=1$. So the provable floor is flat
-under the rate of time preference and climbs above it, which is what Section~\ref{sec:num2} shows
-and why the upper endpoint of the rate interval has to be taken above $1/\beta-1$. The proof is
-one induction: writing $v_k=(1-\kappa_k)/\kappa_k$ and $u_k=\bar H_k/\bar y$, both satisfy
-first-order recursions, $v_{k+1}=(\text{\th}/R)(1+v_k)$ and $u_{k+1}=(1+u_k)/R$, from the same
-starting point, and $\text{\th}\ge1$ keeps the first above the second.
+The increment of the aggregate floor is $G_k\kappa_{k+1}\bar y$ times the slack in that
+inequality, and the inequality reverses below $\Thorn=1$. So the provable floor is flat under the
+rate of time preference and climbs above it, which is why the upper endpoint of the rate interval
+has to be taken above $\lambda=1/\beta-1$. The proof is one induction: writing
+$v_k=(1-\kappa_k)/\kappa_k$ and $u_k=\bar H_k/\bar y$, both satisfy first-order recursions,
+$v_{k+1}=(\Thorn/R)(1+v_k)$ and $u_{k+1}=(1+u_k)/R$, from the same starting point, and
+$\Thorn\ge1$ keeps the first above the second.
 
-\subsection{Existence, with both ends discharged}
+One thing the affine form cannot do is refuse to claim negative assets. Its intercept goes badly
+negative: at the calibration, $160$ of $413$ entries are below zero and the worst is $-62$, with
+$F_K$ running from $-58.8$ at the lowest earnings to $+685$ at the highest. A cohort's accumulated
+assets cannot be negative, so all of that is slack the aggregate inherits. Reading the floor as a
+function of assets rather than as an affine form fixes it, because the saving floor can then be
+clamped at zero where it belongs:
+\[
+  \Lambda_0(z,a)=a,\qquad
+  \Lambda_{k+1}(z,a)=a+\textstyle\sum_{z'}\pi(z,z')\,\Lambda_k\bigl(z',\Phi_{k+1}(z,a)\bigr),
+\]
+with $\Phi$ the clamped saving floor of Section~\ref{sec:assetdep}. The proof needs only that
+$\Lambda_k$ is increasing in assets, which the clamp preserves.
 
-\begin{theorem}[Existence from primitives]\label{thm:exist2}
-Fix a rate interval and continuous demand $D$. Suppose there is a $B$ with $0\le B\le\bar a$,
-$(1+r_{lo})B+y_{\max}\le B$ and $B\le D(r_{lo})$; and suppose $\rho_{K+1}<\bar a$ and
-$D(r_{hi})\le\sum_z\nu_zF_K(z)/(K+1)$ at $r_{hi}$. Then there is a rate in the interval at which
-the capital the cohorts accumulate equals the capital the firm demands.
-\formal{IncomeFluctuation.exists\_olgEquilibrium\_rate}
-\end{theorem}
-
-Nothing in those hypotheses refers to the household's decisions. They are inequalities among the
-discount factor, the interest rate, the earnings process, the horizon and the demand curve, with
-$\rho$, $F$ and $G$ explicit finite recursions in those primitives. With
-Theorem~\ref{thm:thm2} and Theorem~\ref{thm:thm3} the life-cycle economy therefore has the same
-three-part structure as the stationary one --- existence, monotone supply, single crossing ---
-with every piece proved and only Light's Theorem 1 assumed.
-
-\subsection{The propensity in closed form, and the floor with it}\label{sec:geom}
-
-The last hypothesis can be put in closed form too, and doing so turns on knowing not just that
-$\kappa_k$ exceeds its infinite-horizon limit but how fast it settles.
-
-\begin{proposition}[The finite-horizon propensity]\label{prop:kappa}
-Write $q=\text{\th}/R$. Then $\kappa_k\sum_{i\le k}q^i=1$, and hence
-$\kappa_k\bigl(1-q^{k+1}\bigr)=1-q$: the propensity exceeds $1-q$ by exactly $\kappa_kq^{k+1}$.
-\formal{IncomeFluctuation.stageMPC\_mul\_mpcSum},
-\lean{IncomeFluctuation.stageMPC\_mul\_one\_sub\_pow}
+\begin{proposition}[The clamped floor]\label{prop:clampfloor}
+$\Lambda_k(z,a)\le A_k(a,z)$ on any reachable family, so capital per head is at least
+$\sum_z\nu_z\Lambda_K(z,0)/(K+1)$, which is at least what Proposition~\ref{prop:affine} gives.
+\formal{IncomeFluctuation.cohortFloorAt\_le\_cohortAssets},
+\lean{IncomeFluctuation.le\_olgCapital\_at}
 \end{proposition}
 
-The defining recursion $\kappa_{k+1}=\kappa_kR/(\text{\th}+\kappa_kR)$ is exactly
-$1/\kappa_{k+1}=1+q/\kappa_k$, so the reciprocal accumulates the geometric series and nothing
-else. The same sum tames the slope. Writing $S_k=\sum_{i\le k}q^i$, the recursion
-$G_{k+1}=1+G_k(1-\kappa_{k+1})R$ has an age-dependent coefficient, but $W_k=G_kS_k$ obeys
-$W_{k+1}=S_{k+1}+\text{\th}W_k$, which does not. Then $S_{k+1}\ge1$ and $(1-q)S_k\le1$ give the
-bound that matters.
+\subsection{A ceiling on capital}\label{sec:affceil}
 
-\begin{proposition}[A slope that grows]\label{prop:slope}
-$G_k\ \ge\ (1-q)\sum_{j\le k}\text{\th}^{\,j}$.
-\formal{IncomeFluctuation.mul\_geomSum\_le\_cohortSlope}
+Existence also needs capital supply below demand at the bottom of the interval, and there three
+bounds are available, each asking for more and giving more.
+
+The cheapest uses the budget and nothing else. A household cannot carry forward more than its cash
+on hand, so an asset level $B$ with $RB+y_{\max}\le B$ is never left once entered.
+
+\begin{proposition}[A forward-invariant level caps supply]\label{prop:ceiling}
+If $0\le B\le\bar a$ and $RB+y_{\max}\le B$, then capital per head is at most $B$.
+\formal{IncomeFluctuation.olgCapital\_le\_of\_invariant}
 \end{proposition}
 
-Average human wealth is a geometric sum as well, $\bar H_{k+1}=\bar yR^{-1}\sum_{i\le k}R^{-i}$,
-so every factor in the increment of Theorem~\ref{thm:patient} is explicit and the aggregate floor
-becomes a closed-form expression in the discount factor, the interest rate, average earnings and
-the horizon, with no recursion in the model left to run
-(\lean{IncomeFluctuation.geomFloor\_le\_sum\_mul\_cohortFloor}).
+The second says the household will not want to carry that much. Consuming at least
+$\kappa_k(m+H_k(z))$ by the constraint-incidence bound of Theorem~\ref{thm:incidence}, it saves at
+most $(1-\kappa_k)(y_z+Ra)-\kappa_kH_k(z)$.
 
-\begin{theorem}[Existence with both ends in closed form]\label{thm:exist3}
-Under the conditions of Theorem~\ref{thm:exist2}, with the floor hypothesis replaced by the
-closed-form expression and with $1\le\text{\th}\le R$ at $r_{hi}$, a stationary equilibrium
-exists.
-\formal{IncomeFluctuation.exists\_olgEquilibrium\_of\_geomBounds}
-\end{theorem}
+\begin{proposition}[The incidence ceiling]\label{prop:ceiling2}
+If $B\le\bar a$ and, at every age and earnings state,
+$(1-\kappa_j)(y_w+RB)-\kappa_jH_j(w)\le B$, then capital per head is at most $B$.
+\formal{IncomeFluctuation.olgCapital\_le\_of\_incidence}
+\end{proposition}
 
-The two conditions on $\text{\th}$ say the household is patient enough for the floor to climb and
-impatient enough for its propensity to settle. Knowing the rate is worth a great deal. Using only
-$\kappa_k\ge1-q$ and $G_k\ge1$, the resulting bound first exceeds Cobb--Douglas demand at
-$r\approx610\%$, where a lifetime of feasible saving reaches $6\times10^{50}$; using
-Proposition~\ref{prop:slope} it does so at $r\approx18\%$, where the same quantity is
-$3.8\times10^{5}$ (\texttt{numerics/closedform.m}, \texttt{numerics/bisectC.m}). What is still
-given away is the exact propensity inside the increment and the exact slope: at $r_{hi}=10\%$ the
-closed form gives $0.48$ against a true floor of $4.75$ and a demand of $3.13$, so at a
-calibrated rate it is the finite recursion of Section~\ref{sec:num2} that has to be evaluated, not
-the closed form.
-
-\subsection{What the numbers say}\label{sec:num2}
-
-The calibration is the one used throughout: $J=60$, $\beta=0.96$, relative risk aversion $3$, the
-Tauchen discretisation of Aiyagari's earnings process with $\rho=0.9$ and $\sigma=0.4$, and a
-Cobb--Douglas technology with $\alpha=9/25$ and $\delta=2/25$, so capital demand is
-$\alpha/((1-\alpha)(r+\delta))$. Capital supply is the average asset holding across the sixty
-cohorts, each born with nothing. The last column is not the solved supply but the floor that
-Proposition~\ref{prop:floor} provably delivers, iterated across ages with the expectation of
-$H_k$ taken under the ergodic distribution and Jensen's inequality applied to the outer maximum
-(\texttt{numerics/olgexist.m}).
-
-\begingroup\small
-\begin{center}
-\begin{tabular}{@{}lccccccc@{}}
-\toprule
-$r$ & $-4\%$ & $0\%$ & $\lambda=4.17\%$ & $6\%$ & $8\%$ & $10\%$ & $15\%$ \\
-\midrule
-Capital demand & $14.06$ & $7.03$ & $4.62$ & $4.02$ & $3.52$ & $3.13$ & $2.45$ \\
-Capital supply & $1.03$ & $1.98$ & $3.78$ & $4.85$ & $6.18$ & $7.69$ & $12.49$ \\
-Provable floor & $0.00$ & $0.00$ & $0.00$ & $1.52$ & $3.13$ & $4.75$ & $9.40$ \\
-\bottomrule
-\end{tabular}
-\end{center}
-\endgroup
-
-Supply crosses demand between $4.17\%$ and $6\%$, so the equilibrium rate exceeds the rate of
-time preference, which is what Section~\ref{sec:reach} has to accommodate. The provable floor
-crosses between $8\%$ and $10\%$, so $r_{hi}=10\%$ suffices for the upper inequality of
-Theorem~\ref{thm:exist} and $r_{hi}=8\%$ does not. The optimal path reaches assets of $82$ at
-$r=10\%$, against the crude reachable bound of $9{,}044$ and a demand of $3.13$; the constants are
-ordinary, unlike the stationary case, where the corresponding instantiation put $r_{hi}$ within
-$10^{-27}$ of $\lambda$.
-
-\subsection{The theorem checked, hypothesis by hypothesis}\label{sec:sharpnum}
-
-Theorem~\ref{thm:exist2} and its sharper sibling are only worth as much as the hypotheses they
-carry, so it is worth checking every one at a calibration. Take the calibration of
-Section~\ref{sec:num2} with $r_{lo}=-7\%$, $r_{hi}=10\%$, artefactual cap $\bar a=10^4$ and
-$B=30$. Every hypothesis holds, with the margin shown (\texttt{numerics/sharpcheck.m}).
-
-\begingroup\small
-\begin{center}
-\begin{tabular}{@{}llr@{}}
-\toprule
-Hypothesis & What it asks & Margin\\
-\midrule
-$0<1+r_{lo}$, $0<1+r_{hi}$, $r_{lo}\le r_{hi}$ & the rates are admissible and ordered
-  & $0.93$, $1.10$, $0.17$\\
-$r_{lo}+\delta>0$ & demand is continuous on the interval & $0.010$\\
-$\nu\ge0$, $\sum\nu=1$ & the earnings weights are a distribution & $0.014$, exact\\
-cap slack at $r_{lo}$ & $\bar a>y_{\max}+R_{lo}\bar a$ & $697$\\
-$0\le B\le\bar a$ & the ceiling level is admissible & $30$, $9970$\\
-forward invariance & $(1-\kappa_j)(y_w+R_{lo}B)-\kappa_jH_j(w)\le B$ & $0.585$\\
-$B\le D(r_{lo})$ & the ceiling is below demand & $26.25$\\
-$\rho_{K+1}<\bar a$ & a lifetime of feasible saving fits & $967$\\
-$D(r_{hi})\le\sum_z\nu_zF_K(z)/(K+1)$ & the floor is above demand & $1.628$\\
-\bottomrule
-\end{tabular}
-\end{center}
-\endgroup
-
-The constants behind them are: a reachable bound $\rho_{K+1}=9{,}033$, a ceiling fixed point
-$29.42$ against a demand of $56.25$ at the bottom, and a provable floor of $4.75$ against a demand
-of $3.13$ at the top. The equilibrium the theorem then asserts is real: solving the model, capital
-supply crosses demand at $r=5.09\%$, comfortably inside the interval.
-
-\subsection{How far the hypotheses reach}
-
-Sweeping the endpoints (\texttt{numerics/sharpsweep.m}) shows where each side gives way.
-
-\begingroup\small
-\begin{center}
-\begin{tabular}{@{}lccccc@{}}
-\toprule
-$r_{lo}$ & $-7.9\%$ & $-7.0\%$ & $-6.5\%$ & $-6.0\%$ & $-5.5\%$\\
-\midrule
-Capital demand & $562.50$ & $56.25$ & $37.50$ & $28.13$ & $22.50$\\
-Ceiling & $19.54$ & $22.17$ & $23.81$ & $25.62$ & $27.59$\\
-Room for $B$ & $542.96$ & $34.09$ & $13.69$ & $2.51$ & none\\
-\midrule
-$r_{hi}$ & $6\%$ & $8\%$ & $9\%$ & $10\%$ & $15\%$\\
-\midrule
-Capital demand & $4.018$ & $3.516$ & $3.309$ & $3.125$ & $2.446$\\
-Provable floor & $1.524$ & $3.129$ & $3.934$ & $4.753$ & $9.397$\\
-Reachable bound & $1.6\!\times\!10^{3}$ & $3.7\!\times\!10^{3}$ & $5.8\!\times\!10^{3}$
-  & $9.0\!\times\!10^{3}$ & $8.7\!\times\!10^{4}$\\
-\bottomrule
-\end{tabular}
-\end{center}
-\endgroup
-
-The hypotheses hold for any $r_{lo}$ at or below $-5.85\%$ and any $r_{hi}$ at or above $8.38\%$,
-so the \emph{tightest} bracket they give is $[-5.85\%,\,8.38\%]$, needing a cap of
-$4.4\times10^3$. The true equilibrium at $5.09\%$ sits inside it with room on both sides. With the
-budget ceiling in place of the incidence one the low endpoint would have to be $-6.73\%$ or below,
-which is the whole of what Proposition~\ref{prop:ceiling2} buys.
-
-Two features of the calibration decide the endpoints, and they are different. At the bottom it is
-the demand curve's pole at $r=-\delta$ that makes demand large, and the ceiling grows slowly enough
-to stay under it. At the top it is the patience criterion of Theorem~\ref{thm:patient}: below the
-rate of time preference the provable floor does not move at all, so the upper endpoint cannot be
-anywhere near $\lambda=4.17\%$, and it in fact has to be about twice that.
-
-\subsection{The ceiling read as an average, not a worst case}\label{sec:affceil}
-
-Proposition~\ref{prop:ceiling2} bounds every age's assets by one forward-invariant level, and so
-pays $(K+1)B$ for a cohort that holds nothing when it is born, nothing when it dies, and anything
-like $B$ only in between. The floor never made that mistake: it carries the affine bound
-$F_k(z)+G_ka$ and aggregates once at the end. The ceiling can be built the same way, from the same
-slope $G$, with the saving ceiling of the incidence bound in place of the saving floor:
+Both bound \emph{every} age's assets by one level, and so pay $(K+1)B$ for a cohort that holds
+nothing when it is born, nothing when it dies, and anything like $B$ only in between. The floor
+never made that mistake, and the third ceiling does not either: it is the same affine object,
+built from the same slope $G$, with the saving ceiling in place of the saving floor,
 \[
   \bar F_0=0,\qquad
   \bar F_{k+1}(z)=\textstyle\sum_{z'}\pi(z,z')\bar F_k(z')
@@ -457,8 +305,8 @@ $\sum_z\nu_z\bar F_K(z)/(K+1)$.
 \lean{IncomeFluctuation.olgCapital\_le\_cohortCeil}
 \end{proposition}
 
-Replacing a worst case over ages by an average over them is worth a factor of fourteen
-(\texttt{numerics/affceil.m}).
+Replacing a worst case over ages by an average over them is worth a factor of fourteen, and it
+keeps working above the rate of time preference, where no forward-invariant level exists at all.
 
 \begingroup\small
 \begin{center}
@@ -467,19 +315,37 @@ Replacing a worst case over ages by an average over them is worth a factor of fo
 & $r=-7\%$ & $r=-4\%$ & $r=0\%$ & $r=\lambda$ & $r=5\%$\\
 \midrule
 Capital demand & $56.25$ & $14.06$ & $7.03$ & $4.62$ & $4.33$\\
-Invariant level & $22.17$ & $35.11$ & --- & --- & ---\\
-Affine ceiling & $1.54$ & $2.28$ & $3.86$ & $5.98$ & $6.47$\\
+Proposition~\ref{prop:ceiling}, the budget & $42.52$ & $74.41$ & --- & --- & ---\\
+Proposition~\ref{prop:ceiling2}, incidence & $22.17$ & $35.11$ & --- & --- & ---\\
+Proposition~\ref{prop:affceil}, affine & $1.54$ & $2.28$ & $3.86$ & $5.98$ & $6.47$\\
 True capital supply & $0.64$ & $1.03$ & $1.98$ & $3.78$ & $4.25$\\
 \bottomrule
 \end{tabular}
 \end{center}
 \endgroup
 
-The affine ceiling sits within a factor of $1.5$ to $2.4$ of the truth where the invariant level was
-out by a factor of twenty-six, and it keeps working above the rate of time preference, where no
-forward-invariant level exists at all. The bottom of the interval then rises from $-5.85\%$ to
-$+2.78\%$, against an absolute limit of $5.09\%$, which is where capital supply meets demand and
-where no upper bound on supply can help.
+\subsection{Existence from primitives}
+
+The two ends can now be put together, and the statement has taken four forms as the bounds
+improved. All four are in the development; the last is the one to read.
+
+\begin{theorem}[Existence from primitives]\label{thm:exist2}
+Fix a rate interval and continuous demand $D$. Suppose there is a $B$ with $0\le B\le\bar a$,
+$(1+r_{lo})B+y_{\max}\le B$ and $B\le D(r_{lo})$; and suppose $\rho_{K+1}<\bar a$ and
+$D(r_{hi})\le\sum_z\nu_zF_K(z)/(K+1)$ at $r_{hi}$. Then there is a rate in the interval at which
+the capital the cohorts accumulate equals the capital the firm demands.
+\formal{IncomeFluctuation.exists\_olgEquilibrium\_rate},
+\lean{IncomeFluctuation.exists\_olgEquilibrium\_of\_bounds}
+\end{theorem}
+
+Nothing in those hypotheses refers to the household's decisions. They are inequalities among the
+discount factor, the interest rate, the earnings process, the horizon and the demand curve, with
+$\rho$, $F$ and $G$ explicit finite recursions in those primitives. Three refinements follow.
+Proposition~\ref{prop:slope} turns the floor into a closed form with no recursion left to run
+(\lean{IncomeFluctuation.exists\_olgEquilibrium\_of\_geomBounds}, Theorem~\ref{thm:exist3} below);
+and Proposition~\ref{prop:ceiling2} replaces the budget ceiling
+(\lean{IncomeFluctuation.exists\_olgEquilibrium\_of\_sharpBounds}). The affine ceiling replaces it
+again, and at that point no auxiliary $B$ and no invariance condition survive.
 
 \begin{theorem}[Existence, both ends read the same way]\label{thm:exist4}
 With the ceiling at $r_{lo}$ and the floor at $r_{hi}$ both taken as weighted averages of affine
@@ -487,186 +353,141 @@ bounds on a cohort's accumulated assets, a stationary equilibrium exists.
 \formal{IncomeFluctuation.exists\_olgEquilibrium\_affine}
 \end{theorem}
 
-No forward-invariant level and no auxiliary $B$ survive in that statement: the two boundary
-conditions are the same object built twice, once from the saving ceiling and once from the saving
-floor, sharing a slope. Each half asks for what it can have. At the bottom the artefactual cap is
-slack, which holds below the rate of time preference; at the top it cannot be, and the reachable
-family of Section~\ref{sec:reach} stands in. Checking every hypothesis at $r_{lo}=2\%$,
-$r_{hi}=10\%$ and a cap of $10^4$ (\texttt{numerics/affcheck.m}), all hold, with the ceiling at
-$4.81$ against a demand of $5.63$ and the floor at $4.75$ against a demand of $3.13$. The bracket
-$[2\%,10\%]$ is half the width of the one Section~\ref{sec:sharpnum} could offer, and it still
-contains the true equilibrium.
+Reading the floor at the assets held as well gives the tightest form.
 
-\subsection{Why the top will not widen}\label{sec:topwall}
-
-The upper endpoint of $8.38\%$ is set by the provable floor meeting demand, and it is twice the
-rate of time preference. It is worth knowing whether that is a weakness of the bound or of the
-economics, and the answer is the first, with a definite cause.
-
-Start with where the floor loses. Running the floor's own recursion on the cohort's \emph{true}
-mean consumption path reproduces aggregate capital exactly, $6.180$ against $6.180$ at $r=8\%$
-(\texttt{numerics/diag.m}). So none of the loss is in the aggregation, the affine bound or the
-earnings weights: all of it is in the one inequality $c_k\le\kappa_k(m+H_k(z))$.
-
-That inequality is tight at the end of life and loose at the start.
-
-\begingroup\small
-\begin{center}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-Age & $0$ & $10$ & $30$ & $59$\\
-\midrule
-Consumption, truth over bound & $0.81$ & $0.88$ & $0.93$ & $1.00$\\
-Assets, floor over truth & --- & $0.50$ & $0.51$ & $0.48$\\
-\bottomrule
-\end{tabular}
-\end{center}
-\endgroup
-
-The leverage is what matters. At birth the household earns $1$ and consumes $0.698$, so it saves
-$0.302$; the bound allows it to consume $0.858$, so the provable saving is $0.142$. Overstating
-consumption by a fifth halves the saving, and the asset floor sits at about half the truth at every
-age thereafter.
-
-Three ways of tightening that inequality were tried and none works.
-
-\emph{Truncating the horizon.} Feeding the trivial bound $c\le m$ into the same Euler step $j$
-times rather than $k$ gives $c_k\le\kappa_j(m+H_j(z))$ for every $j\le k$, so the minimum over $j$
-is available, and the check confirms every branch is valid. It buys nothing: $\kappa_j(m+H_j)$ is
-decreasing in $j$, so the minimum is always the full-horizon branch already in use
-(\texttt{numerics/trunc.m}).
-
-\emph{Keeping the power mean.} The Euler step produces the power mean with exponent $-\mu$, and the
-proof relaxes it to the arithmetic mean, which is $20\%$ larger here. Substituting the power mean
-back is not legitimate: the step shifts by gross saving, and a power mean with negative exponent is
-superadditive, so the shift comes out larger inside than outside, which is the wrong way for an
-upper bound. The arithmetic version is what makes the shift exact. Carried through anyway the
-result is invalid, violating the true consumption function by $0.30$ and producing a floor of
-$7.45$ at $r=8\%$ against a true capital supply of $6.18$ (\texttt{numerics/riskupper.m}).
-
-\emph{Keeping the power mean with assets inside.} Putting the shift inside the mean avoids
-superadditivity, at the cost of evaluating tomorrow's bound at a saving \emph{ceiling} rather than
-at the true saving, which decouples the budget identity from the Euler step. That loses more than
-the power mean gains: the bound at birth rises from $0.858$ to $0.956$ against a truth of $0.698$
-(\texttt{numerics/gamma.m}).
-
-So the arithmetic relaxation is not an avoidable slip. Solving the budget identity simultaneously
-with the Euler step is what produces the sharp $\kappa_{k+1}(m+H_{k+1})$ form, and that is exactly
-what forces the arithmetic mean.
-
-Finally, the size of the prize. No lower bound on capital supply can exceed the truth, and the true
-crossing is at $5.09\%$, so the best any sharpening could do is move the upper endpoint from
-$8.38\%$ to $5.09\%$. The whole of that $3.3$ points is the young household's consumption being
-overstated by a fifth, and that overstatement is a risk effect: the household consumes less than
-permanent income because earnings are risky and the limit may bind. Capturing it needs the power
-mean, and the power mean is what the step cannot carry.
-
-\subsection{The floor read at the assets held}\label{sec:clampfloor}
-
-Section~\ref{sec:affceil} fixed the ceiling by refusing to worst-case over ages. The floor has a
-fault of the same kind, in a different place. Its intercept $F_k(z)$ goes badly negative: at the
-calibration, $160$ of $413$ entries are below zero and the worst is $-62$, with $F_K$ running from
-$-58.8$ at the lowest earnings to $+685$ at the highest
-(\texttt{numerics/floordiag.m}). A cohort's accumulated assets cannot be negative, so all of that
-is slack the aggregate inherits.
-
-An affine form cannot express the clamp. Reading the floor as a function of assets can:
-\[
-  \Lambda_0(z,a)=a,\qquad
-  \Lambda_{k+1}(z,a)=a+\textstyle\sum_{z'}\pi(z,z')\,\Lambda_k\bigl(z',\Phi_{k+1}(z,a)\bigr),
-\]
-with $\Phi$ the saving floor of Section~\ref{sec:assetdep}, clamped at zero. The proof needs only
-that $\Lambda_k$ is increasing in assets, which the clamp preserves.
-
-\begin{proposition}[The clamped floor]\label{prop:clampfloor}
-$\Lambda_k(z,a)\le A_k(a,z)$ on any reachable family, so capital per head is at least
-$\sum_z\nu_z\Lambda_K(z,0)/(K+1)$.
-\formal{IncomeFluctuation.cohortFloorAt\_le\_cohortAssets},
-\lean{IncomeFluctuation.le\_olgCapital\_at}
-\end{proposition}
-
-\begingroup\small
-\begin{center}
-\begin{tabular}{@{}lccccc@{}}
-\toprule
-& $r=5\%$ & $r=6\%$ & $r=7\%$ & $r=8\%$ & $r=10\%$\\
-\midrule
-Capital demand & $4.327$ & $4.018$ & $3.750$ & $3.516$ & $3.125$\\
-Affine floor & $0.704$ & $1.524$ & $2.329$ & $3.129$ & $4.753$\\
-Clamped floor & $2.091$ & $2.588$ & $3.169$ & $3.799$ & $5.187$\\
-True capital supply & $4.248$ & $4.848$ & $5.492$ & $6.180$ & $7.691$\\
-\bottomrule
-\end{tabular}
-\end{center}
-\endgroup
-
-The top of the interval falls from $8.38\%$ to $7.67\%$. Pairing it with the affine ceiling, whose
-intercept never goes negative because it is built from the saving ceiling, gives the tightest
-statement the development offers.
-
-\begin{theorem}[Existence, both ends read at the assets held]\label{thm:exist5}
+\begin{theorem}[Existence with both ends read at the assets held]\label{thm:exist5}
 With the affine ceiling at $r_{lo}$ and the clamped floor at $r_{hi}$, a stationary equilibrium
 exists.
 \formal{IncomeFluctuation.exists\_olgEquilibrium\_clamped}
 \end{theorem}
 
-Checking every hypothesis at $r_{lo}=2\%$, $r_{hi}=8\%$ and a cap of $10^4$
-(\texttt{numerics/clampcheck.m}), all hold, with the ceiling at $4.81$ against a demand of $5.63$
-and the floor at $3.80$ against a demand of $3.52$. The bracket has come down from the $17$ points
-of Section~\ref{sec:sharpnum} to $6$, and the tightest these bounds can give is
-$[2.78\%,\,7.67\%]$, against an absolute limit of $5.09\%$ on both sides.
+The two boundary conditions are then the same object built twice, once from the saving ceiling and
+once from the saving floor, sharing a slope. Each half asks for what it can have: at the bottom
+the artefactual cap is slack, which holds below the rate of time preference; at the top it cannot
+be, and the reachable family of Section~\ref{sec:reach} stands in. So the low endpoint must sit
+below $\lambda$ and the high endpoint above it, and Section~\ref{sec:sharpnum} shows a bracket that
+does.
 
-The same diagnostic closes the other candidate for the top for good. Re-running the power-mean
-recursion of Section~\ref{sec:topwall} with the \emph{true} saving reproduces the truth exactly, so
-all of its loss is the saving ceiling it has to use instead; and that ceiling is only $1.19$ times
-the truth at birth, yet still produces a worse bound than the arithmetic one, $0.956$ against
-$0.858$. A fifth of an overstatement compounded across fifty-nine steps is what does it. The
-arithmetic relaxation stays the best available.
+For completeness, the closed-form variant.
 
-\subsection{Why the bottom does not tighten the same way}\label{sec:botwall}
+\begin{theorem}[Existence in closed form]\label{thm:exist3}
+Under the conditions of Theorem~\ref{thm:exist2}, with the floor hypothesis replaced by the
+closed-form expression of Proposition~\ref{prop:slope} and with $1\le\Thorn\le R$ at $r_{hi}$, a
+stationary equilibrium exists.
+\formal{IncomeFluctuation.exists\_olgEquilibrium\_of\_geomBounds}
+\end{theorem}
 
-The floor gained from being read at the assets held because an affine form cannot express the
-clamp. The ceiling has no such nonlinearity to recover, and the measurement says so exactly:
-reading it at the assets held, with the same human wealth, gives the identical number at every
-rate, $4.8147$ against $4.8147$ at $r=2\%$ (\texttt{numerics/ceilat.m}). Given its one-step bound
-the affine ceiling is already exact.
+\subsection{What the numbers say}\label{sec:num2}
 
-What is left is the one-step bound itself, and there the asset-dependent incidence bound of
-Section~\ref{sec:assetdep} does help. It could not help
-Proposition~\ref{prop:ceiling2}, whose binding state was the highest earnings one where the cap
-was never active; but the affine ceiling averages over states, so the low earnings states where
-the cap bites now enter.
+The calibration is the one used throughout: $J=60$, $\beta=0.96$, relative risk aversion $3$, the
+Tauchen discretisation of Aiyagari's earnings process with $\rho=0.9$ and $\sigma=0.4$, and a
+Cobb--Douglas technology with $\alpha=9/25$ and $\delta=2/25$, so capital demand is
+$\alpha/((1-\alpha)(r+\delta))$ and $\lambda=4.17\%$. Capital supply is the average asset holding
+across the sixty cohorts, each born with nothing. The last row is not the solved supply but the
+floor of Proposition~\ref{prop:affine} (\texttt{numerics/olgexist.m}).
 
 \begingroup\small
 \begin{center}
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabular}{@{}lccccccc@{}}
 \toprule
-& $r=0\%$ & $r=2\%$ & $r=3\%$ & $r=4\%$ & highest $r_{lo}$\\
+$r$ & $-4\%$ & $0\%$ & $\lambda$ & $6\%$ & $8\%$ & $10\%$ & $15\%$ \\
 \midrule
-Capital demand & $7.031$ & $5.625$ & $5.114$ & $4.688$ &\\
-Ceiling, cap at zero assets & $3.863$ & $4.815$ & $5.334$ & $5.885$ & $+2.78\%$\\
-Ceiling, cap at the assets held & $3.470$ & $4.232$ & $4.676$ & $5.178$ & $+3.47\%$\\
-True capital supply & $1.978$ & $2.730$ & $3.186$ & $3.693$ &\\
+Capital demand & $14.06$ & $7.03$ & $4.62$ & $4.02$ & $3.52$ & $3.13$ & $2.45$ \\
+Capital supply & $1.03$ & $1.98$ & $3.78$ & $4.85$ & $6.18$ & $7.69$ & $12.49$ \\
+Provable floor & $0.00$ & $0.00$ & $0.00$ & $1.52$ & $3.13$ & $4.75$ & $9.40$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 \endgroup
 
-So there are $0.7$ points on the table, the same as the floor gave at the top. Taking them needs
-the ceiling read at the assets held, and that needs its argument, the saving ceiling, to increase
-with assets. It does: over the whole grid at $r=3\%$ there is not one decreasing step.
+Supply crosses demand at $5.09\%$, above the rate of time preference, which is what
+Section~\ref{sec:reach} has to accommodate; and the floor is flat below $\lambda$ and climbs above
+it, which is Theorem~\ref{thm:patient}. The optimal path reaches assets of $82$ at $r=10\%$,
+against the crude reachable bound of $9{,}033$; the constants are ordinary, unlike the stationary
+case, where the corresponding instantiation put $r_{hi}$ within $10^{-27}$ of $\lambda$.
 
-The proof does not follow. The induction needs a slope bound on the asset-dependent human wealth,
-and the truth sits exactly on it: the largest slope over the grid is $26.147$ and the cap's slope
-is $26.147$, because it is the cap branch that binds. But carrying the bound through the recursion
-means passing a perturbation through the power mean, and a power mean with negative exponent is not
-$1$-Lipschitz in the sup norm. It is superadditive, so a uniform shift comes out amplified, here by
-a factor of $9.1$ (\texttt{numerics/slopes.m}). Over fifty-nine ages the natural induction would
-allow the slope to grow by $4\times10^{56}$, against a truth that does not grow at all.
+\subsection{The theorem checked, hypothesis by hypothesis}\label{sec:sharpnum}
 
-That is the same obstruction as at the top, arriving from the other side. There it blocked
-substituting the power mean into the consumption upper bound; here it blocks propagating a slope
-bound past it. The cheap way round, keeping the affine ceiling but reading the asset-dependent
-human wealth at zero assets, is valid and monotone by construction and buys almost nothing: the low
-endpoint moves from $2.78\%$ to $2.81\%$ (\texttt{numerics/ceilvar.m}). The bracket therefore stands
-at $[2.78\%,\,7.67\%]$.
+Take $r_{lo}=2\%$, $r_{hi}=8\%$ and an artefactual cap of $10^4$. Every hypothesis of
+Theorem~\ref{thm:exist5} holds (\texttt{numerics/clampcheck.m}): the cap is forward invariant at
+$r_{lo}$ with margin $134$; the ceiling is $4.81$ against a demand of $5.63$; a lifetime of
+feasible saving reaches $3{,}730$ against the cap; and the floor is $3.80$ against a demand of
+$3.52$. The bracket contains the true equilibrium at $5.09\%$.
+
+Sweeping the endpoints shows what each bound is worth. The low endpoint may be taken as high as
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lc@{\qquad}lc@{}}
+\toprule
+Ceiling used & highest $r_{lo}$ & Floor used & lowest $r_{hi}$\\
+\midrule
+Proposition~\ref{prop:ceiling}, the budget & $-6.73\%$
+  & closed form, crude $G_k\ge1$ & $610\%$\\
+Proposition~\ref{prop:ceiling2}, incidence & $-5.85\%$
+  & closed form, Proposition~\ref{prop:slope} & $18.2\%$\\
+Proposition~\ref{prop:affceil}, affine & $+2.78\%$
+  & Proposition~\ref{prop:affine}, affine & $8.38\%$\\
+& & Proposition~\ref{prop:clampfloor}, clamped & $7.67\%$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+So the tightest bracket the development gives is $[2.78\%,\,7.67\%]$, and the absolute limit is
+$5.09\%$ from both sides, since no bound on capital supply can cross demand before supply does.
+The closed-form floor is reported because it needs no recursion at all; at a calibrated rate it is
+much the weaker, giving $0.48$ at $r=10\%$ against a true floor of $4.75$.
+
+\subsection{Where the bounds stop}\label{sec:topwall}
+
+Both ends are now within a few points of the limit, and neither will move further with the tools
+here. The reasons are worth recording, because they are the same reason twice.
+
+At the top, the floor's entire loss is in one inequality. Running the floor's own recursion on the
+cohort's \emph{true} mean consumption path reproduces aggregate capital exactly, $6.180$ against
+$6.180$ at $r=8\%$ (\texttt{numerics/diag.m}), so none of it is in the aggregation, the affine
+bound or the earnings weights: all of it is in $c_k\le\kappa_k(m+H_k(z))$. That inequality is
+exact at the end of life and a fifth loose at the start, and the leverage is what hurts. At birth
+the household earns $1$ and consumes $0.698$, so it saves $0.302$; the bound allows $0.858$ and
+leaves a provable saving of $0.142$. Overstating consumption by a fifth halves the saving.
+
+Three ways of tightening it fail. Truncating the horizon gives $c_k\le\kappa_j(m+H_j(z))$ for
+every $j\le k$, all valid, but $\kappa_j(m+H_j)$ is decreasing in $j$ so the minimum is the
+full-horizon branch already in use. Substituting the power mean that the Euler step actually
+produces, in place of the arithmetic mean the proof relaxes it to, is not legitimate: the step
+shifts by gross saving, and a power mean with negative exponent is superadditive, so the shift
+comes out larger inside than outside, which is the wrong way for an upper bound; carried through
+anyway it violates the true consumption function by $0.30$ and gives a floor of $7.45$ against a
+true supply of $6.18$. Putting the shift inside the mean avoids superadditivity but forces
+tomorrow's bound to be read at a saving ceiling, decoupling the budget identity from the Euler
+step, and loses more than the power mean gains, $0.956$ against $0.858$ at birth. That last one
+also measures the sensitivity: with the \emph{true} saving the same recursion reproduces the truth
+exactly, and the ceiling it must use instead is only $1.19$ times the truth at birth.
+
+\subsection{And the same obstruction from the other side}\label{sec:botwall}
+
+At the bottom there is no structural slack left. Reading the ceiling at the assets held, with the
+same human wealth, gives the identical number at every rate, $4.8147$ against $4.8147$ at
+$r=2\%$ (\texttt{numerics/ceilat.m}): given its one-step bound the affine ceiling is already
+exact. What remains is the one-step bound, and there the asset-dependent incidence bound of
+Section~\ref{sec:assetdep} does help, because the affine ceiling averages over states and so picks
+up the low earnings states where the cap bites. It is worth $0.7$ points, the same as the clamp
+gave at the top: the low endpoint would move from $2.78\%$ to $3.47\%$.
+
+The proof does not follow. Taking those points needs the ceiling read at the assets held, which
+needs its argument, the saving ceiling, to increase with assets. It does, with not one decreasing
+step over the grid, and the truth sits exactly on the bound the induction would need: the largest
+slope of the asset-dependent human wealth is $26.147$ and the cap's slope is $26.147$, because it
+is the cap branch that binds. But carrying that bound through the recursion means passing a
+perturbation through the power mean, and a power mean with negative exponent is not $1$-Lipschitz
+in the sup norm. It is superadditive, so a uniform shift comes out amplified, here by $9.1$; over
+fifty-nine ages the natural induction would allow the slope to grow by $4\times10^{56}$, against a
+truth that does not grow at all (\texttt{numerics/slopes.m}). The cheap way round, reading the
+asset-dependent human wealth at zero assets, is valid and monotone by construction and moves the
+endpoint from $2.78\%$ to $2.81\%$.
+
+So superadditivity of the power mean blocks both ends: at the top it stops the mean being
+substituted into the consumption upper bound, and at the bottom it stops a slope bound being
+propagated past it. It is the same obstruction that closed the rate-response bound in the
+stationary companion.

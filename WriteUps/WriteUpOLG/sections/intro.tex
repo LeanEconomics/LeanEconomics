@@ -17,9 +17,31 @@ distributions by induction on age, with no Doeblin atom and no uniqueness of a s
 distribution.
 
 The target of the programme is uniqueness of the stationary equilibrium of a stochastic
-life-cycle economy in the manner of \citet{Huggett1996} at $\mu\in\{3,5\}$. Section~\ref{sec:lc}
-records the first stage, the life-cycle household, which is formalised. Section~\ref{sec:prog}
-records the rest of the programme, the classical results of \citet{Diamond1965} included, and
-what each stage needs. As in the companion, every result stated with a formal name has been
-checked by the Lean kernel against Mathlib; the development is at
-\url{https://github.com/LeanEconomics/LeanEconomics}, directory \texttt{LeanEconomics/OLG}.
+life-cycle economy in the manner of \citet{Huggett1996} at $\mu\in\{3,5\}$. That target is not
+reached here, and the paper is as much a record of where it is blocked as of what is proved.
+
+What is proved is this. Section~\ref{sec:lc} sets out the life-cycle household and the
+finite-horizon sandwich on consumption. Section~\ref{sec:ret} adds retirement, a pension and a
+means test, and settles which policy a means test makes non-monotone and in which state space.
+Section~\ref{sec:eqm} is the main result: a stationary equilibrium exists, with both boundary
+conditions discharged from primitives rather than assumed. Capital supply in a life cycle is a
+finite composition of finite sums, so existence needs no stationary distribution and no
+compactness argument beyond Berge; and it can be bracketed by two affine bounds on a cohort's
+accumulated assets, one built from a floor on saving and one from a ceiling, sharing a slope, with
+every coefficient an explicit recursion in the primitives. At Aiyagari's calibration the
+hypotheses hold on an interval of about five percentage points containing the true equilibrium
+rate of $5.09\%$.
+
+What is not proved is Light's Theorem 1, that saving rises with the interest rate, which is the
+one household-side input uniqueness still needs. Section~\ref{sec:thm1} reports how far it goes:
+it is true at every age up to a critical relative risk aversion of about $3.4$, so the life cycle
+covers Aiyagari's $\mu=3$ and not his $\mu=5$, and the Euler reduction of it is false at
+logarithmic utility exactly where an equilibrium sits. A different sufficient condition, on the
+value gap between two rates, is true there instead, and Section~\ref{sec:log} proves it suffices.
+Section~\ref{sec:prog} records the rest of the programme, the classical results of
+\citet{Diamond1965} included, and what each stage needs.
+
+As in the companion, every result stated with a formal name has been checked by the Lean kernel
+against Mathlib; the development is at
+\url{https://github.com/LeanEconomics/LeanEconomics}, directory \texttt{LeanEconomics/OLG}, and
+the numerical work is in \texttt{WriteUps/WriteUpOLG/numerics}.
