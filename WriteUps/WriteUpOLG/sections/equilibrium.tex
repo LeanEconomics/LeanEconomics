@@ -622,3 +622,51 @@ all of its loss is the saving ceiling it has to use instead; and that ceiling is
 the truth at birth, yet still produces a worse bound than the arithmetic one, $0.956$ against
 $0.858$. A fifth of an overstatement compounded across fifty-nine steps is what does it. The
 arithmetic relaxation stays the best available.
+
+\subsection{Why the bottom does not tighten the same way}\label{sec:botwall}
+
+The floor gained from being read at the assets held because an affine form cannot express the
+clamp. The ceiling has no such nonlinearity to recover, and the measurement says so exactly:
+reading it at the assets held, with the same human wealth, gives the identical number at every
+rate, $4.8147$ against $4.8147$ at $r=2\%$ (\texttt{numerics/ceilat.m}). Given its one-step bound
+the affine ceiling is already exact.
+
+What is left is the one-step bound itself, and there the asset-dependent incidence bound of
+Section~\ref{sec:assetdep} does help. It could not help
+Proposition~\ref{prop:ceiling2}, whose binding state was the highest earnings one where the cap
+was never active; but the affine ceiling averages over states, so the low earnings states where
+the cap bites now enter.
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+& $r=0\%$ & $r=2\%$ & $r=3\%$ & $r=4\%$ & highest $r_{lo}$\\
+\midrule
+Capital demand & $7.031$ & $5.625$ & $5.114$ & $4.688$ &\\
+Ceiling, cap at zero assets & $3.863$ & $4.815$ & $5.334$ & $5.885$ & $+2.78\%$\\
+Ceiling, cap at the assets held & $3.470$ & $4.232$ & $4.676$ & $5.178$ & $+3.47\%$\\
+True capital supply & $1.978$ & $2.730$ & $3.186$ & $3.693$ &\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+So there are $0.7$ points on the table, the same as the floor gave at the top. Taking them needs
+the ceiling read at the assets held, and that needs its argument, the saving ceiling, to increase
+with assets. It does: over the whole grid at $r=3\%$ there is not one decreasing step.
+
+The proof does not follow. The induction needs a slope bound on the asset-dependent human wealth,
+and the truth sits exactly on it: the largest slope over the grid is $26.147$ and the cap's slope
+is $26.147$, because it is the cap branch that binds. But carrying the bound through the recursion
+means passing a perturbation through the power mean, and a power mean with negative exponent is not
+$1$-Lipschitz in the sup norm. It is superadditive, so a uniform shift comes out amplified, here by
+a factor of $9.1$ (\texttt{numerics/slopes.m}). Over fifty-nine ages the natural induction would
+allow the slope to grow by $4\times10^{56}$, against a truth that does not grow at all.
+
+That is the same obstruction as at the top, arriving from the other side. There it blocked
+substituting the power mean into the consumption upper bound; here it blocks propagating a slope
+bound past it. The cheap way round, keeping the affine ceiling but reading the asset-dependent
+human wealth at zero assets, is valid and monotone by construction and buys almost nothing: the low
+endpoint moves from $2.78\%$ to $2.81\%$ (\texttt{numerics/ceilvar.m}). The bracket therefore stands
+at $[2.78\%,\,7.67\%]$.
