@@ -434,3 +434,67 @@ the demand curve's pole at $r=-\delta$ that makes demand large, and the ceiling 
 to stay under it. At the top it is the patience criterion of Theorem~\ref{thm:patient}: below the
 rate of time preference the provable floor does not move at all, so the upper endpoint cannot be
 anywhere near $\lambda=4.17\%$, and it in fact has to be about twice that.
+
+\subsection{Why the top will not widen}\label{sec:topwall}
+
+The upper endpoint of $8.38\%$ is set by the provable floor meeting demand, and it is twice the
+rate of time preference. It is worth knowing whether that is a weakness of the bound or of the
+economics, and the answer is the first, with a definite cause.
+
+Start with where the floor loses. Running the floor's own recursion on the cohort's \emph{true}
+mean consumption path reproduces aggregate capital exactly, $6.180$ against $6.180$ at $r=8\%$
+(\texttt{numerics/diag.m}). So none of the loss is in the aggregation, the affine bound or the
+earnings weights: all of it is in the one inequality $c_k\le\kappa_k(m+H_k(z))$.
+
+That inequality is tight at the end of life and loose at the start.
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Age & $0$ & $10$ & $30$ & $59$\\
+\midrule
+Consumption, truth over bound & $0.81$ & $0.88$ & $0.93$ & $1.00$\\
+Assets, floor over truth & --- & $0.50$ & $0.51$ & $0.48$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+The leverage is what matters. At birth the household earns $1$ and consumes $0.698$, so it saves
+$0.302$; the bound allows it to consume $0.858$, so the provable saving is $0.142$. Overstating
+consumption by a fifth halves the saving, and the asset floor sits at about half the truth at every
+age thereafter.
+
+Three ways of tightening that inequality were tried and none works.
+
+\emph{Truncating the horizon.} Feeding the trivial bound $c\le m$ into the same Euler step $j$
+times rather than $k$ gives $c_k\le\kappa_j(m+H_j(z))$ for every $j\le k$, so the minimum over $j$
+is available, and the check confirms every branch is valid. It buys nothing: $\kappa_j(m+H_j)$ is
+decreasing in $j$, so the minimum is always the full-horizon branch already in use
+(\texttt{numerics/trunc.m}).
+
+\emph{Keeping the power mean.} The Euler step produces the power mean with exponent $-\mu$, and the
+proof relaxes it to the arithmetic mean, which is $20\%$ larger here. Substituting the power mean
+back is not legitimate: the step shifts by gross saving, and a power mean with negative exponent is
+superadditive, so the shift comes out larger inside than outside, which is the wrong way for an
+upper bound. The arithmetic version is what makes the shift exact. Carried through anyway the
+result is invalid, violating the true consumption function by $0.30$ and producing a floor of
+$7.45$ at $r=8\%$ against a true capital supply of $6.18$ (\texttt{numerics/riskupper.m}).
+
+\emph{Keeping the power mean with assets inside.} Putting the shift inside the mean avoids
+superadditivity, at the cost of evaluating tomorrow's bound at a saving \emph{ceiling} rather than
+at the true saving, which decouples the budget identity from the Euler step. That loses more than
+the power mean gains: the bound at birth rises from $0.858$ to $0.956$ against a truth of $0.698$
+(\texttt{numerics/gamma.m}).
+
+So the arithmetic relaxation is not an avoidable slip. Solving the budget identity simultaneously
+with the Euler step is what produces the sharp $\kappa_{k+1}(m+H_{k+1})$ form, and that is exactly
+what forces the arithmetic mean.
+
+Finally, the size of the prize. No lower bound on capital supply can exceed the truth, and the true
+crossing is at $5.09\%$, so the best any sharpening could do is move the upper endpoint from
+$8.38\%$ to $5.09\%$. The whole of that $3.3$ points is the young household's consumption being
+overstated by a fifth, and that overstatement is a risk effect: the household consumes less than
+permanent income because earnings are risky and the limit may bind. Capturing it needs the power
+mean, and the power mean is what the step cannot carry.
