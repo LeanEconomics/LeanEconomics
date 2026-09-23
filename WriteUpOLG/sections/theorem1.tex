@@ -409,5 +409,43 @@ criterion without risk, Theorem~\ref{thm:limit} signs the constraint's effect,
 Theorem~\ref{thm:modulus} bounds it by a shift in wealth, and Theorem~\ref{thm:mpc} converts a
 shift in wealth into consumption. What none of them supplies is a bound on consumption that is
 tight to a few per cent rather than to a factor of ten, and every route we have tried reduces to
-exactly that. It is the one quantitative fact about a single household that the whole programme,
-in both horizons, now turns on.
+exactly that.
+
+\subsection{Carrying earnings across all remaining ages}
+
+The two halves of the sandwich are not equally to blame. The upper half,
+$c_k\le\kappa_k(m+H_k)$, carries the expected present value of future earnings and is about twenty
+per cent above the truth at Aiyagari's calibration. The lower half, $\kappa_k m\le c_k$, ignores
+future earnings entirely and is a factor of ten below it. The repair is the same device applied on
+the other side: carry earnings forward across all the remaining ages instead of one step at a
+time.
+
+\begin{theorem}[The lower half, with human wealth]\label{thm:lower}
+Let $H_k$ be the present value of $k$ periods of the minimum earnings, $H_0=0$ and
+$RH_{k+1}=y_{\min}+H_k$. Then $\lambda_k(m+H_k)\le c_k(m)$ at every age and state, where
+$\lambda_0=1$ and $\lambda_{k+1}=\Thorn\lambda_kR/(\Thorn+\lambda_kR)$.
+\formal{IncomeFluctuation.minHumanWealth\_le\_stageConsumption}
+\end{theorem}
+
+The old bound is the case $H=0$. The propensity $\lambda_k$ is the finite-horizon propensity of
+Theorem~\ref{thm:sandwich} discounted once more by patience at each step, and the extra discount is
+not decoration: without it the bound is false at the borrowing constraint, where the household
+consumes exactly its cash on hand while $\kappa_k(m+H_k)$ exceeds it, because $H_k$ discounts
+earnings at $R$ and $1/\kappa_k$ discounts at $R/\Thorn$. Discounting $H_k$ at $R/\Thorn$ instead
+repairs the corner and breaks the induction; the extra patience factor repairs both at once
+(\lean{lowMPC\_mul\_minHumanWealth\_le}), and at $\beta=0.96$, $r=4\%$ and $\mu=3$ it costs about
+three per cent over sixty periods.
+
+At the state where the life cycle binds the household enters the next period with cash on hand
+about $2.0$ and consumes about $0.88$. The old bound gives $0.086$; this one gives $0.33$. Through
+Theorem~\ref{thm:mpc} that improves the bound on the propensity to consume from about $0.94$ to
+about $0.75$, against a true propensity of $0.04$.
+
+So the multi-age argument buys a factor of four and not a factor of ten, and the reason is visible
+in the statement: it carries the \emph{minimum} earnings, and a household that drew the minimum
+forever really would consume this little. What the programme needs is a lower bound carrying the
+\emph{expected} human wealth, and that is not available from any chain of Euler inequalities,
+because the Euler inequality at a constrained state is exactly the statement that expected future
+earnings cannot be borrowed against. That is the one quantitative fact about a single household
+on which the whole programme, in both horizons, now turns, and it is now identified precisely
+rather than merely met repeatedly.
