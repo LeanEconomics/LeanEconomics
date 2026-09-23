@@ -546,6 +546,58 @@ threshold. What the programme has instead is an exact statement of what a sharpe
 supply: a lower bound on consumption that is asset-dependent rather than affine, and the asset
 path to support it.
 
+\subsection{The bound with assets in it}\label{sec:assetdep}
+
+The obstruction just described is no longer binding, because the path bound it asked for is
+available. Proposition~\ref{prop:floor} read at the household's own earnings state rather than at
+the worst one is positive exactly where the cap bites hardest: a household in a high earnings
+state saves, so a period later it is not at the corner, and the cap that then applies to it is the
+one for a household with assets.
+
+So assets go through the recursion twice over. Writing $\Phi_k(z,a)$ for that saving floor,
+clamped at zero,
+\[
+  G_0(z,a)=0,\qquad
+  G_{k+1}(z,a)=\min\Bigl(\tfrac1R M^z_{-\mu}\bigl(y_w+G_k(w,\Phi_{k+1}(z,a))\bigr),\;
+    \bigl(\tfrac1{\kappa_{k+1}}-1\bigr)(y_z+Ra)\Bigr),
+\]
+and the bound is $\kappa_k(m+G_k(z,a))\le c_k(a,z)$. The cap now grows with assets, and tomorrow's
+human wealth is read at the assets the household will hold rather than at zero.
+
+\begin{theorem}[The asset-dependent incidence bound]\label{thm:assetdep}
+$\kappa_k\bigl(m+G_k(z,a)\bigr)\le c_k(a,z)$, and $G_k(z,a)\ge H_k(z)$ for $a\ge0$, so the bound is
+never worse than Theorem~\ref{thm:incidence}.
+\formal{IncomeFluctuation.assetHumanWealth\_le\_stageConsumption},
+\lean{IncomeFluctuation.riskHumanWealth\_le\_assetHumanWealth}
+\end{theorem}
+
+Measured against the truth over the whole grid at three ages
+(\texttt{numerics/assetdep.m}, \texttt{numerics/worstgrid.m}):
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Worst ratio of bound to truth & $r=-7\%$ & $r=4\%$ & $r=10\%$\\
+\midrule
+Theorem~\ref{thm:incidence}, cap at zero assets & $0.237$ & $0.606$ & $0.760$\\
+Theorem~\ref{thm:assetdep}, cap at the assets held & $0.350$ & $0.746$ & $0.857$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+The new bound never exceeds the truth anywhere on the grid. The gain is largest exactly where the
+old one was weakest, at positive assets in low earnings states: at $r=4\%$ with five units of
+assets and the lowest earnings, the ratio rises from $0.621$ to $0.835$. Where the old bound was
+already good, at zero assets, little changes, which is as it should be, since that is the state
+the cap was computed for.
+
+What the refinement does not improve is the ceiling on aggregate capital, because the state that
+binds there is the highest earnings one, where the cap was never active: the implied ceiling at
+$r=-7\%$ is $22.15$ against $22.17$. That is still far below the $39.66$ that feasibility alone
+gives, which is worth carrying into the existence argument of Section~\ref{sec:eqm}.
+
 \section{Theorem 1 at logarithmic utility}\label{sec:log}
 
 The slack condition of Section~\ref{sec:eqm} is an Euler condition, and it is worth asking whether
