@@ -532,6 +532,30 @@ theorem statistic_eq_of_increasingDifferences {φ : Fin (T + 1) → X → ℝ �
   rw [famSummedPairing_scalar] at hle
   linarith [hdd (marginal η₁) (marginal η₂) h]
 
+/-! #### What the hypothesis reduces to -/
+
+/-- **The comonotonicity collapse.** Suppose a statistic `A` and a comparison functional `Φ` on a
+family of candidates are COMONOTONE — whenever `A` is larger, `Φ` is at least as large — which is
+the weakest form in which the hypothesis of `statistic_eq_of_increasingDifferences` can be imposed
+on a family, and which does NOT ask `A` itself to be monotone. If `Φ` is strictly monotone along
+the family, then `A` is monotone along it.
+
+For the overlapping-generations economy this closes the route. The hypothesis was attractive
+because it does not require capital supply to be monotone in the rate, which is the step that is
+unavailable at high risk aversion. But `Φ` IS monotone along the family (measured, over the whole
+bracket, at every risk aversion), so comonotonicity delivers monotone supply — and monotone supply
+already gives uniqueness by single crossing, with no mean field game. The Lasry–Lions route, taken
+to its end, is not logically weaker than the single-crossing route in this model. -/
+theorem monotone_of_comonotone_of_strictMono {ι : Type*} [LinearOrder ι] {A Φ : ι → ℝ}
+    (hc : ∀ i j, A j < A i → Φ j ≤ Φ i) (hΦ : StrictMono Φ) : Monotone A := by
+  intro i j hij
+  by_contra h
+  have hlt : A j < A i := lt_of_not_ge h
+  have h₁ : Φ j ≤ Φ i := hc i j hlt
+  have h₂ : Φ i ≤ Φ j := hΦ.monotone hij
+  have : i = j := hΦ.injective (le_antisymm h₂ h₁)
+  exact absurd (this ▸ hlt) (lt_irrefl _)
+
 end Family
 
 end Paths

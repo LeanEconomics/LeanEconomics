@@ -297,10 +297,79 @@ a radius within which the sign is guaranteed. There is no such radius, because t
 expansion delivers at a hypothetical pair of equilibria is the wrong one. \eqref{eq:W} is strictly
 stronger than uniqueness, as Light's Theorem 1 also is, and any proof of it has to be global.
 
-That is the honest state of it. Optimality gives the differences falling for free over the interval
-between the two \emph{planning} aggregates --- add the two optimality inequalities --- while what is
-needed is the same fall between the two \emph{carried} aggregates; the intervals coincide only at
-equilibrium, and there Proposition~\ref{prop:loss} turns the free inequality against us.
+Optimality gives the differences falling for free over the interval between the two \emph{planning}
+aggregates --- add the two optimality inequalities --- while what is needed is the same fall between
+the two \emph{carried} aggregates; the intervals coincide only at equilibrium, and there
+Proposition~\ref{prop:loss} turns the free inequality against us.
+
+\subsection{The global attempt, and where it ends}
+
+Since no local argument can work, the proof has to be global. Pushing it there settles the route,
+though not in the direction we wanted.
+
+\subsubsection*{Re-pricing a plan, exactly}
+
+One piece of structure is worth recording because it is exact and it is the natural starting point
+for any global argument. Parametrise by the rate rather than the aggregate. The factor-price
+frontier is $dw/dr=-K(r)$, so for a plan with asset path $a$ chosen at rate $\hat r$ and re-priced
+at rate $r$,
+\[
+  w(r)-w(\hat r)=\int_{\hat r}^{r}w'(s)\,ds=-(r-\hat r)\,\bar K,
+  \qquad \bar K:=\frac{1}{r-\hat r}\int_{\hat r}^{r}K(s)\,ds,
+\]
+and therefore, at every date and in every state,
+\begin{equation}\label{eq:reprice}
+  c_t(r)\;=\;\hat c_t\;+\;(r-\hat r)\bigl(a_t-\bar K y_t\bigr).
+  \tag{R}
+\end{equation}
+Re-pricing shifts consumption by the rate gap times the net capital position \emph{at the average
+capital intensity over the interval}. It is an identity, not an approximation. One consequence is
+immediate: differentiating $\Phi$ in the pricing gap at a fixed plan gives
+$\sum_t\beta^t\mathbb E[u''(c_t)(a_t-\bar Ky_t)(a_t-Ky_t)]$, which is negative wherever the two net
+positions agree in sign --- everywhere outside a band of asset-to-earnings ratios of width
+$|K-\bar K|=O(r-\hat r)$. So $\Phi$ falls in the pricing gap at a fixed plan. What \eqref{eq:W}
+needs is the comparison across \emph{different} plans, and \eqref{eq:reprice} does not supply it.
+
+\subsubsection*{The weakest form of the hypothesis}
+
+Before grinding further it is worth asking what the least one could get away with is. The
+uniqueness chain runs: two stationary equilibria $(K_1,r_1)$, $(K_2,r_2)$ with $K_1>K_2$; the firm's
+demand is strictly decreasing, so $r_1<r_2$; the hypothesis gives $\Delta^2\le0$; revealed
+preference gives $\Delta^2>0$ by Proposition~\ref{prop:loss}; contradiction. Nothing in that chain
+asks capital supply to be monotone in the rate. All it asks is
+\begin{equation}\label{eq:C}
+  A(\hat r_1)>A(\hat r_2)\;\Longrightarrow\;
+  \int\bigl[\Phi(\cdot,p(\hat r_1))-\Phi(\cdot,p(\hat r_2))\bigr]\ \ge\ 0,
+  \tag{C}
+\end{equation}
+that the carried aggregate $A$ and the weighted net position $\Phi$ be \emph{comonotone} along the
+family of optimal plans. Neither is required to be monotone in its own right. That is genuinely
+weaker in kind than the single-crossing route, which needs $A$ itself increasing --- the step this
+programme cannot take above $\mu\approx3.4$.
+
+\subsubsection*{The collapse}
+
+It is weaker in kind, and it is not weaker here.
+
+\begin{proposition}[Comonotonicity collapses to monotone supply]\label{prop:collapse}
+If $A$ and $\Phi$ are comonotone along the family and $\Phi$ is strictly monotone along it, then
+$A$ is monotone along it.
+\formal{MeanFieldGame.monotone\_of\_comonotone\_of\_strictMono}
+\end{proposition}
+
+And $\Phi$ \emph{is} strictly monotone along the family: that is the measurement of
+Section~\ref{sec:mfg}, at every one of thirteen steps across $\hat K/K^*\in[0.5,2]$, at every
+pricing point and every risk aversion. So \eqref{eq:C} delivers monotone capital supply --- and
+monotone capital supply already gives uniqueness by single crossing, with no mean field game
+anywhere in the argument. The Lasry--Lions route, taken to its end, is not logically weaker than the
+route it was meant to bypass.
+
+This is a definite closure rather than an open problem, and it is worth being exact about what it
+does and does not say. It does not say \eqref{eq:W} is false: every measurement says it is true. It
+says that a proof of \eqref{eq:W} would be a proof of monotone capital supply, so there is no
+shortcut hiding in the mean field formulation. The one escape is an economy in which $\Phi$ is
+\emph{not} monotone along the family, where \eqref{eq:C} would be strictly weaker than monotone
+supply; we have not found one, and at this calibration none exists.
 
 \subsection{What this leaves}
 
@@ -318,9 +387,13 @@ any hypothesis, and Theorem~\ref{thm:mfgagg} turns the summed condition directly
 of the aggregate, which for this economy is uniqueness outright: one $K$ means one $r$, one
 household problem, one answer. The route is no longer dismissed for the wrong reason.
 
-What is missing is a proof of \eqref{eq:W} from primitives. It is now a measured conjecture ---
-one scalar inequality comparing two marginal-utility-weighted net capital positions --- rather than
-a hypothesis known to be false, and it is strictly weaker than the pointwise policy ordering the
-rest of the programme needs and cannot get above $\mu\approx3.4$. This is the first route here whose
-measured margin improves as risk aversion rises, and the first whose blocking condition survives at
-$\mu=5$.
+What is missing is a proof of \eqref{eq:W} from primitives, and Proposition~\ref{prop:collapse}
+says why it will not come cheaply: a proof of it would be a proof of monotone capital supply. The
+condition is strictly weaker than the \emph{pointwise} policy ordering --- it survives at $\mu=5$
+where that fails on a fifth of the mass, and its measured margin improves as risk aversion rises ---
+but it is not weaker than the aggregate monotonicity that the single-crossing route needs. As a
+route to uniqueness this one is closed. What survives it is the reduction itself: the summed
+pairing is a mixed difference (Theorem~\ref{thm:mfgred}), $\Phi$ is a duration wedge
+(Proposition~\ref{prop:dur}), and re-pricing is exact (\ref{eq:reprice}) --- all of which are
+statements about the life-cycle household rather than about mean field games, and none of which
+depended on the route working.
