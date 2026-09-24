@@ -1,0 +1,117 @@
+\section{The increment of capital supply}\label{sec:inc}
+
+Section~\ref{sec:mfg} ends by closing a route and leaving the original target: uniqueness through
+single crossing, which the programme has pursued through Light's Theorem 1 and cannot get above
+$\mu\approx3.4$. This section changes what has to be proved. Theorem 1 need not hold. It need only
+fail on little mass.
+
+\subsection{What single crossing actually asks}
+
+Work in wage units, where homotheticity makes capital supply per unit of wage a function of the rate
+alone and clearing reads $S(r)=D(r)$ with $D(r)=\alpha/((1-\alpha)(r+\delta))$. Excess supply is
+increasing --- which is all single crossing needs --- as soon as
+\begin{equation}\label{eq:inc}
+  S(r_2)-S(r_1)\;>\;D(r_2)-D(r_1),\qquad r_1<r_2,
+  \tag{I}
+\end{equation}
+that is, as soon as supply does not fall \emph{faster} than demand. Demand is steep at the
+calibration, and that is the whole opportunity: over the proved bracket $r\in[2\%,8\%]$ supply's
+worst secant slope is $+33$ at $\gamma=5$ against $-54$ for demand, and it never bends backwards at
+any $\gamma$ up to $12$. A proof of \eqref{eq:inc} may be lossy by more than the true increment and
+still close.
+
+The two-sided bracket on the \emph{level} of capital that the existence theorem supplies cannot be
+used for this. As $r_2-r_1\to0$ the bracket-only condition $F(r_2)-C(r_1)>D(r_2)-D(r_1)$ degenerates
+into $F\ge C$, a bracket of zero width; measured, its margin runs from $-352$ to $-1737$. The object
+to bound is the increment, not the level twice.
+
+\subsection{Coupling the two economies}
+
+Run both economies on a common earnings path from the common start $a_0=0$, and let
+$x_j=a_j(r_2)-a_j(r_1)$. Split the step at the \emph{lower}-rate state:
+\[
+  x_{j+1}=\underbrace{\bigl[g^2_j(a^2_j)-g^2_j(a^1_j)\bigr]}_{\text{same policy, different assets}}
+   +\underbrace{\bigl[g^2_j(a^1_j)-g^1_j(a^1_j)\bigr]}_{\text{same state, different rate}} .
+\]
+The second bracket is the failure of Theorem 1 at that state, which
+(\lean{stagePolicy\_le\_iff\_consumption\_le}) is exactly $c^2-c^1\le(r_2-r_1)a$ read with a slack;
+call its shortfall $e_j$. The first is at least $-L_j\,(x_j)^-$ when saving is nondecreasing in
+assets and Lipschitz with constant $L_j$. So
+\begin{equation}\label{eq:rec}
+  x_{j+1}\;\ge\;-L_j\,(x_j)^-\;-\;e_j .
+  \tag{$\ast$}
+\end{equation}
+Nothing in \eqref{eq:rec} asks $x_j\ge0$: the pointwise ordering of policies is not assumed, and its
+failure is priced by $e_j$ rather than excluded.
+
+\begin{theorem}[The gap envelope]\label{thm:envelope}
+If $x_0\ge0$, $L_j\ge0$, $e_j\ge0$ and \eqref{eq:rec} holds at every age, then $x_j\ge-f_j$ where
+$f_0=0$ and $f_{j+1}=L_jf_j+e_j$; hence $\sum_jx_j\ge-\sum_jf_j$. With demand falling by more than
+the average of $f$, \eqref{eq:inc} follows.
+\formal{OLG.gapAccum}, \lean{OLG.negPart\_le\_gapAccum}, \lean{OLG.neg\_gapAccum\_le},
+\lean{OLG.sum\_neg\_gapAccum\_le}, \lean{OLG.lt\_of\_increment\_bound}
+\end{theorem}
+
+\subsection{Why the bound is not worst-case}
+
+The negative part is the point of the formulation. From \eqref{eq:rec},
+\[
+  (x_{j+1})^-\;\le\;L_j\,(x_j)^-+e_j ,
+\]
+whose right-hand side is \emph{linear} in the two quantities. Expectations therefore pass straight
+through it, and averaging over the cohort replaces $e_j$ by the \textbf{mass-weighted} failure of
+Theorem 1, $\bar e_j=\mathbb E_{1}\bigl[(g^1_j-g^2_j)^+\bigr]$, in place of its worst case over
+states. Since the violation is confined to a sliver of the distribution, that is the difference
+between a bound that fails and one that passes by two orders of magnitude.
+
+Measured at the calibration, with $L_j=(1-\kappa_k)(1+r_2)$ from the sandwich and the accumulation
+$\Gamma=\frac1J\sum_jf_j/\varepsilon$ around $21$ to $24$:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+& \multicolumn{2}{c}{$r\in[4\%,6\%]$, budget $0.670$}
+& \multicolumn{2}{c}{$r\in[2\%,8\%]$, budget $2.109$}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+$\gamma$ & $5$ & $8$ & $5$ & $8$\\
+\midrule
+worst violation $\varepsilon$ & $0.0460$ & $0.0701$ & $0.1313$ & $0.2053$\\
+mass carrying it & $0.0091$ & $0.0666$ & $0.0084$ & $0.0636$\\
+\midrule
+bound, uniform $\varepsilon$ & $0.976$ $\times$ & $1.464$ $\times$ & $3.125$ $\times$ & $4.707$ $\times$\\
+bound, age-dependent $\varepsilon_j$ & $0.760$ $\times$ & $1.218$ $\times$ & $2.498$ $\times$ & $3.953$ $\times$\\
+bound, mass-weighted $\bar e_j$ & $\mathbf{0.0046}$ $\checkmark$ & $\mathbf{0.0310}$ $\checkmark$ & $\mathbf{0.0138}$ $\checkmark$ & $\mathbf{0.0958}$ $\checkmark$\\
+\midrule
+true $S(r_2)-S(r_1)$ & $+0.692$ & $+0.457$ & $+2.060$ & $+1.368$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At $\gamma\le3$ every column is zero: in wage units Theorem 1 holds exactly, so $\varepsilon=0$ and
+the bound is trivial. The interest is at $\gamma=5$ and $8$, where Theorem 1 fails and the
+mass-weighted bound passes with factors of $145$ and $22$ to spare --- and passes on the wide
+bracket too, where the rates differ by six percentage points. Charging the worst violation at every
+age fails; charging it where it occurs does not. Age-dependence alone does not rescue the worst-case
+version, because the violation is spread over $53$ of $60$ ages while being tiny at nearly all of
+them.
+
+\subsection{What remains}
+
+The engine is proved. Three inputs remain, all of them statements about the life-cycle household
+and none about mean field games.
+
+The Lipschitz constant $L_j=(1-\kappa_k)(1+r_2)$ is saving Lipschitz in assets, equivalently the
+propensity to consume being at least $\kappa_k$ --- the companion of the upper bound on the slope in
+\lean{stageConsumption\_sub\_le\_of\_slope}. It has the terminal condition the programme's other
+backward inductions have: at the last stage the propensity is exactly $1=\kappa_0$. Measured, it
+holds at every stage and every reached state, with equality only at the last stage, so the sandwich
+constant is right and nearly tight (the true accumulation is $20.7$ against the sandwich's $21.2$).
+
+From it, \lean{cohortAssets} is Lipschitz in assets with constant \lean{cohortSlope}, by the
+induction already written for \lean{cohortFloor}.
+
+Then $\bar e_j$ has to be bounded from primitives. This is the one genuinely new estimate, and it is
+a weaker demand than anything the programme has made of Theorem 1 so far: not that the policy
+ordering hold, nor that it hold up to a uniform slack, but that the mass on which it fails, times
+the amount by which it fails there, accumulate to less than the fall in the firm's demand. Numerics:
+\texttt{incbound.m}, \texttt{mpclow.m}, \texttt{slopecheck.m}.

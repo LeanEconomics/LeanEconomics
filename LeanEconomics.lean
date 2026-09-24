@@ -126,6 +126,7 @@ import LeanEconomics.OLG.MeansTest
 import LeanEconomics.OLG.Equilibrium
 import LeanEconomics.OLG.Continuity
 import LeanEconomics.OLG.Existence
+import LeanEconomics.OLG.Increment
 import LeanEconomics.OLG.AssetIncidence
 import LeanEconomics.OLG.Diamond
 import LeanEconomics.OLG.Deterministic

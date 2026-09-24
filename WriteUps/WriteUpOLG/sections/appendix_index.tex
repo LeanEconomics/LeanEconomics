@@ -157,6 +157,10 @@ Theorem~\ref{thm:mfgred} & \lean{famLifetime}, \lean{famSummedPairing\_scalar}, 
 Proposition~\ref{prop:loss} & \lean{famCost}, \lean{famSummedPairing\_eq\_neg\_losses} & Equilibrium/\allowbreak Lasry\allowbreak Lions\\
 Each cross-loss is nonnegative & \lean{famCost\_le\_of\_pathEquilibrium}, \lean{famSummedPairing\_nonpos\_of\_losses} & Equilibrium/\allowbreak Lasry\allowbreak Lions\\
 Proposition~\ref{prop:collapse} & \lean{monotone\_of\_comonotone\_of\_strictMono} & Equilibrium/\allowbreak Lasry\allowbreak Lions\\
+\midrule
+The accumulated gap & \lean{gapAccum}, \lean{gapAccum\_nonneg} & OLG/\allowbreak Increment\\
+Theorem~\ref{thm:envelope} & \lean{negPart\_le\_gapAccum}, \lean{neg\_gapAccum\_le} & OLG/\allowbreak Increment\\
+Aggregate form, single crossing & \lean{sum\_neg\_gapAccum\_le}, \lean{lt\_of\_increment\_bound} & OLG/\allowbreak Increment\\
 \bottomrule
 \end{longtable}
 \endgroup
