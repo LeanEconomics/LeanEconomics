@@ -57,6 +57,20 @@ $\kappa_k$ in closed form (\lean{stageMPC\_mul\_mpcSum}) and human wealth antito
 (\lean{stageHumanWealth\_antitone\_rate}) as the two explicit inputs. Numerics:
 \texttt{slopecheck.m}.
 
+\paragraph{Uniqueness: what stochastic dominance does not buy.} Light and Weintraub's Theorem 2
+reaches uniqueness from ordered stationary distributions, and its hypothesis delivers the ordering
+through the pointwise policy ordering. Since the policy ordering fails above
+$\gamma\approx3.4$, the obvious weakening is to ask only for the ordering it was used to produce:
+first-order stochastic dominance of the cohort distributions. Measured, it buys nothing. In wage
+units, at $r=4\%$ against $6\%$, dominance holds to machine precision at $\gamma\le3$ --- where the
+policy ordering already holds exactly --- and fails at precisely the risk aversions where the policy
+ordering fails: at $\gamma=5$ eleven of sixty ages have a crossing of the asset CDF, worst gap
+$5\times10^{-2}$, and conditional on the income state the worst gap is $0.57$; at $\gamma=8$,
+nineteen ages and $0.22$. The distributions genuinely cross, and they stop being ordered exactly
+when the policies do. Aggregate supply stays monotone throughout ($4.54\to5.24$ at $\gamma=5$,
+$5.53\to5.98$ at $\gamma=8$), which is the point: the aggregate is the weaker statement, and there is
+no distributional route to it. Numerics: \texttt{fosdcheck.m}.
+
 \paragraph{Extensions.} An age profile of earnings, retirement with a pension and a government
 budget, survival risk with accidental bequests as a second fixed point, population growth, and
 Lasry--Lions with age as time, whose finite-horizon core is already formalised and whose

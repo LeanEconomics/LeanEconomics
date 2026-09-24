@@ -207,10 +207,10 @@ that mistake made again one level down.
 
 \subsubsection*{The weighted condition holds where the pointwise one dies}
 
-\eqref{eq:W} is a single scalar comparison, and it is strictly weaker than the pointwise ordering of
-policies $a^1_t\ge a^2_t$ --- Light's Theorem 1, the condition this programme has been stuck on
-since Section~\ref{sec:thm1}. Measured at the calibration, on plans drawn from the candidate
-family at $\hat K/K^*=0.90$ against $1.10$:
+\eqref{eq:W} is a single scalar comparison, and it is weaker than the pointwise ordering of the two
+plans' asset paths. Measured at the calibration, on plans drawn from the candidate family at
+$\hat K/K^*=0.90$ against $1.10$ --- so the two plans face different wages as well as different
+rates, which is the comparison \eqref{eq:W} itself involves:
 
 \begin{center}
 \begin{tabular}{lrrrr}
@@ -219,14 +219,19 @@ $\gamma$ & $1$ & $2$ & $3$ & $5$\\
 \midrule
 $\Phi_1-\Phi_2$ at the midpoint $K$ & $+39.36$ & $+12.67$ & $+7.34$ & $+7.32$\\
 mass on which $a^1_t\ge a^2_t$ FAILS & $0.0000$ & $0.0025$ & $0.0409$ & $0.2006$\\
+the same, at a common wage & $0$ & $0$ & $0$ & $0.0091$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-At $\gamma=5$ a fifth of the mass has the policy ordering backwards, and the weighted comparison is
-still positive by a wide margin, at every $K$ between the two aggregates. That is the point of the
-exercise: \eqref{eq:W} is not a restatement of Light's Theorem 1 but a genuine weakening of it, and
-it survives exactly where Theorem 1 dies.
+The second row is the one to read against Light's Theorem 1, which is a statement about the
+household at a \emph{fixed} wage: in wage units the policy ordering is exact --- violated on zero
+mass, not on small mass --- for $\gamma\le3$, and fails on under one percent of the mass at
+$\gamma=5$ (on $6.7\%$ at $\gamma=8$). The first row, which lets the wage move along the frontier as
+well, overstates the failure of Theorem 1 by more than an order of magnitude; it is the right
+measure for \eqref{eq:W} and the wrong one for Theorem 1. So \eqref{eq:W} is weaker than the
+pointwise ordering and does survive where that ordering fails, but the margin between them at
+$\gamma=5$ is one percent of the mass, not a fifth.
 
 More than those pairs is true. Sweeping the planning aggregate over $\hat K/K^*\in[0.5,2]$ at
 fourteen points, $\Phi(K,p(\hat K))$ is strictly \emph{decreasing} in $\hat K$ at every one of the
@@ -390,7 +395,7 @@ household problem, one answer. The route is no longer dismissed for the wrong re
 What is missing is a proof of \eqref{eq:W} from primitives, and Proposition~\ref{prop:collapse}
 says why it will not come cheaply: a proof of it would be a proof of monotone capital supply. The
 condition is strictly weaker than the \emph{pointwise} policy ordering --- it survives at $\mu=5$
-where that fails on a fifth of the mass, and its measured margin improves as risk aversion rises ---
+where that fails, and its measured margin improves as risk aversion rises ---
 but it is not weaker than the aggregate monotonicity that the single-crossing route needs. As a
 route to uniqueness this one is closed. What survives it is the reduction itself: the summed
 pairing is a mixed difference (Theorem~\ref{thm:mfgred}), $\Phi$ is a duration wedge
