@@ -128,6 +128,7 @@ import LeanEconomics.OLG.Continuity
 import LeanEconomics.OLG.Existence
 import LeanEconomics.OLG.AssetIncidence
 import LeanEconomics.OLG.Diamond
+import LeanEconomics.OLG.Deterministic
 import LeanEconomics.OLG.RateMonotone
 import LeanEconomics.OLG.CertaintyEquivalent
 import LeanEconomics.OLG.BorrowingLimit
