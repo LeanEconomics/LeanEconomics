@@ -35,6 +35,28 @@ steady state with $r<n$ by an explicit Pareto-improving transfer, the golden rul
 autarkic and monetary steady states of the pure-exchange economy. These are standalone results
 and will be the classical sections of this write-up.
 
+\paragraph{Uniqueness: bound the increment, not the level.} Section~\ref{sec:mfg} closes the mean
+field route, and what it leaves is the original target: capital supply rising with the rate. Two
+things are now measured. First, single crossing is not marginal. In wage units, clearing is
+$S(r)=\alpha/((1-\alpha)(r+\delta))$, and uniqueness needs only $S(r_2)-S(r_1)>D(r_2)-D(r_1)$ for
+$r_1<r_2$ --- supply may bend backwards, just not faster than demand. Over the proved bracket
+$r\in[2\%,8\%]$ supply does not bend backwards at all, at any $\gamma$ up to $12$, and its worst
+secant slope is $+33$ at $\gamma=5$ against a demand secant slope of $-54$: a margin of $+57$, so a
+proof may under-estimate the supply increment by more than twice its true size and still close. At
+$\gamma=12$ the binding interval moves to the top of the bracket, where demand is flatter, and the
+margin is still $+34$.
+
+Second, the existing two-sided bracket on the \emph{level} of capital cannot deliver it, and not
+merely for want of tightness. The bracket-only sufficient condition $F(r_2)-C(r_1)>D(r_2)-D(r_1)$
+degenerates as $r_2-r_1\to0$ into $F\ge C$, a bracket of zero width; measured, its margin runs from
+$-352$ to $-1737$. The object to bound is therefore the \emph{increment} $S(r_2)-S(r_1)$, not the
+level twice. That means coupling the two economies on a common earnings path and propagating an
+affine lower bound on the asset \emph{difference} forward --- the same machinery as
+\lean{cohortFloor} and \lean{cohortCeil}, applied to the difference rather than to the level, with
+$\kappa_k$ in closed form (\lean{stageMPC\_mul\_mpcSum}) and human wealth antitone in the rate
+(\lean{stageHumanWealth\_antitone\_rate}) as the two explicit inputs. Numerics:
+\texttt{slopecheck.m}.
+
 \paragraph{Extensions.} An age profile of earnings, retirement with a pension and a government
 budget, survival risk with accidental bequests as a second fixed point, population growth, and
 Lasry--Lions with age as time, whose finite-horizon core is already formalised and whose
