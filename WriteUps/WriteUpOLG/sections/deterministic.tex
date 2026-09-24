@@ -1,0 +1,85 @@
+\section{The deterministic life cycle}\label{sec:det}
+
+Between Diamond's two periods and the stochastic life cycle sits the case with many periods and no
+earnings risk, the Auerbach--Kotlikoff class. It is worth doing on its own, because there the
+sandwich of Theorem~\ref{thm:sandwich} closes and Light's Theorem 1 becomes algebra.
+
+\subsection{The sandwich closes}
+
+Make income the same in every state, and suppose the household is interior at every age: it saves
+something and stops short of the artefactual cap.
+
+\begin{theorem}[Consumption in closed form]\label{thm:detclosed}
+Under those two conditions, $c_k(a,z)=\kappa_k\bigl(m+H_k\bigr)$ exactly, so saving is exactly
+$(1-\kappa_k)(y+Ra)-\kappa_kH_k$.
+\formal{IncomeFluctuation.stageConsumption\_eq\_of\_interior}
+\end{theorem}
+
+The proof squeezes the Euler equation between its two directions. Interiority gives both the
+inequality above the floor and the one under the cap, hence equality; constant income makes
+tomorrow's consumption the same in every state, so the expectation collapses to a point and the
+power can be inverted; the budget identity closes the induction. What the stochastic model can
+only bracket is here an identity.
+
+\subsection{Uniqueness at logarithmic utility}
+
+\begin{theorem}[Theorem 1, deterministic and logarithmic]\label{thm:detlog}
+At $\gamma=1$, saving rises with the interest rate at every age and every asset level, with no
+condition. Aggregate capital rises with it, and the stationary equilibrium rate is unique.
+\formal{IncomeFluctuation.stagePolicy\_mono\_det\_log},
+\lean{IncomeFluctuation.olgCapital\_mono\_det\_log}
+\end{theorem}
+
+Two facts do it. At $\gamma=1$ the patience factor is $\beta R$, so the $R$ cancels out of the
+recursion for $\kappa$ and the propensity does not depend on the rate at all
+(\lean{stageMPC\_one\_eq\_of\_rate}); and human wealth falls as the rate rises
+(\lean{stageHumanWealth\_antitone\_rate}). The gap is then exactly
+\[
+  g(R_2)-g(R_1)=(1-\kappa_k)(R_2-R_1)a+\kappa_k\bigl(H_k(R_1)-H_k(R_2)\bigr),
+\]
+and both terms are nonnegative. Compare Section~\ref{sec:log}, where at logarithmic utility with
+risk the Euler condition is \emph{false} at the rates that matter and a different sufficient
+condition has to be found. Risk is what makes it hard, not the horizon.
+
+\subsection{Above logarithmic utility, and a correction}
+
+For $\gamma\ne1$ the propensity moves with the rate and the comparative static becomes a duration
+comparison. Consumption at zero assets is $y\sum_{i\le K}R^{-i}\big/\sum_{i\le K}q^i$ with
+$q=\Thorn/R$, and it falls with the rate exactly when
+\[
+  T_y\ \ge\ \Bigl(1-\tfrac1\gamma\Bigr)T_c ,
+\]
+where $T_y$ and $T_c$ are the durations of the income and consumption profiles. Positive assets
+only help, since they add $(1-\kappa_k)(R_2-R_1)a\ge0$.
+
+It is worth being careful about what that threshold is. The certainty-equivalent analysis of
+Section~\ref{sec:thm1} reports a critical risk aversion of $4.33$, and it is tempting to read that
+as the deterministic threshold. It is not. That number is the certainty equivalent of the
+\emph{risky} problem read at the state that matters, where expected income falls back towards the
+mean and so is front-loaded relative to consumption. With a flat income profile the two durations
+are nearly equal, and the criterion has enormous room (\texttt{numerics/detcheck.m}):
+
+\begingroup\small
+\begin{center}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+$r$ & $0\%$ & $2\%$ & $4\%$ & $6\%$\\
+\midrule
+Income duration $T_y$ & $29.50$ & $23.70$ & $18.70$ & $14.79$\\
+Consumption duration $T_c$ & $28.89$ & $23.40$ & $18.68$ & $14.95$\\
+$T_y/T_c$ & $1.021$ & $1.013$ & $1.001$ & $0.989$\\
+Criterion binds at $\gamma$ of & never & never & never & $94$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\endgroup
+
+Below the rate of time preference the income profile is in fact the \emph{longer} of the two, so
+$T_y>T_c$ and the criterion holds for every $\gamma$ whatever; above it consumption is the longer,
+and the criterion first fails at a risk aversion near $94$. Either way there is no threshold an
+economist would meet: the derivative of saving with respect to the rate at $r=4\%$ is positive and
+comfortably so from $\gamma=1$ to $\gamma=5$, at zero assets and at five units of them. The threshold of
+Section~\ref{sec:thm1} is a feature of the earnings \emph{profile} the risky problem induces, not
+of risk aversion by itself. Only the logarithmic case is formalised, because above it the duration
+comparison is an inequality between two geometric sums with different ratios, which is true here
+but not unconditionally.
