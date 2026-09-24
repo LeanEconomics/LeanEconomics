@@ -264,13 +264,51 @@ against the $3.39$ that bisection on the full life-cycle model gives. The bound 
 reproduces the measured threshold to within two per cent, and it says the same thing the earlier
 sections said: the calibration he used for $\mu=3$ is inside, and $\mu=5$ is not.
 
-Two caveats. The first inequality of \eqref{eq:practical} is a theorem about the
-certainty-equivalent household (\lean{consumption\_antitone\_iff}, and
-Theorem~\ref{thm:ce} for $\mu\le1$); the constant $0.36$ is measured over fifteen calibrations and
+\subsubsection*{The certainty-equivalent half, for every risk aversion}
+
+The first inequality of \eqref{eq:practical} was a theorem only for $\mu\le1$, where the exponent
+$\theta=1-1/\mu$ is nonpositive and every factor moves the same way. It is now a theorem for every
+$\mu$. Writing $\lambda=R_1/R_2<1$, the criterion $W(R_2)D(R_1)\le W(R_1)D(R_2)$ compares how the
+same weights respond to $\lambda^t$ against $(\lambda^t)^\theta$. Each $\lambda^t$ lies in
+$[\lambda^{J-1},1]$, and on that interval the concave $x\mapsto x^\theta$ lies above its chord,
+which is affine; replacing the power by its chord leaves a comparison of two sums linear in
+$\lambda^t$.
+
+\begin{theorem}[The chord criterion]\label{thm:chord}
+For $\mu>1$, if
+$W(R_2)D(R_1)\le W(R_1)\bigl(\iota\,D(R_1)+\varsigma\,D_\lambda(R_1)\bigr)$, where $\iota$ and
+$\varsigma$ are the intercept and slope of that chord and $D_\lambda$ is the path price with each
+term discounted once more by $\lambda^t$, then initial consumption falls with the rate.
+\formal{CertaintyEquivalent.consumption\_antitone\_of\_chord},
+\lean{CertaintyEquivalent.chord\_le\_pathPrice}
+\end{theorem}
+
+The replacement costs almost nothing, because it is first-order exact: as $R_2\to R_1$ it
+reproduces $T_y\ge(1-1/\mu)T_c$ exactly. At Aiyagari's numbers the chord threshold is $4.3263$
+against the exact $4.3267$, and the cost grows only with the size of the rate step, to $0.04$ at
+$\Delta r=10^{-3}$ and $0.40$ at $10^{-2}$ (\texttt{numerics/chord.m}). Together with the $\mu\le1$
+theorem this settles the certainty-equivalent household at every risk aversion.
+
+\subsubsection*{The risk half, and why it resists}
+
+Two caveats remain. The constant $0.36$ is measured over fifteen calibrations and
 is not proved. And both are statements at zero wealth in the highest earnings state, which is
 where the life-cycle model binds; the reduction of Theorem~\ref{thm:reduction} is what would carry
 them to the rest of the state space, and its own condition fails, so this is a sharp description
 of where the truth lies rather than a proof of it.
+
+It is worth being precise about why the constant resists. What has to be bounded is a difference of
+\emph{rate responses} between two problems, the risky one and its certainty equivalent, and the
+threshold is the rate at which one of those responses changes sign. No bound on the \emph{level} of
+consumption helps with that, however sharp: at Aiyagari's calibration the sharpest sandwich
+available has width $0.30$ to $0.48$ at the state in question, while the response itself runs from
+$-2.48$ at $r=2\%$ through zero to $+0.29$ at $r=6\%$ (\texttt{numerics/scale.m}). A bound on where
+consumption lies says nothing about how it moves. What is needed is a bound on the rate response
+itself, and that is exactly the object the companion write-up proved cannot be had from the affine
+induction, whose per-step multiplier is at least $1/\Thorn>1$. The two halves of
+\eqref{eq:practical} therefore stand on different ground: the first is now a theorem for every
+risk aversion, and the second is blocked by the same obstruction that closed the rate-response
+bound.
 
 \subsection{The channel is the borrowing constraint}
 

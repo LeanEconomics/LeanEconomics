@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Analysis.Convex.SpecificFunctions.Pow
 import Mathlib.Algebra.Order.BigOperators.Ring.Finset
 
 /-!
@@ -176,6 +177,133 @@ theorem consumption_antitone_of_le_one (hJ : 0 < J) (hy : ∀ t, 0 ≤ y t) (hβ
     (h₂ : c₂ * pathPrice J β γ R₂ = humanWealth J y R₂) : c₂ ≤ c₁ :=
   (consumption_antitone_iff hJ hβ hR₁ (lt_of_lt_of_le hR₁ hR) h₁ h₂).mpr
     (humanWealth_mul_pathPrice_le_of_le_one hy hβ hγ0 hγ1 hR₁ hR)
+
+/-! ### A criterion for every risk aversion
+
+`humanWealth_mul_pathPrice_le_of_le_one` settles `γ ≤ 1` term by term, because there the exponent
+`θ = 1 - 1/γ` is nonpositive and every factor moves the right way. Above one the two elasticities
+genuinely compete, and the comparison is the duration criterion. Writing `λ = R₁/R₂ < 1`,
+
+  `W(R₂) = ∑ y_t R₁^{-t} λ^t`,   `D(R₂) = ∑ β^{t/γ} R₁^{t/γ-t} (λ^t)^θ`,
+
+so the criterion asks how the same weights respond to `λ^t` against `(λ^t)^θ`. Every `λ^t` lies in
+`[λ^{J-1}, 1]`, and on that interval the concave `x ↦ x^θ` lies above its chord, which is affine.
+Replacing the power by its chord therefore gives a sufficient condition in terms of two sums that
+are linear in `λ^t`, and it is first-order exact: as `R₂ → R₁` it reproduces the duration criterion
+`T_y ≥ (1 - 1/γ) T_c` exactly. At Aiyagari's numbers the chord threshold is `4.3263` against the
+exact `4.3267` (`WriteUps/WriteUpOLG/numerics/chord.m`).
+-/
+
+/-- The chord of `x ↦ x^θ` across `[m, 1]`, as an affine function of `x`. -/
+noncomputable def chordSlope (θ m : ℝ) : ℝ := (1 - m ^ θ) / (1 - m)
+
+/-- The intercept of that chord. -/
+noncomputable def chordInt (θ m : ℝ) : ℝ := m ^ θ - chordSlope θ m * m
+
+/-- **A concave power lies above its chord.** -/
+theorem chord_le_rpow {θ m x : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1) (hm0 : 0 < m) (hm1 : m < 1)
+    (hx : x ∈ Set.Icc m 1) : chordInt θ m + chordSlope θ m * x ≤ x ^ θ := by
+  have hd : (0 : ℝ) < 1 - m := by linarith
+  set b : ℝ := (x - m) / (1 - m) with hb
+  have hb0 : 0 ≤ b := div_nonneg (by linarith [hx.1]) hd.le
+  have hb1 : b ≤ 1 := by rw [hb, div_le_one hd]; linarith [hx.2]
+  have hcomb : (1 - b) * m + b * 1 = x := by
+    rw [hb]; field_simp; ring
+  have hconc := (Real.strictConcaveOn_rpow hθ0 hθ1).concaveOn.2
+    (Set.mem_Ici.2 hm0.le) (Set.mem_Ici.2 zero_le_one) (by linarith : (0:ℝ) ≤ 1 - b) hb0
+    (by ring)
+  simp only [smul_eq_mul, hcomb, Real.one_rpow] at hconc
+  have hid : chordInt θ m + chordSlope θ m * x = (1 - b) * m ^ θ + b * 1 := by
+    rw [chordInt, chordSlope, hb]; field_simp; ring
+  rw [hid]
+  simpa using hconc
+
+/-- The path price with each term discounted once more, by `λ^t`. -/
+noncomputable def pathPriceTilt (J : ℕ) (β γ R lam : ℝ) : ℝ :=
+  ∑ t ∈ range J, β ^ ((t : ℝ) / γ) * R ^ ((t : ℝ) / γ - (t : ℝ)) * lam ^ (t : ℝ)
+
+theorem humanWealth_eq_tilt (hR₁ : 0 < R₁) (hR₂ : 0 < R₂) :
+    humanWealth J y R₂ = ∑ t ∈ range J, y t * R₁ ^ (-(t : ℝ)) * (R₁ / R₂) ^ (t : ℝ) := by
+  refine Finset.sum_congr rfl fun t _ => ?_
+  rw [Real.div_rpow hR₁.le hR₂.le, Real.rpow_neg hR₁.le, Real.rpow_neg hR₂.le]
+  field_simp
+
+/-- **The chord bound on the path price at the higher rate.** -/
+theorem chord_le_pathPrice (hβ : 0 < β) (hγ : 1 < γ) (hR₁ : 0 < R₁) (hR₂ : 0 < R₂)
+    (hR : R₁ < R₂) (hJ : 1 < J) :
+    chordInt (1 - 1/γ) ((R₁/R₂) ^ ((J : ℝ) - 1)) * pathPrice J β γ R₁
+        + chordSlope (1 - 1/γ) ((R₁/R₂) ^ ((J : ℝ) - 1)) * pathPriceTilt J β γ R₁ (R₁/R₂)
+      ≤ pathPrice J β γ R₂ := by
+  set lam : ℝ := R₁ / R₂ with hlam
+  set θ : ℝ := 1 - 1/γ with hθ
+  have hγ0 : (0 : ℝ) < γ := by linarith
+  have hlam0 : 0 < lam := div_pos hR₁ hR₂
+  have hlam1 : lam < 1 := by rw [hlam, div_lt_one hR₂]; exact hR
+  have hθ0 : 0 < θ := by rw [hθ]; have : 1/γ < 1 := by rw [div_lt_one hγ0]; exact hγ
+                         linarith
+  have hθ1 : θ < 1 := by rw [hθ]; have : 0 < 1/γ := by positivity
+                         linarith
+  set m : ℝ := lam ^ ((J : ℝ) - 1) with hm
+  have hm0 : 0 < m := Real.rpow_pos_of_pos hlam0 _
+  have hm1 : m < 1 := by
+    rw [hm]
+    exact Real.rpow_lt_one hlam0.le hlam1 (by
+      have h2 : (2 : ℕ) ≤ J := hJ
+      have : (2 : ℝ) ≤ (J : ℝ) := by exact_mod_cast h2
+      linarith)
+  -- each term of the higher-rate price is the lower-rate term times `(λ^t)^θ`
+  have hterm : ∀ t ∈ range J, β ^ ((t : ℝ)/γ) * R₂ ^ ((t : ℝ)/γ - (t : ℝ))
+      = β ^ ((t : ℝ)/γ) * R₁ ^ ((t : ℝ)/γ - (t : ℝ)) * (lam ^ (t : ℝ)) ^ θ := by
+    intro t _
+    have hpow : (lam ^ (t : ℝ)) ^ θ = lam ^ ((t : ℝ) * θ) := by
+      rw [← Real.rpow_mul hlam0.le]
+    have hexp : (t : ℝ) * θ = (t : ℝ) - (t : ℝ)/γ := by rw [hθ]; field_simp
+    rw [hpow, hexp, hlam, Real.div_rpow hR₁.le hR₂.le]
+    rw [show ((t : ℝ)/γ - (t : ℝ)) = -((t : ℝ) - (t : ℝ)/γ) from by ring,
+      Real.rpow_neg hR₁.le, Real.rpow_neg hR₂.le]
+    field_simp
+  -- the chord bounds each `(λ^t)^θ` from below
+  have hbound : ∀ t ∈ range J,
+      (β ^ ((t : ℝ)/γ) * R₁ ^ ((t : ℝ)/γ - (t : ℝ)))
+          * (chordInt θ m + chordSlope θ m * lam ^ (t : ℝ))
+        ≤ β ^ ((t : ℝ)/γ) * R₂ ^ ((t : ℝ)/γ - (t : ℝ)) := by
+    intro t ht
+    rw [hterm t ht]
+    refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+    refine chord_le_rpow hθ0 hθ1 hm0 hm1 ⟨?_, ?_⟩
+    · rw [hm]
+      refine Real.rpow_le_rpow_of_exponent_ge hlam0 hlam1.le ?_
+      have : (t : ℝ) ≤ (J : ℝ) - 1 := by
+        have := Finset.mem_range.1 ht
+        have h2 : (t : ℝ) + 1 ≤ (J : ℝ) := by exact_mod_cast this
+        linarith
+      linarith
+    · exact Real.rpow_le_one hlam0.le hlam1.le (by positivity)
+  have hsum := Finset.sum_le_sum hbound
+  have hlhs : chordInt θ m * pathPrice J β γ R₁
+      + chordSlope θ m * pathPriceTilt J β γ R₁ lam
+      = ∑ t ∈ range J, (β ^ ((t : ℝ)/γ) * R₁ ^ ((t : ℝ)/γ - (t : ℝ)))
+          * (chordInt θ m + chordSlope θ m * lam ^ (t : ℝ)) := by
+    simp only [pathPrice, pathPriceTilt, Finset.mul_sum, ← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun t _ => by ring
+  rw [hlhs]
+  simpa [pathPrice] using hsum
+
+/-- **Theorem 1 at zero wealth for every risk aversion above one**, given the chord criterion.
+Together with `consumption_antitone_of_le_one` this covers all `γ > 0`: below one the criterion is
+automatic, above one it is this inequality, which is first-order equivalent to the duration
+comparison. -/
+theorem consumption_antitone_of_chord (hJ : 1 < J) (hγ : 1 < γ) (hβ : 0 < β)
+    (hR₁ : 0 < R₁) (hR₂ : 0 < R₂) (hR : R₁ < R₂) (hW : 0 ≤ humanWealth J y R₁)
+    (hchord : humanWealth J y R₂ * pathPrice J β γ R₁
+      ≤ humanWealth J y R₁
+        * (chordInt (1 - 1/γ) ((R₁/R₂) ^ ((J : ℝ) - 1)) * pathPrice J β γ R₁
+          + chordSlope (1 - 1/γ) ((R₁/R₂) ^ ((J : ℝ) - 1)) * pathPriceTilt J β γ R₁ (R₁/R₂)))
+    {c₁ c₂ : ℝ} (h₁ : c₁ * pathPrice J β γ R₁ = humanWealth J y R₁)
+    (h₂ : c₂ * pathPrice J β γ R₂ = humanWealth J y R₂) : c₂ ≤ c₁ := by
+  rw [consumption_antitone_iff (by omega) hβ hR₁ hR₂ h₁ h₂]
+  exact le_trans hchord
+    (mul_le_mul_of_nonneg_left (chord_le_pathPrice hβ hγ hR₁ hR₂ hR hJ) hW)
 
 end CertaintyEquivalent
 
