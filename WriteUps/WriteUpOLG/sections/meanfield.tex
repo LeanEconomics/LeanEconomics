@@ -1,0 +1,164 @@
+\section{Mean field games, with age as time}\label{sec:mfg}
+
+The Lasry--Lions argument \citep{LasryLions2007} proves uniqueness in a mean field game from two
+optimality inequalities and a monotonicity condition on the cost. An earlier survey ruled it out
+for the stationary Bewley model, and for a stated reason: the argument cancels a term
+$\int(u_1-u_2)\,d\bigl(m_1(0)-m_2(0)\bigr)$ by assuming the two equilibria start from a common
+initial distribution, and a stationary discounted equilibrium has no common start --- two
+candidate rates carry two different stationary distributions.
+
+Overlapping generations do have one. Every cohort is born with nothing, whatever the rate, so the
+date-zero marginal is the same point mass crossed with the invariant earnings law at every
+candidate equilibrium. The stated obstruction is simply absent, and the monotonicity condition
+becomes a question to check rather than one to dismiss.
+
+\subsection{The game}
+
+Take age as time. A player is a cohort member, a path is
+$x=(a_0,\dots,a_{J})$ with $a_0=0$, and the population is a distribution $\eta$ over paths with
+date-$t$ marginals $m_t$. The cost at date $t$ is the negative of flow utility, with the budget
+substituted in,
+\[
+  F_t(x,m) \;=\; -\beta^{t}\,u\Bigl(w\bigl(K(m)\bigr)y_t+\bigl(1+r(K(m))\bigr)a_t-a_{t+1}\Bigr),
+  \qquad K(m)=\int a\,dm ,
+\]
+so the population enters through the single scalar $K$, and through it through both factor prices.
+This is the price-through-an-aggregate structure of \citet{GraberMatter2024}, except that the
+aggregate enters the budget rather than being added to the cost.
+
+\subsection{What the argument actually uses}
+
+Adding the two equilibrium inequalities --- each equilibrium does no worse against its own costs
+than the other distribution does --- signs the sum of the date pairings and nothing finer:
+\[
+  \sum_{t}\;\underbrace{\int\bigl(F_t(\cdot,m_{1t})-F_t(\cdot,m_{2t})\bigr)\,d(m_{1t}-m_{2t})}
+  _{\textstyle P_t}\;\le\;0 .
+\]
+
+\begin{theorem}[The engine]\label{thm:mfgengine}
+Two relaxed equilibria of the finite-horizon game with a common initial distribution have
+$\sum_t P_t\le 0$. No monotonicity, no integrability and no continuity is used.
+\formal{MeanFieldGame.summedPairing\_nonpos\_of\_pathEquilibrium}
+\end{theorem}
+
+The usual hypothesis, that every $F_t$ is Lasry--Lions monotone, is one way to conclude from this
+and not the only one: it forces each summand to be zero. The weaker hypothesis that the argument
+can carry asks only that the total be nonnegative.
+
+\begin{theorem}[Uniqueness of an aggregate from the summed pairing]\label{thm:mfgagg}
+If the cost separates a statistic $A$ of the marginals --- $\sum_tP_t>0$ whenever $A$ differs ---
+then two relaxed equilibria from a common initial distribution agree on $A$. No single date is
+assumed monotone.
+\formal{MeanFieldGame.aggregate\_eq\_of\_pathEquilibrium}
+\end{theorem}
+
+Date-by-date monotonicity is the special case in which every summand is already nonnegative
+(\lean{summedLasryLionsMonotone\_of\_forall}). The distinction is not cosmetic here, as the next
+two subsections show: in this economy the date-by-date hypothesis is false and the summed one is
+not.
+
+\subsection{The price channel is monotone; the curvature is not}
+
+Suppose for a moment that $u$ were affine. Then
+$F_t(x,m_1)-F_t(x,m_2)=-\beta^t\bigl[(w_1-w_2)y_t+(r_1-r_2)a_t\bigr]$ and the pairing is
+\[
+  P_t \;=\; -\beta^t (w_1-w_2)\!\int\! y_t\,d(m_{1t}-m_{2t})
+        \;-\;\beta^t (r_1-r_2)\!\int\! a_t\,d(m_{1t}-m_{2t}).
+\]
+The first term is exactly zero: labour is exogenous and the earnings marginal at each age is the
+same invariant law in both equilibria. The second is $-\beta^t(r_1-r_2)(A_{1t}-A_{2t})$, and the
+factor-price frontier makes $r$ strictly decreasing in $K$, so it is strictly positive at every
+date at which the economy with more capital holds more assets. The interest channel is exactly the
+Lasry--Lions congestion term: more aggregate capital raises the cost of holding capital. The price
+channel of a production economy does not run the wrong way. It is the only part of the problem
+that is unambiguously right.
+
+What breaks is the weighting. With $u$ strictly concave the pairing is that same price term
+weighted by marginal utility, and the weights do not cancel, because the two economies choose
+different savings and so sit at different marginal utilities. Over all pairs of measures the
+damage is total: taking concave and convex envelopes in the aggregate shows that unrestricted
+monotonicity of this cost forces $u$ to be affine. The question worth asking is therefore the
+restricted one --- whether monotonicity holds over the distributions the model can actually
+generate.
+
+\subsection{Date by date it fails, and it fails at birth}
+
+Take two economies differing only in $\beta$, each at its own equilibrium, so that each
+distribution is priced by the aggregate it actually carries. Since $\beta$ does not appear in
+$F_t$, this is a legitimate test of the date-$t$ condition. At the calibration of
+Section~\ref{sec:eqm} ($\alpha=9/25$, $\delta=2/25$, $J=60$, Aiyagari's earnings chain), with
+$\beta=0.960$ against $\beta=0.950$:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+$\gamma$ & $0.5$ & $1$ & $2$ & $3$ & $5$\\
+\midrule
+dates with $P_t<0$ (of $60$) & $3$ & $4$ & $5$ & $6$ & $6$\\
+$P_0$ & $-0.00147$ & $-0.00227$ & $-0.00324$ & $-0.00419$ & $-0.00804$\\
+$\sum_t P_t$ (undiscounted) & $+0.271$ & $+0.175$ & $+0.091$ & $+0.061$ & $+0.047$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The failures are at the start of life, and they survive as the two equilibria close up:
+$P_0/(\Delta\beta)^2$ converges to $-25.6$ at $\gamma=1$ and $-44.4$ at $\gamma=3$ as
+$\Delta\beta$ falls from $0.02$ to $0.00125$, with the count of negative dates unchanged
+throughout. So this is a property of the derivative, not an artefact of a wide gap.
+
+Date zero is the sharp case, and it is worth spelling out, because it is exactly the common
+initial distribution that was supposed to rescue the argument. Every cohort is born with nothing,
+so $a_0=0$ for all of the mass in both economies, and the affine-utility pairing above is
+identically zero: with no assets to price, the aggregate coupling has no grip at all. But the wage
+still differs, and the utility gain from the higher wage is weighted by marginal utility, which is
+higher in the economy that saves more. At $\gamma=1$ mean date-zero saving is $0.2937$ against
+$0.2736$, and $P_0$ is strictly negative. The common start does not make the date-zero pairing
+vanish; it removes the one term that could have made it positive.
+
+\subsection{Summed, it holds where the equilibrium lives}
+
+The summed condition is a different matter. Test it over the family the equilibria belong to:
+$m(\hat K)$ generated by optimal life-cycle behaviour at the prices of $\hat K$, priced inside $F$
+by the aggregate $A(\hat K)$ it actually carries. Every equilibrium is an $m(\hat K)$ with
+$A(\hat K)=\hat K$, so monotonicity over pairs from this family is exactly what
+Theorem~\ref{thm:mfgagg} needs.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+$\gamma$ & $1$ & $2$ & $3$ & $5$\\
+\midrule
+pairs with $\sum_t\beta^tP_t<0$, $\hat K/K^*\in[0.5,2]$ & $1/66$ & $0/66$ & $0/66$ & $0/66$\\
+pairs failing inside $K\in[3.55,7.40]$ & $0/36$ & $0/36$ & $0/36$ & $0/28$\\
+least margin $\sum_t\beta^tP_t/(A_1-A_2)^2$ there & $+0.075$ & $+0.097$ & $+0.121$ & $+0.338$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The bracket $K\in[3.55,7.40]$ is the one $r\in[2\%,8\%]$ of Theorem~\ref{thm:exist5}, inside which
+the equilibrium is proved to lie. Within it the summed pairing is strictly positive for every pair
+and every risk aversion tested, with a margin bounded away from zero, and the margin grows with
+$\gamma$. The single failure is at $\gamma=1$ between two candidates one of which sits outside the
+bracket entirely.
+
+\subsection{What this leaves}
+
+Three things, in order of how much they are worth.
+
+The negative result is definite and it is not the expected one. Date-by-date Lasry--Lions
+monotonicity fails in this economy, for every risk aversion including logarithmic, and the reason
+is not that the price channel runs backwards --- it runs the right way, exactly --- but that
+strict concavity reweights it, most severely at the ages where there are no assets to price. This
+is not a $\mu=1$ frontier of the kind the rest of the programme keeps running into; it fails at
+$\mu=1$ too.
+
+The structural gain is real. Theorem~\ref{thm:mfgengine} isolates what the argument does without
+any hypothesis, and Theorem~\ref{thm:mfgagg} turns the summed condition directly into uniqueness
+of the aggregate, which for this economy is uniqueness outright: one $K$ means one $r$, one
+household problem, one answer. The route is no longer dismissed for the wrong reason.
+
+What is missing is a proof of the summed condition from primitives. It is now a measured
+conjecture --- one scalar inequality about a whole life, strictly satisfied with room to spare
+throughout the bracket in which existence is proved --- rather than a hypothesis known to be
+false. That is a better position than the date-by-date condition ever offered, and it is the first
+route in this programme whose measured margin improves as risk aversion rises.

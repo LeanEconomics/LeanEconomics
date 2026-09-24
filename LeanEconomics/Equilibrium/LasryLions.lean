@@ -47,6 +47,20 @@ DISTRIBUTION have, for every date, a zero Lasry–Lions pairing when each date's
 (`llPairing_eq_zero_of_pathEquilibrium`), and the same value function when the costs are
 strictly monotone (`value_eq_of_pathEquilibrium`).
 
+## The summed pairing, and what it is for
+
+Adding the two optimality inequalities signs only the TOTAL of the date pairings
+(`summedPairing_nonpos_of_pathEquilibrium`), and that step uses no monotonicity, no
+integrability and no continuity. Date-by-date monotonicity is then one way — not the only way —
+to conclude. `SummedLasryLionsMonotone` asks only for the total, and
+`aggregate_eq_of_pathEquilibrium` shows that a cost whose summed pairing is strictly positive
+whenever an aggregate differs makes that aggregate the same at every equilibrium.
+
+The weakening is not cosmetic. In the overlapping-generations production economy the date-`t`
+pairing is NEGATIVE over the first few ages, for every risk aversion, while the summed pairing is
+positive throughout the bracket in which the equilibrium is known to lie. The date-by-date
+hypothesis is false there and the summed one is not.
+
 ## What this says about Bewley models
 
 The argument cancels the term `∫ (u₁ - u₂) d(m₁(0) - m₂(0))` because the two equilibria start
@@ -55,6 +69,9 @@ candidate rates carry two different stationary distributions. That is why the La
 does not reach the Aiyagari uniqueness problem, and why the coupling through a market-clearing
 price, which Graber and Matter show is typically NOT Lasry–Lions monotone, is handled there by
 monotonicity of excess supply instead (`Equilibrium.Uniqueness`, `Analysis.StronglyMonotone`).
+
+Overlapping generations DO have a common start — every cohort is born with nothing — so that
+obstruction is absent and the question becomes the monotonicity condition itself.
 -/
 
 open MeasureTheory
@@ -243,6 +260,72 @@ theorem integral_value_eq {F : Fin (T + 1) → X → ProbabilityMeasure X → �
   rw [integral_value, ← integral_pathCost]
   exact (integral_congr_ae h).symm
 
+/-- The pairings of all the dates added up. -/
+noncomputable def summedPairing (F : Fin (T + 1) → X → ProbabilityMeasure X → ℝ)
+    (m₁ m₂ : Fin (T + 1) → ProbabilityMeasure X) : ℝ :=
+  ∑ t, llPairing (F t) (m₁ t) (m₂ t)
+
+/-- **The engine of the Lasry–Lions argument**, with no monotonicity in it at all: two relaxed
+equilibria from a common initial distribution have a nonpositive SUMMED pairing. Adding the two
+optimality inequalities signs the TOTAL over dates; it says nothing about any single date. -/
+theorem summedPairing_nonpos_of_pathEquilibrium
+    {F : Fin (T + 1) → X → ProbabilityMeasure X → ℝ}
+    {η₁ η₂ : ProbabilityMeasure (Path X T)}
+    (h₁ : IsPathEquilibrium F η₁) (h₂ : IsPathEquilibrium F η₂)
+    (h0 : marginal η₁ 0 = marginal η₂ 0) :
+    summedPairing F (marginal η₁) (marginal η₂) ≤ 0 := by
+  have e₁ := integral_value_eq h₁
+  have e₂ := integral_value_eq h₂
+  have i₁ := integral_value_le F (marginal η₂) η₁
+  have i₂ := integral_value_le F (marginal η₁) η₂
+  rw [h0] at e₁ i₁
+  have hpair : ∀ s, llPairing (F s) (marginal η₁ s) (marginal η₂ s)
+      = (∫ x, F s x (marginal η₁ s) ∂(marginal η₁ s : Measure X)
+          - ∫ x, F s x (marginal η₂ s) ∂(marginal η₁ s : Measure X))
+        - (∫ x, F s x (marginal η₁ s) ∂(marginal η₂ s : Measure X)
+          - ∫ x, F s x (marginal η₂ s) ∂(marginal η₂ s : Measure X)) := by
+    intro s
+    unfold llPairing
+    rw [integral_sub Integrable.of_finite Integrable.of_finite,
+      integral_sub Integrable.of_finite Integrable.of_finite]
+  unfold summedPairing
+  simp only [hpair, Finset.sum_sub_distrib]
+  linarith
+
+/-- **Summed Lasry–Lions monotonicity**: the pairing of the WHOLE life is nonnegative, though no
+single date need be. This is the weakest hypothesis the argument above can use. -/
+def SummedLasryLionsMonotone (F : Fin (T + 1) → X → ProbabilityMeasure X → ℝ) : Prop :=
+  ∀ m₁ m₂ : Fin (T + 1) → ProbabilityMeasure X, 0 ≤ summedPairing F m₁ m₂
+
+omit [Finite X] [MeasurableSingletonClass X] in
+/-- Date-by-date monotonicity is the special case in which every summand is already nonnegative. -/
+theorem summedLasryLionsMonotone_of_forall {F : Fin (T + 1) → X → ProbabilityMeasure X → ℝ}
+    (hF : ∀ t, LasryLionsMonotone (F t)) : SummedLasryLionsMonotone F :=
+  fun _ _ => Finset.sum_nonneg fun t _ => hF t _ _
+
+/-- Under the summed condition the total pairing is zero. -/
+theorem summedPairing_eq_zero_of_pathEquilibrium
+    {F : Fin (T + 1) → X → ProbabilityMeasure X → ℝ} (hF : SummedLasryLionsMonotone F)
+    {η₁ η₂ : ProbabilityMeasure (Path X T)}
+    (h₁ : IsPathEquilibrium F η₁) (h₂ : IsPathEquilibrium F η₂)
+    (h0 : marginal η₁ 0 = marginal η₂ 0) :
+    summedPairing F (marginal η₁) (marginal η₂) = 0 :=
+  le_antisymm (summedPairing_nonpos_of_pathEquilibrium h₁ h₂ h0) (hF _ _)
+
+/-- **Uniqueness of an aggregate from the summed pairing alone.** If the cost SEPARATES a
+statistic `A` — the summed pairing is strictly positive whenever `A` differs — then two relaxed
+equilibria from a common initial distribution agree on `A`. No single date is assumed monotone,
+and no integrability or continuity is used. -/
+theorem aggregate_eq_of_pathEquilibrium {F : Fin (T + 1) → X → ProbabilityMeasure X → ℝ}
+    {A : (Fin (T + 1) → ProbabilityMeasure X) → ℝ}
+    (hsep : ∀ m₁ m₂, A m₁ ≠ A m₂ → 0 < summedPairing F m₁ m₂)
+    {η₁ η₂ : ProbabilityMeasure (Path X T)}
+    (h₁ : IsPathEquilibrium F η₁) (h₂ : IsPathEquilibrium F η₂)
+    (h0 : marginal η₁ 0 = marginal η₂ 0) :
+    A (marginal η₁) = A (marginal η₂) := by
+  by_contra h
+  exact absurd (summedPairing_nonpos_of_pathEquilibrium h₁ h₂ h0) (not_le.2 (hsep _ _ h))
+
 /-- **Lasry–Lions for the finite-horizon finite-state game** (Cannarsa–Capuani Thm. 4.1 in
 discrete time): two relaxed equilibria from the same initial distribution, with each date's cost
 Lasry–Lions monotone, have zero pairing at every date. -/
@@ -251,24 +334,8 @@ theorem llPairing_eq_zero_of_pathEquilibrium {F : Fin (T + 1) → X → Probabil
     (h₁ : IsPathEquilibrium F η₁) (h₂ : IsPathEquilibrium F η₂)
     (h0 : marginal η₁ 0 = marginal η₂ 0) (t : Fin (T + 1)) :
     llPairing (F t) (marginal η₁ t) (marginal η₂ t) = 0 := by
-  -- the sum of the pairings over dates is at most zero
-  have hsum : ∑ s, llPairing (F s) (marginal η₁ s) (marginal η₂ s) ≤ 0 := by
-    have e₁ := integral_value_eq h₁
-    have e₂ := integral_value_eq h₂
-    have i₁ := integral_value_le F (marginal η₂) η₁
-    have i₂ := integral_value_le F (marginal η₁) η₂
-    rw [h0] at e₁ i₁
-    have hpair : ∀ s, llPairing (F s) (marginal η₁ s) (marginal η₂ s)
-        = (∫ x, F s x (marginal η₁ s) ∂(marginal η₁ s : Measure X)
-            - ∫ x, F s x (marginal η₂ s) ∂(marginal η₁ s : Measure X))
-          - (∫ x, F s x (marginal η₁ s) ∂(marginal η₂ s : Measure X)
-            - ∫ x, F s x (marginal η₂ s) ∂(marginal η₂ s : Measure X)) := by
-      intro s
-      unfold llPairing
-      rw [integral_sub Integrable.of_finite Integrable.of_finite,
-        integral_sub Integrable.of_finite Integrable.of_finite]
-    simp only [hpair, Finset.sum_sub_distrib]
-    linarith
+  have hsum := summedPairing_nonpos_of_pathEquilibrium h₁ h₂ h0
+  unfold summedPairing at hsum
   -- each pairing is nonnegative, so each is zero
   have hnn : ∀ s ∈ Finset.univ, 0 ≤ llPairing (F s) (marginal η₁ s) (marginal η₂ s) :=
     fun s _ => hF s _ _
