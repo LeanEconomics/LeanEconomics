@@ -49,8 +49,13 @@ write-up on Aiyagari (1994) in the same repository. Comments welcome.}}
 
 \begin{abstract}
 \noindent
-This is the record of a programme to formalise overlapping-generations economies in Lean 4. A
-household that lives $J$ periods against uninsurable earnings risk and a borrowing constraint
+This is the record of a programme to formalise overlapping-generations economies in Lean 4. In
+Diamond's two-period economy everything is closed form and the steady state is unique for every
+relative risk aversion, with no condition on the savings function, even though the saving rate
+itself falls with the return whenever risk aversion exceeds one: the wage channel of a
+Cobb-Douglas technology dominates. That is the only place in the paper where uniqueness is settled
+outright, and it shows that a proof need not go through the household-side comparative static at
+all. A household that lives $J$ periods against uninsurable earnings risk and a borrowing constraint
 solves a finite backward induction, so everything proved for the infinite-horizon Bellman operator
 with an arbitrary continuation applies stage by stage with no fixed point. On top of that we prove
 the finite-horizon sandwich, $\kappa_k m\le c_k\le\kappa_k(m+H_k(z))$ with
@@ -78,6 +83,7 @@ mean with negative exponent is superadditive rather than $1$-Lipschitz.
 Bewley models, formal verification, Lean.
 
 \input{sections/intro}
+\input{sections/diamond}
 \input{sections/lifecycle}
 \input{sections/retirement}
 \input{sections/equilibrium}

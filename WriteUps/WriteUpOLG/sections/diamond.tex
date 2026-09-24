@@ -1,0 +1,79 @@
+\section{Diamond's two-period economy}\label{sec:diamond}
+
+The base case of the programme, and the one place in it where uniqueness is proved outright rather
+than reduced to an assumption. Agents live two periods, work when young and consume out of savings
+when old; a representative firm rents capital from the old.
+
+\subsection{The household, in closed form}
+
+A young household with wage $w$ facing gross return $R$ solves $\max u(w-s)+\beta u(Rs)$. With
+CRRA utility the Euler equation $u'(w-s)=\beta R\,u'(Rs)$ has the explicit solution $s=\sigma(R)w$
+with
+\[
+  \sigma(R)=\frac{1}{1+\beta^{-1/\gamma}R^{(\gamma-1)/\gamma}}
+\]
+(\lean{saveShare}). That $\sigma$ satisfies the Euler equation is algebra
+(\lean{saveShare\_euler}); that it is the optimum needs one more ingredient.
+
+\begin{proposition}[CRRA lies below its tangent]\label{prop:tangent}
+For $c,c'>0$ and $\gamma>0$, $u(c')\le u(c)+u'(c)(c'-c)$.
+\formal{crra\_le\_tangent}
+\end{proposition}
+
+This is Bernoulli's inequality in both directions. Below unit risk aversion the exponent $1-\gamma$
+lies in $(0,1)$ and the concave form applies directly; above it the exponent is negative, and
+inverting the consumption ratio and multiplying through turns the claim into the form with
+exponent $\gamma\ge1$. Optimality then follows by adding the tangent inequality at the two
+consumption levels and cancelling with the Euler equation, with no differentiation of a value
+function anywhere (\lean{saveShare\_isOptimal}).
+
+\subsection{The comparative static is discouraging}
+
+\begin{proposition}[The textbook comparative static]\label{prop:diamondcs}
+The saving rate rises with the gross return if $\gamma<1$ and falls if $\gamma>1$.
+\formal{saveShare\_strictMonoOn}, \lean{saveShare\_strictAntiOn}
+\end{proposition}
+
+So the household-side monotonicity that Section~\ref{sec:thm1} cannot establish in general is
+here a one-line calculation, and it runs the \emph{wrong} way at the risk aversions economists
+use: above unit intertemporal elasticity the income effect beats the substitution effect and a
+household facing a better return saves a smaller share of a given wage.
+
+\subsection{The steady state is unique anyway}
+
+What rescues it is general equilibrium. With Cobb-Douglas production the wage rises and the return
+falls as capital deepens, and the wage channel dominates. Writing $k'=\sigma(R(k))\,w(k)$ for
+capital per worker next period (\lean{diamondMap}), the whole argument is that $k'/k$ falls.
+
+\begin{proposition}[The engine]\label{prop:engine}
+If $\theta\le1$, $B>0$, $a\ge0$ and $b>0$, then $x\mapsto x/(1+B(a+bx)^\theta)$ is strictly
+increasing on $(0,\infty)$.
+\formal{div\_one\_add\_rpow\_strictMono}
+\end{proposition}
+
+The proof is the chain $x_2/x_1\le R_2/R_1\le(R_2/R_1)^\theta$, where the first step is
+$ax_2\le ax_1$ and the second is that a ratio at most one rises when raised to a power at most one.
+No calculus. Substituting $x=k^{\alpha-1}$, which falls with $k$, and $\theta=(\gamma-1)/\gamma$,
+which is below one for every positive $\gamma$, gives the result.
+
+\begin{theorem}[Existence and uniqueness]\label{thm:diamond}
+For every $\gamma>0$, every $\delta\le1$ and Cobb-Douglas production, the map $k\mapsto k'/k$ is
+strictly decreasing, so there is at most one positive steady state; and if the map crosses the
+diagonal between two positive levels there is exactly one.
+\formal{exists\_unique\_steadyState}, \lean{steadyState\_unique}, \lean{exists\_steadyState}
+\end{theorem}
+
+No condition on the savings function is needed, of the kind textbook treatments impose. The
+numerical check is in \texttt{numerics/dcheck.m}: the closed form matches a grid search to within
+the grid spacing at every risk aversion and return tried; there is exactly one positive crossing
+of the diagonal for risk aversions from $0.5$ to $10$ at both $\delta=1$ and $\delta=1/2$; and the
+saving rate rises with the return only below unit risk aversion, as
+Proposition~\ref{prop:diamondcs} says.
+
+What this does and does not settle is worth stating. It settles uniqueness in the two-period
+economy completely, for every risk aversion, which the stochastic life cycle of
+Section~\ref{sec:eqm} does not. It settles it by an argument that has no counterpart there,
+because with more than two periods the household's saving is not a closed form and $k'/k$ is not a
+product of two monotone factors. What it does supply is the shape of the answer: the
+household-side comparative static can fail while the general-equilibrium one holds, so a proof of
+uniqueness need not go through Light's Theorem 1 at all.

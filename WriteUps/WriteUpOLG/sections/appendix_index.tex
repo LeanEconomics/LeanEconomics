@@ -33,6 +33,13 @@ Perpetuity bound $H_k\le p/r$ & \lean{stageHumanWealth\_withPension\_le} & OLG/\
 Life-cycle value with retirement & \lean{lifeValue} & OLG/\allowbreak Retirement\\
 Saving, consumption rise with wealth & \lean{lifePolicy\_mono}, \lean{lifeConsumption\_mono} & OLG/\allowbreak Retirement\\
 \midrule
+Proposition~\ref{prop:tangent} & \lean{crra\_le\_tangent} & OLG/\allowbreak Diamond\\
+Closed-form saving & \lean{saveShare}, \lean{saveShare\_euler} & OLG/\allowbreak Diamond\\
+It is the optimum & \lean{saveShare\_isOptimal} & OLG/\allowbreak Diamond\\
+Proposition~\ref{prop:diamondcs} & \lean{saveShare\_strictMonoOn}, \lean{saveShare\_strictAntiOn} & OLG/\allowbreak Diamond\\
+Proposition~\ref{prop:engine} & \lean{div\_one\_add\_rpow\_strictMono} & OLG/\allowbreak Diamond\\
+Theorem~\ref{thm:diamond} & \lean{exists\_unique\_steadyState} & OLG/\allowbreak Diamond\\
+\midrule
 Pension schedules & \lean{lumpSum}, \lean{tapered}, \lean{cliff} & OLG/\allowbreak MeansTest\\
 Cash on hand & \lean{cash} & OLG/\allowbreak MeansTest\\
 Theorem~\ref{thm:topkis} & \lean{isOptimalSaving\_mono} & OLG/\allowbreak MeansTest\\
