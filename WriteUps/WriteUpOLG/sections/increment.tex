@@ -97,21 +97,51 @@ them.
 
 \subsection{What remains}
 
-The engine is proved. Three inputs remain, all of them statements about the life-cycle household
-and none about mean field games.
+The engine is proved, and so is the Lipschitz constant it runs on.
 
-The Lipschitz constant $L_j=(1-\kappa_k)(1+r_2)$ is saving Lipschitz in assets, equivalently the
-propensity to consume being at least $\kappa_k$ --- the companion of the upper bound on the slope in
-\lean{stageConsumption\_sub\_le\_of\_slope}. It has the terminal condition the programme's other
-backward inductions have: at the last stage the propensity is exactly $1=\kappa_0$. Measured, it
-holds at every stage and every reached state, with equality only at the last stage, so the sandwich
-constant is right and nearly tight (the true accumulation is $20.7$ against the sandwich's $21.2$).
+\subsubsection*{The propensity floor}
 
-From it, \lean{cohortAssets} is Lipschitz in assets with constant \lean{cohortSlope}, by the
-induction already written for \lean{cohortFloor}.
+\begin{theorem}[The propensity to consume is at least $\kappa_k$]\label{thm:mpcfloor}
+At every stage, every income state and every pair of asset levels in the region,
+\[
+  \kappa_k\,(1+r)(a_2-a_1)\;\le\;c_k(z,a_2)-c_k(z,a_1),\qquad a_1\le a_2 ,
+\]
+so saving is Lipschitz in assets with constant $(1-\kappa_k)(1+r)$, which is the $L_j$ the increment
+argument uses.
+\formal{IncomeFluctuation.stageMPC\_mul\_le\_stageConsumption\_sub}
+\end{theorem}
 
-Then $\bar e_j$ has to be bounded from primitives. This is the one genuinely new estimate, and it is
-a weaker demand than anything the programme has made of Theorem 1 so far: not that the policy
-ordering hold, nor that it hold up to a uniform slack, but that the mass on which it fails, times
-the amount by which it fails there, accumulate to less than the fall in the firm's demand. Numerics:
+The terminal condition is an identity rather than an assumption: in the last period consumption is
+cash on hand, so the propensity is exactly $1=\kappa_0$. The step is the two-point Euler comparison.
+With $b_i$ the saving at $a_i$ and $t=\kappa_kR(b_2-b_1)\ge0$, the induction hypothesis raises next
+period's consumption by at least $t$ in \emph{every} state, so the Euler equation above the floor at
+$a_2$ gives
+\[
+  c_2^{-\gamma}\;\le\;\beta R\sum_{z'}\pi\,\bigl(C'(z')+t\bigr)^{-\gamma}
+   \;=\;\beta R\,M(C'+t)^{-\gamma}\;\le\;\beta R\,\bigl(M(C')+t\bigr)^{-\gamma},
+\]
+with $M$ the certainty equivalent, the power mean of exponent $-\gamma$. The Euler equation under
+the cap at $a_1$ gives $M(C')\ge\Thorn c_1$, and $\beta R=\Thorn^\gamma$ turns the chain into
+$c_2\ge c_1+t/\Thorn$, which is the claim at stage $k+1$ once denominators are cleared.
+
+The last inequality in the display is \textbf{superadditivity of the certainty equivalent},
+$M(x+t)\ge M(x)+t$, which is concavity and homogeneity of degree one at the midpoint
+(\lean{powerMean\_add\_const\_le}, already proved for the constraint-incidence bound of
+Section~\ref{sec:thm1}). It is worth pausing on: this is the direction a negative power mean
+obliges, and it is the reverse of what several arguments in this programme wanted and could not
+have. The recurring obstruction, read the other way round, is what makes the floor go through.
+
+Measured, the floor holds at every stage and every reached state with equality only at the last
+stage, and the constant is nearly tight: the true accumulation is $20.7$ against the sandwich's
+$21.2$.
+
+\subsubsection*{Two things left}
+
+\lean{cohortAssets} Lipschitz in assets with constant \lean{cohortSlope}, which now follows from
+Theorem~\ref{thm:mpcfloor} by the induction already written for \lean{cohortFloor}.
+
+And a primitive bound on $\bar e_j$. This is the one genuinely new estimate, and it is a weaker
+demand than anything the programme has made of Theorem 1 so far: not that the policy ordering hold,
+nor that it hold up to a uniform slack, but that the mass on which it fails, times the amount by
+which it fails there, accumulate to less than the fall in the firm's demand. Numerics:
 \texttt{incbound.m}, \texttt{mpclow.m}, \texttt{slopecheck.m}.
