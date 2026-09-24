@@ -141,6 +141,100 @@ and every risk aversion tested, with a margin bounded away from zero, and the ma
 $\gamma$. The single failure is at $\gamma=1$ between two candidates one of which sits outside the
 bracket entirely.
 
+\subsection{Towards a proof from primitives}
+
+The summed condition is an integral inequality over pairs of measures. It is not: it is a
+submodularity condition on a function of two real arguments, and the reduction is exact.
+
+Let $U_i(K)$ be the lifetime utility of the \emph{plan} carried by $m_i$ --- its asset path --- when
+that plan is priced at aggregate $K$. Expanding the definitions and collecting terms,
+\[
+  \sum_t P_t \;=\; -\Bigl[\,U_1(K_1)-U_2(K_1)\;-\;U_1(K_2)+U_2(K_2)\,\Bigr],
+\]
+a mixed difference. (Checked numerically: the two sides agree to $10^{-14}$ in every case
+reported above.) So summed Lasry--Lions monotonicity is exactly the statement that $U(K,\text{plan})$
+has \emph{decreasing differences} in the aggregate and the plan: the plan that goes with the larger
+aggregate loses its relative advantage as the aggregate rises.
+
+\begin{theorem}[The reduction]\label{thm:mfgred}
+When the population enters the cost only through a real statistic $\theta$, the summed pairing is
+the mixed difference of the whole-life cost in (population, statistic). Strictly increasing
+differences of that cost make $\theta$ the same at every relaxed equilibrium with a common start.
+\formal{MeanFieldGame.famSummedPairing\_scalar},
+\lean{MeanFieldGame.statistic\_eq\_of\_increasingDifferences}
+\end{theorem}
+
+This needed one repair. A stationary overlapping-generations aggregate is an average across
+\emph{all} ages, so the date-$t$ cost depends on the whole family of marginals and not on the
+date-$t$ marginal alone. The finite-horizon machinery has been redone in that generality
+(\lean{famPathCost}, \lean{IsFamPathEquilibrium}, \lean{famSummedPairing},
+\lean{famSummedPairing\_nonpos\_of\_pathEquilibrium}); the engine survives unchanged.
+
+\subsubsection*{What the differences are made of}
+
+Differentiate. For \emph{any} constant-returns technology, Euler's theorem gives
+$\partial w/\partial K=-(K/L)\,\partial r/\partial K$, so with $L$ normalised to one,
+\[
+  \frac{\partial U}{\partial K}(K,\text{plan})\;=\;r'(K)\,\Phi(K,\text{plan}),
+  \qquad
+  \Phi(K,\text{plan})\;=\;\sum_t\beta^t\,\mathbb E\bigl[u'(c_t)\,(a_t-Ky_t)\bigr],
+\]
+where $c_t$ is the plan's consumption \emph{at the pricing aggregate} $K$. The quantity $a_t-Ky_t$
+is the household's \textbf{net capital position}: its assets less the capital that goes with its own
+labour at the economy's capital--labour ratio. Since $r'<0$, decreasing differences say
+
+\begin{equation}\label{eq:W}
+  \Phi(K,\text{plan}_1)\;\ge\;\Phi(K,\text{plan}_2)
+  \qquad\text{at every common }K,
+  \tag{W}
+\end{equation}
+for $\text{plan}_1$ the plan carrying the larger aggregate: \emph{the plan with more capital has the
+larger marginal-utility-weighted net capital position.}
+
+\subsubsection*{A pointwise condition, and why it is no good}
+
+Submodularity of the flow $u\bigl(w(K)y+(1+r(K))a-a'\bigr)$ in $(K,a)$ is, for constant relative
+risk aversion, exactly
+\begin{equation}\label{eq:P}
+  \gamma\,(1+r(K))\,(a_t-Ky_t)\;\le\;c_t \qquad\text{at every age and state,}
+  \tag{P}
+\end{equation}
+which implies \eqref{eq:W} and hence the summed condition. It is free wherever the household holds
+less than its share of the capital stock, and it is hopeless where it does not: at the calibration
+it is violated on $27\%$ to $45\%$ of the mass, at every risk aversion. Requiring each date to
+carry itself is precisely what the summed condition was introduced to avoid, and \eqref{eq:P} is
+that mistake made again one level down.
+
+\subsubsection*{The weighted condition holds where the pointwise one dies}
+
+\eqref{eq:W} is a single scalar comparison, and it is strictly weaker than the pointwise ordering of
+policies $a^1_t\ge a^2_t$ --- Light's Theorem 1, the condition this programme has been stuck on
+since Section~\ref{sec:thm1}. Measured at the calibration, on plans drawn from the candidate
+family at $\hat K/K^*=0.90$ against $1.10$:
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+$\gamma$ & $1$ & $2$ & $3$ & $5$\\
+\midrule
+$\Phi_1-\Phi_2$ at the midpoint $K$ & $+39.36$ & $+12.67$ & $+7.34$ & $+7.32$\\
+mass on which $a^1_t\ge a^2_t$ FAILS & $0.0000$ & $0.0025$ & $0.0409$ & $0.2006$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At $\gamma=5$ a fifth of the mass has the policy ordering backwards, and the weighted comparison is
+still positive by a wide margin, at every $K$ between the two aggregates. That is the point of the
+exercise: \eqref{eq:W} is not a restatement of Light's Theorem 1 but a genuine weakening of it, and
+it survives exactly where Theorem 1 dies.
+
+What is not done is a proof of \eqref{eq:W}. Optimality gives it for free over the wrong interval:
+each plan is optimal at its own planning aggregate, so adding the two optimality inequalities shows
+the difference $U(\cdot,\text{plan}_1)-U(\cdot,\text{plan}_2)$ falls across the interval between the
+two \emph{planning} aggregates --- while what is needed is the same fall across the interval between
+the two \emph{carried} aggregates. The two intervals coincide only at equilibrium, where the
+statement is vacuous. Closing that gap is the open problem.
+
 \subsection{What this leaves}
 
 Three things, in order of how much they are worth.
@@ -157,8 +251,9 @@ any hypothesis, and Theorem~\ref{thm:mfgagg} turns the summed condition directly
 of the aggregate, which for this economy is uniqueness outright: one $K$ means one $r$, one
 household problem, one answer. The route is no longer dismissed for the wrong reason.
 
-What is missing is a proof of the summed condition from primitives. It is now a measured
-conjecture --- one scalar inequality about a whole life, strictly satisfied with room to spare
-throughout the bracket in which existence is proved --- rather than a hypothesis known to be
-false. That is a better position than the date-by-date condition ever offered, and it is the first
-route in this programme whose measured margin improves as risk aversion rises.
+What is missing is a proof of \eqref{eq:W} from primitives. It is now a measured conjecture ---
+one scalar inequality comparing two marginal-utility-weighted net capital positions --- rather than
+a hypothesis known to be false, and it is strictly weaker than the pointwise policy ordering the
+rest of the programme needs and cannot get above $\mu\approx3.4$. This is the first route here whose
+measured margin improves as risk aversion rises, and the first whose blocking condition survives at
+$\mu=5$.

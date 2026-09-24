@@ -357,6 +357,141 @@ theorem value_eq_of_pathEquilibrium {F : Fin (T + 1) → X → ProbabilityMeasur
   unfold value pathCost
   simp only [hcost]
 
+/-! ### Costs that see the whole family of marginals -/
+
+section Family
+
+/-- A family of date marginals. -/
+abbrev Marginals (X : Type*) [MeasurableSpace X] (T : ℕ) := Fin (T + 1) → ProbabilityMeasure X
+
+/-- The cost of a path when each date's cost may depend on the WHOLE family of marginals, not
+only on its own date's. A stationary overlapping-generations economy needs this: the aggregate
+capital that prices every date is an average across ALL ages. -/
+def famPathCost (F : Fin (T + 1) → X → Marginals X T → ℝ) (m : Marginals X T)
+    (γ : Path X T) : ℝ :=
+  ∑ t, F t (γ t) m
+
+/-- The value from `x` against a family of marginals. -/
+noncomputable def famValue (F : Fin (T + 1) → X → Marginals X T → ℝ) (m : Marginals X T)
+    (x : X) : ℝ :=
+  ⨅ γ : {γ : Path X T // γ 0 = x}, famPathCost F m γ.1
+
+omit [MeasurableSingletonClass X] in
+theorem famValue_le (F : Fin (T + 1) → X → Marginals X T → ℝ) (m : Marginals X T)
+    (γ : Path X T) : famValue F m (γ 0) ≤ famPathCost F m γ :=
+  ciInf_le (Set.finite_range _).bddBelow (⟨γ, rfl⟩ : {γ' : Path X T // γ' 0 = γ 0})
+
+/-- A relaxed equilibrium for a family-dependent cost. -/
+def IsFamPathEquilibrium (F : Fin (T + 1) → X → Marginals X T → ℝ)
+    (η : ProbabilityMeasure (Path X T)) : Prop :=
+  ∀ᵐ γ ∂(η : Measure (Path X T)), famPathCost F (marginal η) γ = famValue F (marginal η) (γ 0)
+
+theorem integral_famPathCost (F : Fin (T + 1) → X → Marginals X T → ℝ) (m : Marginals X T)
+    (η : ProbabilityMeasure (Path X T)) :
+    ∫ γ, famPathCost F m γ ∂(η : Measure (Path X T))
+      = ∑ t, ∫ x, F t x m ∂(marginal η t : Measure X) := by
+  unfold famPathCost
+  rw [integral_finsetSum _ (fun t _ => Integrable.of_finite)]
+  refine Finset.sum_congr rfl fun t _ => ?_
+  unfold marginal
+  rw [ProbabilityMeasure.toMeasure_map,
+    integral_map (measurable_pi_apply t).aemeasurable (measurable_of_finite _).aestronglyMeasurable]
+
+theorem integral_famValue (F : Fin (T + 1) → X → Marginals X T → ℝ) (m : Marginals X T)
+    (η : ProbabilityMeasure (Path X T)) :
+    ∫ x, famValue F m x ∂(marginal η 0 : Measure X)
+      = ∫ γ, famValue F m (γ 0) ∂(η : Measure (Path X T)) := by
+  unfold marginal
+  rw [ProbabilityMeasure.toMeasure_map,
+    integral_map (measurable_pi_apply 0).aemeasurable (measurable_of_finite _).aestronglyMeasurable]
+
+theorem integral_famValue_le (F : Fin (T + 1) → X → Marginals X T → ℝ) (m : Marginals X T)
+    (η : ProbabilityMeasure (Path X T)) :
+    ∫ x, famValue F m x ∂(marginal η 0 : Measure X)
+      ≤ ∑ t, ∫ x, F t x m ∂(marginal η t : Measure X) := by
+  rw [integral_famValue, ← integral_famPathCost]
+  exact integral_mono Integrable.of_finite Integrable.of_finite fun γ => famValue_le F m γ
+
+theorem integral_famValue_eq {F : Fin (T + 1) → X → Marginals X T → ℝ}
+    {η : ProbabilityMeasure (Path X T)} (h : IsFamPathEquilibrium F η) :
+    ∫ x, famValue F (marginal η) x ∂(marginal η 0 : Measure X)
+      = ∑ t, ∫ x, F t x (marginal η) ∂(marginal η t : Measure X) := by
+  rw [integral_famValue, ← integral_famPathCost]
+  exact (integral_congr_ae h).symm
+
+/-- The summed pairing for a family-dependent cost. -/
+noncomputable def famSummedPairing (F : Fin (T + 1) → X → Marginals X T → ℝ)
+    (m₁ m₂ : Marginals X T) : ℝ :=
+  (∑ t, ∫ x, (F t x m₁ - F t x m₂) ∂(m₁ t : Measure X))
+    - ∑ t, ∫ x, (F t x m₁ - F t x m₂) ∂(m₂ t : Measure X)
+
+theorem famSummedPairing_eq (F : Fin (T + 1) → X → Marginals X T → ℝ) (m₁ m₂ : Marginals X T) :
+    famSummedPairing F m₁ m₂
+      = ((∑ t, ∫ x, F t x m₁ ∂(m₁ t : Measure X)) - ∑ t, ∫ x, F t x m₂ ∂(m₁ t : Measure X))
+        - ((∑ t, ∫ x, F t x m₁ ∂(m₂ t : Measure X))
+            - ∑ t, ∫ x, F t x m₂ ∂(m₂ t : Measure X)) := by
+  have h : ∀ m : Marginals X T, (∑ t, ∫ x, (F t x m₁ - F t x m₂) ∂(m t : Measure X))
+      = (∑ t, ∫ x, F t x m₁ ∂(m t : Measure X)) - ∑ t, ∫ x, F t x m₂ ∂(m t : Measure X) := by
+    intro m
+    rw [← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun t _ =>
+      integral_sub Integrable.of_finite Integrable.of_finite
+  unfold famSummedPairing
+  rw [h m₁, h m₂]
+
+/-- **The engine, for a cost that sees the whole family.** Two relaxed equilibria from a common
+initial distribution have a nonpositive summed pairing. -/
+theorem famSummedPairing_nonpos_of_pathEquilibrium
+    {F : Fin (T + 1) → X → Marginals X T → ℝ} {η₁ η₂ : ProbabilityMeasure (Path X T)}
+    (h₁ : IsFamPathEquilibrium F η₁) (h₂ : IsFamPathEquilibrium F η₂)
+    (h0 : marginal η₁ 0 = marginal η₂ 0) :
+    famSummedPairing F (marginal η₁) (marginal η₂) ≤ 0 := by
+  have e₁ := integral_famValue_eq h₁
+  have e₂ := integral_famValue_eq h₂
+  have i₁ := integral_famValue_le F (marginal η₂) η₁
+  have i₂ := integral_famValue_le F (marginal η₁) η₂
+  rw [h0] at e₁ i₁
+  rw [famSummedPairing_eq]
+  linarith
+
+/-! #### Interaction through a real statistic -/
+
+/-- The whole-life cost of the population `m`, priced by the statistic value `s`. -/
+noncomputable def famLifetime (φ : Fin (T + 1) → X → ℝ → ℝ) (m : Marginals X T) (s : ℝ) : ℝ :=
+  ∑ t, ∫ x, φ t x s ∂(m t : Measure X)
+
+/-- **The reduction.** When the population enters only through a real statistic `θ`, the summed
+pairing is exactly the MIXED DIFFERENCE of the whole-life cost in (population, statistic). A
+condition on measures has become a submodularity condition on a function of two arguments. -/
+theorem famSummedPairing_scalar (φ : Fin (T + 1) → X → ℝ → ℝ) (θ : Marginals X T → ℝ)
+    (m₁ m₂ : Marginals X T) :
+    famSummedPairing (fun t x m => φ t x (θ m)) m₁ m₂
+      = (famLifetime φ m₁ (θ m₁) - famLifetime φ m₁ (θ m₂))
+        - (famLifetime φ m₂ (θ m₁) - famLifetime φ m₂ (θ m₂)) := by
+  rw [famSummedPairing_eq]
+  rfl
+
+/-- **Strictly increasing differences of the whole-life COST pin the statistic.** Equivalently,
+for a payoff, strictly DECREASING differences: the plan that goes with the larger aggregate loses
+its relative advantage as the aggregate rises. Two relaxed equilibria from a common initial
+distribution then agree on `θ`. -/
+theorem statistic_eq_of_increasingDifferences {φ : Fin (T + 1) → X → ℝ → ℝ}
+    {θ : Marginals X T → ℝ}
+    (hdd : ∀ m₁ m₂ : Marginals X T, θ m₁ ≠ θ m₂ →
+      famLifetime φ m₂ (θ m₁) - famLifetime φ m₂ (θ m₂)
+        < famLifetime φ m₁ (θ m₁) - famLifetime φ m₁ (θ m₂))
+    {η₁ η₂ : ProbabilityMeasure (Path X T)}
+    (h₁ : IsFamPathEquilibrium (fun t x m => φ t x (θ m)) η₁)
+    (h₂ : IsFamPathEquilibrium (fun t x m => φ t x (θ m)) η₂)
+    (h0 : marginal η₁ 0 = marginal η₂ 0) :
+    θ (marginal η₁) = θ (marginal η₂) := by
+  by_contra h
+  have hle := famSummedPairing_nonpos_of_pathEquilibrium h₁ h₂ h0
+  rw [famSummedPairing_scalar] at hle
+  linarith [hdd (marginal η₁) (marginal η₂) h]
+
+end Family
+
 end Paths
 
 end MeanFieldGame
