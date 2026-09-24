@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import LeanEconomics.OLG.MPCBound
-import LeanEconomics.OLG.Incidence
+import LeanEconomics.OLG.Existence
 
 /-!
 # The propensity to consume is at least `κ_k`
@@ -148,6 +148,61 @@ theorem stageMPC_mul_le_stageConsumption_sub {γ : ℝ} (hγ0 : 0 < γ) (hu : P.
     rw [htdef, hb] at hk2
     rw [div_le_iff₀ hT0] at hk2
     nlinarith [hk2, hT0, hκ, hR]
+
+/-- **`cohortAssets` is Lipschitz in assets, with constant `cohortSlope`.** The same constant the
+affine ceiling of `Existence` carries, now as a bound on DIFFERENCES rather than on levels, which is
+what the increment argument accumulates. -/
+theorem cohortAssets_sub_le_cohortSlope {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
+    (hslack : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z,
+      P.stagePolicy j (b, w) < P.maxSaving (b, w))
+    (k : ℕ) : ∀ (z : Z) (a₁ a₂ : ℝ), a₁ ∈ Icc (0 : ℝ) assetCap → a₂ ∈ Icc (0 : ℝ) assetCap →
+      a₁ ≤ a₂ → P.cohortAssets k (a₂, z) - P.cohortAssets k (a₁, z)
+        ≤ P.cohortSlope γ k * (a₂ - a₁) := by
+  induction k with
+  | zero =>
+    intro z a₁ a₂ _ _ _
+    have h₁ : P.cohortAssets 0 (a₁, z) = a₁ := P.cohortAssets_zero _
+    have h₂ : P.cohortAssets 0 (a₂, z) = a₂ := P.cohortAssets_zero _
+    rw [h₁, h₂, P.cohortSlope_zero, one_mul]
+  | succ k ih =>
+    intro z a₁ a₂ ha₁ ha₂ hle
+    have hG : 0 < P.cohortSlope γ k := P.cohortSlope_pos hγ0 hβ k
+    set b₁ : ℝ := P.stagePolicy (k + 1) (a₁, z) with hb₁def
+    set b₂ : ℝ := P.stagePolicy (k + 1) (a₂, z) with hb₂def
+    have hb₁mem : b₁ ∈ Icc (0 : ℝ) assetCap := P.stagePolicy_mem_region _ _
+    have hb₂mem : b₂ ∈ Icc (0 : ℝ) assetCap := P.stagePolicy_mem_region _ _
+    have hble : b₁ ≤ b₂ := P.stagePolicy_mono (k + 1) ha₁ ha₂ hle
+    -- the propensity floor caps the saving increment
+    have hb : b₂ - b₁ ≤ (1 - P.stageMPC γ (k + 1)) * ((1 + P.interest) * (a₂ - a₁)) := by
+      have hc := P.stageMPC_mul_le_stageConsumption_sub hγ0 hu hβ hd hslack (k + 1) z a₁ a₂
+        ha₁ ha₂ hle
+      have hres : P.resources (a₂, z) - P.resources (a₁, z) = (1 + P.interest) * (a₂ - a₁) := by
+        rw [P.resources_eq_of_mem ha₁ z, P.resources_eq_of_mem ha₂ z]; ring
+      have e₁ : P.stageConsumption (k + 1) z a₁ = P.resources (a₁, z) - b₁ := rfl
+      have e₂ : P.stageConsumption (k + 1) z a₂ = P.resources (a₂, z) - b₂ := rfl
+      rw [e₁, e₂] at hc
+      nlinarith [hres]
+    -- the cohort step, against the induction hypothesis
+    have hdiff : (∑ z', P.transitionMatrix z z' * P.cohortAssets k (b₂, z'))
+        - (∑ z', P.transitionMatrix z z' * P.cohortAssets k (b₁, z'))
+        ≤ P.cohortSlope γ k * (b₂ - b₁) := by
+      rw [← Finset.sum_sub_distrib]
+      calc ∑ z', (P.transitionMatrix z z' * P.cohortAssets k (b₂, z')
+              - P.transitionMatrix z z' * P.cohortAssets k (b₁, z'))
+          ≤ ∑ z', P.transitionMatrix z z' * (P.cohortSlope γ k * (b₂ - b₁)) := by
+            refine Finset.sum_le_sum fun z' _ => ?_
+            have := mul_le_mul_of_nonneg_left (ih z' b₁ b₂ hb₁mem hb₂mem hble)
+              (P.transitionMatrix_nonneg z z')
+            linarith [this]
+        _ = P.cohortSlope γ k * (b₂ - b₁) := by
+            rw [← Finset.sum_mul, P.transitionMatrix_sum z, one_mul]
+    rw [P.cohortAssets_succ, P.cohortAssets_succ, P.cohortSlope_succ]
+    simp only [stageStep]
+    have hmul : P.cohortSlope γ k * (b₂ - b₁)
+        ≤ P.cohortSlope γ k * ((1 - P.stageMPC γ (k + 1)) * ((1 + P.interest) * (a₂ - a₁))) :=
+      mul_le_mul_of_nonneg_left hb hG.le
+    nlinarith [hdiff, hmul]
 
 end IncomeFluctuation
 

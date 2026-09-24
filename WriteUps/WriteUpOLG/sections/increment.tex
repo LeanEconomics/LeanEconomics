@@ -135,12 +135,28 @@ Measured, the floor holds at every stage and every reached state with equality o
 stage, and the constant is nearly tight: the true accumulation is $20.7$ against the sandwich's
 $21.2$.
 
-\subsubsection*{Two things left}
+\subsubsection*{The Lipschitz bound it gives}
 
-\lean{cohortAssets} Lipschitz in assets with constant \lean{cohortSlope}, which now follows from
-Theorem~\ref{thm:mpcfloor} by the induction already written for \lean{cohortFloor}.
+\begin{theorem}[Accumulated assets are Lipschitz in assets]\label{thm:cohortlip}
+For $a_1\le a_2$ in the region,
+\[
+  A_k(a_2,z)-A_k(a_1,z)\;\le\;G_k\,(a_2-a_1),
+\]
+with $G_k$ the slope \lean{cohortSlope} of the affine ceiling: $G_0=1$,
+$G_{k+1}=1+G_k(1-\kappa_{k+1})(1+r)$.
+\formal{IncomeFluctuation.cohortAssets\_sub\_le\_cohortSlope}
+\end{theorem}
 
-And a primitive bound on $\bar e_j$. This is the one genuinely new estimate, and it is a weaker
+The induction is the one already written for the affine floor, with one substitution: the propensity
+floor turns a step of assets into a step of saving no larger than $(1-\kappa_{k+1})(1+r)$ times it,
+and the expectation over next period's earnings passes the constant through unchanged. The same $G_k$
+that bounds the \emph{level} of accumulated assets in Section~\ref{sec:eqm} therefore bounds their
+\emph{differences}, which is what the increment argument accumulates --- and it is the $L_j$ whose
+accumulation was measured at $21$ above.
+
+\subsubsection*{One thing left}
+
+A primitive bound on $\bar e_j$. This is the one genuinely new estimate, and it is a weaker
 demand than anything the programme has made of Theorem 1 so far: not that the policy ordering hold,
 nor that it hold up to a uniform slack, but that the mass on which it fails, times the amount by
 which it fails there, accumulate to less than the fall in the firm's demand. Numerics:
