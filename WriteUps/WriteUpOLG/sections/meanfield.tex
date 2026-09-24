@@ -228,12 +228,79 @@ still positive by a wide margin, at every $K$ between the two aggregates. That i
 exercise: \eqref{eq:W} is not a restatement of Light's Theorem 1 but a genuine weakening of it, and
 it survives exactly where Theorem 1 dies.
 
-What is not done is a proof of \eqref{eq:W}. Optimality gives it for free over the wrong interval:
-each plan is optimal at its own planning aggregate, so adding the two optimality inequalities shows
-the difference $U(\cdot,\text{plan}_1)-U(\cdot,\text{plan}_2)$ falls across the interval between the
-two \emph{planning} aggregates --- while what is needed is the same fall across the interval between
-the two \emph{carried} aggregates. The two intervals coincide only at equilibrium, where the
-statement is vacuous. Closing that gap is the open problem.
+More than those pairs is true. Sweeping the planning aggregate over $\hat K/K^*\in[0.5,2]$ at
+fourteen points, $\Phi(K,p(\hat K))$ is strictly \emph{decreasing} in $\hat K$ at every one of the
+thirteen steps, for $\gamma=1,3,5$ and for each of $K=0.90K^*,K^*,1.10K^*$. So \eqref{eq:W} holds
+not merely at the pairs one happens to test but as a monotone comparative static in the plan. Over
+all $91$ pairs at five pricing points each, $\gamma=3$ and $\gamma=5$ give no failures at all; the
+$42$ failures out of $455$ at $\gamma=1$ all involve the extreme candidate $\hat K=0.5K^*$, whose
+carried aggregate is $48.6$, ten times the capital stock and far outside the bracket of
+Theorem~\ref{thm:exist5}.
+
+\subsection{What $\Phi$ is, and why it will not yield locally}
+
+Two things can be proved. Neither closes \eqref{eq:W}, and the second says why.
+
+\subsubsection*{The duration identity}
+
+Along the diagonal, where a plan is priced by the aggregate it was chosen for, $\Phi$ has a closed
+form. Let $m_t=\beta^tu'(c_t)$. Interiority makes $m$ a state-price density,
+$\mathbb E_t[m_{t+1}]=m_t/R$, and writing $P[x]=\sum_t\mathbb E[m_tx_t]$ and
+$P_1[x]=\sum_t t\,\mathbb E[m_tx_t]$, two identities follow from the budget recursion
+$a_{t+1}=Ra_t+wy_t-c_t$ with $a_0=a_{J+1}=0$: the lifetime budget in state-price units,
+$P[w y-c]=0$, and $P[a]=-P_1[wy-c]/R$.
+
+\begin{proposition}[$\Phi$ as a duration wedge]\label{prop:dur}
+For the plan optimal at $K$, with $Y=P[y]$ and $T_c=P_1[c]/P[c]$, $T_y=P_1[y]/P[y]$ the
+marginal-utility-weighted durations of consumption and of earnings,
+\[
+  \Phi\bigl(K,p(K)\bigr)\;=\;Y\Bigl[\tfrac{w}{R}\,(T_c-T_y)\;-\;K\Bigr].
+\]
+\end{proposition}
+
+Assets are the wedge between the duration of spending and the duration of earning; the household's
+marginal valuation of a higher interest rate is negative exactly when that wedge, scaled by the
+wage, falls short of the economy's capital--labour ratio. At the calibration it does, at every risk
+aversion: $T_c-T_y$ runs from $1.7$ to $3.8$ years while $K\approx5$, so $\Phi<0$ --- along the
+factor-price frontier a higher interest rate \emph{hurts} the household, because $dw/dr=-K$ and the
+marginal-utility weighting favours the young, who have no assets to gain on. Checked numerically:
+$P[wy-c]/P[c]=3\times10^{-5}$, $P[a]+P_1[wy-c]/R = 1.7\times10^{-2}$ against $P[a]=57.9$, and the
+two sides of Proposition~\ref{prop:dur} agree to one part in $10^{4}$; the residual is the
+borrowing constraint, which binds on $3$--$11\%$ of the mass and breaks the Euler equality there.
+At $\gamma=1$ the identity $m_tc_t=\beta^t$ makes $T_c=\sum_t t\beta^t/\sum_t\beta^t$ exactly,
+independent of prices and of the earnings process.
+
+This is the diagonal, and \eqref{eq:W} is about two plans priced at a \emph{common} aggregate that
+is neither's own. The identity does not reach it.
+
+\subsubsection*{The obstruction}
+
+The reason \eqref{eq:W} resists is not that the argument is delicate. It is that the inequality is
+the whole of uniqueness, and the following says so.
+
+\begin{proposition}[The pairing is minus two revealed-preference losses]\label{prop:loss}
+For any cost, the summed pairing satisfies the identity
+$\;\sum_tP_t=-\bigl[(\mathcal C_1[m_2]-\mathcal C_1[m_1])+(\mathcal C_2[m_1]-\mathcal C_2[m_2])\bigr]$,
+where $\mathcal C_i[m]$ is the whole-life cost borne by population $m$ at the prices set by
+population $i$. At two relaxed equilibria with a common start both brackets are nonnegative.
+\formal{MeanFieldGame.famSummedPairing\_eq\_neg\_losses},
+\lean{MeanFieldGame.famCost\_le\_of\_pathEquilibrium},
+\lean{MeanFieldGame.famSummedPairing\_nonpos\_of\_losses}
+\end{proposition}
+
+At two \emph{distinct} equilibria both brackets are strictly positive, so $\sum_tP_t<0$ strictly.
+A hypothesis forcing $\sum_tP_t>0$ is therefore not a statement about nearby populations that could
+be established by a local expansion and then extended: it is, on the nose, the assertion that no
+second equilibrium exists. That kills the route we would otherwise have taken --- expand the
+optimality loss to second order about the diagonal, where it is a positive quadratic, and read off
+a radius within which the sign is guaranteed. There is no such radius, because the sign that a local
+expansion delivers at a hypothetical pair of equilibria is the wrong one. \eqref{eq:W} is strictly
+stronger than uniqueness, as Light's Theorem 1 also is, and any proof of it has to be global.
+
+That is the honest state of it. Optimality gives the differences falling for free over the interval
+between the two \emph{planning} aggregates --- add the two optimality inequalities --- while what is
+needed is the same fall between the two \emph{carried} aggregates; the intervals coincide only at
+equilibrium, and there Proposition~\ref{prop:loss} turns the free inequality against us.
 
 \subsection{What this leaves}
 

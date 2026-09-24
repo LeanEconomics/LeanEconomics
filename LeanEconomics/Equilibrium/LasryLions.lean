@@ -454,6 +454,48 @@ theorem famSummedPairing_nonpos_of_pathEquilibrium
   rw [famSummedPairing_eq]
   linarith
 
+/-- The cost borne by population `m'` when the prices are set by population `m`. -/
+noncomputable def famCost (F : Fin (T + 1) → X → Marginals X T → ℝ) (m m' : Marginals X T) : ℝ :=
+  ∑ t, ∫ x, F t x m ∂(m' t : Measure X)
+
+theorem famSummedPairing_eq_cost (F : Fin (T + 1) → X → Marginals X T → ℝ)
+    (m₁ m₂ : Marginals X T) :
+    famSummedPairing F m₁ m₂
+      = (famCost F m₁ m₁ - famCost F m₂ m₁) - (famCost F m₁ m₂ - famCost F m₂ m₂) :=
+  famSummedPairing_eq F m₁ m₂
+
+/-- **The pairing is minus the sum of the two cross-losses.** Pure algebra, no hypotheses. -/
+theorem famSummedPairing_eq_neg_losses (F : Fin (T + 1) → X → Marginals X T → ℝ)
+    (m₁ m₂ : Marginals X T) :
+    famSummedPairing F m₁ m₂
+      = -((famCost F m₁ m₂ - famCost F m₁ m₁) + (famCost F m₂ m₁ - famCost F m₂ m₂)) := by
+  rw [famSummedPairing_eq_cost]; ring
+
+/-- **Each cross-loss is nonnegative**: a population pays at least as much under someone else's
+prices as the population those prices came from does. Revealed preference, twice. -/
+theorem famCost_le_of_pathEquilibrium {F : Fin (T + 1) → X → Marginals X T → ℝ}
+    {η₁ η₂ : ProbabilityMeasure (Path X T)} (h₁ : IsFamPathEquilibrium F η₁)
+    (h0 : marginal η₁ 0 = marginal η₂ 0) :
+    famCost F (marginal η₁) (marginal η₁) ≤ famCost F (marginal η₁) (marginal η₂) := by
+  have e := integral_famValue_eq h₁
+  have i := integral_famValue_le F (marginal η₁) η₂
+  rw [← h0] at i
+  unfold famCost
+  linarith
+
+/-- **Why the monotonicity hypothesis admits no local version.** At two relaxed equilibria from a
+common start the summed pairing is minus a sum of two nonnegative revealed-preference losses. So a
+hypothesis forcing it to be positive is not a perturbation statement about nearby populations: it
+is exactly the assertion that no such pair exists, and any proof of it must be global. -/
+theorem famSummedPairing_nonpos_of_losses {F : Fin (T + 1) → X → Marginals X T → ℝ}
+    {η₁ η₂ : ProbabilityMeasure (Path X T)} (h₁ : IsFamPathEquilibrium F η₁)
+    (h₂ : IsFamPathEquilibrium F η₂) (h0 : marginal η₁ 0 = marginal η₂ 0) :
+    famSummedPairing F (marginal η₁) (marginal η₂) ≤ 0 := by
+  rw [famSummedPairing_eq_neg_losses]
+  have l₁ := famCost_le_of_pathEquilibrium h₁ h0
+  have l₂ := famCost_le_of_pathEquilibrium h₂ h0.symm
+  linarith
+
 /-! #### Interaction through a real statistic -/
 
 /-- The whole-life cost of the population `m`, priced by the statistic value `s`. -/
