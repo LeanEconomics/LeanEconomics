@@ -128,6 +128,7 @@ import LeanEconomics.OLG.Continuity
 import LeanEconomics.OLG.Existence
 import LeanEconomics.OLG.Increment
 import LeanEconomics.OLG.PropensityFloor
+import LeanEconomics.OLG.MassWeighted
 import LeanEconomics.OLG.AssetIncidence
 import LeanEconomics.OLG.Diamond
 import LeanEconomics.OLG.Deterministic

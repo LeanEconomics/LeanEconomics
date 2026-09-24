@@ -154,10 +154,71 @@ that bounds the \emph{level} of accumulated assets in Section~\ref{sec:eqm} ther
 \emph{differences}, which is what the increment argument accumulates --- and it is the $L_j$ whose
 accumulation was measured at $21$ above.
 
+\subsection{The mass-weighted failure}
+
+What is left is $\bar e_j$, an expectation against a distribution nobody controls. It looks like the
+hard part, and it would be if the failure of Theorem 1 were spread over assets. It is not.
+
+\subsubsection*{Where the failure lives}
+
+Measured at $\gamma=5$ over $r\in[4\%,6\%]$, the failure reaches down to $a=0$ --- so no threshold in
+assets confines it, and a Markov bound on a thin upper tail is worthless: the sup of the failure
+below any threshold is the global sup, and the resulting bound is the uniform one that already
+failed. But sorted by earnings state the picture is different. With Aiyagari's seven-state chain the
+sup of the failure over assets, state by state, is
+\[
+  (0,\;0,\;0,\;0,\;0,\;0.0143,\;0.0460),
+\]
+zero in the bottom five states and confined to the top two, whose invariant mass is
+$\nu_6+\nu_7=0.095$. At $\gamma=8$ it reaches the fourth state and the profile is
+$(0,0,0,0.0014,0.0118,0.0333,0.0701)$. The failure of Theorem 1 is an \emph{earnings-state}
+phenomenon: it is the high-earners, who are few.
+
+\subsubsection*{Why that coordinate is free}
+
+Earnings are exogenous and the cohort is born with its state drawn from the invariant law, so the
+earnings marginal is $\nu$ at \emph{every} age, exactly. Nothing has to be estimated in that
+coordinate.
+
+\begin{theorem}[The earnings marginal of a cohort is $\nu$]\label{thm:marginal}
+If $\nu$ is invariant for $\pi$, the $\nu$-weighted expectation of a function of the earnings state
+is unchanged by any number of steps of the cohort recursion. Hence
+$\bar e_j\le\sum_z\nu_z\,V_j(z)$ with $V_j(z)$ the supremum over assets of the failure at earnings
+state $z$: exact in earnings, worst-case only in assets.
+\formal{IncomeFluctuation.incomeStep}, \lean{IncomeFluctuation.stageStep\_of\_incomeFn},
+\lean{IncomeFluctuation.sum\_mul\_incomeStep}, \lean{IncomeFluctuation.sum\_mul\_incomeStep\_iterate},
+\lean{IncomeFluctuation.sum\_mul\_le\_of\_le}
+\end{theorem}
+
+Being exact in the coordinate where the failure lives is what makes the bound work:
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+& \multicolumn{2}{c}{$r\in[4\%,6\%]$, budget $0.670$}
+& \multicolumn{2}{c}{$r\in[2\%,8\%]$, budget $2.109$}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+$\gamma$ & $5$ & $8$ & $5$ & $8$\\
+\midrule
+worst-case in both coordinates & $0.976$ $\times$ & $1.464$ $\times$ & $3.125$ $\times$ & $4.707$ $\times$\\
+Markov in assets, best threshold & $0.976$ $\times$ & $1.464$ $\times$ & $3.125$ $\times$ & $4.707$ $\times$\\
+$\nu$-exact, worst-case in assets & $\mathbf{0.032}$ $\checkmark$ & $\mathbf{0.130}$ $\checkmark$ & $\mathbf{0.103}$ $\checkmark$ & $\mathbf{0.422}$ $\checkmark$\\
+fully mass-weighted (the truth) & $0.0046$ & $0.0310$ & $0.0138$ & $0.0958$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The $\nu$-exact row passes with factors of $21$, $5.1$, $20$ and $5.0$, and it is within a factor of
+seven of the fully mass-weighted truth --- the whole of the remaining looseness being the worst case
+over assets inside each earnings state.
+
 \subsubsection*{One thing left}
 
-A primitive bound on $\bar e_j$. This is the one genuinely new estimate, and it is a weaker
-demand than anything the programme has made of Theorem 1 so far: not that the policy ordering hold,
-nor that it hold up to a uniform slack, but that the mass on which it fails, times the amount by
-which it fails there, accumulate to less than the fall in the firm's demand. Numerics:
-\texttt{incbound.m}, \texttt{mpclow.m}, \texttt{slopecheck.m}.
+A primitive bound on $V_j(z)$: the largest failure of Theorem 1 over assets at a single earnings
+state. There is no distribution in that statement. It is the \lean{StageSlack} object of
+Section~\ref{sec:thm1} read quantitatively --- how much the slack condition can be violated, rather
+than whether it holds --- and it is the weakest demand the programme has made of Theorem 1: not that
+the policy ordering hold, nor that it hold up to a uniform slack, but that its failure at the
+high-earnings states, weighted by their small invariant mass, accumulate to less than the fall in the
+firm's demand. Numerics: \texttt{incbound.m}, \texttt{ebar.m}, \texttt{mpclow.m},
+\texttt{slopecheck.m}.
