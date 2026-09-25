@@ -212,13 +212,52 @@ The $\nu$-exact row passes with factors of $21$, $5.1$, $20$ and $5.0$, and it i
 seven of the fully mass-weighted truth --- the whole of the remaining looseness being the worst case
 over assets inside each earnings state.
 
-\subsubsection*{One thing left}
+\subsection{What $V_j(z)$ would take}
 
-A primitive bound on $V_j(z)$: the largest failure of Theorem 1 over assets at a single earnings
-state. There is no distribution in that statement. It is the \lean{StageSlack} object of
-Section~\ref{sec:thm1} read quantitatively --- how much the slack condition can be violated, rather
-than whether it holds --- and it is the weakest demand the programme has made of Theorem 1: not that
-the policy ordering hold, nor that it hold up to a uniform slack, but that its failure at the
-high-earnings states, weighted by their small invariant mass, accumulate to less than the fall in the
-firm's demand. Numerics: \texttt{incbound.m}, \texttt{ebar.m}, \texttt{mpclow.m},
-\texttt{slopecheck.m}.
+One quantity remains: $V_j(z)$, the largest failure of Theorem 1 over assets at a single earnings
+state. There is no distribution in it, and the accumulation leaves an allowance of
+$0.670/21\approx0.032$ per age for $\sum_z\nu_zV_j(z)$. Two routes suggest themselves. Both fail, and
+the reasons are worth recording because they are quantitative.
+
+\subsubsection*{The quantitative step amplifies}
+
+The Theorem-1 step can be made quantitative without touching a power mean. Suppose the failure
+$D=c_2-c_1-\Delta r\,a$ is positive at $(a,z)$. Then $b_1>b_2\ge0$, so the low-rate Euler equation
+holds above the floor and the high-rate one under the cap; the stage-$k$ failure bound and
+monotonicity of consumption in assets give $C_2(z',b_2)\le C_1(z',b_1)+\Delta r\,b_1+\varepsilon_k(z')$,
+and $(C+s)^{-\gamma}=C^{-\gamma}(1+s/C)^{-\gamma}\ge C^{-\gamma}(1+\sigma)^{-\gamma}$ with
+$\sigma=\max_{z'}s(z')/C_1(z',b_1)$. Chaining the two Euler relations,
+\begin{equation}\label{eq:qstep}
+  D\;\le\;c_1\Bigl[(R_1/R_2)^{1/\gamma}(1+\sigma)-1\Bigr]-\Delta r\,a .
+  \tag{Q}
+\end{equation}
+This is a genuine quantitative step: it recovers the no-failure criterion when the bracket is
+nonpositive, and bounds the failure otherwise. It also amplifies. The derivative of \eqref{eq:qstep}
+in $\varepsilon_k$ is $c_1(R_1/R_2)^{1/\gamma}/\min_{z'}C_1(z',b_1)$, measured at $4.7$ at
+$\gamma=5$ and $4.2$ at $\gamma=8$. Over sixty stages the recursion started from the exact terminal
+condition $\varepsilon_0=0$ reaches $V\approx2.8\times10^{3}$ at $\gamma=5$ against a true supremum of
+$0.046$ --- and with the sandwich floor in place of the true $C_1$, $10^{60}$. This is the
+amplification the rate-response route already ran into, with a per-step multiplier bounded below by
+$1/\Thorn>1$; the life cycle does not escape it, it merely makes it finite.
+
+\subsubsection*{The direct bound is an order of magnitude too loose}
+
+The alternative is to bound the failure at each stage separately, with no induction, from the
+sandwich: $c_2\le\kappa^2_{k}(m_2+H^2_{k})$ and $c_1\ge\kappa^1_{k}m_1$. That gives $1.835$ against
+an allowance of $0.032$, too loose by a factor of $58$, and the source of the looseness is visible:
+the sandwich slack is of order $\kappa_kH_k$, measured at $0.96$, an order-one quantity where the
+target is of order $0.03$.
+
+\subsubsection*{What that says}
+
+The remaining gap is not a matter of assembling existing bounds. It needs an estimate of the
+rate-response of consumption whose error is small \emph{relative to the response itself} --- an
+absolute error below $0.03$ on a quantity of size about one --- and no sandwich in this programme is
+of that quality. That is a sharper statement of the requirement than the programme has had before,
+and it is attached to a single distribution-free object rather than to Theorem 1 in full.
+
+What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
+increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is
+Theorem~\ref{thm:mpcfloor} and Theorem~\ref{thm:cohortlip}; and the mass weighting is exact in the
+coordinate where the failure lives, by Theorem~\ref{thm:marginal}. Numerics: \texttt{incbound.m},
+\texttt{ebar.m}, \texttt{vjbound.m}, \texttt{vjdiag.m}, \texttt{mpclow.m}, \texttt{slopecheck.m}.
