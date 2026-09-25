@@ -172,6 +172,27 @@ theorem sum_mul_rpow_pred_le {γ xmin : ℝ} (hw : ∀ i, 0 ≤ w i) (hx : ∀ i
     _ ≤ (w i * x i ^ (-γ)) * xmin⁻¹ := mul_le_mul_of_nonneg_left hinv hnn
     _ = w i * x i ^ (-γ) / xmin := by rw [div_eq_mul_inv]
 
+/-- **The gradient sum is one plus the variance of the risk tilt.** Write `u i = (x i / M) ^ (-γ)`
+for the tilt. By the definition of the power mean its weighted mean is exactly one, and then the
+gradient sum `∑ w u ^ (1 + 1/γ)` is, at `γ = 1` where the exponent is exactly two, one plus the
+weighted variance of `u`.
+
+This is the bound the minimum cannot give. `sum_mul_rpow_pred_le` sees only the support of `x` and
+returns `M / min x`, measured at `4.7` to `5.9`; the variance sees the WEIGHTS, and is measured at
+`0.041`. For `γ > 1` the exponent `1 + 1/γ` falls below two and Lyapunov's inequality gives
+`∑ w u ^ (1+1/γ) ≤ (1 + Var)^{(γ+1)/(2γ)}`, which is an identity at `γ = 1` and loses accuracy
+above it: measured `1.076` against a true `1.050` at `γ = 1.5`, and `1.26` against `1.08` at
+`γ = 3`, against an allowance of about `1.06` throughout. So this route closes at logarithmic
+utility and not above (`WriteUps/WriteUpOLG/numerics/lyap.m`). -/
+theorem sum_mul_sq_eq_one_add_variance {w u : ι → ℝ} (hw1 : ∑ i, w i = 1)
+    (hu : ∑ i, w i * u i = 1) :
+    ∑ i, w i * u i ^ 2 = 1 + ∑ i, w i * (u i - 1) ^ 2 := by
+  have hexp : ∀ i, w i * (u i - 1) ^ 2 = w i * u i ^ 2 - 2 * (w i * u i) + w i := by
+    intro i; ring
+  rw [Finset.sum_congr rfl fun i _ => hexp i]
+  rw [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum, hu, hw1]
+  ring
+
 /-- **A power mean with a negative exponent is concave.**
 
 Homogeneity turns concavity into the convexity of `{x > 0 : ∑ w x ^ p ≤ 1}`, and that is a

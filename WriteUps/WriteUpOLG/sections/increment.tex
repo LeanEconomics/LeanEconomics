@@ -345,9 +345,54 @@ The crude route returns exactly to where it started.
 So $A$'s smallness is a statement about the \emph{weights} of the earnings chain and not its support:
 with $\rho=0.9$ the transition puts almost all mass on neighbouring states, where next period's
 consumption is close to its certainty equivalent, while the far states that make $\min x$ small carry
-almost no probability. A usable bound must split the two --- near states by proximity, far states by
-their probability --- and that is the next thing to try. Numerics: \texttt{cestep.m},
-\texttt{damp.m}.
+almost no probability.
+
+\subsubsection*{Splitting near from far does not work; the variance does}
+
+The obvious way to use the weights is to split the states, bounding the near ones by proximity and
+the far ones by their probability. It fails, and instructively. With $d=1$ the far mass is
+$3\times10^{-3}$, so the far term is negligible --- and the bound is still $2.48$ against an
+allowance of $1.066$, because the near term takes a \emph{maximum} over neighbouring states and
+$(C/M)^{-\gamma-1}$ reaches $2.5$ even there. Widening to $d=2$ makes it worse, at $4.99$. The
+averaging is the whole of the effect, and any bound that replaces it by a maximum on a subset throws
+it away.
+
+What does work is the exact constraint that $M$ carries. Writing $u=(C/M)^{-\gamma}$ for the risk
+tilt, the definition of the power mean says $\mathbb E_w[u]=1$ \emph{exactly}, and the gradient sum
+is $A=\mathbb E_w[u^{1+1/\gamma}]$. At $\gamma=1$ the exponent is two and
+
+\begin{proposition}[The gradient sum is one plus the variance]\label{prop:gradvar}
+With $\mathbb E_w[u]=1$, $\;\mathbb E_w[u^2]=1+\operatorname{Var}_w(u)$.
+\formal{sum\_mul\_sq\_eq\_one\_add\_variance}
+\end{proposition}
+
+so $A=1+\operatorname{Var}_w(u)$, with no inequality anywhere. Above $\gamma=1$ the exponent falls
+below two and Lyapunov gives $A\le(1+\operatorname{Var}_w(u))^{(\gamma+1)/(2\gamma)}$.
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+$\gamma$ & $1$ & $1.5$ & $2$ & $2.5$ & $3$\\
+\midrule
+allowance on $A$ & $1.066$ & $1.060$ & $1.056$ & $1.054$ & $1.053$\\
+$A$ true & $1.041$ & $1.050$ & $1.058$ & $1.067$ & $1.076$\\
+$\operatorname{Var}_w(u)$ & $0.041$ & $0.092$ & $0.165$ & $0.270$ & $0.416$\\
+bound from the variance & $\mathbf{1.041}$ & $1.076$ & $1.122$ & $1.182$ & $1.261$\\
+slack on the variance & $\mathbf{1.61\times}$ & $0.78\times$ & $0.46\times$ & $0.29\times$ & $0.19\times$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At $\gamma=1$ the bound is exact and leaves $1.61$ times of room on the variance at the newborn stage
+--- $2.35$ times at stage twenty --- so the whole chain closes there on one remaining primitive input:
+$\operatorname{Var}_w\bigl((C/M)^{-1}\bigr)\le0.066$, against a measured $0.041$. Above $\gamma=1$ it
+does not: Lyapunov loses accuracy as the exponent falls below two, and the variance itself grows
+tenfold by $\gamma=3$, so the bound exceeds the allowance from $\gamma=1.5$ on.
+
+That is a complete route at logarithmic utility, and a sharp statement of what it needs. It would give
+Theorem 1 at \emph{every} state, not only the binding one, hence monotone capital supply and
+uniqueness at $\mu=1$ --- which is more than Proposition~\ref{prop:twosand} delivers. Numerics:
+\texttt{cestep.m}, \texttt{damp.m}, \texttt{nearfar.m}, \texttt{lyap.m}.
 
 What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
 increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is
