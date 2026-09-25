@@ -355,6 +355,21 @@ theorem saving_le_of_precautionary_ratio {gCE₁ gCE₂ P₁ P₂ θ : ℝ}
     (hratio : θ * P₁ ≤ P₂) (hmargin : (1 - θ) * P₁ ≤ gCE₂ - gCE₁) :
     gCE₁ + P₁ ≤ gCE₂ + P₂ := by nlinarith
 
+/-- **The level route, discharged by a consumption floor.** Precautionary saving is
+`P₁ = c₀^CE - c₀`, so any proved FLOOR `F ≤ c₀` bounds it above by `c₀^CE - F`, and the level route
+closes on the single numerical inequality `c₀^CE - F ≤ margin`. Nothing else is needed: no bound on
+how precautionary saving moves with the rate, and no estimate at the higher rate.
+
+At Aiyagari's numbers with logarithmic utility, at zero wealth in the top earnings state across
+`r ∈ [4%, 6%]`, the floor of `Incidence.riskHumanWealth_le_stageConsumption` gives
+`κ_{J-1}(y_max + H^risk_{J-1}) = 1.3184` against a true `c₀ = 1.4373`, the closed form gives
+`c₀^CE = 1.5463`, and the margin is `0.3287`. So `c₀^CE - F = 0.2280 ≤ 0.3287` and the route closes,
+with the floor at ninety-two per cent of the truth where eighty-five was required
+(`WriteUps/WriteUpOLG/numerics/logfloor.m`). -/
+theorem precautionary_level_of_floor {c0CE c0 F gCE₁ gCE₂ P₂ : ℝ}
+    (hfloor : F ≤ c0) (hnum : c0CE - F ≤ gCE₂ - gCE₁) (hP₂ : 0 ≤ P₂) :
+    gCE₁ + (c0CE - c0) ≤ gCE₂ + P₂ := by linarith
+
 end CertaintyEquivalent
 
 end LeanEconomics

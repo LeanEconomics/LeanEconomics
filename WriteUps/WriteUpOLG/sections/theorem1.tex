@@ -395,12 +395,54 @@ $\theta$ is $0.842$ against $0.872$, a margin of three per cent. Above $\gamma\a
 margin at all, because Theorem 1 itself fails on that interval --- the $3.39$ of the derivative
 comparison is the threshold at $r=4\%$, not across $[4\%,6\%]$.
 
-So the honest target is $\gamma\le2$, and what it needs is two-sided bounds on precautionary saving at
-one state accurate to about a quarter: measured, $P(R_1)=0.154$ and $P(R_2)=0.122$ against a required
-gap of $0.107$. The sandwich available gives $\kappa_kH_k=1.40$ at that state, nine times too loose,
-so this is a new estimate rather than an assembly of existing ones --- but it is a bound on a level,
-at one state, with a factor of four to give away, which is a different kind of demand from anything
-the increment route leaves open. Numerics: \texttt{precbound.m}.
+\subsubsection*{The level route closes at $\gamma=1$}
+
+At $\gamma=1$ the level route needs no new estimate at all. Precautionary saving is
+$P_1=c_0^{\mathrm{CE}}-c_0$, so any \emph{floor} $F\le c_0$ bounds it above by
+$c_0^{\mathrm{CE}}-F$, and \eqref{eq:precfall} reduces to one numerical inequality,
+$c_0^{\mathrm{CE}}-F\le\text{margin}$ (\lean{CertaintyEquivalent.precautionary\_level\_of\_floor}).
+No bound on how precautionary saving moves with the rate is involved, and nothing at the higher rate.
+
+The floor is already proved. \lean{Incidence.riskHumanWealth\_le\_stageConsumption} gives
+$\kappa_k\bigl(m+H^{\mathrm{risk}}_k(z)\bigr)\le c_k(z,a)$, with $H^{\mathrm{risk}}$ accumulated by
+the power mean of exponent $-\gamma$ --- the harmonic mean at $\gamma=1$ --- and capped state by state
+at what the borrowing constraint permits. At zero wealth in the top earnings state across
+$r\in[4\%,6\%]$:
+
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+required floor $c_0^{\mathrm{CE}}-\text{margin}$ & $1.2176$ & ($=1.5463-0.3287$)\\
+\midrule
+$\kappa_{J-1}\,y_{\max}$ & $0.1303$ & no human wealth\\
+$\kappa_{J-1}(y_{\max}+H^{\min})$ & $0.3966$ & \lean{LowerSandwich}, $3.07\times$ short\\
+$\kappa_{J-1}(y_{\max}+H^{\mathrm{risk}})$ & $\mathbf{1.3184}$ & \lean{Incidence}, \textbf{clears it}\\
+\midrule
+true $c_0$ & $1.4373$ & floor at $92\%$, $85\%$ required\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+So $c_0^{\mathrm{CE}}-F=0.2280\le0.3287$, and Theorem 1 holds at that state, at logarithmic utility,
+across the bracket, from the constraint-incidence floor and the closed form --- no new estimate. The
+route that had to be abandoned in Section~\ref{sec:inc} is the one that needs a tight bound on a rate
+\emph{response}; this one needs only a tight bound on a \emph{level}, and the programme already has
+one good enough.
+
+Two things it is not. It is one state --- the state where the life cycle binds, which is why it is
+the one worth doing first, but Theorem 1 asks for all of them, and the reduction that would carry it
+across the state space is the one whose own condition fails. And it is $\gamma=1$: at $\gamma=2$ the
+margin falls to $0.107$ while $c_0^{\mathrm{CE}}-F$ does not fall with it, so the level route dies and
+the multiplicative one takes over, needing $\theta\ge0.305$ against a true $0.793$.
+
+Two negative results are worth recording alongside. The iterated-harmonic formula
+$(y+H^{\mathrm{harm}})/D$ is within $1.8\%$ of the truth at the top state ($1.4121$ against
+$1.4373$), and is \emph{not} a floor: at the bottom state it gives $0.6588$ against a true $0.2700$,
+because it ignores the borrowing constraint, which is exactly what the cap in $H^{\mathrm{risk}}$
+repairs. And Kantorovich's bound on the arithmetic-minus-harmonic gap accumulates to $84.4$ against a
+true gap of $3.07$; the exact variance identity $\mathrm{AM}-\mathrm{HM}\le\mathrm{Var}/x_{\min}$
+does eight times better at $10.5$, and neither is needed once the floor is used directly. Numerics:
+\texttt{precbound.m}, \texttt{logfloor.m}, \texttt{logPharm.m}.
 
 \subsection{The channel is the borrowing constraint}
 
