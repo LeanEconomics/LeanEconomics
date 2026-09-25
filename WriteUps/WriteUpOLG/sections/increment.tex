@@ -486,13 +486,57 @@ rather than bounded. The box in $C$ is a box in $v$, the slope constraints are s
 and \eqref{eq:cv} is a ratio of quadratic forms, scale-invariant, of the kind whose maximum over a
 polytope is a standard finite computation.
 
-So the last step of the $\gamma=1$ chain is: maximise a squared coefficient of variation over a
-seven-dimensional polytope with twenty-six constraints, and certify the maximum below $0.066$. That is
-an optimisation certificate of the kind this programme already builds for the existence bracket, not a
-further estimate about households --- but it is a piece of work in its own right, and it is not done.
-Numerics: \texttt{cestep.m}, \texttt{damp.m}, \texttt{nearfar.m}, \texttt{lyap.m},
-\texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m}, \texttt{slopestate.m}, \texttt{tworeg.m},
-\texttt{polymax.m}, \texttt{bandb.m}.
+\subsubsection*{The enumeration, and what it turns up}
+
+In $v$-coordinates the objective is coordinatewise quasi-convex, and that is what makes enumeration
+legitimate. Holding all but one coordinate fixed,
+\[
+  \frac{\partial}{\partial v_j}\frac{\sum_iw_iv_i^{2}}{(\sum_iw_iv_i)^{2}}
+  \;\propto\;v_jB-A,\qquad A=\sum_{i\ne j}w_iv_i^{2},\quad B=\sum_{i\ne j}w_iv_i,
+\]
+so the objective is unimodal with a \emph{minimum} in each coordinate: its maximum over any interval
+is at an endpoint. At a maximiser every coordinate therefore sits at an endpoint of its conditional
+feasible range.
+
+Enumerating those endpoints settles the question, and not in favour of the bracket. A forward sweep
+over the chain --- each coordinate at an endpoint of the range its predecessor leaves --- gives
+$0.0414$, and random probes never beat it, which looks like closure. Enumerating patterns in both
+directions, so that a coordinate may also be pinned against its successor, gives $\mathbf{0.0874}$ at
+the newborn stage, against an allowance of $0.0661$. The admissible set provably contains a profile
+that violates the requirement. The forward sweep was incomplete, and so were the coordinate ascent and
+the random search of the previous subsection, all three by a factor of two.
+
+\subsubsection*{Concavity is the missing constraint}
+
+The profiles that do the damage zig-zag across earnings states, and they are not consumption
+functions: consumption is \emph{concave} in cash on hand, by Carroll--Kimball, which this development
+already proves (\lean{concaveOn\_stageConsumption}). Across earnings states at fixed assets, cash on
+hand moves with $y$, so concavity says the slopes $\Delta C/\Delta y$ fall with $j$ --- five more
+linear constraints that the bracket was silently discarding.
+
+With them the same two-directional enumeration gives $0.0415$ at every stage tested, against
+allowances of $0.0661$, $0.0725$ and $0.0969$: a margin of $1.59$ to $2.34$ times.
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+stage & $59$ & $40$ & $20$\\
+\midrule
+allowance & $0.0661$ & $0.0725$ & $0.0969$\\
+enumerated, bracket $+$ slopes & $0.0874$ $\times$ & $0.0702$ & $0.0415$\\
+enumerated, $+$ concavity & $\mathbf{0.0415}$ & $\mathbf{0.0415}$ & $\mathbf{0.0415}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+So the ingredient the chain was missing is a theorem it already has. What is still absent is an
+\emph{upper} bound: enumeration exhibits feasible points, so it certifies that the maximum is at least
+$0.0415$, and the concavity constraints involve three consecutive coordinates, which the
+two-neighbour patterns do not exhaust. Every search agrees on $0.0415$ and the margin is comfortable;
+the certificate is the missing half. Numerics: \texttt{cestep.m}, \texttt{damp.m},
+\texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m},
+\texttt{slopestate.m}, \texttt{tworeg.m}, \texttt{polymax.m}, \texttt{bandb.m}, \texttt{vertcert.m},
+\texttt{vertfull.m}.
 
 What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
 increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is
