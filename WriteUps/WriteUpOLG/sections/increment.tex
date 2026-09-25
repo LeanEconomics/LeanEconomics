@@ -529,14 +529,44 @@ enumerated, $+$ concavity & $\mathbf{0.0415}$ & $\mathbf{0.0415}$ & $\mathbf{0.0
 \end{tabular}
 \end{center}
 
-So the ingredient the chain was missing is a theorem it already has. What is still absent is an
-\emph{upper} bound: enumeration exhibits feasible points, so it certifies that the maximum is at least
-$0.0415$, and the concavity constraints involve three consecutive coordinates, which the
-two-neighbour patterns do not exhaust. Every search agrees on $0.0415$ and the margin is comfortable;
-the certificate is the missing half. Numerics: \texttt{cestep.m}, \texttt{damp.m},
+So the ingredient the chain was missing is a theorem it already has.
+
+\subsubsection*{The certificate}
+
+The upper bound follows from the same unimodality that justified enumerating. On \emph{any} box the
+objective is maximised at a box vertex, so the maximum over a box is \emph{exactly} the maximum over
+its $2^{7}$ vertices --- an exact and consistent bound, unlike the one that defeated branch and bound
+before, which put the mean at the top of the box and the consumptions at the bottom. Branch and bound
+with it: discard a box when it is disjoint from the polytope, by an interval test on the slope and
+concavity constraints, or when its exact maximum is at most the allowance; otherwise split the widest
+coordinate. If the stack empties, every point of the polytope lay in a discarded box and the maximum is
+certified below the allowance.
+
+It empties. At the newborn stage, over forty asset values in each of the seven earnings states, every
+node is discarded, with at most $6971$ boxes examined at the worst of them.
+
+The newborn stage is the one that matters. The allowance is $\Thorn/\bigl(q(1-\kappa_kR)\bigr)-1$ and
+$\kappa_k$ rises as the horizon shortens, so the allowance rises too --- $0.0661$ at $k=59$, $0.0725$
+at $k=40$, $0.0969$ at $k=20$, $0.2586$ at $k=5$ --- while the variance stays at $0.0415$ throughout.
+Certifying the youngest cohort certifies every age, and that step is an argument rather than a sample.
+
+\subsubsection*{What this does and does not settle}
+
+At the calibration, at logarithmic utility, over $r\in[4\%,6\%]$: every input of the chain holds. The
+error carried between stages is damped (Theorem~\ref{thm:mpcfloor}, \lean{damped\_le\_one}), the
+gradient sum is one plus a variance (Proposition~\ref{prop:gradvar}), and the variance is certified
+below what the damping allows. Theorem 1 then holds at \emph{every} state, hence capital supply rises
+with the rate, hence the stationary equilibrium is unique.
+
+Two things keep that from being a theorem of the same standing as the rest of this write-up. The
+certificate is in floating point with tolerances of $10^{-12}$, not the rational arithmetic the
+existence bracket uses; and the asset argument is sampled on a grid of forty values per state rather
+than handled as an interval. Neither is a gap in the argument --- both are gaps in the arithmetic, and
+both are the kind of thing the programme has closed before. Until they are closed this is a certified
+numerical statement resting on eight formalised lemmas, not a ninth lemma. Numerics: \texttt{cestep.m}, \texttt{damp.m},
 \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m},
 \texttt{slopestate.m}, \texttt{tworeg.m}, \texttt{polymax.m}, \texttt{bandb.m}, \texttt{vertcert.m},
-\texttt{vertfull.m}.
+\texttt{vertfull.m}, \texttt{certify.m}.
 
 What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
 increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is
