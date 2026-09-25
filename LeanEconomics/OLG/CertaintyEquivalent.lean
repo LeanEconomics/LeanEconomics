@@ -318,7 +318,8 @@ The arithmetic is trivial; what matters is how much room it leaves, and the room
 Measured at Aiyagari's numbers at zero wealth in the top earnings state, the correction is stable —
 between `1.15` and `3.89` across `γ ∈ [1,5]`, and DECREASING in `γ` — while the
 certainty-equivalent response falls steeply, from `20.98` at `γ = 1` to `2.73` at `γ = 3` and
-through zero at `γ ≈ 4.33`. So a bound on the correction may be loose by a factor of `5.4` at `γ = 1`, `3.0`
+through zero at `γ ≈ 4.33`. So a bound on the correction may be loose by a factor of `5.4` at
+`γ = 1`, `3.0`
 at `γ = 2` and `1.5` at `γ = 3` and still deliver Theorem 1 there
 (`WriteUps/WriteUpOLG/numerics/riskgap.m`).
 
@@ -328,6 +329,31 @@ do. -/
 theorem saving_nonneg_of_correction_le {gCE gRisk corr B : ℝ}
     (hsplit : gCE - corr ≤ gRisk) (hcorr : corr ≤ B) (hCE : B ≤ gCE) : 0 ≤ gRisk := by
   linarith
+
+/-! ### The precautionary split, in secant form -/
+
+/-- **The secant reduction.** Write the risky household's saving at the state as the
+certainty-equivalent saving plus precautionary saving, `g = g_CE + P` with `P ≥ 0`. Theorem 1 across
+an interval of rates is then exactly a bound on how far precautionary saving FALLS across it. No
+derivative appears, and nothing is assumed about the sign of that fall. -/
+theorem saving_le_of_precautionary_fall {gCE₁ gCE₂ P₁ P₂ : ℝ}
+    (hfall : P₁ - P₂ ≤ gCE₂ - gCE₁) : gCE₁ + P₁ ≤ gCE₂ + P₂ := by linarith
+
+/-- **The level route.** Discarding `P₂ ≥ 0` altogether, a bound on the LEVEL of precautionary
+saving at the lower rate suffices. At Aiyagari's numbers over `r ∈ [4%, 6%]` this route closes at
+`γ = 1`, where the margin `g_CE(R₂) - g_CE(R₁) = 0.329` exceeds `P(R₁) = 0.109` threefold, and it
+closes nowhere above: at `γ = 2` the margin is `0.107` against `P(R₁) = 0.154`. -/
+theorem saving_le_of_precautionary_level {gCE₁ gCE₂ P₁ P₂ : ℝ} (hP₂ : 0 ≤ P₂)
+    (hlevel : P₁ ≤ gCE₂ - gCE₁) : gCE₁ + P₁ ≤ gCE₂ + P₂ := by linarith
+
+/-- **The multiplicative route.** Keeping a fraction `θ` of precautionary saving at the higher rate
+turns the requirement into `(1 - θ) P₁ ≤ margin`. At `γ = 2` the admissible `θ` is `0.305` against a
+true ratio of `0.793` --- a crude bound would do. At `γ = 3` it is `0.842` against `0.872`, a margin
+of three per cent, and above `γ ≈ 3.1` there is none: Theorem 1 itself fails across that
+interval. -/
+theorem saving_le_of_precautionary_ratio {gCE₁ gCE₂ P₁ P₂ θ : ℝ}
+    (hratio : θ * P₁ ≤ P₂) (hmargin : (1 - θ) * P₁ ≤ gCE₂ - gCE₁) :
+    gCE₁ + P₁ ≤ gCE₂ + P₂ := by nlinarith
 
 end CertaintyEquivalent
 

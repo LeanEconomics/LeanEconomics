@@ -351,6 +351,57 @@ at $\gamma=3$, so a single constant cannot cover the range --- the bound must be
 $\gamma$, which costs nothing, since Theorem 1 is wanted at a calibration and not as a family.
 Numerics: \texttt{riskgap.m}.
 
+\subsubsection*{The precautionary split, and what a bound on it must achieve}
+
+The slack above is measured on derivatives at $r=4\%$. Theorem 1 is a statement about an interval, so
+it is worth redoing in secant form, where the object to be bounded becomes concrete. Write the risky
+household's saving at the state as the certainty-equivalent saving plus precautionary saving,
+$g=g_{\mathrm{CE}}+P$ with $P=c_0^{\mathrm{CE}}-c_0\ge0$. Then Theorem 1 across $[r_1,r_2]$ is
+\emph{exactly}
+\begin{equation}\label{eq:precfall}
+  P(R_1)-P(R_2)\;\le\;g_{\mathrm{CE}}(R_2)-g_{\mathrm{CE}}(R_1)\;=:\;\text{margin},
+  \tag{P}
+\end{equation}
+a bound on how far precautionary saving falls across the interval
+(\lean{CertaintyEquivalent.saving\_le\_of\_precautionary\_fall}). No derivative appears. Two weakenings
+of \eqref{eq:precfall} are worth separating, and they close at different risk aversions. Measured over
+$r\in[4\%,6\%]$ at zero wealth in the top earnings state:
+
+\begin{center}
+\begin{tabular}{lrrrrrr}
+\toprule
+$\gamma$ & $1$ & $2$ & $2.5$ & $3$ & $3.2$ & $3.39$\\
+\midrule
+$P(R_1)$ & $0.109$ & $0.154$ & $0.176$ & $0.198$ & $0.206$ & $0.214$\\
+$P(R_1)-P(R_2)$ & $0.044$ & $0.032$ & $0.028$ & $0.025$ & $0.024$ & $0.023$\\
+margin & $0.329$ & $0.107$ & $0.062$ & $0.031$ & $0.022$ & $0.014$\\
+\midrule
+level route: $P(R_1)\le$ margin & $\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ & $\times$\\
+$\theta$ admissible & --- & $0.305$ & $0.650$ & $0.842$ & $0.895$ & $0.936$\\
+$\theta$ true & $0.598$ & $0.793$ & $0.839$ & $0.872$ & $0.883$ & $0.892$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At $\gamma=1$ the crudest weakening works: discard $P(R_2)\ge0$ and a bound on the \emph{level} of
+precautionary saving suffices, with the margin $0.329$ exceeding $P(R_1)=0.109$ threefold
+(\lean{saving\_le\_of\_precautionary\_level}). Above that the level route dies and one needs the
+multiplicative form: keeping a fraction $\theta$ of precautionary saving at the higher rate,
+\eqref{eq:precfall} becomes $(1-\theta)P(R_1)\le\text{margin}$
+(\lean{saving\_le\_of\_precautionary\_ratio}). At $\gamma=2$ the admissible $\theta$ is $0.305$ against
+a true ratio of $0.793$: precautionary saving need only be shown not to lose seventy per cent of
+itself when the rate rises by two points, which is a crude statement. At $\gamma=3$ the admissible
+$\theta$ is $0.842$ against $0.872$, a margin of three per cent. Above $\gamma\approx3.1$ there is no
+margin at all, because Theorem 1 itself fails on that interval --- the $3.39$ of the derivative
+comparison is the threshold at $r=4\%$, not across $[4\%,6\%]$.
+
+So the honest target is $\gamma\le2$, and what it needs is two-sided bounds on precautionary saving at
+one state accurate to about a quarter: measured, $P(R_1)=0.154$ and $P(R_2)=0.122$ against a required
+gap of $0.107$. The sandwich available gives $\kappa_kH_k=1.40$ at that state, nine times too loose,
+so this is a new estimate rather than an assembly of existing ones --- but it is a bound on a level,
+at one state, with a factor of four to give away, which is a different kind of demand from anything
+the increment route leaves open. Numerics: \texttt{precbound.m}.
+
 \subsection{The channel is the borrowing constraint}
 
 The first-order scaling points at the constraint rather than at precaution, and the point can be
