@@ -416,12 +416,31 @@ case, and the worst case is what a bound must survive.)
 
 Scaling suggests the slope bound needed is about $s\le0.41$. That cannot be uniform: the true
 cross-state slope is $\kappa_k\approx0.04$ where the household is unconstrained but exactly $1$ where
-the borrowing constraint binds, and it binds at the low-earnings states. So the slope bound has to be
-state-dependent, and the constrained states have to be shown to carry little weight under
-$\pi(z,\cdot)$ --- which they do at $\rho=0.9$, but that has to be part of the estimate rather than
-an observation about it. That is where the chain stands. Numerics: \texttt{cestep.m},
-\texttt{damp.m}, \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m},
-\texttt{varmax.m}.
+the borrowing constraint binds.
+
+\subsubsection*{Making the slope state-dependent, and what that turns up}
+
+The split is available. The saving floor of \lean{le\_stagePolicy\_state\_on} certifies that the
+constraint cannot bind at $(b,z')$ whenever $(1-\kappa_k)(y(z')+Rb)>\kappa_kH_k(z')$, a primitive
+test, and it certifies $89\%$ to $94\%$ of the pairs that arise. Only $1.6\%$ are in fact
+constrained.
+
+What it does not do is let the constrained states be neglected. Measured, there are pairs $(z,b)$ at
+which the states carrying the entire transition mass are constrained --- low assets and low earnings,
+where the household consumes its cash on hand --- so the weights cannot be used to make that regime
+disappear.
+
+The way through is not a better slope bound on that regime but a different handle on it. Where the
+constraint binds, consumption is cash on hand \emph{exactly}: $C(z')=y(z')+Rb$, with no bracket at
+all, so the spread of $C$ across those states is exactly the spread of $y$, which is known. The two
+regimes want treating differently in kind --- an identity on the constrained set, a slope bound on
+the unconstrained one --- rather than a single slope bound made state-dependent. The worst-case
+maximisation of the previous subsection is loose precisely because it gives the constrained states a
+bracket they do not have.
+
+That is where the chain stands, and it is a more specific place than it was. Numerics:
+\texttt{cestep.m}, \texttt{damp.m}, \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m},
+\texttt{varmpc.m}, \texttt{varmax.m}, \texttt{slopestate.m}.
 
 What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
 increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is
