@@ -148,6 +148,30 @@ theorem powerMean_mono (hp : p < 0) (hw : ∀ i, 0 ≤ w i) (hw1 : ∑ i, w i = 
   exact Real.rpow_le_rpow_of_nonpos (sum_rpow_pos hw hw1 hy) h1
     (le_of_lt (div_neg_of_pos_of_neg one_pos hp))
 
+/-- **The gradient sum of a power mean is at most `M / min x`.** The quantity
+`∑ w x^{-γ-1}`, which is what a common shift costs when propagated through a power mean, is bounded
+termwise by `∑ w x^{-γ} / min x`.
+
+This is worth recording as a WARNING rather than a tool. Normalised, it says the gradient sum
+`A = ∑ w (x/M)^{-γ-1}` is at most `M / min x` — and `M / min x` is exactly the multiplier that
+bounding the expectation by its smallest term produces. Measured in the overlapping-generations
+life cycle, `A` runs from `1.04` to `1.19` while `M / min x` runs from `4.7` to `5.9`, so this bound
+discards the entire advantage of keeping the certainty equivalent. A usable bound on `A` has to see
+the WEIGHTS — the far states carry little probability — and not merely the support. -/
+theorem sum_mul_rpow_pred_le {γ xmin : ℝ} (hw : ∀ i, 0 ≤ w i) (hx : ∀ i, 0 < x i)
+    (hmin : 0 < xmin) (hle : ∀ i, xmin ≤ x i) :
+    ∑ i, w i * x i ^ (-γ - 1) ≤ (∑ i, w i * x i ^ (-γ)) / xmin := by
+  rw [Finset.sum_div]
+  refine Finset.sum_le_sum fun i _ => ?_
+  have hsplit : x i ^ (-γ - 1) = x i ^ (-γ) * (x i)⁻¹ := by
+    rw [show (-γ - 1 : ℝ) = (-γ) + (-1) from by ring, Real.rpow_add (hx i), Real.rpow_neg_one]
+  have hinv : (x i)⁻¹ ≤ xmin⁻¹ := by
+    simpa [one_div] using one_div_le_one_div_of_le hmin (hle i)
+  have hnn : 0 ≤ w i * x i ^ (-γ) := mul_nonneg (hw i) (Real.rpow_nonneg (hx i).le _)
+  calc w i * x i ^ (-γ - 1) = (w i * x i ^ (-γ)) * (x i)⁻¹ := by rw [hsplit]; ring
+    _ ≤ (w i * x i ^ (-γ)) * xmin⁻¹ := mul_le_mul_of_nonneg_left hinv hnn
+    _ = w i * x i ^ (-γ) / xmin := by rw [div_eq_mul_inv]
+
 /-- **A power mean with a negative exponent is concave.**
 
 Homogeneity turns concavity into the convexity of `{x > 0 : ∑ w x ^ p ≤ 1}`, and that is a

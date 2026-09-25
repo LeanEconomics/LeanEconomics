@@ -298,11 +298,56 @@ $b_1\le(\Thorn/qA)\bigl(a+c_1/(\gamma R)\bigr)$ --- which is the \lean{StageSlac
 Section~\ref{sec:thm1} with the risk penalty $A$ made explicit --- still fails by fourteen per cent at
 zero wealth in the top earnings state at $\gamma=1$.
 
-So the two-rate difference is not beyond reach in the way the minimum-based step suggested. What
-stands between the certainty-equivalent step and a contraction is a factor of $1.02$ at $\gamma=1$,
-and the obstruction has a name: $A>1$ is the dispersion of next period's consumption, which is
-precisely what the borrowing constraint creates by flattening consumption in the low-earnings states.
-Numerics: \texttt{cestep.m}.
+\subsubsection*{The propensity floor damps the step}
+
+The factor of $1.02$ closes once the propensity floor is put into the step, where it belongs. Under
+the failure hypothesis the household at the lower rate saves MORE, by exactly the failure $D$, and
+saving more raises next period's consumption by at least $\kappa_kR_1D$
+(Theorem~\ref{thm:mpcfloor}). Carrying that through,
+\[
+  D\Bigl[1+\frac{qA\kappa_kR_1}{\Thorn_1}\Bigr]\;\le\;\frac{qA}{\Thorn_1}\varepsilon_k
+   +(q-1)c_1+\frac{qA}{\Thorn_1}\Delta r\,b_2-\Delta r\,a ,
+\]
+so the error carried from one stage to the next is multiplied not by $qA/\Thorn_1$ but by
+\[
+  m_k\;=\;\frac{qA/\Thorn_1}{1+qA\kappa_kR_1/\Thorn_1}\;=\;\frac{qA}{\Thorn_1+qA\kappa_kR_1},
+\]
+at most one exactly when $qA\le\Thorn_1+qA\kappa_kR_1$
+(\lean{CertaintyEquivalent.damped\_le\_one}). The damping is the propensity floor feeding back
+against the failure.
+
+\begin{center}
+\begin{tabular}{lrrrrrr}
+\toprule
+$\gamma$ & $1$ & $1.5$ & $2$ & $2.5$ & $3$ & $5$\\
+\midrule
+$\max_k m_k$ & $\mathbf{0.978}$ & $\mathbf{0.992}$ & $1.002$ & $1.012$ & $1.021$ & $1.035$\\
+$\prod_k m_k$ & $0.027$ & $0.062$ & $0.112$ & $0.196$ & $0.337$ & $0.785$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At $\gamma\le1.5$ the recursion contracts stage by stage. And the product over the sixty stages is
+below one at \emph{every} risk aversion tested, because $\kappa_k$ approaches one late in life, where
+the damping is strongest --- so an error carried from the terminal condition, which is exactly zero, is
+damped over a life even at $\gamma=5$. This is the first non-amplifying propagation of the two-rate
+difference in this programme.
+
+\subsubsection*{Where it still stops}
+
+$A$ has to be bounded from primitives, and the obvious bound destroys the gain. Termwise,
+$\sum w\,x^{-\gamma-1}\le\sum w\,x^{-\gamma}/\min x$, so $A\le M/\min x$
+(\lean{sum\_mul\_rpow\_pred\_le}) --- and $M/\min x$ is precisely the multiplier that bounding the
+expectation by its smallest term gives. Measured, $A$ runs from $1.04$ to $1.19$ while $M/\min x$ runs
+from $4.7$ to $5.9$; substituting the bound raises $m_k$ to $2.4$--$2.6$ and the product to $10^{20}$.
+The crude route returns exactly to where it started.
+
+So $A$'s smallness is a statement about the \emph{weights} of the earnings chain and not its support:
+with $\rho=0.9$ the transition puts almost all mass on neighbouring states, where next period's
+consumption is close to its certainty equivalent, while the far states that make $\min x$ small carry
+almost no probability. A usable bound must split the two --- near states by proximity, far states by
+their probability --- and that is the next thing to try. Numerics: \texttt{cestep.m},
+\texttt{damp.m}.
 
 What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
 increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is

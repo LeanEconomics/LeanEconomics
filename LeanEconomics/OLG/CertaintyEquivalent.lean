@@ -452,6 +452,28 @@ theorem mul_le_mul_of_euler_pair {γ c₁ c₂ M₁ M₂ K₁ K₂ : ℝ} (hγ :
     hinv _ (by positivity : (0:ℝ) < c₁ * M₂ * K₁ ^ (1 / γ))] at hstep
   exact hstep
 
+/-- **The damped multiplier.** With the propensity floor in the step, the error carried from one
+stage to the next is multiplied by `(qA/Þ)/(1 + qA κ R/Þ)`, which equals `qA/(Þ + qA κ R)` and is at
+most one exactly when `qA ≤ Þ + qA κ R`. The damping term is the propensity floor's contribution: a
+household that fails Theorem 1 saves less, and saving less cuts next period's consumption by at least
+`κ_k R` times the shortfall, which feeds back against the failure.
+
+Measured over `r ∈ [4%, 6%]`, the multiplier is `0.9776` at `γ = 1` and `0.9917` at `γ = 1.5` — below
+one, so the recursion CONTRACTS there — and `1.0020`, `1.0117`, `1.0214`, `1.0354` at
+`γ = 2, 2.5, 3, 5`. Its product over the sixty stages is below one at every risk aversion tested:
+`0.027`, `0.062`, `0.112`, `0.196`, `0.337`, `0.785`, because `κ_k` is near one late in life where the
+damping is strongest. This is the first non-amplifying propagation of the two-rate difference in this
+programme (`WriteUps/WriteUpOLG/numerics/damp.m`). -/
+theorem damped_le_one {qA Th kap R : ℝ} (hTh : 0 < Th) (hqA : 0 ≤ qA) (hkap : 0 ≤ kap)
+    (hR : 0 ≤ R) (h : qA ≤ Th + qA * kap * R) :
+    (qA / Th) / (1 + qA * kap * R / Th) ≤ 1 := by
+  have hd2 : 0 < 1 + qA * kap * R / Th := by positivity
+  rw [div_le_one hd2, div_le_iff₀ hTh]
+  have hmul : (1 + qA * kap * R / Th) * Th = Th + qA * kap * R := by
+    field_simp
+  rw [hmul]
+  exact h
+
 end CertaintyEquivalent
 
 end LeanEconomics
