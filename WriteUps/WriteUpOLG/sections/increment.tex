@@ -438,9 +438,36 @@ the unconstrained one --- rather than a single slope bound made state-dependent.
 maximisation of the previous subsection is loose precisely because it gives the constrained states a
 bracket they do not have.
 
-That is where the chain stands, and it is a more specific place than it was. Numerics:
-\texttt{cestep.m}, \texttt{damp.m}, \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m},
-\texttt{varmpc.m}, \texttt{varmax.m}, \texttt{slopestate.m}.
+\subsubsection*{The two-regime estimate, and what is still missing from it}
+
+Read as a bound, the constrained regime's identity is a \emph{ceiling}: consumption never exceeds cash
+on hand, so at every state
+\[
+  \underbrace{\kappa_k\bigl(m+H^{\mathrm{risk}}_k(z')\bigr)}_{L(z')}\;\le\;C(z')\;\le\;
+  \underbrace{\min\bigl\{\kappa_k(m+H_k(z')),\;m\bigr\}}_{U(z')},\qquad m=y(z')+Rb,
+\]
+both sides primitive, together with the slope constraints $\kappa_k\Delta y\le\Delta C\le\Delta y$ that
+link the states. Maximising $\operatorname{Var}_w(M/C)$ over that admissible set changes the picture
+completely. The best feasible profile found gives $0.0406$ at the newborn stage --- essentially the
+true variance of $0.0404$ --- against an allowance of $0.0661$, and a search over the set turns up
+nothing above it. The slope constraints are what do the work: dropping them and maximising over the
+box alone gives $0.1537$.
+
+It is not a certificate, and the gap is worth being exact about. What is established rigorously is an
+\emph{interval}: the true consumption profile is feasible, so the maximum is at least $0.0411$; the
+polytope sits inside the box, so the maximum is at most $0.1537$. The allowance of $0.0661$ lies
+inside that interval. The search says the maximum is at the lower end and the chain closes; the
+search is not exhaustive, and at two of the three stages tested it returns a value below the true
+variance, which shows directly that it can miss.
+
+Closing this needs an upper bound on the maximum that uses the weights. The weight-free one is
+available and useless: since $\mathbb E_w[u]=1$, $\operatorname{Var}_w(u)\le\max u-1\le
+\mathrm{HM}(U)/\min L-1$, which is $0.97$ at the binding stage against an allowance of $0.066$. So
+the last step of the $\gamma=1$ chain is a constrained maximisation certificate --- vertex enumeration
+over the polytope, or an analytic bound that keeps the transition weights --- and not a further
+economic estimate. Numerics: \texttt{cestep.m}, \texttt{damp.m}, \texttt{nearfar.m},
+\texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m}, \texttt{slopestate.m},
+\texttt{tworeg.m}, \texttt{polymax.m}.
 
 What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
 increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is
