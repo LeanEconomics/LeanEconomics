@@ -392,6 +392,66 @@ theorem le_of_ceiling_le_floor {c₁ c₂ F C : ℝ} (hfloor : F ≤ c₁) (hcei
     c₂ ≤ c₁ :=
   le_trans hceil (le_trans hnum hfloor)
 
+/-! ### Chaining the two rates through the certainty equivalent -/
+
+/-- **The certainty-equivalent chaining step.** Two Euler relations at two rates, one an upper bound
+and one a lower, divide into a bound on the RATIO of today's consumptions in terms of the
+ratio of the
+two certainty equivalents:
+
+`c₂^{-γ} ≥ K₂ M₂^{-γ}` and `c₁^{-γ} ≤ K₁ M₁^{-γ}` give `c₂/c₁ ≤ (K₁/K₂)^{1/γ} (M₂/M₁)`.
+
+The point is what is ABSENT. The earlier quantitative step bounded the expectation below by its
+smallest term, which charged every stage's error against next period's consumption in the WORST
+earnings state and amplified it by a factor measured at `4.2` to `5.8` per stage — hopeless
+over sixty
+of them. Chaining through the certainty equivalent instead leaves the multiplier equal to the power
+mean's gradient sum `A = ∑ π (C/M)^{-γ-1}`, which is `1` exactly when next period's consumption is
+riskless, and is measured at `1.04` at `γ = 1` rising to `1.19` at `γ = 8`: a fivefold reduction.
+
+It is not yet a contraction. With `q = (R₁/R₂)^{1/γ}` the product `qA` is `1.022` at `γ = 1` and
+`1.127` at `γ = 5`, so the recursion still grows, by `(qA)^{59} = 3.6` at `γ = 1` against `1180` at
+`γ = 5`. The per-stage criterion it yields, `b₁ ≤ (Þ/qA)(a + c₁/(γR))` — the `StageSlack` of
+`RateMonotone` with the risk penalty `A` made explicit — fails by fourteen per cent at zero
+wealth in
+the top earnings state at `γ = 1` (`WriteUps/WriteUpOLG/numerics/cestep.m`). -/
+theorem mul_le_mul_of_euler_pair {γ c₁ c₂ M₁ M₂ K₁ K₂ : ℝ} (hγ : 0 < γ) (hc₁ : 0 < c₁)
+    (hc₂ : 0 < c₂) (hM₁ : 0 < M₁) (hM₂ : 0 < M₂) (hK₁ : 0 < K₁) (hK₂ : 0 < K₂)
+    (h₂ : K₂ * M₂ ^ (-γ) ≤ c₂ ^ (-γ)) (h₁ : c₁ ^ (-γ) ≤ K₁ * M₁ ^ (-γ)) :
+    c₂ * M₁ * K₂ ^ (1 / γ) ≤ c₁ * M₂ * K₁ ^ (1 / γ) := by
+  have hexp : ∀ c M K : ℝ, 0 < c → 0 < M → 0 < K →
+      (c * M * K ^ (1 / γ)) ^ (-γ) = c ^ (-γ) * M ^ (-γ) * K⁻¹ := by
+    intro c M K hc hM hK
+    rw [Real.mul_rpow (by positivity) (by positivity), Real.mul_rpow hc.le hM.le,
+      ← Real.rpow_mul hK.le, show (1 / γ) * (-γ) = -1 from by field_simp, Real.rpow_neg_one]
+  have a₁ : c₁ ^ (-γ) / K₁ ≤ M₁ ^ (-γ) := by
+    rw [div_le_iff₀ hK₁]
+    calc c₁ ^ (-γ) ≤ K₁ * M₁ ^ (-γ) := h₁
+      _ = M₁ ^ (-γ) * K₁ := by ring
+  have a₂ : M₂ ^ (-γ) ≤ c₂ ^ (-γ) / K₂ := by
+    rw [le_div_iff₀ hK₂]
+    calc M₂ ^ (-γ) * K₂ = K₂ * M₂ ^ (-γ) := by ring
+      _ ≤ c₂ ^ (-γ) := h₂
+  have hmul := mul_le_mul a₁ a₂ (by positivity : (0 : ℝ) ≤ M₂ ^ (-γ))
+    (by positivity : (0 : ℝ) ≤ M₁ ^ (-γ))
+  have hXY : (c₁ * M₂ * K₁ ^ (1 / γ)) ^ (-γ) ≤ (c₂ * M₁ * K₂ ^ (1 / γ)) ^ (-γ) := by
+    rw [hexp c₁ M₂ K₁ hc₁ hM₂ hK₁, hexp c₂ M₁ K₂ hc₂ hM₁ hK₂]
+    calc c₁ ^ (-γ) * M₂ ^ (-γ) * K₁⁻¹ = c₁ ^ (-γ) / K₁ * M₂ ^ (-γ) := by ring
+      _ ≤ M₁ ^ (-γ) * (c₂ ^ (-γ) / K₂) := hmul
+      _ = c₂ ^ (-γ) * M₁ ^ (-γ) * K₂⁻¹ := by ring
+  -- invert the negative power: `t ↦ t ^ (-1/γ)` is antitone on the positives
+  have hinv : ∀ Z : ℝ, 0 < Z → (Z ^ (-γ)) ^ (-1 / γ) = Z := by
+    intro Z hZ
+    rw [← Real.rpow_mul hZ.le, show (-γ) * (-1 / γ) = 1 from by field_simp, Real.rpow_one]
+  have hne : (-1 / γ : ℝ) ≤ 0 := by
+    rw [neg_div]
+    exact neg_nonpos.2 (by positivity)
+  have hstep := rpow_le_rpow_of_nonpos (x := (c₁ * M₂ * K₁ ^ (1 / γ)) ^ (-γ))
+    (z := (c₂ * M₁ * K₂ ^ (1 / γ)) ^ (-γ)) (e := -1 / γ) (by positivity) hXY hne
+  rw [hinv _ (by positivity : (0:ℝ) < c₂ * M₁ * K₂ ^ (1 / γ)),
+    hinv _ (by positivity : (0:ℝ) < c₁ * M₂ * K₁ ^ (1 / γ))] at hstep
+  exact hstep
+
 end CertaintyEquivalent
 
 end LeanEconomics

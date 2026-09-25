@@ -256,6 +256,54 @@ absolute error below $0.03$ on a quantity of size about one --- and no sandwich 
 of that quality. That is a sharper statement of the requirement than the programme has had before,
 and it is attached to a single distribution-free object rather than to Theorem 1 in full.
 
+\subsubsection*{The multiplier is the dispersion of next period's consumption}
+
+The amplification above is not intrinsic to comparing the two rates; it is an artefact of how the
+expectation was bounded. Step \eqref{eq:qstep} replaces $\sum\pi\,C^{-\gamma}$ by its smallest term,
+which charges every stage's error against next period's consumption in the \emph{worst} earnings
+state. Chaining the same two Euler relations through the certainty equivalent instead leaves no
+minimum anywhere:
+
+\begin{proposition}[Certainty-equivalent chaining]\label{prop:cechain}
+From $c_2^{-\gamma}\ge K_2M_2^{-\gamma}$ and $c_1^{-\gamma}\le K_1M_1^{-\gamma}$,
+\[
+  \frac{c_2}{c_1}\;\le\;\Bigl(\frac{K_1}{K_2}\Bigr)^{1/\gamma}\frac{M_2}{M_1},
+\]
+with $M_i$ the certainty equivalent of next period's consumption.
+\formal{CertaintyEquivalent.mul\_le\_mul\_of\_euler\_pair}
+\end{proposition}
+
+Propagating a constant shift through $M$ then costs the power mean's gradient sum
+$A=\sum_{z'}\pi\,(C/M)^{-\gamma-1}$, which is $1$ exactly when next period's consumption is riskless.
+So the per-stage multiplier becomes a measure of the dispersion of next period's consumption under the
+risk-tilted measure, rather than the ratio of today's consumption to its worst realisation:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+$\gamma$ & $1$ & $2$ & $3$ & $5$ & $8$\\
+\midrule
+multiplier, minimum-based \eqref{eq:qstep} & $5.75$ & $5.47$ & $5.20$ & $4.72$ & $4.20$\\
+multiplier $A$, certainty-equivalent & $\mathbf{1.041}$ & $\mathbf{1.063}$ & $\mathbf{1.086}$ & $\mathbf{1.132}$ & $\mathbf{1.189}$\\
+$qA$, with $q=(R_1/R_2)^{1/\gamma}$ & $1.022$ & $1.053$ & $1.079$ & $1.127$ & $1.186$\\
+$(qA)^{59}$ & $3.6$ & $21$ & $88$ & $1180$ & $2.2\times10^{4}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A fivefold reduction per stage, and at $\gamma=1$ the sixty-stage accumulation falls from
+$5.75^{59}$, which is beyond any use, to $3.6$. It is still not a contraction: $qA>1$ throughout, so
+the recursion grows, and the per-stage criterion it yields,
+$b_1\le(\Thorn/qA)\bigl(a+c_1/(\gamma R)\bigr)$ --- which is the \lean{StageSlack} of
+Section~\ref{sec:thm1} with the risk penalty $A$ made explicit --- still fails by fourteen per cent at
+zero wealth in the top earnings state at $\gamma=1$.
+
+So the two-rate difference is not beyond reach in the way the minimum-based step suggested. What
+stands between the certainty-equivalent step and a contraction is a factor of $1.02$ at $\gamma=1$,
+and the obstruction has a name: $A>1$ is the dispersion of next period's consumption, which is
+precisely what the borrowing constraint creates by flattening consumption in the low-earnings states.
+Numerics: \texttt{cestep.m}.
+
 What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
 increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is
 Theorem~\ref{thm:mpcfloor} and Theorem~\ref{thm:cohortlip}; and the mass weighting is exact in the
