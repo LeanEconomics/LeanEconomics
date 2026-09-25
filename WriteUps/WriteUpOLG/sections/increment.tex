@@ -579,6 +579,11 @@ The branch and bound certifies every node: seven earnings states, the asset rang
 intervals, at most $3385$ boxes at the worst of them. Nothing is sampled and nothing is rounded
 inward.
 
+It survives a much larger asset range than the newborn needs. Rerun over $b\in[0,12]$ in eight
+intervals --- four times the range any newborn can reach, and beyond what the later stages of the life
+cycle require --- every node is still certified, with at most $16673$ boxes. So the asset argument is
+not where the remaining scope question lies.
+
 \subsubsection*{What is settled and what is not}
 
 At the rational calibration, at logarithmic utility, over $r\in[4\%,6\%]$, at the binding stage: the
@@ -587,11 +592,12 @@ lemmas of this section and Section~\ref{sec:thm1} that gives Theorem 1 at every 
 
 The scope is the newborn stage. That is the binding stage for the \emph{allowance}, which rises as the
 horizon shortens, and the argument for that is algebraic rather than numerical. But it is not the
-binding stage for the asset argument: a household at stage $k<J-1$ has accumulated assets, so its $b$
-ranges further, and the certificate would have to be rerun over each stage's own range with that
-stage's own $\kappa_k$. The allowance is looser there by a factor of up to four, which is why this is
-expected to be bookkeeping rather than another obstacle --- but it is bookkeeping that has not been
-done, and the claim here is the newborn stage and no more. The certificate is
+binding stage for the asset argument: a household at stage $k<J-1$ has accumulated assets. That part is
+now covered, since the certificate holds out to $b=12$; what is not is the propensity, because each
+stage carries its own $\kappa_k$ and so its own box, and the certificate has been run only with
+$\kappa_{J-1}$. The allowance is looser at every other stage by a factor of up to four, which is why
+this is expected to be bookkeeping rather than another obstacle --- but it is bookkeeping that has not
+been done, and the claim here is the newborn stage and no more. The certificate is
 \texttt{numerics/rational/cert.py}, with the calibration in \texttt{inputs.py}. Numerics: \texttt{cestep.m}, \texttt{damp.m},
 \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m},
 \texttt{slopestate.m}, \texttt{tworeg.m}, \texttt{polymax.m}, \texttt{bandb.m}, \texttt{vertcert.m},
