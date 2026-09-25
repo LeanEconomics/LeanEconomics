@@ -462,12 +462,37 @@ variance, which shows directly that it can miss.
 
 Closing this needs an upper bound on the maximum that uses the weights. The weight-free one is
 available and useless: since $\mathbb E_w[u]=1$, $\operatorname{Var}_w(u)\le\max u-1\le
-\mathrm{HM}(U)/\min L-1$, which is $0.97$ at the binding stage against an allowance of $0.066$. So
-the last step of the $\gamma=1$ chain is a constrained maximisation certificate --- vertex enumeration
-over the polytope, or an analytic bound that keeps the transition weights --- and not a further
-economic estimate. Numerics: \texttt{cestep.m}, \texttt{damp.m}, \texttt{nearfar.m},
-\texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m}, \texttt{slopestate.m},
-\texttt{tworeg.m}, \texttt{polymax.m}.
+\mathrm{HM}(U)/\min L-1$, which is $0.97$ at the binding stage against an allowance of $0.066$.
+
+\subsubsection*{Branch and bound, and the right coordinates}
+
+The natural certificate is branch and bound: on a sub-box $[c^-,c^+]$ the harmonic mean is increasing
+in each coordinate, so $M\le M(c^+)$ and $u_i\le M(c^+)/c^-_i$, giving an upper bound on
+$\operatorname{Var}_w(u)$; branch, prune the slope-infeasible boxes, and refine. It does not converge:
+with four thousand nodes per state the certified bound is $4.34$ against an allowance of $0.066$, and
+the worst node is the lowest earnings state, where the bracket is widest.
+
+The bound is the problem, not the budget. It evaluates the mean at the top of the box and the
+individual consumptions at the bottom, which no single point achieves --- an inconsistency that no
+amount of branching removes, because it is reintroduced at every level.
+
+Changing coordinates removes it. Put $v_i=1/C_i$. Then $M=1/\sum_jw_jv_j$ and $u_i=Mv_i$, so
+\begin{equation}\label{eq:cv}
+  \operatorname{Var}_w(u)\;=\;\frac{\sum_iw_iv_i^{2}}{\bigl(\sum_iw_iv_i\bigr)^{2}}-1 ,
+  \tag{CV}
+\end{equation}
+the squared coefficient of variation of $v$ under $w$ --- exact algebra, with the mean eliminated
+rather than bounded. The box in $C$ is a box in $v$, the slope constraints are still linear in $C$,
+and \eqref{eq:cv} is a ratio of quadratic forms, scale-invariant, of the kind whose maximum over a
+polytope is a standard finite computation.
+
+So the last step of the $\gamma=1$ chain is: maximise a squared coefficient of variation over a
+seven-dimensional polytope with twenty-six constraints, and certify the maximum below $0.066$. That is
+an optimisation certificate of the kind this programme already builds for the existence bracket, not a
+further estimate about households --- but it is a piece of work in its own right, and it is not done.
+Numerics: \texttt{cestep.m}, \texttt{damp.m}, \texttt{nearfar.m}, \texttt{lyap.m},
+\texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m}, \texttt{slopestate.m}, \texttt{tworeg.m},
+\texttt{polymax.m}, \texttt{bandb.m}.
 
 What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
 increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is
