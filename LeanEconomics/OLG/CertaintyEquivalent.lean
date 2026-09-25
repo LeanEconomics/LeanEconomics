@@ -305,6 +305,30 @@ theorem consumption_antitone_of_chord (hJ : 1 < J) (hγ : 1 < γ) (hβ : 0 < β)
   exact le_trans hchord
     (mul_le_mul_of_nonneg_left (chord_le_pathPrice hβ hγ hR₁ hR₂ hR hJ) hW)
 
+/-! ### The risk correction, and how much slack a bound on it has -/
+
+/-- **Theorem 1 from the certainty-equivalent criterion and an allowance for risk.** The
+certainty-equivalent household's saving response has a closed form and is proved antitone for
+`γ ≤ 1` (`consumption_antitone_of_le_one`) and by the chord above it
+(`consumption_antitone_of_chord`). The risky household's response differs from it by a correction.
+Any bound on that correction which the certainty-equivalent response exceeds certifies Theorem 1 at
+the state.
+
+The arithmetic is trivial; what matters is how much room it leaves, and the room is the finding.
+Measured at Aiyagari's numbers at zero wealth in the top earnings state, the correction is stable —
+between `1.15` and `3.89` across `γ ∈ [1,5]`, and DECREASING in `γ` — while the
+certainty-equivalent response falls steeply, from `20.98` at `γ = 1` to `2.73` at `γ = 3` and
+through zero at `γ ≈ 4.33`. So a bound on the correction may be loose by a factor of `5.4` at `γ = 1`, `3.0`
+at `γ = 2` and `1.5` at `γ = 3` and still deliver Theorem 1 there
+(`WriteUps/WriteUpOLG/numerics/riskgap.m`).
+
+That is a far weaker demand than the routes of `Increment`, where the remaining estimate needs an
+absolute error below `0.03` on a quantity of size about one. Here a crude precautionary bound would
+do. -/
+theorem saving_nonneg_of_correction_le {gCE gRisk corr B : ℝ}
+    (hsplit : gCE - corr ≤ gRisk) (hcorr : corr ≤ B) (hCE : B ≤ gCE) : 0 ≤ gRisk := by
+  linarith
+
 end CertaintyEquivalent
 
 end LeanEconomics

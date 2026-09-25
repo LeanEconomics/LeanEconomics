@@ -310,6 +310,47 @@ induction, whose per-step multiplier is at least $1/\Thorn>1$. The two halves of
 risk aversion, and the second is blocked by the same obstruction that closed the rate-response
 bound.
 
+\subsubsection*{How much slack a bound on the correction has}
+
+That said, ``blocked'' understates how good the position is, and the quantity worth measuring is
+not the correction but the room around it. Write the risky household's saving response at the state
+as the certainty-equivalent response less a correction,
+$\partial g/\partial r=\partial g_{\mathrm{CE}}/\partial r-\mathrm{corr}$. Theorem 1 at the state
+follows from any bound $B\ge\mathrm{corr}$ with $B\le\partial g_{\mathrm{CE}}/\partial r$
+(\lean{CertaintyEquivalent.saving\_nonneg\_of\_correction\_le}), so what matters is the ratio
+$(\partial g_{\mathrm{CE}}/\partial r)/\mathrm{corr}$: a bound loose by less than that factor still
+delivers the theorem. Measured at $r=4\%$, zero wealth, top earnings state:
+
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+$\gamma$ & $1$ & $2$ & $2.5$ & $3$ & $3.2$ & $3.39$ & $5$\\
+\midrule
+$\partial g_{\mathrm{CE}}/\partial r$ & $20.98$ & $7.28$ & $4.55$ & $2.73$ & $2.17$ & $1.69$ & $-0.89$\\
+$\partial g/\partial r$ (risky) & $17.08$ & $4.88$ & $2.49$ & $0.92$ & $0.44$ & $0.03$ & $-2.05$\\
+correction & $3.89$ & $2.40$ & $2.06$ & $1.82$ & $1.73$ & $1.66$ & $1.15$\\
+\midrule
+slack factor & $\mathbf{5.4}$ & $\mathbf{3.0}$ & $\mathbf{2.2}$ & $\mathbf{1.5}$ & $1.25$ & $1.02$ & ---\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two things stand out. The correction is \emph{stable}: it stays between $1.15$ and $3.89$ across
+$\gamma\in[1,5]$, and it \emph{falls} as risk aversion rises, while the certainty-equivalent response
+collapses from $20.98$ to below zero. The threshold is therefore set by the certainty-equivalent side
+and not by risk at all --- which is the same conclusion the closed form gave, now with the correction
+measured rather than inferred. And the slack is generous where it matters: a bound on the correction
+may be wrong by a factor of $5.4$ at $\gamma=1$, $3.0$ at $\gamma=2$ and $1.5$ at $\gamma=3$ and
+still certify Theorem 1 there.
+
+That is a far weaker demand than the one left open in Section~\ref{sec:inc}, where the remaining
+estimate needs an absolute error below $0.03$ on a quantity of size about one. Here a crude
+precautionary bound would do. Note only that the slack is \emph{not} uniform in $\gamma$: the
+correction peaks at $3.89$ at $\gamma=1$ while $\partial g_{\mathrm{CE}}/\partial r$ is only $2.73$
+at $\gamma=3$, so a single constant cannot cover the range --- the bound must be allowed to depend on
+$\gamma$, which costs nothing, since Theorem 1 is wanted at a calibration and not as a family.
+Numerics: \texttt{riskgap.m}.
+
 \subsection{The channel is the borrowing constraint}
 
 The first-order scaling points at the constraint rather than at precaution, and the point can be
