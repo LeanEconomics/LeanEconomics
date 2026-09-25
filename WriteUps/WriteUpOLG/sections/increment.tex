@@ -391,8 +391,37 @@ tenfold by $\gamma=3$, so the bound exceeds the allowance from $\gamma=1.5$ on.
 
 That is a complete route at logarithmic utility, and a sharp statement of what it needs. It would give
 Theorem 1 at \emph{every} state, not only the binding one, hence monotone capital supply and
-uniqueness at $\mu=1$ --- which is more than Proposition~\ref{prop:twosand} delivers. Numerics:
-\texttt{cestep.m}, \texttt{damp.m}, \texttt{nearfar.m}, \texttt{lyap.m}.
+uniqueness at $\mu=1$ --- which is more than Proposition~\ref{prop:twosand} delivers.
+
+\subsubsection*{Bounding the variance: levels are hopeless, and the propensity is not enough}
+
+Two ways to bound $\operatorname{Var}_w(u)\le0.066$ were tried. Both fail, and the second fails for a
+reason worth stating.
+
+Bounding it through \emph{levels} --- $\mathbb E[u^2]=M^2\sum w/C^2$ with the ceiling on $M$ and a
+floor on $C$ --- gives $5.5$ with the constraint-incidence floor and $11.0$ with the lower sandwich,
+against an allowance of $0.066$: too loose by factors of $84$ and $166$. The reason is the same one
+that closed the two-sandwich route at $\gamma=2$, one level down. A variance is a measure of
+\emph{spread}, and a per-state bracket of width comparable to the spread contributes a spurious
+spread larger than the real one; squaring makes it worse.
+
+Bounding the spread directly is the right instinct. Across income states at fixed assets, cash on
+hand differs by $y(z')-y(z'')$, so the propensity brackets the consumption difference:
+$\kappa_k|\Delta y|\le|\Delta C|\le s|\Delta y|$ with $s$ any proved upper bound on the propensity.
+With the trivial $s=1$ and the incidence floor anchoring the level, maximising
+$\operatorname{Var}_w(M/C)$ over the admissible set --- $C(1)$ in its bracket, each increment at
+either end --- gives $0.393$ at the newborn stage, against the allowance of $0.066$. Short by a
+factor of six. (A single admissible profile gives $0.044$ and appears to pass; it is not the worst
+case, and the worst case is what a bound must survive.)
+
+Scaling suggests the slope bound needed is about $s\le0.41$. That cannot be uniform: the true
+cross-state slope is $\kappa_k\approx0.04$ where the household is unconstrained but exactly $1$ where
+the borrowing constraint binds, and it binds at the low-earnings states. So the slope bound has to be
+state-dependent, and the constrained states have to be shown to carry little weight under
+$\pi(z,\cdot)$ --- which they do at $\rho=0.9$, but that has to be part of the estimate rather than
+an observation about it. That is where the chain stands. Numerics: \texttt{cestep.m},
+\texttt{damp.m}, \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m},
+\texttt{varmax.m}.
 
 What is proved stands on its own: single crossing needs only the increment \eqref{eq:inc}; the
 increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipschitz constant is
