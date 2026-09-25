@@ -370,6 +370,28 @@ theorem precautionary_level_of_floor {c0CE c0 F gCE₁ gCE₂ P₂ : ℝ}
     (hfloor : F ≤ c0) (hnum : c0CE - F ≤ gCE₂ - gCE₁) (hP₂ : 0 ≤ P₂) :
     gCE₁ + (c0CE - c0) ≤ gCE₂ + P₂ := by linarith
 
+/-- **Theorem 1 at a state, from two sandwiches and one comparison.** If the CEILING on consumption
+at the higher rate lies below the FLOOR at the lower rate, then consumption falls with the rate at
+that state, which is Theorem 1 there. No certainty-equivalent machinery is involved at all.
+
+This supersedes the level route above rather than complementing it: the quantity that route required
+a floor to beat, `c₀^CE - margin`, IS the certainty-equivalent consumption at the higher rate, and
+that in turn IS the arithmetic upper sandwich `κ_k(m + H_k)` — the deterministic household's
+propensity times its resources plus the present value of its own expected earnings. So the
+`γ = 1` result is exactly this lemma with `C` the arithmetic ceiling at `R₂` and `F` the
+constraint-incidence floor at `R₁`.
+
+Measured at zero wealth in the top earnings state across `r ∈ [4%, 6%]`: at `γ = 1`,
+`C = 1.2176 ≤ 1.3184 = F`, and Theorem 1 follows. At `γ = 2` it does not: `C = 1.4168` against
+`F = 1.2250`. The reason is structural. The width of the sandwich at a rate is the precautionary
+wedge — the arithmetic human wealth gives the ceiling, the risk-adjusted one the floor, and they
+cannot both be tight — so the route works exactly while the consumption response to the rate exceeds
+that wedge. Measured, the response is `0.285` against a wedge of `0.184` at `γ = 1`, and `0.075`
+against `0.267` at `γ = 2` (`WriteUps/WriteUpOLG/numerics/g2.m`). -/
+theorem le_of_ceiling_le_floor {c₁ c₂ F C : ℝ} (hfloor : F ≤ c₁) (hceil : c₂ ≤ C) (hnum : C ≤ F) :
+    c₂ ≤ c₁ :=
+  le_trans hceil (le_trans hnum hfloor)
+
 end CertaintyEquivalent
 
 end LeanEconomics

@@ -429,11 +429,58 @@ route that had to be abandoned in Section~\ref{sec:inc} is the one that needs a 
 \emph{response}; this one needs only a tight bound on a \emph{level}, and the programme already has
 one good enough.
 
-Two things it is not. It is one state --- the state where the life cycle binds, which is why it is
-the one worth doing first, but Theorem 1 asks for all of them, and the reduction that would carry it
-across the state space is the one whose own condition fails. And it is $\gamma=1$: at $\gamma=2$ the
-margin falls to $0.107$ while $c_0^{\mathrm{CE}}-F$ does not fall with it, so the level route dies and
-the multiplicative one takes over, needing $\theta\ge0.305$ against a true $0.793$.
+\subsubsection*{The same result without the certainty equivalent, and why $\gamma=2$ does not follow}
+
+The certainty-equivalent apparatus turns out to be unnecessary for this. The quantity the level route
+needed a floor to beat, $c_0^{\mathrm{CE}}-\text{margin}$, \emph{is} certainty-equivalent consumption
+at the higher rate, and that in turn \emph{is} the arithmetic upper sandwich
+$\kappa_k(m+H_k)$ --- the deterministic propensity times resources plus the present value of the
+household's own expected earnings. So the $\gamma=1$ result is just this:
+
+\begin{proposition}[Theorem 1 at a state, from two sandwiches]\label{prop:twosand}
+If the ceiling on consumption at the higher rate lies below the floor at the lower rate, consumption
+falls with the rate at that state.
+\formal{CertaintyEquivalent.le\_of\_ceiling\_le\_floor}
+\end{proposition}
+
+with $C$ the arithmetic ceiling at $R_2$ and $F$ the constraint-incidence floor at $R_1$. At zero
+wealth in the top earnings state across $r\in[4\%,6\%]$:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+$\gamma$ & $1$ & $1.5$ & $2$ & $2.5$ & $3$\\
+\midrule
+floor at $R_1$ & $1.3184$ & $1.2672$ & $1.2250$ & $1.1886$ & $1.1565$\\
+ceiling at $R_2$ & $1.2176$ & $1.3495$ & $1.4168$ & $1.4576$ & $1.4850$\\
+ceiling $\le$ floor & $\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$\\
+\midrule
+true $c_0(R_1)-c_0(R_2)$ & $0.2849$ & $0.1452$ & $0.0750$ & $0.0332$ & $0.0058$\\
+sandwich width lost & $0.1841$ & --- & $0.2668$ & --- & ---\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The failure at $\gamma=2$ is structural, not a matter of sharpening constants. The width of the
+sandwich at a given rate \emph{is} the precautionary wedge: the arithmetic human wealth gives the
+ceiling, the risk-adjusted one gives the floor, and they cannot both be tight, because the distance
+between them is exactly what precaution costs. So the route works while the consumption response to
+the rate exceeds that wedge, and no longer. Measured, the response is $0.285$ against a wedge of
+$0.184$ at $\gamma=1$, and $0.075$ against $0.267$ at $\gamma=2$ --- short by a factor of $3.6$, with
+both terms moving the wrong way as $\gamma$ rises: the response collapses ($0.285\to0.075\to0.006$)
+while the ceiling and floor each lose accuracy ($1.057\to1.094\to1.131$ and
+$0.917\to0.894\to0.877$ as fractions of the truth).
+
+Getting $\gamma=2$ therefore needs what everything else in this programme needs: a bound on the
+\emph{difference} between the two problems, rather than two bounds on the two problems separately. Two
+sandwiches cannot do it, however good, once the difference is smaller than their width.
+
+Two things the $\gamma=1$ result is not. It is one state --- the state where the life cycle binds,
+which is why it is the one worth doing first, but Theorem 1 asks for all of them, and the reduction
+that would carry it across the state space is the one whose own condition fails. And it is
+$\gamma=1$: the multiplicative route remains available in principle above that, needing
+$\theta\ge0.305$ against a true $0.793$ at $\gamma=2$, but $\theta$ is a ratio of precautionary
+savings at two rates, which is again a difference between the two problems.
 
 Two negative results are worth recording alongside. The iterated-harmonic formula
 $(y+H^{\mathrm{harm}})/D$ is within $1.8\%$ of the truth at the top state ($1.4121$ against
@@ -442,7 +489,7 @@ because it ignores the borrowing constraint, which is exactly what the cap in $H
 repairs. And Kantorovich's bound on the arithmetic-minus-harmonic gap accumulates to $84.4$ against a
 true gap of $3.07$; the exact variance identity $\mathrm{AM}-\mathrm{HM}\le\mathrm{Var}/x_{\min}$
 does eight times better at $10.5$, and neither is needed once the floor is used directly. Numerics:
-\texttt{precbound.m}, \texttt{logfloor.m}, \texttt{logPharm.m}.
+\texttt{precbound.m}, \texttt{logfloor.m}, \texttt{logPharm.m}, \texttt{g2.m}.
 
 \subsection{The channel is the borrowing constraint}
 
