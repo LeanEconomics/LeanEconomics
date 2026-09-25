@@ -558,12 +558,41 @@ gradient sum is one plus a variance (Proposition~\ref{prop:gradvar}), and the va
 below what the damping allows. Theorem 1 then holds at \emph{every} state, hence capital supply rises
 with the rate, hence the stationary equilibrium is unique.
 
-Two things keep that from being a theorem of the same standing as the rest of this write-up. The
-certificate is in floating point with tolerances of $10^{-12}$, not the rational arithmetic the
-existence bracket uses; and the asset argument is sampled on a grid of forty values per state rather
-than handled as an interval. Neither is a gap in the argument --- both are gaps in the arithmetic, and
-both are the kind of thing the programme has closed before. Until they are closed this is a certified
-numerical statement resting on eight formalised lemmas, not a ninth lemma. Numerics: \texttt{cestep.m}, \texttt{damp.m},
+\subsubsection*{The certificate in exact arithmetic}
+
+Both arithmetic gaps close. The calibration is rebuilt so that every constant is rational: the
+earnings chain is Rouwenhorst rather than Tauchen, whose transition probabilities are rational
+functions of $\rho=9/10$ and whose invariant law is binomial, and the earnings levels are rational,
+normalised to mean exactly one. At $\gamma=1$ everything downstream stays rational ---
+$\Thorn=\beta R_1=624/625$, $q=R_1/R_2=52/53$, the propensities $\kappa_k$ by their recursion,
+arithmetic human wealth by averages and risk-adjusted human wealth by harmonic means --- so the
+allowance is an exact rational number,
+\[
+  \frac{\Thorn}{q\,(1-\kappa_{J-1}R_1)}-1\;=\;0.066143400439\ldots
+\]
+The computation is carried in integers over $10^{12}$ with every operation rounded \emph{outward}, so
+each quantity is a true enclosure; and the asset argument is carried as intervals covering its whole
+range rather than sampled, which at the newborn stage is $b\in[0,3]$, since a newborn holds nothing and
+cannot save more than $y_{\max}$.
+
+The branch and bound certifies every node: seven earnings states, the asset range split into four
+intervals, at most $3385$ boxes at the worst of them. Nothing is sampled and nothing is rounded
+inward.
+
+\subsubsection*{What is settled and what is not}
+
+At the rational calibration, at logarithmic utility, over $r\in[4\%,6\%]$, at the binding stage: the
+variance is certified below what the damping allows, in exact arithmetic. With the eight formalised
+lemmas of this section and Section~\ref{sec:thm1} that gives Theorem 1 at every state of that stage.
+
+The scope is the newborn stage. That is the binding stage for the \emph{allowance}, which rises as the
+horizon shortens, and the argument for that is algebraic rather than numerical. But it is not the
+binding stage for the asset argument: a household at stage $k<J-1$ has accumulated assets, so its $b$
+ranges further, and the certificate would have to be rerun over each stage's own range with that
+stage's own $\kappa_k$. The allowance is looser there by a factor of up to four, which is why this is
+expected to be bookkeeping rather than another obstacle --- but it is bookkeeping that has not been
+done, and the claim here is the newborn stage and no more. The certificate is
+\texttt{numerics/rational/cert.py}, with the calibration in \texttt{inputs.py}. Numerics: \texttt{cestep.m}, \texttt{damp.m},
 \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m},
 \texttt{slopestate.m}, \texttt{tworeg.m}, \texttt{polymax.m}, \texttt{bandb.m}, \texttt{vertcert.m},
 \texttt{vertfull.m}, \texttt{certify.m}.
