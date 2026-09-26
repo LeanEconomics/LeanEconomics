@@ -25,6 +25,11 @@ used for this. As $r_2-r_1\to0$ the bracket-only condition $F(r_2)-C(r_1)>D(r_2)
 into $F\ge C$, a bracket of zero width; measured, its margin runs from $-352$ to $-1737$. The object
 to bound is the increment, not the level twice.
 
+The two-sided bracket on the \emph{level} of capital that the existence theorem supplies
+cannot be used for this, for a reason that recurs below and is set out in
+Appendix~\ref{app:routes}: a bracket as wide as the quantity being bounded contributes a
+spurious spread larger than the real one.
+
 \subsection{Coupling the two economies}
 
 Run both economies on a common earnings path from the common start $a_0=0$, and let
@@ -159,20 +164,9 @@ accumulation was measured at $21$ above.
 What is left is $\bar e_j$, an expectation against a distribution nobody controls. It looks like the
 hard part, and it would be if the failure of Theorem 1 were spread over assets. It is not.
 
-\subsubsection*{Where the failure lives}
-
-Measured at $\gamma=5$ over $r\in[4\%,6\%]$, the failure reaches down to $a=0$ --- so no threshold in
-assets confines it, and a Markov bound on a thin upper tail is worthless: the sup of the failure
-below any threshold is the global sup, and the resulting bound is the uniform one that already
-failed. But sorted by earnings state the picture is different. With Aiyagari's seven-state chain the
-sup of the failure over assets, state by state, is
-\[
-  (0,\;0,\;0,\;0,\;0,\;0.0143,\;0.0460),
-\]
-zero in the bottom five states and confined to the top two, whose invariant mass is
-$\nu_6+\nu_7=0.095$. At $\gamma=8$ it reaches the fourth state and the profile is
-$(0,0,0,0.0014,0.0118,0.0333,0.0701)$. The failure of Theorem 1 is an \emph{earnings-state}
-phenomenon: it is the high-earners, who are few.
+Measured, the failure of Theorem 1 is not spread over assets but confined to the
+high-earnings states --- at $\gamma=5$ the top two of seven, carrying invariant mass $0.095$.
+That is the coordinate in which no estimate is needed.
 
 \subsubsection*{Why that coordinate is free}
 
@@ -216,50 +210,16 @@ over assets inside each earnings state.
 
 One quantity remains: $V_j(z)$, the largest failure of Theorem 1 over assets at a single earnings
 state. There is no distribution in it, and the accumulation leaves an allowance of
-$0.670/21\approx0.032$ per age for $\sum_z\nu_zV_j(z)$. Two routes suggest themselves. Both fail, and
-the reasons are worth recording because they are quantitative.
-
-\subsubsection*{The minimum-based step amplifies}
-
-The Theorem-1 step can be made quantitative without touching a power mean. Suppose the failure
-$D=c_2-c_1-\Delta r\,a$ is positive at $(a,z)$. Then $b_1>b_2\ge0$, so the low-rate Euler equation
-holds above the floor and the high-rate one under the cap; the stage-$k$ failure bound and
-monotonicity of consumption in assets give $C_2(z',b_2)\le C_1(z',b_1)+\Delta r\,b_1+\varepsilon_k(z')$,
-and $(C+s)^{-\gamma}=C^{-\gamma}(1+s/C)^{-\gamma}\ge C^{-\gamma}(1+\sigma)^{-\gamma}$ with
-$\sigma=\max_{z'}s(z')/C_1(z',b_1)$. Chaining the two Euler relations,
-\begin{equation}\label{eq:qstep}
-  D\;\le\;c_1\Bigl[(R_1/R_2)^{1/\gamma}(1+\sigma)-1\Bigr]-\Delta r\,a .
-  \tag{Q}
-\end{equation}
-This is a genuine quantitative step: it recovers the no-failure criterion when the bracket is
-nonpositive, and bounds the failure otherwise. It also amplifies. The derivative of \eqref{eq:qstep}
-in $\varepsilon_k$ is $c_1(R_1/R_2)^{1/\gamma}/\min_{z'}C_1(z',b_1)$, measured at $4.7$ at
-$\gamma=5$ and $4.2$ at $\gamma=8$. Over sixty stages the recursion started from the exact terminal
-condition $\varepsilon_0=0$ reaches $V\approx2.8\times10^{3}$ at $\gamma=5$ against a true supremum of
-$0.046$ --- and with the sandwich floor in place of the true $C_1$, $10^{60}$. This is the
-amplification the rate-response route already ran into, with a per-step multiplier bounded below by
-$1/\Thorn>1$; the life cycle does not escape it, it merely makes it finite.
-
-\subsubsection*{The direct bound is too loose}
-
-The alternative is to bound the failure at each stage separately, with no induction, from the
-sandwich: $c_2\le\kappa^2_{k}(m_2+H^2_{k})$ and $c_1\ge\kappa^1_{k}m_1$. That gives $1.835$ against
-an allowance of $0.032$, too loose by a factor of $58$, and the source of the looseness is visible:
-the sandwich slack is of order $\kappa_kH_k$, measured at $0.96$, an order-one quantity where the
-target is of order $0.03$.
-
-\subsubsection*{What the two failures have in common}
-
-The remaining gap is not a matter of assembling existing bounds. It needs an estimate of the
-rate-response of consumption whose error is small \emph{relative to the response itself} --- an
-absolute error below $0.03$ on a quantity of size about one --- and no sandwich in this programme is
-of that quality. That is a sharper statement of the requirement than the programme has had before,
-and it is attached to a single distribution-free object rather than to Theorem 1 in full.
+$0.670/21\approx0.032$ per age for $\sum_z\nu_zV_j(z)$. Two routes to it suggest themselves and both
+fail --- a quantitative version of the Euler step, which amplifies, and a direct bound from the
+sandwich, which is an order of magnitude too loose (Appendix~\ref{app:routes}). What works is a
+different chaining of the same two Euler relations.
 
 \subsubsection*{Chaining through the certainty equivalent}
 
-The amplification above is not intrinsic to comparing the two rates; it is an artefact of how the
-expectation was bounded. Step \eqref{eq:qstep} replaces $\sum\pi\,C^{-\gamma}$ by its smallest term,
+That amplification is not intrinsic to comparing the two rates; it is an artefact of how the
+expectation was bounded. The minimum-based step \eqref{eq:qstep} of Appendix~\ref{app:routes}
+replaces $\sum\pi\,C^{-\gamma}$ by its smallest term,
 which charges every stage's error against next period's consumption in the \emph{worst} earnings
 state. Chaining the same two Euler relations through the certainty equivalent instead leaves no
 minimum anywhere:
@@ -283,7 +243,7 @@ risk-tilted measure, rather than the ratio of today's consumption to its worst r
 \toprule
 $\gamma$ & $1$ & $2$ & $3$ & $5$ & $8$\\
 \midrule
-multiplier, minimum-based \eqref{eq:qstep} & $5.75$ & $5.47$ & $5.20$ & $4.72$ & $4.20$\\
+multiplier, minimum-based & $5.75$ & $5.47$ & $5.20$ & $4.72$ & $4.20$\\
 multiplier $A$, certainty-equivalent & $\mathbf{1.041}$ & $\mathbf{1.063}$ & $\mathbf{1.086}$ & $\mathbf{1.132}$ & $\mathbf{1.189}$\\
 $qA$, with $q=(R_1/R_2)^{1/\gamma}$ & $1.022$ & $1.053$ & $1.079$ & $1.127$ & $1.186$\\
 $(qA)^{59}$ & $3.6$ & $21$ & $88$ & $1180$ & $2.2\times10^{4}$\\
@@ -333,31 +293,11 @@ the damping is strongest --- so an error carried from the terminal condition, wh
 damped over a life even at $\gamma=5$. This is the first non-amplifying propagation of the two-rate
 difference in this programme.
 
-\subsubsection*{Bounding the multiplier}
+\subsubsection*{The multiplier is a variance}
 
-$A$ has to be bounded from primitives, and the obvious bound destroys the gain. Termwise,
-$\sum w\,x^{-\gamma-1}\le\sum w\,x^{-\gamma}/\min x$, so $A\le M/\min x$
-(\lean{sum\_mul\_rpow\_pred\_le}) --- and $M/\min x$ is precisely the multiplier that bounding the
-expectation by its smallest term gives. Measured, $A$ runs from $1.04$ to $1.19$ while $M/\min x$ runs
-from $4.7$ to $5.9$; substituting the bound raises $m_k$ to $2.4$--$2.6$ and the product to $10^{20}$.
-The crude route returns exactly to where it started.
-
-So $A$'s smallness is a statement about the \emph{weights} of the earnings chain and not its support:
-with $\rho=0.9$ the transition puts almost all mass on neighbouring states, where next period's
-consumption is close to its certainty equivalent, while the far states that make $\min x$ small carry
-almost no probability.
-
-\subsubsection*{From the support to the weights}
-
-The obvious way to use the weights is to split the states, bounding the near ones by proximity and
-the far ones by their probability. It fails, and instructively. With $d=1$ the far mass is
-$3\times10^{-3}$, so the far term is negligible --- and the bound is still $2.48$ against an
-allowance of $1.066$, because the near term takes a \emph{maximum} over neighbouring states and
-$(C/M)^{-\gamma-1}$ reaches $2.5$ even there. Widening to $d=2$ makes it worse, at $4.99$. The
-averaging is the whole of the effect, and any bound that replaces it by a maximum on a subset throws
-it away.
-
-What does work is the exact constraint that $M$ carries. Writing $u=(C/M)^{-\gamma}$ for the risk
+The multiplier $A$ has to be bounded from primitives, and what does that is the exact constraint
+$M$ carries rather than any bound on the spread of $C$ (Appendix~\ref{app:routes} collects the
+attempts that use the spread). Writing $u=(C/M)^{-\gamma}$ for the risk
 tilt, the definition of the power mean says $\mathbb E_w[u]=1$ \emph{exactly}, and the gradient sum
 is $A=\mathbb E_w[u^{1+1/\gamma}]$. At $\gamma=1$ the exponent is two and
 
@@ -393,55 +333,12 @@ That is a complete route at logarithmic utility, and a sharp statement of what i
 Theorem 1 at \emph{every} state, not only the binding one, hence monotone capital supply and
 uniqueness at $\mu=1$ --- which is more than Proposition~\ref{prop:twosand} delivers.
 
-\subsubsection*{Why level brackets cannot bound a variance}
-
-Two ways to bound $\operatorname{Var}_w(u)\le0.066$ were tried. Both fail, and the second fails for a
-reason worth stating.
-
-Bounding it through \emph{levels} --- $\mathbb E[u^2]=M^2\sum w/C^2$ with the ceiling on $M$ and a
-floor on $C$ --- gives $5.5$ with the constraint-incidence floor and $11.0$ with the lower sandwich,
-against an allowance of $0.066$: too loose by factors of $84$ and $166$. The reason is the same one
-that closed the two-sandwich route at $\gamma=2$, one level down. A variance is a measure of
-\emph{spread}, and a per-state bracket of width comparable to the spread contributes a spurious
-spread larger than the real one; squaring makes it worse.
-
-Bounding the spread directly is the right instinct. Across income states at fixed assets, cash on
-hand differs by $y(z')-y(z'')$, so the propensity brackets the consumption difference:
-$\kappa_k|\Delta y|\le|\Delta C|\le s|\Delta y|$ with $s$ any proved upper bound on the propensity.
-With the trivial $s=1$ and the incidence floor anchoring the level, maximising
-$\operatorname{Var}_w(M/C)$ over the admissible set --- $C(1)$ in its bracket, each increment at
-either end --- gives $0.393$ at the newborn stage, against the allowance of $0.066$. Short by a
-factor of six. (A single admissible profile gives $0.044$ and appears to pass; it is not the worst
-case, and the worst case is what a bound must survive.)
-
-Scaling suggests the slope bound needed is about $s\le0.41$. That cannot be uniform: the true
-cross-state slope is $\kappa_k\approx0.04$ where the household is unconstrained but exactly $1$ where
-the borrowing constraint binds.
-
-\subsubsection*{The slope, state by state}
-
-The split is available. The saving floor of \lean{le\_stagePolicy\_state\_on} certifies that the
-constraint cannot bind at $(b,z')$ whenever $(1-\kappa_k)(y(z')+Rb)>\kappa_kH_k(z')$, a primitive
-test, and it certifies $89\%$ to $94\%$ of the pairs that arise. Only $1.6\%$ are in fact
-constrained.
-
-What it does not do is let the constrained states be neglected. Measured, there are pairs $(z,b)$ at
-which the states carrying the entire transition mass are constrained --- low assets and low earnings,
-where the household consumes its cash on hand --- so the weights cannot be used to make that regime
-disappear.
-
-The way through is not a better slope bound on that regime but a different handle on it. Where the
-constraint binds, consumption is cash on hand \emph{exactly}: $C(z')=y(z')+Rb$, with no bracket at
-all, so the spread of $C$ across those states is exactly the spread of $y$, which is known. The two
-regimes want treating differently in kind --- an identity on the constrained set, a slope bound on
-the unconstrained one --- rather than a single slope bound made state-dependent. The worst-case
-maximisation of the previous subsection is loose precisely because it gives the constrained states a
-bracket they do not have.
-
 \subsubsection*{The two-regime bracket}
 
-Read as a bound, the constrained regime's identity is a \emph{ceiling}: consumption never exceeds cash
-on hand, so at every state
+So the variance of the risk tilt is what must be bounded, and bounding it needs an admissible set
+for $C$ tight enough that its worst member satisfies the requirement. Read as a bound, the constrained
+regime's identity supplies a \emph{ceiling}: consumption never exceeds cash on hand, so at every
+state
 \[
   \underbrace{\kappa_k\bigl(m+H^{\mathrm{risk}}_k(z')\bigr)}_{L(z')}\;\le\;C(z')\;\le\;
   \underbrace{\min\bigl\{\kappa_k(m+H_k(z')),\;m\bigr\}}_{U(z')},\qquad m=y(z')+Rb,
@@ -464,19 +361,9 @@ Closing this needs an upper bound on the maximum that uses the weights. The weig
 available and useless: since $\mathbb E_w[u]=1$, $\operatorname{Var}_w(u)\le\max u-1\le
 \mathrm{HM}(U)/\min L-1$, which is $0.97$ at the binding stage against an allowance of $0.066$.
 
-\subsubsection*{The right coordinates}
+\subsubsection*{The coefficient of variation}
 
-The natural certificate is branch and bound: on a sub-box $[c^-,c^+]$ the harmonic mean is increasing
-in each coordinate, so $M\le M(c^+)$ and $u_i\le M(c^+)/c^-_i$, giving an upper bound on
-$\operatorname{Var}_w(u)$; branch, prune the slope-infeasible boxes, and refine. It does not converge:
-with four thousand nodes per state the certified bound is $4.34$ against an allowance of $0.066$, and
-the worst node is the lowest earnings state, where the bracket is widest.
-
-The bound is the problem, not the budget. It evaluates the mean at the top of the box and the
-individual consumptions at the bottom, which no single point achieves --- an inconsistency that no
-amount of branching removes, because it is reintroduced at every level.
-
-Changing coordinates removes it. Put $v_i=1/C_i$. Then $M=1/\sum_jw_jv_j$ and $u_i=Mv_i$, so
+The certificate wants an upper bound on the maximum, and the coordinates matter for getting one. Put $v_i=1/C_i$. Put $v_i=1/C_i$. Then $M=1/\sum_jw_jv_j$ and $u_i=Mv_i$, so
 \begin{equation}\label{eq:cv}
   \operatorname{Var}_w(u)\;=\;\frac{\sum_iw_iv_i^{2}}{\bigl(\sum_iw_iv_i\bigr)^{2}}-1 ,
   \tag{CV}
@@ -486,7 +373,7 @@ rather than bounded. The box in $C$ is a box in $v$, the slope constraints are s
 and \eqref{eq:cv} is a ratio of quadratic forms, scale-invariant, of the kind whose maximum over a
 polytope is a standard finite computation.
 
-\subsubsection*{Enumeration}
+\subsubsection*{Why enumeration is legitimate}
 
 In $v$-coordinates the objective is coordinatewise quasi-convex, and that is what makes enumeration
 legitimate. Holding all but one coordinate fixed,
@@ -498,18 +385,12 @@ so the objective is unimodal with a \emph{minimum} in each coordinate: its maxim
 is at an endpoint. At a maximiser every coordinate therefore sits at an endpoint of its conditional
 feasible range.
 
-Enumerating those endpoints settles the question, and not in favour of the bracket. A forward sweep
-over the chain --- each coordinate at an endpoint of the range its predecessor leaves --- gives
-$0.0414$, and random probes never beat it, which looks like closure. Enumerating patterns in both
-directions, so that a coordinate may also be pinned against its successor, gives $\mathbf{0.0874}$ at
-the newborn stage, against an allowance of $0.0661$. The admissible set provably contains a profile
-that violates the requirement. The forward sweep was incomplete, and so were the coordinate ascent and
-the random search of the previous subsection, all three by a factor of two.
-
 \subsubsection*{Concavity is the missing constraint}
 
-The profiles that do the damage zig-zag across earnings states, and they are not consumption
-functions: consumption is \emph{concave} in cash on hand, by Carroll--Kimball, which this development
+The bracket and the slope constraints are not by themselves enough: enumerating the admissible set
+turns up a profile with variance $0.0874$, above the allowance of $0.0661$
+(Appendix~\ref{app:routes}). The profiles that do the damage zig-zag across earnings states, and they
+are not consumption functions: consumption is \emph{concave} in cash on hand, by Carroll--Kimball, which this development
 already proves (\lean{concaveOn\_stageConsumption}). Across earnings states at fixed assets, cash on
 hand moves with $y$, so concavity says the slopes $\Delta C/\Delta y$ fall with $j$ --- five more
 linear constraints that the bracket was silently discarding.
@@ -531,36 +412,11 @@ enumerated, $+$ concavity & $\mathbf{0.0415}$ & $\mathbf{0.0415}$ & $\mathbf{0.0
 
 So the ingredient the chain was missing is a theorem it already has.
 
-\subsubsection*{A first certificate, in floating point}
-
-The upper bound follows from the same unimodality that justified enumerating. On \emph{any} box the
-objective is maximised at a box vertex, so the maximum over a box is \emph{exactly} the maximum over
-its $2^{7}$ vertices --- an exact and consistent bound, unlike the one that defeated branch and bound
-before, which put the mean at the top of the box and the consumptions at the bottom. Branch and bound
-with it: discard a box when it is disjoint from the polytope, by an interval test on the slope and
-concavity constraints, or when its exact maximum is at most the allowance; otherwise split the widest
-coordinate. If the stack empties, every point of the polytope lay in a discarded box and the maximum is
-certified below the allowance.
-
-It empties. At the newborn stage, over forty asset values in each of the seven earnings states, every
-node is discarded, with at most $6971$ boxes examined at the worst of them.
-
-The newborn stage is the one that matters. The allowance is $\Thorn/\bigl(q(1-\kappa_kR)\bigr)-1$ and
-$\kappa_k$ rises as the horizon shortens, so the allowance rises too --- $0.0661$ at $k=59$, $0.0725$
-at $k=40$, $0.0969$ at $k=20$, $0.2586$ at $k=5$ --- while the variance stays at $0.0415$ throughout.
-Certifying the youngest cohort certifies every age, and that step is an argument rather than a sample.
-
-\subsubsection*{Its two gaps}
-
-At the calibration, at logarithmic utility, over $r\in[4\%,6\%]$: every input of the chain holds. The
-error carried between stages is damped (Theorem~\ref{thm:mpcfloor}, \lean{damped\_le\_one}), the
-gradient sum is one plus a variance (Proposition~\ref{prop:gradvar}), and the variance is certified
-below what the damping allows. Theorem 1 then holds at \emph{every} state, hence capital supply rises
-with the rate, hence the stationary equilibrium is unique.
-
 \subsubsection*{The certificate in exact arithmetic}
 
-Both arithmetic gaps close. The calibration is rebuilt so that every constant is rational: the
+A first run of this certificate in floating point, over a grid of asset values, leaves two gaps:
+the arithmetic, and the sampling (Appendix~\ref{app:routes}). Both close. The calibration is rebuilt
+so that every constant is rational: the
 earnings chain is Rouwenhorst rather than Tauchen, whose transition probabilities are rational
 functions of $\rho=9/10$ and whose invariant law is binomial, and the earnings levels are rational,
 normalised to mean exactly one. At $\gamma=1$ everything downstream stays rational ---
