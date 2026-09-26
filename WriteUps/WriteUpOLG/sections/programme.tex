@@ -1,59 +1,68 @@
-\section{The programme}\label{sec:prog}
+\section{What remains}\label{sec:prog}
 
-The stages, in the order we intend to take them. The first is done (Section~\ref{sec:lc}).
+\subsection{Above logarithmic utility}
 
-\paragraph{Equilibrium.} A stationary overlapping-generations equilibrium: the distribution
-$\mu_1$ of the youngest cohort is given (zero wealth, earnings drawn from the invariant law),
-$\mu_{j+1}$ is the pushforward of $\mu_j$ under the age-$j$ policy and the earnings chain,
-capital supply is $K(r)=\sum_j\omega_j\int a\,d\mu_j$ with cohort weights $\omega_j$, labour is
-exogenous, and the firm is Aiyagari's. Targets: continuity of $K$ in the rate, a finite composition
-of continuous pushforwards; existence by the intermediate value theorem against the firm's demand,
-with the floor at the top of the interval from explicit accumulation over the life rather than from
-an ergodic identity; Light's Theorem 2 by induction on age, an ordering of policies at every age
-giving first-order stochastic dominance of every $\mu_j$ and so of $K$; and single crossing
-against a decreasing demand.
+The one thing the programme set out to do and has not done is uniqueness at $\mu\in\{3,5\}$. The
+argument of Section~\ref{sec:inc} does not fail there for want of propagation: the per-stage
+multiplier $m_k=qA/(\Thorn+qA\kappa_kR)$ has a product below one over a life at every risk aversion we
+tested, up to $\gamma=5$. What gives way is the certainty-equivalent side. The gradient sum $A$ is
+one plus the variance of the risk tilt at $\gamma=1$ and only bounded by
+$(1+\operatorname{Var})^{(\gamma+1)/(2\gamma)}$ above it, by Lyapunov, and both the loss in that
+inequality and the variance itself grow with $\gamma$ --- the variance tenfold between $\gamma=1$ and
+$\gamma=3$. The bound crosses the allowance between $\gamma=1$ and $\gamma=1.5$.
 
-\paragraph{Theorem 1 by backward induction.} The research core: saving rises with the rate at
-every age, for $\mu\in\{3,5\}$. The reduction of the companion write-up applies stage by stage,
-Theorem 1 at stage $k+1$ following from the slack elasticity condition on the stage-$k$
-consumption functions at the pivot; the transfer lemma propagates an affine bound on the response
-of consumption to the rate backward from the terminal condition $c_0=m$, where the response is
-exactly $\Delta r\cdot a$; and the slack condition at each stage is a finite check on the
-constants so obtained. The obstruction of the infinite horizon, a step multiplier of at least
-$1/\Thorn$, does not bite in $J$ steps. The first session is numerical: a life-cycle economy with
-$J=60$, Aiyagari's earnings chain and $\mu\in\{3,5\}$, checking the slack condition at every age
-and wealth and running the recursion for the constants. If it holds the argument is formalised;
-if it fails only at moderate ages and wealth we look for the age-dependent refinement; if it fails
-badly, log utility is the fallback, where Theorem 1 at each stage follows from the rescaling proof
-of the companion, which is already an induction on Bellman iterates.
+So the question at $\mu=3$ is whether $\mathbb E_w[u^{1+1/\gamma}]$ can be bounded better than by
+Lyapunov, given $\mathbb E_w[u]=1$ and a bound on the variance. That is a question about moments of a
+positive random variable with known mean, not about households, and it is where we would look next.
 
-\paragraph{Diamond (1965) and Samuelson.} Section~\ref{sec:diamond} does the first item, and for
-every risk aversion rather than only for logarithmic utility. What remains of the two-period
-economy: monotone global convergence,
-existence under Inada conditions and a multiplicity witness in general, dynamic inefficiency of a
-steady state with $r<n$ by an explicit Pareto-improving transfer, the golden rule, and the
-autarkic and monetary steady states of the pure-exchange economy. These are standalone results
-and will be the classical sections of this write-up.
+\subsection{Routes that are closed}
 
-\paragraph{Uniqueness: bound the increment, not the level.} Section~\ref{sec:inc} does this, and
-records what is left of it: the propensity-to-consume floor, the Lipschitz bound on
-\lean{cohortAssets}, and an estimate of the mass-weighted failure of Theorem 1.
+Three, each with a reason worth keeping so that none is reopened.
 
-\paragraph{Uniqueness: what stochastic dominance does not buy.} Light and Weintraub's Theorem 2
-reaches uniqueness from ordered stationary distributions, and its hypothesis delivers the ordering
-through the pointwise policy ordering. Since the policy ordering fails above
-$\gamma\approx3.4$, the obvious weakening is to ask only for the ordering it was used to produce:
-first-order stochastic dominance of the cohort distributions. Measured, it buys nothing. In wage
-units, at $r=4\%$ against $6\%$, dominance holds to machine precision at $\gamma\le3$ --- where the
-policy ordering already holds exactly --- and fails at precisely the risk aversions where the policy
-ordering fails: at $\gamma=5$ eleven of sixty ages have a crossing of the asset CDF, worst gap
-$5\times10^{-2}$, and conditional on the income state the worst gap is $0.57$; at $\gamma=8$,
-nineteen ages and $0.22$. The distributions genuinely cross, and they stop being ordered exactly
-when the policies do. Aggregate supply stays monotone throughout ($4.54\to5.24$ at $\gamma=5$,
-$5.53\to5.98$ at $\gamma=8$), which is the point: the aggregate is the weaker statement, and there is
-no distributional route to it. Numerics: \texttt{fosdcheck.m}.
+\paragraph{Mean field games.} Section~\ref{sec:mfg}. Date-by-date Lasry--Lions monotonicity is false
+here at every risk aversion, and the summed condition that the argument actually uses, taken to its
+weakest form, collapses to monotone capital supply. What survives is about the life-cycle household:
+the reduction of the summed pairing to a mixed difference, the duration wedge for $\Phi$, and the
+exact re-pricing identity.
 
-\paragraph{Extensions.} An age profile of earnings, retirement with a pension and a government
-budget, survival risk with accidental bequests as a second fixed point, population growth, and
-Lasry--Lions with age as time, whose finite-horizon core is already formalised and whose
-monotonicity is again the elasticity condition.
+\paragraph{Stochastic dominance.} Light and Weintraub's Theorem 2 reaches uniqueness from ordered
+distributions, and the obvious weakening of its hypothesis is to ask only for that ordering: first-order
+stochastic dominance of the cohort distributions. It buys nothing. In wage units, at $r=4\%$ against
+$6\%$, dominance holds to machine precision at $\gamma\le3$, where the policy ordering already holds
+exactly, and fails at precisely the risk aversions where the policy ordering fails --- at $\gamma=5$,
+eleven of sixty ages have a crossing of the asset CDF, worst gap $5\times10^{-2}$, and $0.57$
+conditional on the earnings state. The distributions genuinely cross, and they stop being ordered
+exactly when the policies do, while aggregate supply stays monotone throughout. The aggregate is the
+weaker statement and there is no distributional route to it (\texttt{fosdcheck.m}).
+
+\paragraph{Two-sided sandwiches.} For the two-rate comparison at a state, the width of the sandwich at
+a given rate \emph{is} the precautionary wedge: arithmetic human wealth gives the ceiling,
+risk-adjusted gives the floor, and they cannot both be tight. So bounding the two problems separately
+works only while the consumption response to the rate exceeds that wedge, which at Aiyagari's numbers
+is $\gamma=1$ alone (Section~\ref{sec:thm1}). Any route to $\mu>1$ has to bound the \emph{difference}
+between the two problems, which is what Section~\ref{sec:inc} does.
+
+\subsection{The classical two-period results}
+
+Section~\ref{sec:diamond} does the steady state, and for every risk aversion rather than only for
+logarithmic utility. What remains of the two-period economy is standalone: monotone global
+convergence, existence under Inada conditions with a multiplicity witness in general, dynamic
+inefficiency of a steady state with $r<n$ by an explicit Pareto-improving transfer, the golden rule,
+and the autarkic and monetary steady states of the pure-exchange economy.
+
+\subsection{Extensions}
+
+An age profile of earnings; a government budget alongside the pension of Section~\ref{sec:ret};
+survival risk with accidental bequests as a second fixed point; population growth. Each of these
+changes the equilibrium object rather than the household, so the existence argument of
+Section~\ref{sec:eqm} should carry with the bracket recomputed.
+
+\subsection{The certificate}
+
+The uniqueness result of Section~\ref{sec:inc} rests on a hypothesis discharged by a computation in
+exact rational arithmetic rather than by a Lean proof term. Two things would improve its standing. The
+computation could be replayed inside Lean, which for a branch and bound over rational boxes is a
+matter of \texttt{Decidable} arithmetic and a large \texttt{native\_decide}, or the variance bound could
+be replaced by an analytic argument, which is the same question as the one above about moments. Until
+one of those, the result has the standing of the existence bracket of Section~\ref{sec:eqm}: checked,
+and not checked by the kernel.

@@ -141,7 +141,7 @@ and every risk aversion tested, with a margin bounded away from zero, and the ma
 $\gamma$. The single failure is at $\gamma=1$ between two candidates one of which sits outside the
 bracket entirely.
 
-\subsection{Towards a proof from primitives}
+\subsection{The reduction to submodularity}
 
 The summed condition is an integral inequality over pairs of measures. It is not: it is a
 submodularity condition on a function of two real arguments, and the reduction is exact.
@@ -170,7 +170,7 @@ date-$t$ marginal alone. The finite-horizon machinery has been redone in that ge
 (\lean{famPathCost}, \lean{IsFamPathEquilibrium}, \lean{famSummedPairing},
 \lean{famSummedPairing\_nonpos\_of\_pathEquilibrium}); the engine survives unchanged.
 
-\subsubsection*{What the differences are made of}
+\subsubsection*{The two channels}
 
 Differentiate. For \emph{any} constant-returns technology, Euler's theorem gives
 $\partial w/\partial K=-(K/L)\,\partial r/\partial K$, so with $L$ normalised to one,
@@ -191,7 +191,7 @@ labour at the economy's capital--labour ratio. Since $r'<0$, decreasing differen
 for $\text{plan}_1$ the plan carrying the larger aggregate: \emph{the plan with more capital has the
 larger marginal-utility-weighted net capital position.}
 
-\subsubsection*{A pointwise condition, and why it is no good}
+\subsubsection*{A pointwise condition}
 
 Submodularity of the flow $u\bigl(w(K)y+(1+r(K))a-a'\bigr)$ in $(K,a)$ is, for constant relative
 risk aversion, exactly
@@ -205,7 +205,7 @@ it is violated on $27\%$ to $45\%$ of the mass, at every risk aversion. Requirin
 carry itself is precisely what the summed condition was introduced to avoid, and \eqref{eq:P} is
 that mistake made again one level down.
 
-\subsubsection*{The weighted condition holds where the pointwise one dies}
+\subsubsection*{Where the pointwise ordering fails}
 
 \eqref{eq:W} is a single scalar comparison, and it is weaker than the pointwise ordering of the two
 plans' asset paths. Measured at the calibration, on plans drawn from the candidate family at
@@ -242,7 +242,7 @@ $42$ failures out of $455$ at $\gamma=1$ all involve the extreme candidate $\hat
 carried aggregate is $48.6$, ten times the capital stock and far outside the bracket of
 Theorem~\ref{thm:exist5}.
 
-\subsection{What $\Phi$ is, and why it will not yield locally}
+\subsection{The weighted net capital position}
 
 Two things can be proved. Neither closes \eqref{eq:W}, and the second says why.
 
@@ -307,7 +307,7 @@ aggregates --- add the two optimality inequalities --- while what is needed is t
 the two \emph{carried} aggregates; the intervals coincide only at equilibrium, and there
 Proposition~\ref{prop:loss} turns the free inequality against us.
 
-\subsection{The global attempt, and where it ends}
+\subsection{Comonotonicity, and the collapse}
 
 Since no local argument can work, the proof has to be global. Pushing it there settles the route,
 though not in the direction we wanted.

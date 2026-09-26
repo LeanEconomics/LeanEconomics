@@ -49,34 +49,45 @@ write-up on Aiyagari (1994) in the same repository. Comments welcome.}}
 
 \begin{abstract}
 \noindent
-This is the record of a programme to formalise overlapping-generations economies in Lean 4. In
-Diamond's two-period economy everything is closed form and the steady state is unique for every
-relative risk aversion, with no condition on the savings function, even though the saving rate
-itself falls with the return whenever risk aversion exceeds one: the wage channel of a
-Cobb-Douglas technology dominates. That is the only place in the paper where uniqueness is settled
-outright, and it shows that a proof need not go through the household-side comparative static at
-all. A household that lives $J$ periods against uninsurable earnings risk and a borrowing constraint
-solves a finite backward induction, so everything proved for the infinite-horizon Bellman operator
-with an arbitrary continuation applies stage by stage with no fixed point. On top of that we prove
-the finite-horizon sandwich, $\kappa_k m\le c_k\le\kappa_k(m+H_k(z))$ with
-$1/\kappa_k=\sum_{i\le k}(\Thorn/R)^i$, and then that $\kappa_k$ is exactly the reciprocal of that
-geometric sum, so the gap to its infinite-horizon limit closes at a known rate. Adding retirement
-and a pension, we settle a claim often made informally: a means test does make the policy
-non-monotone, but not for the reason usually given. Saving rises with cash on hand whatever the
-continuation, by Topkis, so a value function made non-concave by the test cannot by itself reverse
-it; what the test reverses is consumption, and cash on hand itself once the taper is steeper than
-the gross return. The main result is existence of a stationary equilibrium with both boundary
-conditions discharged: capital supply is a finite composition, with no stationary distribution,
-no Feller property and no Doeblin condition, and it is bracketed above and below by affine bounds
-on a cohort's accumulated assets whose coefficients are explicit recursions in the discount
-factor, the interest rate, the earnings process and the horizon. Nothing in the hypotheses refers
-to the household's decisions, and at Aiyagari's calibration they hold on an interval of five
-percentage points containing the true equilibrium. We also report what the life cycle does for
-Light's Theorem 1, that saving rises with the interest rate: it holds at every age below a
-critical relative risk aversion of about $3.4$, so the life cycle delivers Aiyagari's $\mu=3$ and
-not his $\mu=5$; at logarithmic utility we give a sufficient condition that is true where the
-Euler condition is false. Where the bounds stop is the same obstruction at both ends, that a power
-mean with negative exponent is superadditive rather than $1$-Lipschitz.
+This is the record of a programme to formalise overlapping-generations economies in Lean 4, and of
+one result it reaches. In Diamond's two-period economy the steady state is unique for every relative
+risk aversion and every depreciation rate, with no condition on the savings function, even though the
+saving rate itself falls with the return whenever risk aversion exceeds one: the wage channel of a
+constant-returns technology dominates. That is worth stating first because it shows a uniqueness proof
+need not pass through the household-side comparative static at all. A household living $J$ periods
+against uninsurable earnings risk and a borrowing constraint solves a finite backward induction, so
+everything proved for the infinite-horizon Bellman operator with an arbitrary continuation applies
+stage by stage with no fixed point; on top of that we prove the finite-horizon sandwich
+$\kappa_km\le c_k\le\kappa_k(m+H_k(z))$, that $\kappa_k$ is exactly the reciprocal of
+$\sum_{i\le k}(\Thorn/R)^i$, and that the propensity to consume is at least $\kappa_k$ --- the
+companion of the upper bound on its slope, and the piece the uniqueness argument turns out to need.
+Adding retirement and a pension settles a claim often made informally: a means test does make the
+policy non-monotone, but not for the reason usually given, since saving rises with cash on hand
+whatever the continuation, by Topkis, so a non-concave value function cannot by itself reverse it.
+A stationary equilibrium exists with both boundary conditions discharged from primitives: capital
+supply is a finite composition, needing no stationary distribution, no Feller property and no Doeblin
+condition, and it is bracketed by affine bounds on a cohort's accumulated assets whose coefficients
+are explicit recursions in the primitives.
+
+The equilibrium is unique at logarithmic utility. Single crossing does not need capital supply to rise
+with the rate, only to fall more slowly than the firm's demand, and that increment is controlled by an
+envelope whose per-stage multiplier is damped by the propensity floor; the mass weighting in it is
+exact, because a cohort's earnings marginal is the invariant law at every age; and the multiplier
+itself is one plus the variance of the risk tilt, which we certify below what the damping allows, in
+exact rational arithmetic, at every one of the sixty stages and over the whole asset range. Theorem 1
+then holds at every state and every age, capital supply rises with the rate, and the equilibrium is
+unique --- a theorem with one computational hypothesis discharged by certificate rather than by proof
+term, at one calibration.
+
+Above logarithmic utility it is open, and the paper is as much a record of where it is blocked. Two
+routes are closed with quantified reasons. Date-by-date Lasry--Lions monotonicity fails in this
+economy at every risk aversion including logarithmic, and not because the price channel runs
+backwards --- it is exactly the congestion term --- but because strict concavity reweights it; the
+summed condition that the argument actually uses does hold, but its weakest form collapses to
+monotone capital supply, so the mean field route is not weaker than the single crossing it was meant
+to bypass. And the certainty-equivalent criterion that carries the logarithmic case fails from
+$\gamma\approx1.5$: the propagation is damped at every risk aversion we test, and it is the
+certainty-equivalent side that gives way.
 \end{abstract}
 
 \noindent\emph{JEL:} C63, D52, E21. \quad \emph{Keywords:} overlapping generations, life cycle,

@@ -52,7 +52,7 @@ the average of $f$, \eqref{eq:inc} follows.
 \lean{OLG.sum\_neg\_gapAccum\_le}, \lean{OLG.lt\_of\_increment\_bound}
 \end{theorem}
 
-\subsection{Why the bound is not worst-case}
+\subsection{The mass-weighted form}
 
 The negative part is the point of the formulation. From \eqref{eq:rec},
 \[
@@ -95,7 +95,7 @@ age fails; charging it where it occurs does not. Age-dependence alone does not r
 version, because the violation is spread over $53$ of $60$ ages while being tiny at nearly all of
 them.
 
-\subsection{What remains}
+\subsection{The Lipschitz constant}
 
 The engine is proved, and so is the Lipschitz constant it runs on.
 
@@ -212,14 +212,14 @@ The $\nu$-exact row passes with factors of $21$, $5.1$, $20$ and $5.0$, and it i
 seven of the fully mass-weighted truth --- the whole of the remaining looseness being the worst case
 over assets inside each earnings state.
 
-\subsection{What $V_j(z)$ would take}
+\subsection{The two-rate difference}
 
 One quantity remains: $V_j(z)$, the largest failure of Theorem 1 over assets at a single earnings
 state. There is no distribution in it, and the accumulation leaves an allowance of
 $0.670/21\approx0.032$ per age for $\sum_z\nu_zV_j(z)$. Two routes suggest themselves. Both fail, and
 the reasons are worth recording because they are quantitative.
 
-\subsubsection*{The quantitative step amplifies}
+\subsubsection*{The minimum-based step amplifies}
 
 The Theorem-1 step can be made quantitative without touching a power mean. Suppose the failure
 $D=c_2-c_1-\Delta r\,a$ is positive at $(a,z)$. Then $b_1>b_2\ge0$, so the low-rate Euler equation
@@ -240,7 +240,7 @@ $0.046$ --- and with the sandwich floor in place of the true $C_1$, $10^{60}$. T
 amplification the rate-response route already ran into, with a per-step multiplier bounded below by
 $1/\Thorn>1$; the life cycle does not escape it, it merely makes it finite.
 
-\subsubsection*{The direct bound is an order of magnitude too loose}
+\subsubsection*{The direct bound is too loose}
 
 The alternative is to bound the failure at each stage separately, with no induction, from the
 sandwich: $c_2\le\kappa^2_{k}(m_2+H^2_{k})$ and $c_1\ge\kappa^1_{k}m_1$. That gives $1.835$ against
@@ -248,7 +248,7 @@ an allowance of $0.032$, too loose by a factor of $58$, and the source of the lo
 the sandwich slack is of order $\kappa_kH_k$, measured at $0.96$, an order-one quantity where the
 target is of order $0.03$.
 
-\subsubsection*{What that says}
+\subsubsection*{What the two failures have in common}
 
 The remaining gap is not a matter of assembling existing bounds. It needs an estimate of the
 rate-response of consumption whose error is small \emph{relative to the response itself} --- an
@@ -256,7 +256,7 @@ absolute error below $0.03$ on a quantity of size about one --- and no sandwich 
 of that quality. That is a sharper statement of the requirement than the programme has had before,
 and it is attached to a single distribution-free object rather than to Theorem 1 in full.
 
-\subsubsection*{The multiplier is the dispersion of next period's consumption}
+\subsubsection*{Chaining through the certainty equivalent}
 
 The amplification above is not intrinsic to comparing the two rates; it is an artefact of how the
 expectation was bounded. Step \eqref{eq:qstep} replaces $\sum\pi\,C^{-\gamma}$ by its smallest term,
@@ -333,7 +333,7 @@ the damping is strongest --- so an error carried from the terminal condition, wh
 damped over a life even at $\gamma=5$. This is the first non-amplifying propagation of the two-rate
 difference in this programme.
 
-\subsubsection*{Where it still stops}
+\subsubsection*{Bounding the multiplier}
 
 $A$ has to be bounded from primitives, and the obvious bound destroys the gain. Termwise,
 $\sum w\,x^{-\gamma-1}\le\sum w\,x^{-\gamma}/\min x$, so $A\le M/\min x$
@@ -347,7 +347,7 @@ with $\rho=0.9$ the transition puts almost all mass on neighbouring states, wher
 consumption is close to its certainty equivalent, while the far states that make $\min x$ small carry
 almost no probability.
 
-\subsubsection*{Splitting near from far does not work; the variance does}
+\subsubsection*{From the support to the weights}
 
 The obvious way to use the weights is to split the states, bounding the near ones by proximity and
 the far ones by their probability. It fails, and instructively. With $d=1$ the far mass is
@@ -393,7 +393,7 @@ That is a complete route at logarithmic utility, and a sharp statement of what i
 Theorem 1 at \emph{every} state, not only the binding one, hence monotone capital supply and
 uniqueness at $\mu=1$ --- which is more than Proposition~\ref{prop:twosand} delivers.
 
-\subsubsection*{Bounding the variance: levels are hopeless, and the propensity is not enough}
+\subsubsection*{Why level brackets cannot bound a variance}
 
 Two ways to bound $\operatorname{Var}_w(u)\le0.066$ were tried. Both fail, and the second fails for a
 reason worth stating.
@@ -418,7 +418,7 @@ Scaling suggests the slope bound needed is about $s\le0.41$. That cannot be unif
 cross-state slope is $\kappa_k\approx0.04$ where the household is unconstrained but exactly $1$ where
 the borrowing constraint binds.
 
-\subsubsection*{Making the slope state-dependent, and what that turns up}
+\subsubsection*{The slope, state by state}
 
 The split is available. The saving floor of \lean{le\_stagePolicy\_state\_on} certifies that the
 constraint cannot bind at $(b,z')$ whenever $(1-\kappa_k)(y(z')+Rb)>\kappa_kH_k(z')$, a primitive
@@ -438,7 +438,7 @@ the unconstrained one --- rather than a single slope bound made state-dependent.
 maximisation of the previous subsection is loose precisely because it gives the constrained states a
 bracket they do not have.
 
-\subsubsection*{The two-regime estimate, and what is still missing from it}
+\subsubsection*{The two-regime bracket}
 
 Read as a bound, the constrained regime's identity is a \emph{ceiling}: consumption never exceeds cash
 on hand, so at every state
@@ -464,7 +464,7 @@ Closing this needs an upper bound on the maximum that uses the weights. The weig
 available and useless: since $\mathbb E_w[u]=1$, $\operatorname{Var}_w(u)\le\max u-1\le
 \mathrm{HM}(U)/\min L-1$, which is $0.97$ at the binding stage against an allowance of $0.066$.
 
-\subsubsection*{Branch and bound, and the right coordinates}
+\subsubsection*{The right coordinates}
 
 The natural certificate is branch and bound: on a sub-box $[c^-,c^+]$ the harmonic mean is increasing
 in each coordinate, so $M\le M(c^+)$ and $u_i\le M(c^+)/c^-_i$, giving an upper bound on
@@ -486,7 +486,7 @@ rather than bounded. The box in $C$ is a box in $v$, the slope constraints are s
 and \eqref{eq:cv} is a ratio of quadratic forms, scale-invariant, of the kind whose maximum over a
 polytope is a standard finite computation.
 
-\subsubsection*{The enumeration, and what it turns up}
+\subsubsection*{Enumeration}
 
 In $v$-coordinates the objective is coordinatewise quasi-convex, and that is what makes enumeration
 legitimate. Holding all but one coordinate fixed,
@@ -531,7 +531,7 @@ enumerated, $+$ concavity & $\mathbf{0.0415}$ & $\mathbf{0.0415}$ & $\mathbf{0.0
 
 So the ingredient the chain was missing is a theorem it already has.
 
-\subsubsection*{The certificate}
+\subsubsection*{A first certificate, in floating point}
 
 The upper bound follows from the same unimodality that justified enumerating. On \emph{any} box the
 objective is maximised at a box vertex, so the maximum over a box is \emph{exactly} the maximum over
@@ -550,7 +550,7 @@ $\kappa_k$ rises as the horizon shortens, so the allowance rises too --- $0.0661
 at $k=40$, $0.0969$ at $k=20$, $0.2586$ at $k=5$ --- while the variance stays at $0.0415$ throughout.
 Certifying the youngest cohort certifies every age, and that step is an argument rather than a sample.
 
-\subsubsection*{What this does and does not settle}
+\subsubsection*{Its two gaps}
 
 At the calibration, at logarithmic utility, over $r\in[4\%,6\%]$: every input of the chain holds. The
 error carried between stages is damped (Theorem~\ref{thm:mpcfloor}, \lean{damped\_le\_one}), the

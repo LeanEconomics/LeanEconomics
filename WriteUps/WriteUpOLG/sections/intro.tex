@@ -16,33 +16,58 @@ rate, so an ordering of policies pushes forward to an ordering of the whole age 
 distributions by induction on age, with no Doeblin atom and no uniqueness of a stationary
 distribution.
 
-The target of the programme is uniqueness of the stationary equilibrium of a stochastic
-life-cycle economy in the manner of \citet{Huggett1996} at $\mu\in\{3,5\}$. That target is not
-reached here, and the paper is as much a record of where it is blocked as of what is proved.
+The target of the programme is uniqueness of the stationary equilibrium of a stochastic life-cycle
+economy in the manner of \citet{Huggett1996} at $\mu\in\{3,5\}$. It is reached at $\mu=1$ and not
+above, and the paper is as much a record of where it is blocked as of what is proved.
 
-What is proved is this. Section~\ref{sec:diamond} does Diamond's two-period economy, where the
-steady state is unique for every risk aversion and the household-side comparative static that
-blocks the general case runs the wrong way without doing any harm. Section~\ref{sec:lc} sets out
-the life-cycle household and the
-finite-horizon sandwich on consumption. Section~\ref{sec:ret} adds retirement, a pension and a
-means test, and settles which policy a means test makes non-monotone and in which state space.
-Section~\ref{sec:eqm} is the main result: a stationary equilibrium exists, with both boundary
-conditions discharged from primitives rather than assumed. Capital supply in a life cycle is a
-finite composition of finite sums, so existence needs no stationary distribution and no
-compactness argument beyond Berge; and it can be bracketed by two affine bounds on a cohort's
-accumulated assets, one built from a floor on saving and one from a ceiling, sharing a slope, with
-every coefficient an explicit recursion in the primitives. At Aiyagari's calibration the
-hypotheses hold on an interval of about five percentage points containing the true equilibrium
-rate of $5.09\%$.
+Sections~\ref{sec:diamond} to~\ref{sec:eqm} are the foundations. Section~\ref{sec:diamond} does
+Diamond's two-period economy, where the steady state is unique for every risk aversion and the
+household-side comparative static that blocks the general case runs the wrong way without doing any
+harm. Section~\ref{sec:lc} sets out the life-cycle household, the finite-horizon sandwich, and the
+propensity floor. Section~\ref{sec:ret} adds retirement, a pension and a means test, and settles
+which policy a means test makes non-monotone and in which state space. Section~\ref{sec:eqm} proves
+existence of a stationary equilibrium with both boundary conditions discharged from primitives rather
+than assumed: capital supply in a life cycle is a finite composition of finite sums, so existence
+needs no stationary distribution and no compactness argument beyond Berge, and it can be bracketed by
+two affine bounds on a cohort's accumulated assets sharing a slope, with every coefficient an explicit
+recursion in the primitives. At Aiyagari's calibration the hypotheses hold on an interval of about
+five percentage points containing the true rate of $5.09\%$.
 
-What is not proved is Light's Theorem 1, that saving rises with the interest rate, which is the
-one household-side input uniqueness still needs. Section~\ref{sec:thm1} reports how far it goes:
-it is true at every age up to a critical relative risk aversion of about $3.4$, so the life cycle
-covers Aiyagari's $\mu=3$ and not his $\mu=5$, and the Euler reduction of it is false at
-logarithmic utility exactly where an equilibrium sits. A different sufficient condition, on the
-value gap between two rates, is true there instead, and Section~\ref{sec:log} proves it suffices.
-Section~\ref{sec:prog} records the rest of the programme, the classical results of
-\citet{Diamond1965} included, and what each stage needs.
+Sections~\ref{sec:thm1} to~\ref{sec:inc} are about uniqueness, and they are best read as three
+attempts on one obstacle. Uniqueness needs capital supply to rise with the interest rate, and the
+only route the literature offers is Light's Theorem 1, that saving rises with the rate at every
+state. Section~\ref{sec:thm1} reports how far that goes: it holds at every age below a critical
+relative risk aversion of about $3.4$, so the life cycle covers Aiyagari's $\mu=3$ and not his
+$\mu=5$; the Euler reduction of it is false at logarithmic utility exactly where an equilibrium sits,
+and a different sufficient condition, on the value gap between two rates, is true there instead
+(Section~\ref{sec:log}). The section also separates the mechanism from the usual story: the reversal
+happens in the certainty-equivalent household, which faces no risk at all, so precautionary saving is
+not what drives it, and we give the criterion in closed form and prove its certainty-equivalent half
+for every risk aversion.
+
+Section~\ref{sec:mfg} asks what mean field games offer. The Lasry--Lions argument was dismissed for
+the stationary Bewley model because it needs a common initial distribution, which overlapping
+generations have; so the monotonicity condition becomes a question to check rather than one to
+dismiss. Date by date it fails, at every risk aversion, and not for the expected reason. What the
+argument actually uses is weaker --- only the summed pairing is signed --- and that weaker condition
+holds throughout the bracket in which the equilibrium is known to lie. But pushed to its weakest form
+it collapses to monotone capital supply, so the route is not logically weaker than the one it was
+meant to bypass. The section is a closure, with the reduction and the two theorems it produces kept
+because they are about the life-cycle household rather than about mean field games.
+
+Section~\ref{sec:inc} is the route that works at $\mu=1$. Single crossing does not ask capital supply
+to rise, only to fall more slowly than the firm's demand; over the proved bracket the demand curve is
+steep enough that a proof may lose more than the true increment and still close. Coupling the two
+economies on a common earnings path and splitting the step at the lower-rate state gives an envelope
+in which the failure of Theorem 1 is priced rather than excluded, and its per-stage multiplier is
+damped by the propensity floor. Two further facts make the estimate small enough: a cohort's earnings
+marginal is the invariant law at every age, so the mass weighting is exact in the coordinate where the
+failure lives; and the multiplier is one plus the variance of the risk tilt, an identity rather than a
+bound. That variance is certified below what the damping allows, in exact rational arithmetic, at every
+stage and over the whole asset range. What that delivers is Theorem 1 at every state and age, hence
+monotone capital supply, hence uniqueness --- at logarithmic utility, at one calibration, with the last
+hypothesis discharged by certificate rather than by proof term. Section~\ref{sec:prog} records what
+remains.
 
 As in the companion, every result stated with a formal name has been checked by the Lean kernel
 against Mathlib; the development is at
