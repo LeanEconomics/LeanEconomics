@@ -1,3 +1,5 @@
+
+
 \section{Theorem 1 in the life cycle: how far it goes}\label{sec:thm1}
 
 The programme of Section~\ref{sec:prog} rests on Light's Theorem 1, that saving rises with the
@@ -70,30 +72,11 @@ $3$; his $\mu=5$ is well outside. So the life cycle buys one of the two open cas
 other, and it buys $\mu=3$ only at rates below the rate of time preference, which is where the
 equilibrium lies.
 
-\subsection{Why the natural induction does not close}
+\subsection{The reduction, formalised}
 
-The backward induction that the transfer lemma suggests compares the two Euler equations at a
-state where the lower-rate household saves. Writing $b=g^{(1)}_{k+1}(a,z)$ for the pivot, the
-induction hypothesis and monotonicity of $c_k$ give
-$c^{(2)}_k(b')\le c^{(1)}_k(b)+\Delta r\,b$ at the relevant points, and the step closes provided
-\[
-  R_2\,\E\bigl[(c^{(1)}_k(b)+\Delta r\,b)^{-\mu}\bigr]\ \ge\
-  R_1\,\E\bigl[c^{(1)}_k(b)^{-\mu}\bigr]\Bigl(1+\frac{\Delta r\,a}{c^{(1)}_{k+1}(a,z)}\Bigr)^{-\mu}.
-\]
-To first order this asks $\mu\bigl(b/c^{(1)}_k(b)-a/c^{(1)}_{k+1}(a,z)\bigr)\le1/R$: the ratio of
-assets to consumption may rise from one age to the next by at most $1/(\mu R)$. It does not. At
-zero wealth in the highest income state the left-hand side is large, because such a household
-saves a great deal against a certain fall in income, while the right-hand side is about one. The
-margin is negative from the third stage of life onward for every degree of risk aversion we tried,
-logarithmic utility included, at $-0.12$ for $\mu=1$, $-2.86$ for $\mu=3$ and $-6.29$ for $\mu=5$
-per unit of the rate gap. Keeping the term the step discards, the marginal propensity to consume
-times the size of the hypothetical violation, bounds the violation by a multiple of $\Delta r$
-rather than eliminating it, which is not enough: the aggregate difference the equilibrium argument
-must sign is itself of order $\Delta r$.
-
-\subsection{The reduction, formalised, and its verdict}
-
-The backward induction above is proved in Lean, in the form the life cycle makes natural.
+The natural backward induction on the response of consumption to the rate does not close; its step
+multiplier exceeds one, and Appendix~\ref{app:routes} gives the reason and the numbers. What is proved
+in Lean is a different form, the one the life cycle makes natural.
 Because the budget constraint makes the two statements identical
 (\lean{stagePolicy\_le\_iff\_consumption\_le}), the terminal stage needs no hypothesis at all: in
 the last period both households consume their cash on hand and save nothing
@@ -211,7 +194,7 @@ precautionary argument near zero wealth would be aimed at the wrong target: what
 controlled is the elasticity of human wealth against the elasticity of the price of the
 consumption path, and risk enters only as a correction to it.
 
-\subsection{The criterion in elasticity units, and the size of the risk correction}
+\subsection{The criterion, and the risk correction}
 
 The certainty-equivalent criterion is cleanest when written in the intertemporal elasticity of
 substitution rather than in risk aversion. Since it is linear in $1/\mu$,
@@ -264,7 +247,7 @@ against the $3.39$ that bisection on the full life-cycle model gives. The bound 
 reproduces the measured threshold to within two per cent, and it says the same thing the earlier
 sections said: the calibration he used for $\mu=3$ is inside, and $\mu=5$ is not.
 
-\subsubsection*{The certainty-equivalent half, for every risk aversion}
+\subsection{The certainty-equivalent half, for every risk aversion}
 
 The first inequality of \eqref{eq:practical} was a theorem only for $\mu\le1$, where the exponent
 $\theta=1-1/\mu$ is nonpositive and every factor moves the same way. It is now a theorem for every
@@ -289,30 +272,11 @@ against the exact $4.3267$, and the cost grows only with the size of the rate st
 $\Delta r=10^{-3}$ and $0.40$ at $10^{-2}$ (\texttt{numerics/chord.m}). Together with the $\mu\le1$
 theorem this settles the certainty-equivalent household at every risk aversion.
 
-\subsubsection*{The risk half, and why it resists}
+\subsubsection*{The slack in the correction}
 
-Two caveats remain. The constant $0.36$ is measured over fifteen calibrations and
-is not proved. And both are statements at zero wealth in the highest earnings state, which is
-where the life-cycle model binds; the reduction of Theorem~\ref{thm:reduction} is what would carry
-them to the rest of the state space, and its own condition fails, so this is a sharp description
-of where the truth lies rather than a proof of it.
-
-It is worth being precise about why the constant resists. What has to be bounded is a difference of
-\emph{rate responses} between two problems, the risky one and its certainty equivalent, and the
-threshold is the rate at which one of those responses changes sign. No bound on the \emph{level} of
-consumption helps with that, however sharp: at Aiyagari's calibration the sharpest sandwich
-available has width $0.30$ to $0.48$ at the state in question, while the response itself runs from
-$-2.48$ at $r=2\%$ through zero to $+0.29$ at $r=6\%$ (\texttt{numerics/scale.m}). A bound on where
-consumption lies says nothing about how it moves. What is needed is a bound on the rate response
-itself, and that is exactly the object the companion write-up proved cannot be had from the affine
-induction, whose per-step multiplier is at least $1/\Thorn>1$. The two halves of
-\eqref{eq:practical} therefore stand on different ground: the first is now a theorem for every
-risk aversion, and the second is blocked by the same obstruction that closed the rate-response
-bound.
-
-\subsubsection*{How much slack a bound on the correction has}
-
-That said, ``blocked'' understates how good the position is, and the quantity worth measuring is
+The risk half of the criterion resists, for a reason set out in Appendix~\ref{app:routes}: what has
+to be bounded is a difference of rate \emph{responses}, and no bound on the level of consumption helps
+with that. But ``resists'' understates how good the position is, and the quantity worth measuring is
 not the correction but the room around it. Write the risky household's saving response at the state
 as the certainty-equivalent response less a correction,
 $\partial g/\partial r=\partial g_{\mathrm{CE}}/\partial r-\mathrm{corr}$. Theorem 1 at the state
@@ -351,7 +315,7 @@ at $\gamma=3$, so a single constant cannot cover the range --- the bound must be
 $\gamma$, which costs nothing, since Theorem 1 is wanted at a calibration and not as a family.
 Numerics: \texttt{riskgap.m}.
 
-\subsubsection*{The precautionary split, and what a bound on it must achieve}
+\subsection{The precautionary split}
 
 The slack above is measured on derivatives at $r=4\%$. Theorem 1 is a statement about an interval, so
 it is worth redoing in secant form, where the object to be bounded becomes concrete. Write the risky
@@ -395,7 +359,7 @@ $\theta$ is $0.842$ against $0.872$, a margin of three per cent. Above $\gamma\a
 margin at all, because Theorem 1 itself fails on that interval --- the $3.39$ of the derivative
 comparison is the threshold at $r=4\%$, not across $[4\%,6\%]$.
 
-\subsubsection*{The level route closes at $\gamma=1$}
+\subsection{The level route closes at $\gamma=1$}
 
 At $\gamma=1$ the level route needs no new estimate at all. Precautionary saving is
 $P_1=c_0^{\mathrm{CE}}-c_0$, so any \emph{floor} $F\le c_0$ bounds it above by
@@ -429,7 +393,7 @@ route that had to be abandoned in Section~\ref{sec:inc} is the one that needs a 
 \emph{response}; this one needs only a tight bound on a \emph{level}, and the programme already has
 one good enough.
 
-\subsubsection*{The same result without the certainty equivalent, and why $\gamma=2$ does not follow}
+\subsection{The same result from two sandwiches}
 
 The certainty-equivalent apparatus turns out to be unnecessary for this. The quantity the level route
 needed a floor to beat, $c_0^{\mathrm{CE}}-\text{margin}$, \emph{is} certainty-equivalent consumption

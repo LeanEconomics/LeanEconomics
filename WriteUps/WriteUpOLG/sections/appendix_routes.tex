@@ -1,10 +1,232 @@
 \section{Routes that do not work, with their numbers}\label{app:routes}
 
-Sections~\ref{sec:mfg} and~\ref{sec:inc} both reached their form by elimination, and the eliminated
-routes are worth recording with the numbers that killed them: each is a natural thing to try, and each
-fails for a reason that says something about the model. The first group belongs to the increment
-argument of Section~\ref{sec:inc}, where the allowance to be met is $0.0661$ at the newborn stage; the
-second reports the measurements behind the closure of the mean field route in Section~\ref{sec:mfg}.
+Four of the arguments in this paper reached their form by elimination, and the eliminated routes are
+worth recording with the numbers that killed them: each is a natural thing to try, and each fails for a
+reason that says something about the model. They are gathered here, in the order of the sections they
+belong to --- the existence bracket of Section~\ref{sec:eqm}, Theorem 1 in Section~\ref{sec:thm1}, the
+mean field route of Section~\ref{sec:mfg}, and the increment argument of Section~\ref{sec:inc}, where
+the allowance to be met is $0.0661$ at the newborn stage.
+
+\subsection*{Where the existence bounds stop}
+
+The bracket of Section~\ref{sec:eqm} is not tight at either end, and the same fact stops it at
+both.
+
+\subsubsection*{Where the bounds stop}\label{sec:topwall}
+
+Both ends are now within a few points of the limit, and neither will move further with the tools
+here. The reasons are worth recording, because they are the same reason twice.
+
+At the top, the floor's entire loss is in one inequality. Running the floor's own recursion on the
+cohort's \emph{true} mean consumption path reproduces aggregate capital exactly, $6.180$ against
+$6.180$ at $r=8\%$ (\texttt{numerics/diag.m}), so none of it is in the aggregation, the affine
+bound or the earnings weights: all of it is in $c_k\le\kappa_k(m+H_k(z))$. That inequality is
+exact at the end of life and a fifth loose at the start, and the leverage is what hurts. At birth
+the household earns $1$ and consumes $0.698$, so it saves $0.302$; the bound allows $0.858$ and
+leaves a provable saving of $0.142$. Overstating consumption by a fifth halves the saving.
+
+Three ways of tightening it fail. Truncating the horizon gives $c_k\le\kappa_j(m+H_j(z))$ for
+every $j\le k$, all valid, but $\kappa_j(m+H_j)$ is decreasing in $j$ so the minimum is the
+full-horizon branch already in use. Substituting the power mean that the Euler step actually
+produces, in place of the arithmetic mean the proof relaxes it to, is not legitimate: the step
+shifts by gross saving, and a power mean with negative exponent is superadditive, so the shift
+comes out larger inside than outside, which is the wrong way for an upper bound; carried through
+anyway it violates the true consumption function by $0.30$ and gives a floor of $7.45$ against a
+true supply of $6.18$. Putting the shift inside the mean avoids superadditivity but forces
+tomorrow's bound to be read at a saving ceiling, decoupling the budget identity from the Euler
+step, and loses more than the power mean gains, $0.956$ against $0.858$ at birth. That last one
+also measures the sensitivity: with the \emph{true} saving the same recursion reproduces the truth
+exactly, and the ceiling it must use instead is only $1.19$ times the truth at birth.
+
+\subsubsection*{And the same obstruction from the other side}\label{sec:botwall}
+
+At the bottom there is no structural slack left. Reading the ceiling at the assets held, with the
+same human wealth, gives the identical number at every rate, $4.8147$ against $4.8147$ at
+$r=2\%$ (\texttt{numerics/ceilat.m}): given its one-step bound the affine ceiling is already
+exact. What remains is the one-step bound, and there the asset-dependent incidence bound of
+Section~\ref{sec:assetdep} does help, because the affine ceiling averages over states and so picks
+up the low earnings states where the cap bites. It is worth $0.7$ points, the same as the clamp
+gave at the top: the low endpoint would move from $2.78\%$ to $3.47\%$.
+
+The proof does not follow. Taking those points needs the ceiling read at the assets held, which
+needs its argument, the saving ceiling, to increase with assets. It does, with not one decreasing
+step over the grid, and the truth sits exactly on the bound the induction would need: the largest
+slope of the asset-dependent human wealth is $26.147$ and the cap's slope is $26.147$, because it
+is the cap branch that binds. But carrying that bound through the recursion means passing a
+perturbation through the power mean, and a power mean with negative exponent is not $1$-Lipschitz
+in the sup norm. It is superadditive, so a uniform shift comes out amplified, here by $9.1$; over
+fifty-nine ages the natural induction would allow the slope to grow by $4\times10^{56}$, against a
+truth that does not grow at all (\texttt{numerics/slopes.m}). The cheap way round, reading the
+asset-dependent human wealth at zero assets, is valid and monotone by construction and moves the
+endpoint from $2.78\%$ to $2.81\%$.
+
+So superadditivity of the power mean blocks both ends: at the top it stops the mean being
+substituted into the consumption upper bound, and at the bottom it stops a slope bound being
+propagated past it. It is the same obstruction that closed the rate-response bound in the
+stationary companion.
+
+
+\subsection*{Theorem 1: the routes that do not close}
+
+\subsubsection*{Why the natural induction does not close}
+
+The backward induction that the transfer lemma suggests compares the two Euler equations at a
+state where the lower-rate household saves. Writing $b=g^{(1)}_{k+1}(a,z)$ for the pivot, the
+induction hypothesis and monotonicity of $c_k$ give
+$c^{(2)}_k(b')\le c^{(1)}_k(b)+\Delta r\,b$ at the relevant points, and the step closes provided
+\[
+  R_2\,\E\bigl[(c^{(1)}_k(b)+\Delta r\,b)^{-\mu}\bigr]\ \ge\
+  R_1\,\E\bigl[c^{(1)}_k(b)^{-\mu}\bigr]\Bigl(1+\frac{\Delta r\,a}{c^{(1)}_{k+1}(a,z)}\Bigr)^{-\mu}.
+\]
+To first order this asks $\mu\bigl(b/c^{(1)}_k(b)-a/c^{(1)}_{k+1}(a,z)\bigr)\le1/R$: the ratio of
+assets to consumption may rise from one age to the next by at most $1/(\mu R)$. It does not. At
+zero wealth in the highest income state the left-hand side is large, because such a household
+saves a great deal against a certain fall in income, while the right-hand side is about one. The
+margin is negative from the third stage of life onward for every degree of risk aversion we tried,
+logarithmic utility included, at $-0.12$ for $\mu=1$, $-2.86$ for $\mu=3$ and $-6.29$ for $\mu=5$
+per unit of the rate gap. Keeping the term the step discards, the marginal propensity to consume
+times the size of the hypothetical violation, bounds the violation by a multiple of $\Delta r$
+rather than eliminating it, which is not enough: the aggregate difference the equilibrium argument
+must sign is itself of order $\Delta r$.
+
+\subsubsection*{The risk half, and why it resists}
+
+Two caveats remain. The constant $0.36$ is measured over fifteen calibrations and
+is not proved. And both are statements at zero wealth in the highest earnings state, which is
+where the life-cycle model binds; the reduction of Theorem~\ref{thm:reduction} is what would carry
+them to the rest of the state space, and its own condition fails, so this is a sharp description
+of where the truth lies rather than a proof of it.
+
+It is worth being precise about why the constant resists. What has to be bounded is a difference of
+\emph{rate responses} between two problems, the risky one and its certainty equivalent, and the
+threshold is the rate at which one of those responses changes sign. No bound on the \emph{level} of
+consumption helps with that, however sharp: at Aiyagari's calibration the sharpest sandwich
+available has width $0.30$ to $0.48$ at the state in question, while the response itself runs from
+$-2.48$ at $r=2\%$ through zero to $+0.29$ at $r=6\%$ (\texttt{numerics/scale.m}). A bound on where
+consumption lies says nothing about how it moves. What is needed is a bound on the rate response
+itself, and that is exactly the object the companion write-up proved cannot be had from the affine
+induction, whose per-step multiplier is at least $1/\Thorn>1$. The two halves of
+\eqref{eq:practical} therefore stand on different ground: the first is now a theorem for every
+risk aversion, and the second is blocked by the same obstruction that closed the rate-response
+bound.
+
+
+\subsection*{The mean field condition, measured}
+
+Section~\ref{sec:mfg} rests on two measurements of the Lasry--Lions pairing and two more of the
+condition \eqref{eq:W} it reduces to. They are here.
+
+\subsubsection*{Date by date it fails, and it fails at birth}
+
+Take two economies differing only in $\beta$, each at its own equilibrium, so that each
+distribution is priced by the aggregate it actually carries. Since $\beta$ does not appear in
+$F_t$, this is a legitimate test of the date-$t$ condition. At the calibration of
+Section~\ref{sec:eqm} ($\alpha=9/25$, $\delta=2/25$, $J=60$, Aiyagari's earnings chain), with
+$\beta=0.960$ against $\beta=0.950$:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+$\gamma$ & $0.5$ & $1$ & $2$ & $3$ & $5$\\
+\midrule
+dates with $P_t<0$ (of $60$) & $3$ & $4$ & $5$ & $6$ & $6$\\
+$P_0$ & $-0.00147$ & $-0.00227$ & $-0.00324$ & $-0.00419$ & $-0.00804$\\
+$\sum_t P_t$ (undiscounted) & $+0.271$ & $+0.175$ & $+0.091$ & $+0.061$ & $+0.047$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The failures are at the start of life, and they survive as the two equilibria close up:
+$P_0/(\Delta\beta)^2$ converges to $-25.6$ at $\gamma=1$ and $-44.4$ at $\gamma=3$ as
+$\Delta\beta$ falls from $0.02$ to $0.00125$, with the count of negative dates unchanged
+throughout. So this is a property of the derivative, not an artefact of a wide gap.
+
+Date zero is the sharp case, and it is worth spelling out, because it is exactly the common
+initial distribution that was supposed to rescue the argument. Every cohort is born with nothing,
+so $a_0=0$ for all of the mass in both economies, and the affine-utility pairing above is
+identically zero: with no assets to price, the aggregate coupling has no grip at all. But the wage
+still differs, and the utility gain from the higher wage is weighted by marginal utility, which is
+higher in the economy that saves more. At $\gamma=1$ mean date-zero saving is $0.2937$ against
+$0.2736$, and $P_0$ is strictly negative. The common start does not make the date-zero pairing
+vanish; it removes the one term that could have made it positive.
+
+\subsubsection*{Summed, it holds where the equilibrium lives}
+
+The summed condition is a different matter. Test it over the family the equilibria belong to:
+$m(\hat K)$ generated by optimal life-cycle behaviour at the prices of $\hat K$, priced inside $F$
+by the aggregate $A(\hat K)$ it actually carries. Every equilibrium is an $m(\hat K)$ with
+$A(\hat K)=\hat K$, so monotonicity over pairs from this family is exactly what
+Theorem~\ref{thm:mfgagg} needs.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+$\gamma$ & $1$ & $2$ & $3$ & $5$\\
+\midrule
+pairs with $\sum_t\beta^tP_t<0$, $\hat K/K^*\in[0.5,2]$ & $1/66$ & $0/66$ & $0/66$ & $0/66$\\
+pairs failing inside $K\in[3.55,7.40]$ & $0/36$ & $0/36$ & $0/36$ & $0/28$\\
+least margin $\sum_t\beta^tP_t/(A_1-A_2)^2$ there & $+0.075$ & $+0.097$ & $+0.121$ & $+0.338$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The bracket $K\in[3.55,7.40]$ is the one $r\in[2\%,8\%]$ of Theorem~\ref{thm:exist5}, inside which
+the equilibrium is proved to lie. Within it the summed pairing is strictly positive for every pair
+and every risk aversion tested, with a margin bounded away from zero, and the margin grows with
+$\gamma$. The single failure is at $\gamma=1$ between two candidates one of which sits outside the
+bracket entirely.
+
+\subsubsection*{A pointwise condition}
+
+Submodularity of the flow $u\bigl(w(K)y+(1+r(K))a-a'\bigr)$ in $(K,a)$ is, for constant relative
+risk aversion, exactly
+\begin{equation}\label{eq:P}
+  \gamma\,(1+r(K))\,(a_t-Ky_t)\;\le\;c_t \qquad\text{at every age and state,}
+  \tag{P}
+\end{equation}
+which implies \eqref{eq:W} and hence the summed condition. It is free wherever the household holds
+less than its share of the capital stock, and it is hopeless where it does not: at the calibration
+it is violated on $27\%$ to $45\%$ of the mass, at every risk aversion. Requiring each date to
+carry itself is precisely what the summed condition was introduced to avoid, and \eqref{eq:P} is
+that mistake made again one level down.
+
+\subsubsection*{Where the pointwise ordering fails}
+
+\eqref{eq:W} is a single scalar comparison, and it is weaker than the pointwise ordering of the two
+plans' asset paths. Measured at the calibration, on plans drawn from the candidate family at
+$\hat K/K^*=0.90$ against $1.10$ --- so the two plans face different wages as well as different
+rates, which is the comparison \eqref{eq:W} itself involves:
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+$\gamma$ & $1$ & $2$ & $3$ & $5$\\
+\midrule
+$\Phi_1-\Phi_2$ at the midpoint $K$ & $+39.36$ & $+12.67$ & $+7.34$ & $+7.32$\\
+mass on which $a^1_t\ge a^2_t$ FAILS & $0.0000$ & $0.0025$ & $0.0409$ & $0.2006$\\
+the same, at a common wage & $0$ & $0$ & $0$ & $0.0091$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The second row is the one to read against Light's Theorem 1, which is a statement about the
+household at a \emph{fixed} wage: in wage units the policy ordering is exact --- violated on zero
+mass, not on small mass --- for $\gamma\le3$, and fails on under one percent of the mass at
+$\gamma=5$ (on $6.7\%$ at $\gamma=8$). The first row, which lets the wage move along the frontier as
+well, overstates the failure of Theorem 1 by more than an order of magnitude; it is the right
+measure for \eqref{eq:W} and the wrong one for Theorem 1. So \eqref{eq:W} is weaker than the
+pointwise ordering and does survive where that ordering fails, but the margin between them at
+$\gamma=5$ is one percent of the mass, not a fifth.
+
+More than those pairs is true. Sweeping the planning aggregate over $\hat K/K^*\in[0.5,2]$ at
+fourteen points, $\Phi(K,p(\hat K))$ is strictly \emph{decreasing} in $\hat K$ at every one of the
+thirteen steps, for $\gamma=1,3,5$ and for each of $K=0.90K^*,K^*,1.10K^*$. So \eqref{eq:W} holds
+not merely at the pairs one happens to test but as a monotone comparative static in the plan. Over
+all $91$ pairs at five pricing points each, $\gamma=3$ and $\gamma=5$ give no failures at all; the
+$42$ failures out of $455$ at $\gamma=1$ all involve the extreme candidate $\hat K=0.5K^*$, whose
+carried aggregate is $48.6$, ten times the capital stock and far outside the bracket of
+Theorem~\ref{thm:exist5}.
+
 
 \subsection*{The increment route}
 
@@ -177,120 +399,4 @@ error carried between stages is damped (Theorem~\ref{thm:mpcfloor}, \lean{damped
 gradient sum is one plus a variance (Proposition~\ref{prop:gradvar}), and the variance is certified
 below what the damping allows. Theorem 1 then holds at \emph{every} state, hence capital supply rises
 with the rate, hence the stationary equilibrium is unique.
-
-\subsection*{The mean field condition, measured}
-
-Section~\ref{sec:mfg} rests on two measurements of the Lasry--Lions pairing and two more of the
-condition \eqref{eq:W} it reduces to. They are here.
-
-\subsubsection*{Date by date it fails, and it fails at birth}
-
-Take two economies differing only in $\beta$, each at its own equilibrium, so that each
-distribution is priced by the aggregate it actually carries. Since $\beta$ does not appear in
-$F_t$, this is a legitimate test of the date-$t$ condition. At the calibration of
-Section~\ref{sec:eqm} ($\alpha=9/25$, $\delta=2/25$, $J=60$, Aiyagari's earnings chain), with
-$\beta=0.960$ against $\beta=0.950$:
-
-\begin{center}
-\begin{tabular}{lrrrrr}
-\toprule
-$\gamma$ & $0.5$ & $1$ & $2$ & $3$ & $5$\\
-\midrule
-dates with $P_t<0$ (of $60$) & $3$ & $4$ & $5$ & $6$ & $6$\\
-$P_0$ & $-0.00147$ & $-0.00227$ & $-0.00324$ & $-0.00419$ & $-0.00804$\\
-$\sum_t P_t$ (undiscounted) & $+0.271$ & $+0.175$ & $+0.091$ & $+0.061$ & $+0.047$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-The failures are at the start of life, and they survive as the two equilibria close up:
-$P_0/(\Delta\beta)^2$ converges to $-25.6$ at $\gamma=1$ and $-44.4$ at $\gamma=3$ as
-$\Delta\beta$ falls from $0.02$ to $0.00125$, with the count of negative dates unchanged
-throughout. So this is a property of the derivative, not an artefact of a wide gap.
-
-Date zero is the sharp case, and it is worth spelling out, because it is exactly the common
-initial distribution that was supposed to rescue the argument. Every cohort is born with nothing,
-so $a_0=0$ for all of the mass in both economies, and the affine-utility pairing above is
-identically zero: with no assets to price, the aggregate coupling has no grip at all. But the wage
-still differs, and the utility gain from the higher wage is weighted by marginal utility, which is
-higher in the economy that saves more. At $\gamma=1$ mean date-zero saving is $0.2937$ against
-$0.2736$, and $P_0$ is strictly negative. The common start does not make the date-zero pairing
-vanish; it removes the one term that could have made it positive.
-
-\subsubsection*{Summed, it holds where the equilibrium lives}
-
-The summed condition is a different matter. Test it over the family the equilibria belong to:
-$m(\hat K)$ generated by optimal life-cycle behaviour at the prices of $\hat K$, priced inside $F$
-by the aggregate $A(\hat K)$ it actually carries. Every equilibrium is an $m(\hat K)$ with
-$A(\hat K)=\hat K$, so monotonicity over pairs from this family is exactly what
-Theorem~\ref{thm:mfgagg} needs.
-
-\begin{center}
-\begin{tabular}{lrrrr}
-\toprule
-$\gamma$ & $1$ & $2$ & $3$ & $5$\\
-\midrule
-pairs with $\sum_t\beta^tP_t<0$, $\hat K/K^*\in[0.5,2]$ & $1/66$ & $0/66$ & $0/66$ & $0/66$\\
-pairs failing inside $K\in[3.55,7.40]$ & $0/36$ & $0/36$ & $0/36$ & $0/28$\\
-least margin $\sum_t\beta^tP_t/(A_1-A_2)^2$ there & $+0.075$ & $+0.097$ & $+0.121$ & $+0.338$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-The bracket $K\in[3.55,7.40]$ is the one $r\in[2\%,8\%]$ of Theorem~\ref{thm:exist5}, inside which
-the equilibrium is proved to lie. Within it the summed pairing is strictly positive for every pair
-and every risk aversion tested, with a margin bounded away from zero, and the margin grows with
-$\gamma$. The single failure is at $\gamma=1$ between two candidates one of which sits outside the
-bracket entirely.
-
-\subsubsection*{A pointwise condition}
-
-Submodularity of the flow $u\bigl(w(K)y+(1+r(K))a-a'\bigr)$ in $(K,a)$ is, for constant relative
-risk aversion, exactly
-\begin{equation}\label{eq:P}
-  \gamma\,(1+r(K))\,(a_t-Ky_t)\;\le\;c_t \qquad\text{at every age and state,}
-  \tag{P}
-\end{equation}
-which implies \eqref{eq:W} and hence the summed condition. It is free wherever the household holds
-less than its share of the capital stock, and it is hopeless where it does not: at the calibration
-it is violated on $27\%$ to $45\%$ of the mass, at every risk aversion. Requiring each date to
-carry itself is precisely what the summed condition was introduced to avoid, and \eqref{eq:P} is
-that mistake made again one level down.
-
-\subsubsection*{Where the pointwise ordering fails}
-
-\eqref{eq:W} is a single scalar comparison, and it is weaker than the pointwise ordering of the two
-plans' asset paths. Measured at the calibration, on plans drawn from the candidate family at
-$\hat K/K^*=0.90$ against $1.10$ --- so the two plans face different wages as well as different
-rates, which is the comparison \eqref{eq:W} itself involves:
-
-\begin{center}
-\begin{tabular}{lrrrr}
-\toprule
-$\gamma$ & $1$ & $2$ & $3$ & $5$\\
-\midrule
-$\Phi_1-\Phi_2$ at the midpoint $K$ & $+39.36$ & $+12.67$ & $+7.34$ & $+7.32$\\
-mass on which $a^1_t\ge a^2_t$ FAILS & $0.0000$ & $0.0025$ & $0.0409$ & $0.2006$\\
-the same, at a common wage & $0$ & $0$ & $0$ & $0.0091$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-The second row is the one to read against Light's Theorem 1, which is a statement about the
-household at a \emph{fixed} wage: in wage units the policy ordering is exact --- violated on zero
-mass, not on small mass --- for $\gamma\le3$, and fails on under one percent of the mass at
-$\gamma=5$ (on $6.7\%$ at $\gamma=8$). The first row, which lets the wage move along the frontier as
-well, overstates the failure of Theorem 1 by more than an order of magnitude; it is the right
-measure for \eqref{eq:W} and the wrong one for Theorem 1. So \eqref{eq:W} is weaker than the
-pointwise ordering and does survive where that ordering fails, but the margin between them at
-$\gamma=5$ is one percent of the mass, not a fifth.
-
-More than those pairs is true. Sweeping the planning aggregate over $\hat K/K^*\in[0.5,2]$ at
-fourteen points, $\Phi(K,p(\hat K))$ is strictly \emph{decreasing} in $\hat K$ at every one of the
-thirteen steps, for $\gamma=1,3,5$ and for each of $K=0.90K^*,K^*,1.10K^*$. So \eqref{eq:W} holds
-not merely at the pairs one happens to test but as a monotone comparative static in the plan. Over
-all $91$ pairs at five pricing points each, $\gamma=3$ and $\gamma=5$ give no failures at all; the
-$42$ failures out of $455$ at $\gamma=1$ all involve the extreme candidate $\hat K=0.5K^*$, whose
-carried aggregate is $48.6$, ten times the capital stock and far outside the bracket of
-Theorem~\ref{thm:exist5}.
 

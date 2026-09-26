@@ -439,55 +439,6 @@ $5.09\%$ from both sides, since no bound on capital supply can cross demand befo
 The closed-form floor is reported because it needs no recursion at all; at a calibrated rate it is
 much the weaker, giving $0.48$ at $r=10\%$ against a true floor of $4.75$.
 
-\subsection{Where the bounds stop}\label{sec:topwall}
-
-Both ends are now within a few points of the limit, and neither will move further with the tools
-here. The reasons are worth recording, because they are the same reason twice.
-
-At the top, the floor's entire loss is in one inequality. Running the floor's own recursion on the
-cohort's \emph{true} mean consumption path reproduces aggregate capital exactly, $6.180$ against
-$6.180$ at $r=8\%$ (\texttt{numerics/diag.m}), so none of it is in the aggregation, the affine
-bound or the earnings weights: all of it is in $c_k\le\kappa_k(m+H_k(z))$. That inequality is
-exact at the end of life and a fifth loose at the start, and the leverage is what hurts. At birth
-the household earns $1$ and consumes $0.698$, so it saves $0.302$; the bound allows $0.858$ and
-leaves a provable saving of $0.142$. Overstating consumption by a fifth halves the saving.
-
-Three ways of tightening it fail. Truncating the horizon gives $c_k\le\kappa_j(m+H_j(z))$ for
-every $j\le k$, all valid, but $\kappa_j(m+H_j)$ is decreasing in $j$ so the minimum is the
-full-horizon branch already in use. Substituting the power mean that the Euler step actually
-produces, in place of the arithmetic mean the proof relaxes it to, is not legitimate: the step
-shifts by gross saving, and a power mean with negative exponent is superadditive, so the shift
-comes out larger inside than outside, which is the wrong way for an upper bound; carried through
-anyway it violates the true consumption function by $0.30$ and gives a floor of $7.45$ against a
-true supply of $6.18$. Putting the shift inside the mean avoids superadditivity but forces
-tomorrow's bound to be read at a saving ceiling, decoupling the budget identity from the Euler
-step, and loses more than the power mean gains, $0.956$ against $0.858$ at birth. That last one
-also measures the sensitivity: with the \emph{true} saving the same recursion reproduces the truth
-exactly, and the ceiling it must use instead is only $1.19$ times the truth at birth.
-
-\subsection{And the same obstruction from the other side}\label{sec:botwall}
-
-At the bottom there is no structural slack left. Reading the ceiling at the assets held, with the
-same human wealth, gives the identical number at every rate, $4.8147$ against $4.8147$ at
-$r=2\%$ (\texttt{numerics/ceilat.m}): given its one-step bound the affine ceiling is already
-exact. What remains is the one-step bound, and there the asset-dependent incidence bound of
-Section~\ref{sec:assetdep} does help, because the affine ceiling averages over states and so picks
-up the low earnings states where the cap bites. It is worth $0.7$ points, the same as the clamp
-gave at the top: the low endpoint would move from $2.78\%$ to $3.47\%$.
-
-The proof does not follow. Taking those points needs the ceiling read at the assets held, which
-needs its argument, the saving ceiling, to increase with assets. It does, with not one decreasing
-step over the grid, and the truth sits exactly on the bound the induction would need: the largest
-slope of the asset-dependent human wealth is $26.147$ and the cap's slope is $26.147$, because it
-is the cap branch that binds. But carrying that bound through the recursion means passing a
-perturbation through the power mean, and a power mean with negative exponent is not $1$-Lipschitz
-in the sup norm. It is superadditive, so a uniform shift comes out amplified, here by $9.1$; over
-fifty-nine ages the natural induction would allow the slope to grow by $4\times10^{56}$, against a
-truth that does not grow at all (\texttt{numerics/slopes.m}). The cheap way round, reading the
-asset-dependent human wealth at zero assets, is valid and monotone by construction and moves the
-endpoint from $2.78\%$ to $2.81\%$.
-
-So superadditivity of the power mean blocks both ends: at the top it stops the mean being
-substituted into the consumption upper bound, and at the bottom it stops a slope bound being
-propagated past it. It is the same obstruction that closed the rate-response bound in the
-stationary companion.
+Neither bracket is tight, and the same fact stops them at both ends. Appendix~\ref{app:routes} gives
+it: the obstruction at the top and the obstruction at the bottom are one obstruction, that a power
+mean with negative exponent is superadditive rather than $1$-Lipschitz.
