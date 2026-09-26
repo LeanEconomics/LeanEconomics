@@ -584,20 +584,31 @@ intervals --- four times the range any newborn can reach, and beyond what the la
 cycle require --- every node is still certified, with at most $16673$ boxes. So the asset argument is
 not where the remaining scope question lies.
 
-\subsubsection*{What is settled and what is not}
+\subsubsection*{Every stage}
 
-At the rational calibration, at logarithmic utility, over $r\in[4\%,6\%]$, at the binding stage: the
-variance is certified below what the damping allows, in exact arithmetic. With the eight formalised
-lemmas of this section and Section~\ref{sec:thm1} that gives Theorem 1 at every state of that stage.
+Running the certificate at each stage in turn --- each with its own $\kappa_k$, its own arithmetic and
+risk-adjusted human wealth, its own allowance, and the asset argument as intervals over $[0,12]$ in
+four pieces --- certifies all fifty-nine of them. The allowance falls monotonically from $1.168$ at
+$k=1$ to $0.066143$ at the newborn stage, and every node is discarded at every one.
 
-The scope is the newborn stage. That is the binding stage for the \emph{allowance}, which rises as the
-horizon shortens, and the argument for that is algebraic rather than numerical. But it is not the
-binding stage for the asset argument: a household at stage $k<J-1$ has accumulated assets. That part is
-now covered, since the certificate holds out to $b=12$; what is not is the propensity, because each
-stage carries its own $\kappa_k$ and so its own box, and the certificate has been run only with
-$\kappa_{J-1}$. The allowance is looser at every other stage by a factor of up to four, which is why
-this is expected to be bookkeeping rather than another obstacle --- but it is bookkeeping that has not
-been done, and the claim here is the newborn stage and no more. The certificate is
+The cost is where the difficulty lives, and it does not plateau. The early stages are nearly free ---
+stage $1$ needs a single box, stage $5$ needs $539$ --- and the count then climbs from about $3600$
+around stage $40$ to $14803$ at stage $44$ and $32733$ at stage $59$, a tenfold growth over the last
+twenty stages as the allowance tightens towards the variance. The whole run takes about ten hours.
+
+\subsubsection*{What is settled}
+
+At the rational calibration, at logarithmic utility, over $r\in[4\%,6\%]$: the variance is certified
+below what the damping allows, in exact arithmetic, at every stage and over the whole asset range.
+With the eight formalised lemmas of this section and Section~\ref{sec:thm1}, Theorem 1 holds at every
+state and every age; capital supply rises with the rate; the stationary equilibrium is unique.
+
+What that is, precisely, is a theorem with a computational hypothesis discharged by certificate rather
+than by proof term --- the same standing as the existence bracket of Section~\ref{sec:eqm}, and a
+weaker standing than the lemmas it rests on. The calibration is one calibration: $\beta=24/25$,
+$\rho=9/10$, seven earnings states, sixty periods, $r\in[4\%,6\%]$, logarithmic utility. Nothing here
+extends to $\gamma>1$, where Section~\ref{sec:thm1} shows the certainty-equivalent side of the
+argument fails from $\gamma\approx1.5$ on. The log case is closed; the rest is not. The certificate is
 \texttt{numerics/rational/cert.py}, with the calibration in \texttt{inputs.py}. Numerics: \texttt{cestep.m}, \texttt{damp.m},
 \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m},
 \texttt{slopestate.m}, \texttt{tworeg.m}, \texttt{polymax.m}, \texttt{bandb.m}, \texttt{vertcert.m},
