@@ -33,6 +33,10 @@ local copies live in `~/Dropbox/Papers_and_Textbooks/Econ_Papers/Completed/Bewle
 
 ## 1. Light's induction is the stage induction
 
+**DONE 2026-09-27, commit 7080bd4: `LeanEconomics/OLG/LightInduction.lean`** — `stageValue_incDiffSlices`,
+`valueGap_zero_of_light`, `stagePolicy_mono_light(_crra)`, `olgCapital_le_light_crra`,
+`monotoneOn_olgCapital_light_crra`, `olgEquilibriumRate_unique_light_crra`. Built first time.
+
 Light (2020, Economic Theory; the 2018 WP is in the folder) proves, for the stationary income
 fluctuation problem with CRRA `γ ≤ 1`, that `g(a, s, R₂) ≥ g(a, s, R₁)` at every state (his Theorem
 1). His proof (Appendix, p. 14) is:
@@ -89,6 +93,12 @@ inequality fails pointwise — consistent with Theorem 1 failing pointwise above
 is about its loose link.
 
 ## 2. The moment question, closed
+
+**Numerics done (`numerics/sharpmom.m`)**: the sharp bound (which is Jensen for `x^{p-1}` under the
+tilted weights `w u`, i.e. Hölder between the first and second moments) beats Lyapunov everywhere but
+the chain still fails from `γ = 2`: the TRUE `A = 1.0584` exceeds the allowance `1.0561`, so no moment
+bound can carry it; at `γ = 1.5` the bound misses by 0.001 (1.0606 vs 1.0595) and the lower-bound
+refinement passes by 0.001. Reach of the two-rate route: `γ ≲ 1.5`.
 
 The two-rate chain (`mul_le_mul_of_euler_pair`, `damped_le_one`) needs the gradient sum
 `A = Σ_w u^{1+1/γ}` with `u = (C/M)^{-γ}`, `E_w u = 1` exactly, and the write-up's loose link is the

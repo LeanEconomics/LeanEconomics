@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert Kirkby
 -/
 import Mathlib.Analysis.MeanInequalities
+import Mathlib.Analysis.MeanInequalitiesPow
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 
 /-!
@@ -192,6 +193,32 @@ theorem sum_mul_sq_eq_one_add_variance {w u : ι → ℝ} (hw1 : ∑ i, w i = 1)
   rw [Finset.sum_congr rfl fun i _ => hexp i]
   rw [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum, hu, hw1]
   ring
+
+/-- **The sharp moment bound.** For weights summing to one, `u ≥ 0` with `∑ w u = 1` and
+`1 < p < 2`, `∑ w u^p ≤ (∑ w u²)^(p-1)`. It is Jensen for the concave `x ↦ x^(p-1)` under the
+tilted weights `w u`, which sum to one by hypothesis, and it is attained by the two-point law on
+`{0, ∑ w u²}`. With `p = 1 + 1/γ` it bounds the gradient sum of the two-rate chain by
+`(1 + Var)^(1/γ)`, against Lyapunov's `(1 + Var)^((γ+1)/(2γ))`. -/
+theorem sum_mul_rpow_le_rpow_sum_mul_sq {w u : ι → ℝ} {p : ℝ} (hp1 : 1 < p) (hp2 : p < 2)
+    (hw : ∀ i, 0 ≤ w i) (hu : ∀ i, 0 ≤ u i) (hmean : ∑ i, w i * u i = 1) :
+    ∑ i, w i * u i ^ p ≤ (∑ i, w i * u i ^ 2) ^ (p - 1) := by
+  have hp0 : p - 1 ≠ 0 := sub_ne_zero.2 (ne_of_gt hp1)
+  have hq : (1 : ℝ) ≤ 1 / (p - 1) := by
+    rw [le_div_iff₀ (by linarith)]; linarith
+  have h := Real.arith_mean_le_rpow_mean Finset.univ (fun i => w i * u i)
+    (fun i => u i ^ (p - 1)) (fun i _ => mul_nonneg (hw i) (hu i)) hmean
+    (fun i _ => Real.rpow_nonneg (hu i) _) hq
+  have hL : ∀ i, w i * u i * u i ^ (p - 1) = w i * u i ^ p := by
+    intro i
+    have e : u i ^ p = u i ^ (1 + (p - 1)) := by congr 1; ring
+    rw [e, Real.rpow_add' (hu i) (by linarith : (1 : ℝ) + (p - 1) ≠ 0), Real.rpow_one]
+    ring
+  have hR : ∀ i, w i * u i * (u i ^ (p - 1)) ^ (1 / (p - 1)) = w i * u i ^ 2 := by
+    intro i
+    rw [one_div, Real.rpow_rpow_inv (hu i) hp0]
+    ring
+  simp only [hL, hR, one_div_one_div] at h
+  exact h
 
 /-- **A power mean with a negative exponent is concave.**
 

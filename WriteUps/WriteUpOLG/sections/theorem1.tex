@@ -843,3 +843,45 @@ primitives is not available from the sandwich of Theorem~\ref{thm:sandwich}: the
 is $\kappa_kH_k$, and the rate response of exactly that quantity is what drives the gap, so the
 bounds cannot see it. That is the same obstruction the consumption-bound family ran into above,
 and it is the piece a sharper argument would have to supply.
+
+\subsection{Light's induction is the stage induction}\label{sec:lightind}
+
+The sharper argument exists, and it is Light's own. His proof of Theorem 1 in the stationary model
+is an induction on Bellman iterates from zero: if a continuation's marginal value rises with the rate,
+so does the next iterate's, given concavity of the consumption function and relative risk aversion at
+most one. The iterates from zero are the stage values, so the induction is the stage induction, and
+the step --- proved for the stationary model in \lean{Models/IncomeFluctuationRateStep} --- says
+exactly that the value gap of Definition~\ref{def:gap} with $\theta=0$ propagates from stage $k$ to
+stage $k+1$. Two hybrid hypotheses of that step, positivity and cap slack of the higher-rate
+household's choice against the \emph{lower}-rate continuation, are discharged inside the induction:
+positivity from unbounded utility, and slack from single crossing (the induction hypothesis) against
+the higher-rate household's own slack.
+
+\begin{theorem}[Theorem 1 at $\gamma\le1$, every calibration]\label{thm:lightind}
+Let utility be CRRA with $\gamma\le1$ and unbounded below at zero consumption, and let the saving cap
+be slack at the higher rate at every stage. Then the stage values at the two rates have increasing
+differences in wealth at every stage; saving rises with the rate at every state and age; aggregate
+capital rises with the rate; and a strictly falling demand meets it at most once. No condition on the
+discount factor, the earnings process or the horizon.
+\formal{IncomeFluctuation.stageValue\_incDiffSlices, IncomeFluctuation.valueGap\_zero\_of\_light,
+IncomeFluctuation.stagePolicy\_mono\_light\_crra, IncomeFluctuation.olgCapital\_le\_light\_crra,
+IncomeFluctuation.olgEquilibriumRate\_unique\_light\_crra}
+\end{theorem}
+
+With the value gap at slope zero, Theorem~\ref{thm:gapmono} is not quite available --- its proof
+breaks the tie with the margin $\theta$ --- and the conclusion comes instead by the one-economy chain
+of the stationary file: the budget coincidence puts the lower-rate household's problem at $(a,R_1)$
+equal to the higher-rate household's at $(ta,R_2)$, $t=R_1/R_2$, with the lower-rate continuation;
+single crossing in the continuation (which needs no margin, the lower maximiser being unique) moves
+to the higher-rate continuation; and monotonicity in wealth moves from $ta$ to $a$.
+
+Numerically the statement was already in hand: \texttt{numerics/condB.m} found the value gap
+non-negative at $\gamma=1$ with a relative margin of $7\times10^{-6}$ --- a theorem with equality at
+the corners, as this one has --- and violated from $\gamma=2$. What the theorem adds is that the
+$\mu=1$ uniqueness of Section~\ref{sec:inc} no longer rests on the certificate there: it holds at
+every calibration with $\gamma\le1$, by proof term. Under the standing requirement that utility be
+unbounded below at zero consumption, CRRA with $\gamma\le1$ means $\gamma=1$
+(\lean{crra\_pinch}); the theorem itself is stated for any $\gamma\le1$.
+
+Nothing here reaches $\gamma>1$. The pivotal inequality of the step needs $c\,u'(c)$ increasing,
+which is $\gamma\le1$ exactly, and the value gap itself is violated from $\gamma=2$ on.

@@ -132,6 +132,9 @@ Theorem~\ref{thm:exist3} & \lean{exists\_olgEquilibrium\_of\_geomBounds} & OLG/\
 Definition~\ref{def:gap} & \lean{ValueGap} & OLG/\allowbreak Rate\allowbreak Monotone\\
 Theorem~\ref{thm:gapmono} & \lean{stagePolicy\_mono\_of\_valueGap}, \lean{stagePolicy\_mono\_of\_valueGap\_all} & OLG/\allowbreak Rate\allowbreak Monotone\\
 Capital from the value gap & \lean{olgCapital\_le\_of\_valueGap} & OLG/\allowbreak Rate\allowbreak Monotone\\
+Theorem~\ref{thm:lightind}, stage induction & \lean{stageValue\_incDiffSlices}, \lean{valueGap\_zero\_of\_light} & OLG/\allowbreak Light\allowbreak Induction\\
+Theorem~\ref{thm:lightind}, Theorem 1 & \lean{stagePolicy\_mono\_light}, \lean{stagePolicy\_mono\_light\_crra} & OLG/\allowbreak Light\allowbreak Induction\\
+Theorem~\ref{thm:lightind}, capital and uniqueness & \lean{olgCapital\_le\_light\_crra}, \lean{monotoneOn\_olgCapital\_light\_crra}, \lean{olgEquilibriumRate\_unique\_light\_crra} & OLG/\allowbreak Light\allowbreak Induction\\
 \midrule
 The guaranteed asset path & \lean{assetFloor}, \lean{assetFloor\_le\_stagePolicy} & OLG/\allowbreak Asset\allowbreak Incidence\\
 Human wealth with assets in it & \lean{assetHumanWealth}, \lean{assetHumanWealth\_mono} & OLG/\allowbreak Asset\allowbreak Incidence\\
@@ -176,6 +179,7 @@ Proposition~\ref{prop:cechain} & \lean{mul\_le\_mul\_of\_euler\_pair} & OLG/\all
 The damped multiplier & \lean{damped\_le\_one} & OLG/\allowbreak Certainty\allowbreak Equivalent\\
 The gradient sum, and its warning & \lean{sum\_mul\_rpow\_pred\_le} & Analysis/\allowbreak Power\allowbreak Mean\\
 Proposition~\ref{prop:gradvar} & \lean{sum\_mul\_sq\_eq\_one\_add\_variance} & Analysis/\allowbreak Power\allowbreak Mean\\
+Proposition~\ref{prop:sharpmom} & \lean{sum\_mul\_rpow\_le\_rpow\_sum\_mul\_sq} & Analysis/\allowbreak Power\allowbreak Mean\\
 \bottomrule
 \end{longtable}
 \endgroup

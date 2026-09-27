@@ -59,10 +59,11 @@ Section~\ref{sec:eqm} should carry with the bracket recomputed.
 
 \subsection{The certificate}
 
-The uniqueness result of Section~\ref{sec:inc} rests on a hypothesis discharged by a computation in
-exact rational arithmetic rather than by a Lean proof term. Two things would improve its standing. The
-computation could be replayed inside Lean, which for a branch and bound over rational boxes is a
-matter of \texttt{Decidable} arithmetic and a large \texttt{native\_decide}, or the variance bound could
-be replaced by an analytic argument, which is the same question as the one above about moments. Until
-one of those, the result has the standing of the existence bracket of Section~\ref{sec:eqm}: checked,
-and not checked by the kernel.
+The uniqueness result of Section~\ref{sec:inc} rested on a hypothesis discharged by a computation in
+exact rational arithmetic rather than by a Lean proof term. At $\mu=1$ that is no longer needed:
+Theorem~\ref{thm:lightind} proves the same conclusion, at every calibration, by proof term. The
+certificate keeps its value as the record of the increment route, the only one that reaches above
+$\gamma=1$, and the moment question is settled by Proposition~\ref{prop:sharpmom}: the sharp bound is
+$(1+\operatorname{Var})^{1/\gamma}$, and from $\gamma=2$ the true gradient sum already exceeds the
+allowance, so the route stops at $\gamma\approx1.5$ whatever bound is used. Replaying the certificate
+inside Lean would now only certify a case already proved.

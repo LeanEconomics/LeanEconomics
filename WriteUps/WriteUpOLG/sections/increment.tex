@@ -329,6 +329,45 @@ $\operatorname{Var}_w\bigl((C/M)^{-1}\bigr)\le0.066$, against a measured $0.041$
 does not: Lyapunov loses accuracy as the exponent falls below two, and the variance itself grows
 tenfold by $\gamma=3$, so the bound exceeds the allowance from $\gamma=1.5$ on.
 
+That Lyapunov step interpolates between the zeroth and second moments and ignores that the first
+moment is exactly one. Interpolating between the first and second instead gives the sharp bound.
+
+\begin{proposition}[The sharp moment bound]\label{prop:sharpmom}
+For weights summing to one, $u\ge0$ with $\mathbb E_w[u]=1$ and $1<p<2$,
+$\;\mathbb E_w[u^p]\le(\mathbb E_w[u^2])^{p-1}$, with equality for the two-point law on
+$\{0,\,\mathbb E_w[u^2]\}$. With $p=1+1/\gamma$: $A\le(1+\operatorname{Var}_w(u))^{1/\gamma}$.
+\formal{sum\_mul\_rpow\_le\_rpow\_sum\_mul\_sq}
+\end{proposition}
+
+It is Jensen for the concave $x\mapsto x^{p-1}$ under the tilted weights $w_iu_i$, which sum to one
+by hypothesis; or, in the language of the classical moment problem, the lower principal representation
+of the Chebyshev system $\{1,x,x^2\}$ for $x^p$ with $p\in(1,2)$. The exponent $1/\gamma$ is below
+Lyapunov's $(\gamma+1)/(2\gamma)$ for every $\gamma>1$ and equal to it at $\gamma=1$. A lower bound
+on $u$ sharpens it further --- the extremal law becomes $\{u_{\min},\,1+\operatorname{Var}/(1-u_{\min})\}$
+--- but by less. Against the allowance (\texttt{numerics/sharpmom.m}):
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+$\gamma$ & $1$ & $1.5$ & $2$ & $2.5$ & $3$\\
+\midrule
+allowance on $A$ & $1.0661$ & $1.0595$ & $1.0561$ & $1.0542$ & $1.0528$\\
+$A$ true & $1.0411$ & $1.0502$ & $1.0584$ & $1.0671$ & $1.0764$\\
+Lyapunov & $1.0411$ & $1.0763$ & $1.1215$ & $1.1821$ & $1.2612$\\
+Proposition~\ref{prop:sharpmom} & $1.0411$ & $1.0606$ & $1.0795$ & $1.1003$ & $1.1230$\\
+with the lower bound on $u$ & $1.0411$ & $1.0585$ & $1.0769$ & $1.0980$ & $1.1213$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The verdict is sharper than before, and it is negative. From $\gamma=2$ the \emph{true} gradient sum
+exceeds the allowance --- $1.0584$ against $1.0561$ --- so no bound on $A$ from any moments can carry
+the chain: the two-rate estimate itself is too weak there, not the variance step. At $\gamma=1.5$ the
+sharp bound misses by $0.001$ and the lower-bound refinement passes by $0.001$, on the true variance;
+a certified box maximum of the variance would have to land inside that margin. So the reach of this
+route is $\gamma\lesssim1.5$, and the moment question that Section~\ref{sec:prog} used to list is
+closed: the bound is the sharp one, and it is not enough.
+
 That is a complete route at logarithmic utility, and a sharp statement of what it needs. It would give
 Theorem 1 at \emph{every} state, not only the binding one, hence monotone capital supply and
 uniqueness at $\mu=1$ --- which is more than Proposition~\ref{prop:twosand} delivers.
@@ -464,7 +503,12 @@ than by proof term --- the same standing as the existence bracket of Section~\re
 weaker standing than the lemmas it rests on. The calibration is one calibration: $\beta=24/25$,
 $\rho=9/10$, seven earnings states, sixty periods, $r\in[4\%,6\%]$, logarithmic utility. Nothing here
 extends to $\gamma>1$, where Section~\ref{sec:thm1} shows the certainty-equivalent side of the
-argument fails from $\gamma\approx1.5$ on. The log case is closed; the rest is not. The certificate is
+argument fails from $\gamma\approx1.5$ on. The log case is closed; the rest is not.
+
+It has since been superseded at $\mu=1$. Theorem~\ref{thm:lightind} proves Theorem 1 at every state
+and age for $\gamma\le1$ at every calibration, by Light's induction on the stage values, with no
+computation; the certificate remains as the record of the increment route, which is the only one
+that says anything above $\gamma=1$, and Proposition~\ref{prop:sharpmom} says how far it can go. The certificate is
 \texttt{numerics/rational/cert.py}, with the calibration in \texttt{inputs.py}. Numerics: \texttt{cestep.m}, \texttt{damp.m},
 \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m},
 \texttt{slopestate.m}, \texttt{tworeg.m}, \texttt{polymax.m}, \texttt{bandb.m}, \texttt{vertcert.m},

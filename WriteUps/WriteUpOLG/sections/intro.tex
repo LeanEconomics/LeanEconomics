@@ -66,8 +66,9 @@ failure lives; and the multiplier is one plus the variance of the risk tilt, an 
 bound. That variance is certified below what the damping allows, in exact rational arithmetic, at every
 stage and over the whole asset range. What that delivers is Theorem 1 at every state and age, hence
 monotone capital supply, hence uniqueness --- at logarithmic utility, at one calibration, with the last
-hypothesis discharged by certificate rather than by proof term. Section~\ref{sec:prog} records what
-remains.
+hypothesis discharged by certificate rather than by proof term. Section~\ref{sec:lightind} then
+removes the certificate: Light's induction on the stage values gives Theorem 1 at every state and age
+for $\gamma\le1$ at every calibration, by proof term. Section~\ref{sec:prog} records what remains.
 
 As in the companion, every result stated with a formal name has been checked by the Lean kernel
 against Mathlib; the development is at
