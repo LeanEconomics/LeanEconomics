@@ -111,6 +111,25 @@ risk aversion, and the second is blocked by the same obstruction that closed the
 bound.
 
 
+\paragraph{Theorem 1 with a margin.} Light's invariant fails above $\gamma=1$ inside the reachable
+region (\texttt{gapreach.m}: at $\gamma=2$ from $a=2.8$ with one period to go, where a cohort can reach
+$7.6$), because $\kappa_k$ rises with the rate when $\gamma>1$, so an old household with modest wealth
+consumes proportionally more at the higher rate than $\rho^{1/\gamma}$ allows --- while Theorem 1 itself
+holds there on the interest-income term. So the induction needs a different invariant, and the natural
+one is Theorem 1 with a margin, $g_k(a;R_2)-g_k(a;R_1)\ge s_k(a,z)\ge0$, fed through the Euler step
+with the propensity floor. It does not close. With the margin set to a fraction $\phi$ of the
+\emph{true} stage difference and the consumption slope over $[b_1,b_1+s]$ taken exactly --- the least
+lossy version of the chain --- the step fails at $22\%$ of reachable states at $\gamma=2$ and $36\%$ at
+$\gamma=3$ for $\phi=0$ (this is the slack condition), still at $19\%$ and $32\%$ for $\phi=0.75$, and
+only at $\phi=1$ does it reduce to the $1\%$ of corner states where the higher-rate household's Euler
+equation is an inequality; with the unit consumption slope the margin makes things worse at every
+$\phi$ (\texttt{twosided.m}, \texttt{twosided2.m}). The chain carries the margin one-for-one from
+tomorrow's marginal utility to today's, so a margin helps only where it exceeds what today demands,
+and a primitive margin would have to be within about a quarter of the truth at every state. The one
+natural primitive candidate, the certainty-equivalent household's extra saving, is off by a factor
+between $1.1$ and $6.7$ across states (median $1.5$ at $\gamma=2$, $2.2$ at $\gamma=3$) and fails at
+two thirds of states (\texttt{twosided3.m}). Closed.
+
 \subsection*{The mean field condition, measured}
 
 Section~\ref{sec:mfg} rests on two measurements of the Lasry--Lions pairing and two more of the
