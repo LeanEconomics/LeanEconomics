@@ -10,6 +10,9 @@ c_k(a',z')^{-g}]^{-1/g}, the stage-(k+1) consumption at (a, z) with m = y_z + R 
 Psi_k increasing in a' and in c_k.  If Psi^lo <= Psi <= Psi^hi pointwise then
     c_L <= Psi^lo(m - c_L)  ==>  c_L <= c*,      c_H >= Psi^hi(m - c_H)  ==>  c_H >= c*,
 because c |-> Psi(m - c) - c is strictly decreasing.  Hence lo = min(m, c_L), hi = min(m, c_H).
+Formalised: LeanEconomics/OLG/IntervalEuler.lean -- le_stageConsumption_of_cert,
+stageConsumption_le_of_cert, stageConsumption_eq_resources_of_cert (the corner test), and
+le_of_chord / le_of_left_secant / le_of_right_secant for the bounds between grid points (enc_c).
 
 The certificate then bounds the failure of Theorem 1 at every age and earnings state,
     V_j(z) <= max_i ( hi_2(a_{i+1}) - lo_1(a_i) - dr a_i )^+     over grid intervals in the reach,

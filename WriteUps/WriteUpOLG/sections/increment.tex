@@ -561,10 +561,31 @@ the failure bound is dominated at those wealth levels by $-\Delta r\,a$.
 What that establishes: at the rational calibration, over $r\in[4\%,6\%]$, at $\gamma\in\{2,3,5\}$
 --- Aiyagari's $\mu=3$ and $\mu=5$ --- capital supply falls more slowly than demand, so the
 stationary equilibrium is unique: a theorem with one computational hypothesis discharged by
-certificate, the standing the logarithmic case had before Theorem~\ref{thm:lightind}. The Lean
-piece it rests on and which is not yet written is the soundness of the interval Euler step above
-against \lean{stage\_euler\_le} and \lean{stage\_euler\_ge}; everything downstream of the failure
-bound is formalised. The certificate is
+certificate, the standing the logarithmic case had before Theorem~\ref{thm:lightind}. The step
+itself is a theorem:
+
+\begin{theorem}[The interval Euler step]\label{thm:intervaleuler}
+Let $E_k(x)=\beta R\sum_{z'}\pi(z,z')\,x(z')^{-\gamma}$ and $m=y_z+Ra$. If $0<c_L\le m$ and
+$E_k(\ell)\le c_L^{-\gamma}$ for numbers $\ell(z')\le c_k(m-c_L,z')$, then $c_L\le c_{k+1}(a,z)$; if
+$0<c_H\le m$, $m-c_H$ lies in the region, and $c_H^{-\gamma}\le E_k(h)$ for numbers
+$h(z')\ge c_k(m-c_H,z')$, then $c_{k+1}(a,z)\le c_H$; and if $E_k(\ell)\le m^{-\gamma}$ for
+$\ell(z')\le c_k(0,z')$ then $c_{k+1}(a,z)=m$. Between grid points a concave nondecreasing function
+lies above the chord of lower bounds at two points and below the left secant extended forward and
+the right secant extended backward.
+\formal{IncomeFluctuation.le\_stageConsumption\_of\_cert,
+IncomeFluctuation.stageConsumption\_le\_of\_cert,
+IncomeFluctuation.stageConsumption\_eq\_resources\_of\_cert, le\_of\_chord, le\_of\_left\_secant,
+le\_of\_right\_secant}
+\end{theorem}
+
+The proofs are the two Euler inequalities of Section~\ref{sec:lc} and monotonicity: should today's
+consumption fall below $c_L$ the household saves more than $m-c_L$, its Euler equation holds above
+the floor, and monotone consumption tomorrow chains into $c^{-\gamma}\le c_L^{-\gamma}$; the upper
+half runs the same way through the Euler inequality under the cap. Every inequality the certificate
+checks is an instance of one of these, and what the computation adds is the rational arithmetic,
+rounded outward, and the choice of which grid points to use. Everything downstream of the failure
+bound was already formalised, so the standing of the result is now exactly that of the
+existence bracket: a theorem whose one computational hypothesis is arithmetic. The certificate is
 \texttt{numerics/rational/cert.py}, with the calibration in \texttt{inputs.py}. Numerics: \texttt{cestep.m}, \texttt{damp.m},
 \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m},
 \texttt{slopestate.m}, \texttt{tworeg.m}, \texttt{polymax.m}, \texttt{bandb.m}, \texttt{vertcert.m},

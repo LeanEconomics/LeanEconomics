@@ -16,10 +16,10 @@ $(1+\operatorname{Var})^{1/\gamma}$, and from $\gamma=2$ the true gradient sum a
 allowance, so the two-rate estimate stops at $\gamma\approx1.5$ whatever bound is used. What
 survives above that is the route with the estimate replaced by a rigorous enclosure of the two
 policies, which certifies uniqueness at $\gamma\in\{2,3,5\}$ at the calibration. What remains at
-$\mu\in\{3,5\}$ is therefore not the theorem but its standing: an analytic argument, of which
-Appendix~\ref{app:routes} records four closed with quantified reasons, or the Lean soundness of the
-interval Euler step, which would move the computational hypothesis from the failure bound to the
-arithmetic.
+$\mu\in\{3,5\}$ is therefore not the theorem but its standing: the interval Euler step is a
+theorem (Theorem~\ref{thm:intervaleuler}), so the computational hypothesis is the arithmetic alone;
+an analytic argument, of which Appendix~\ref{app:routes} records four closed with quantified
+reasons, is the open question, and replaying the arithmetic inside Lean the mechanical one.
 
 \subsection{Routes that are closed}
 
