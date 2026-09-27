@@ -130,6 +130,18 @@ natural primitive candidate, the certainty-equivalent household's extra saving, 
 between $1.1$ and $6.7$ across states (median $1.5$ at $\gamma=2$, $2.2$ at $\gamma=3$) and fails at
 two thirds of states (\texttt{twosided3.m}). Closed.
 
+\paragraph{The borrowing-constraint decomposition.} Section~\ref{sec:thm1} records that loosening the
+limit moves the threshold in risk aversion from $3.42$ to $4.38$, and it was natural to hope for
+Theorem 1 as (loose-limit response) $+$ (constraint cross term) with the first half easy. Measured
+across the reachable state space (\texttt{nbl.m}: a stage-dependent limit at $0.9$ and $0.5$ of the
+natural one, itself rate-dependent), the loose-limit household \emph{violates} Theorem 1 at $31\%$ of
+its non-negative-asset states at $\gamma=2$ and $52\%$ at $\gamma=3$, by up to $0.58$ in saving units;
+the cross term is non-negative at every state, with median $0.5$ and ninetieth percentile $3.9$ times
+the loose response. The threshold statement is about one state, the newborn with nothing in the top
+earnings state; in the bulk of the state space the constraint is what carries Theorem 1, and the
+decomposition adds difficulty rather than removing it. Its slack condition is no easier either
+($11$--$21\%$ of states fail). Closed.
+
 \subsection*{The mean field condition, measured}
 
 Section~\ref{sec:mfg} rests on two measurements of the Lasry--Lions pairing and two more of the
@@ -418,4 +430,25 @@ error carried between stages is damped (Theorem~\ref{thm:mpcfloor}, \lean{damped
 gradient sum is one plus a variance (Proposition~\ref{prop:gradvar}), and the variance is certified
 below what the damping allows. Theorem 1 then holds at \emph{every} state, hence capital supply rises
 with the rate, hence the stationary equilibrium is unique.
+
+\paragraph{Bounding the failure from primitives.} For $\gamma\le3.4$ the mass-weighted failure is
+exactly zero and the budget over $[4\%,6\%]$ is $0.670$, so the increment route needs only a
+\emph{provable} per-age failure bound of order $0.01$, never Theorem 1 itself. The failure at a state
+is $c_2-c_1-\Delta r\,a$, so it is bounded by a ceiling on $c_2$ less a floor on $c_1$
+(\texttt{incprim.m}). With the asset-incidence floor at $R_1$ and the true $c_2$, the accumulated
+bound is $0.17$ at $\gamma=1.5$, $0.56$ at $\gamma=2$ (a pass, by $1.2\times$) and $1.33$ at
+$\gamma=3$: the floor side is nearly good enough. With the arithmetic human-wealth ceiling at $R_2$
+and the true $c_1$ it is $1.53$, $2.57$ and $3.96$: the ceiling is where the loss is, and it fails
+even at $\gamma=1$ ($0.74$). The worst states are at zero wealth in the lowest earnings state, where
+the certainty-equivalent ceiling ignores precaution. A power-mean ceiling that keeps the Euler step
+exact but evaluates tomorrow's ceiling at the saving ceiling implied by the consumption floor is worse
+still --- $1.18$ times the truth at the first stage and $1.35$ by the thirtieth at $\gamma=1$, $1.45$
+and $1.59$ at $\gamma=3$ --- because the argument error compounds through the stages. The exact
+version of that recursion is the Coleman operator itself, whose iterates from the terminal ceiling
+are the true policy. So no primitive ceiling of the kinds available is within the factor of ten the
+route needs, and what remains of the route is a rigorous enclosure of the two policies --- interval
+arithmetic on the endogenous-grid recursion, with monotonicity and concavity of consumption
+(both proved) closing the gaps between grid points --- fed into the increment envelope. That is a
+certificate of the same standing the logarithmic case had before Theorem~\ref{thm:lightind}, at
+$\mu=3$ where no analytic route is known.
 
