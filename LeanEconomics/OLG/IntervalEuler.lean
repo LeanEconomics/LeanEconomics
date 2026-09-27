@@ -158,7 +158,8 @@ less, the household saves more than `m - c_L`, its Euler equation holds above th
 monotonicity of tomorrow's consumption chains into `c^{-γ} ≤ c_L^{-γ}`. -/
 theorem le_stageConsumption_of_cert {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
     (hd : P.Unbounded) (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap)
-    (hslack : ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ z' : Z, P.stagePolicy k (b, z') < P.maxSaving (b, z'))
+    (hslackg : ∀ z' : Z, P.stagePolicy k (P.stagePolicy (k + 1) (a, z), z')
+      < P.maxSaving (P.stagePolicy (k + 1) (a, z), z'))
     {cL : ℝ} (hcL : 0 < cL) (hcLm : cL ≤ P.resources (a, z)) {ℓ : Z → ℝ} (hℓ : ∀ z', 0 < ℓ z')
     (hℓle : ∀ z', ℓ z' ≤ P.stageConsumption k z' (P.resources (a, z) - cL))
     (hcert : P.eulerSum γ z ℓ ≤ cL ^ (-γ)) :
@@ -175,7 +176,7 @@ theorem le_stageConsumption_of_cert {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraU
   have h1 : (P.stageConsumption (k + 1) z a) ^ (-γ)
       ≤ P.eulerSum γ z (fun z' => P.stageConsumption k z' (P.stagePolicy (k + 1) (a, z))) := by
     unfold eulerSum
-    exact P.stage_euler_ge hu hd k z ha hgpos fun z' => hslack _ hgmem z'
+    exact P.stage_euler_ge hu hd k z ha hgpos hslackg
   have h2 := P.eulerSum_anti hγ0 z hℓ hmono
   have h3 : (P.stageConsumption (k + 1) z a) ^ (-γ) ≤ cL ^ (-γ) := le_trans h1 (le_trans h2 hcert)
   have hcpos : 0 < P.stageConsumption (k + 1) z a := P.stageConsumption_pos hd _ z ha
@@ -217,14 +218,15 @@ theorem stageConsumption_le_of_cert {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraU
 saving, the household consumes its cash on hand. -/
 theorem stageConsumption_eq_resources_of_cert {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
     (hd : P.Unbounded) (k : ℕ) (z : Z) {a : ℝ} (ha : a ∈ Icc (0 : ℝ) assetCap)
-    (hslack : ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ z' : Z, P.stagePolicy k (b, z') < P.maxSaving (b, z'))
+    (hslackg : ∀ z' : Z, P.stagePolicy k (P.stagePolicy (k + 1) (a, z), z')
+      < P.maxSaving (P.stagePolicy (k + 1) (a, z), z'))
     {ℓ : Z → ℝ} (hℓ : ∀ z', 0 < ℓ z') (hℓle : ∀ z', ℓ z' ≤ P.stageConsumption k z' 0)
     (hcert : P.eulerSum γ z ℓ ≤ (P.resources (a, z)) ^ (-γ)) :
     P.stageConsumption (k + 1) z a = P.resources (a, z) := by
   have hm : 0 < P.resources (a, z) :=
     lt_of_lt_of_le (P.stageConsumption_pos hd (k + 1) z ha) (P.stageConsumption_le_resources _ _ _)
   refine le_antisymm (P.stageConsumption_le_resources _ _ _) ?_
-  refine P.le_stageConsumption_of_cert hγ0 hu hd k z ha hslack hm le_rfl hℓ ?_ hcert
+  refine P.le_stageConsumption_of_cert hγ0 hu hd k z ha hslackg hm le_rfl hℓ ?_ hcert
   intro z'
   simpa using hℓle z'
 

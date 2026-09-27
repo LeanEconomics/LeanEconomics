@@ -15,11 +15,15 @@ That question is settled by Proposition~\ref{prop:sharpmom}: the sharp bound is
 $(1+\operatorname{Var})^{1/\gamma}$, and from $\gamma=2$ the true gradient sum already exceeds the
 allowance, so the two-rate estimate stops at $\gamma\approx1.5$ whatever bound is used. What
 survives above that is the route with the estimate replaced by a rigorous enclosure of the two
-policies, which certifies uniqueness at $\gamma\in\{2,3,5\}$ at the calibration. What remains at
-$\mu\in\{3,5\}$ is therefore not the theorem but its standing: the interval Euler step is a
-theorem (Theorem~\ref{thm:intervaleuler}), so the computational hypothesis is the arithmetic alone;
-an analytic argument, of which Appendix~\ref{app:routes} records four closed with quantified
-reasons, is the open question, and replaying the arithmetic inside Lean the mechanical one.
+policies, which certifies at $\gamma\in\{2,3,5\}$ at the calibration that $4\%$ and $6\%$ are not
+both equilibria --- the pairwise form of single crossing, not uniqueness on the bracket. At
+$\gamma=3$ that certificate is replayed inside Lean at the pair $4\%$, $4.6\%$
+(Theorem~\ref{thm:encllean}): the interval Euler step, the enclosure, cap slack and the envelope
+are proof terms, and the arithmetic is evaluated by \texttt{native\_decide}. What remains at
+$\mu\in\{3,5\}$ is therefore threefold: the replay at $\gamma=2$ and $5$, which is the same
+checker with the exponent changed; the passage from one pair to a bracket, which needs the
+increment for every pair and a grid that refines with the mesh; and an analytic argument, of
+which Appendix~\ref{app:routes} records four closed with quantified reasons.
 
 \subsection{Routes that are closed}
 
@@ -71,5 +75,7 @@ Theorem~\ref{thm:lightind} proves the same conclusion, at every calibration, by 
 certificate keeps its value as the record of the increment route, the only one that reaches above
 $\gamma=1$, and the moment question is settled by Proposition~\ref{prop:sharpmom}: the sharp bound is
 $(1+\operatorname{Var})^{1/\gamma}$, and from $\gamma=2$ the true gradient sum already exceeds the
-allowance, so the route stops at $\gamma\approx1.5$ whatever bound is used. Replaying the certificate
-inside Lean would now only certify a case already proved.
+allowance, so the route stops at $\gamma\approx1.5$ whatever bound is used. Replaying the logarithmic
+certificate inside Lean would now only certify a case already proved; the enclosure certificate at
+$\gamma=3$ has been replayed (Section~\ref{sec:encllean}), with \texttt{native\_decide} as the one
+step that is evaluated rather than derived.

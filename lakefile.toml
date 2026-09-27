@@ -17,3 +17,12 @@ rev = "v4.34.0-rc2"
 
 [[lean_lib]]
 name = "LeanEconomics"
+
+[[lean_lib]]
+name = "EnclCert"
+roots = ["EnclCert.Check"]
+precompileModules = true
+
+[[lean_exe]]
+name = "enclcert"
+root = "EnclCertMain"

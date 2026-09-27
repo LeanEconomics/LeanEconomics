@@ -558,10 +558,15 @@ on --- the power-mean amplification of the two-rate chain, now acting on widths 
 proof --- and reach a tenth of a unit of consumption at the newborn stage, which is harmless because
 the failure bound is dominated at those wealth levels by $-\Delta r\,a$.
 
-What that establishes: at the rational calibration, over $r\in[4\%,6\%]$, at $\gamma\in\{2,3,5\}$
---- Aiyagari's $\mu=3$ and $\mu=5$ --- capital supply falls more slowly than demand, so the
-stationary equilibrium is unique: a theorem with one computational hypothesis discharged by
-certificate, the standing the logarithmic case had before Theorem~\ref{thm:lightind}. The step
+What that establishes is a statement about one \emph{pair} of rates. At the rational calibration,
+at $\gamma\in\{2,3,5\}$ --- Aiyagari's $\mu=3$ and $\mu=5$ --- the increment \eqref{eq:inc} holds
+between $r_1=4\%$ and $r_2=6\%$: capital supply rises between the two by more than demand falls, so
+$4\%$ and $6\%$ are not both stationary equilibria. That is the pairwise form of single crossing.
+Uniqueness on the bracket would need the increment for every pair in it, and the certificate as run
+does not give that: for closer pairs the budget $D(r_1)-D(r_2)$ falls in proportion to the gap while
+the grid-interval slack in the failure bound does not, so a mesh of pairs would need a finer grid
+as the mesh is refined. What is certified is a theorem with one computational hypothesis discharged
+by certificate, the standing the logarithmic case had before Theorem~\ref{thm:lightind}. The step
 itself is a theorem:
 
 \begin{theorem}[The interval Euler step]\label{thm:intervaleuler}
@@ -596,3 +601,68 @@ increment is controlled by the envelope of Theorem~\ref{thm:envelope}; its Lipsc
 Theorem~\ref{thm:mpcfloor} and Theorem~\ref{thm:cohortlip}; and the mass weighting is exact in the
 coordinate where the failure lives, by Theorem~\ref{thm:marginal}. Numerics: \texttt{incbound.m},
 \texttt{ebar.m}, \texttt{vjbound.m}, \texttt{vjdiag.m}, \texttt{mpclow.m}, \texttt{slopecheck.m}.
+
+\subsubsection*{The certificate replayed in Lean: $\mu=3$}\label{sec:encllean}
+
+The remaining computational hypothesis has been removed at $\gamma=3$ by running the certificate
+inside Lean. The checker is a Lean program (\texttt{EnclCert/Check.lean}) with no dependence on
+Mathlib: the same interval endogenous-grid recursion in naturals over $D=10^{12}$, a grid of $1255$
+points to a cap of $2000$, and the rootless Euler tests $\beta R\sum_{z'}\pi(z,z')(c/x_{z'})^3\le1$
+with each ratio rounded up over $10^{30}$ for the lower test and down for the upper. Its verdict
+\lean{enclCheckOf}\,$(R_1,R_2)=\mathtt{true}$ is established by \texttt{native\_decide}, compiled
+code that runs in about a quarter of an hour (\lean{enclCheck\_eq\_true}). Every stored number is
+re-verified by the checker rather than trusted from the search, so the search --- bisection with
+warm-started brackets --- can be arbitrary.
+
+The pair is $r_1=4\%$, $r_2=4.6\%$ rather than $4\%$ and $6\%$, and the reason is the cap. The
+formal life cycle has an artefactual asset cap, and the increment envelope of
+Theorem~\ref{thm:envelope} needs the cap slack on the reach regions. Slack is proved from
+impatience: with $\kappa_k$ the propensity floor of Theorem~\ref{thm:mpcfloor}, the stage-$k$
+policy stays below the cap when
+$\bar y+r\,\bar a<\kappa_k(\underline y+R\bar a)/\Thorn$
+(\lean{stagePolicy\_lt\_cap\_of\_impatience}), and $\kappa_k$ is bounded below by
+$1/\sum_{i\le k}(t/R)^i$ for any $t\ge\Thorn$ (\lean{stageMPC\_ge\_of\_patience\_le}), which
+is a sixty-term geometric sum that \texttt{norm\_num} evaluates exactly (\lean{slack\_low},
+\lean{slack\_high}). At the cap $2000$ this holds for all sixty stages up to about $4.6\%$ and fails
+at $6\%$, where the sixty-period propensity is too small; the certificate could be run at $6\%$ with
+a larger cap and a wider grid, at a proportionate cost in run time.
+
+What the verdict means for the economy is proved in three files. \texttt{OLG/EnclBridge} is the
+rounding: the cash-on-hand bounds (\lean{mDn\_le}, \lean{le\_mUp}), the Euler tests as the
+hypotheses of Theorem~\ref{thm:intervaleuler} (\lean{eulerSum\_le\_of\_test},
+\lean{le\_eulerSum\_of\_test}), the chord and secants in naturals against their real forms
+(\lean{chord\_nat\_le}, \lean{leftSec\_ge}, \lean{rightSec\_ge}), and the enclosure between grid
+points (\lean{encLo\_sound}, \lean{encHi\_sound}). \texttt{OLG/EnclStage} is the stage step: each
+certification is an instance of Theorem~\ref{thm:intervaleuler} (\lean{certL\_sound},
+\lean{certH\_sound}, \lean{cornerTest\_sound}), so a checked stage carries the enclosure forward
+(\lean{checkStage\_sound}) and the terminal check starts it, giving the enclosure at every stage by
+induction (\lean{checkAllStages\_sound}). \texttt{OLG/EnclFinal} assembles the increment: the reach
+regions are a reachable family in the sense of Section~\ref{sec:inc} (\lean{encRegions}, closed
+under the lower-rate policy by monotone saving and the enclosure), the failure bound at each stage
+dominates the difference of the two policies on them (\lean{failV\_sound}), the Lipschitz constants
+dominate \lean{cohortSlope} from the propensity floor (\lean{lip\_high},
+\lean{cohortSlope\_le\_slopeUp}), and the accumulated bound is the checker's rational
+(\lean{accumulated\_cast}) against the fall in demand $D(r)=\alpha/((1-\alpha)(r+\delta))$
+(\lean{budget\_cast}). The envelope itself is Theorem~\ref{thm:envelope} in cohort form, with the
+regions of the lower-rate economy and Lipschitz constants for the higher
+(\lean{olgCapital\_sub\_ge\_of\_failure}).
+
+\begin{theorem}[The certified increment at $\gamma=3$]\label{thm:encllean}
+For the seven-state life cycle at the rational calibration with $\gamma=3$, $\beta=24/25$ and cap
+$2000$, and the demand $D(r)=\alpha/((1-\alpha)(r+\delta))$ with $\alpha=9/25$, $\delta=2/25$,
+\[
+D(4.6\%)-D(4\%)\;<\;S(4.6\%)-S(4\%),
+\]
+so $4\%$ and $4.6\%$ are not both stationary equilibrium rates. The accumulated bound is
+$B=0.0176$ against the budget $D(4\%)-D(4.6\%)=0.2232$, a margin of $12.7\times$.
+\formal{EnclCert.increment\_of\_enclCheck, EnclCert.olg7\_increment}
+\end{theorem}
+
+The theorem depends on \texttt{Lean.ofReduceBool}, the axiom behind \texttt{native\_decide}, in
+addition to the three axioms of classical Mathlib; everything else in it is checked by the kernel.
+That is a different trust from a proof term --- it trusts the compiler and the interpreter's
+natural-number arithmetic --- and a different one from the Python certificate, which trusted a
+program that was never proved to check what it claimed. The interval Euler step, the enclosure
+between grid points, cap slack, the reach regions, the envelope and the budget are all proof terms;
+the arithmetic is the one thing evaluated rather than derived. At $\gamma=2$ and $5$ the same
+checker applies with the exponent changed and the run repeated; that has not been done.

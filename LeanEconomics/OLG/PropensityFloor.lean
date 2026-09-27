@@ -42,10 +42,10 @@ variable {assetCap : ℝ} (P : IncomeFluctuation Z 0 assetCap)
 /-- **The propensity to consume is at least `κ_k`.** Equivalently, saving is Lipschitz in assets
 with constant `(1 - κ_k)(1 + r)`, which is the constant the increment argument uses. -/
 theorem stageMPC_mul_le_stageConsumption_sub {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
-    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
-    (hslack : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z,
-      P.stagePolicy j (b, w) < P.maxSaving (b, w))
-    (k : ℕ) : ∀ (z : Z) (a₁ a₂ : ℝ), a₁ ∈ Icc (0 : ℝ) assetCap → a₂ ∈ Icc (0 : ℝ) assetCap →
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (k : ℕ)
+    (hslack : ∀ j ≤ k, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z,
+      P.stagePolicy j (b, w) < P.maxSaving (b, w)) :
+    ∀ (z : Z) (a₁ a₂ : ℝ), a₁ ∈ Icc (0 : ℝ) assetCap → a₂ ∈ Icc (0 : ℝ) assetCap →
       a₁ ≤ a₂ → P.stageMPC γ k * ((1 + P.interest) * (a₂ - a₁))
         ≤ P.stageConsumption k z a₂ - P.stageConsumption k z a₁ := by
   have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
@@ -100,7 +100,7 @@ theorem stageMPC_mul_le_stageConsumption_sub {γ : ℝ} (hγ0 : 0 < γ) (hu : P.
         have hMrpow : M ^ (-γ) = ∑ z', P.transitionMatrix z z' * (C z') ^ (-γ) :=
           powerMean_rpow hγne hw hw1 hC0
         -- from the Euler equation under the cap at `a₁`
-        have heul₁ := P.stage_euler_le hu hd k z ha₁ (hslack (k + 1) a₁ ha₁ z)
+        have heul₁ := P.stage_euler_le hu hd k z ha₁ (hslack (k + 1) le_rfl a₁ ha₁ z)
         have hTc₁ : P.patience γ * c₁ ≤ M := by
           have h2 : M ^ (-γ) ≤ (P.patience γ * c₁) ^ (-γ) := by
             rw [Real.mul_rpow hT0.le hc₁0.le, hTneg, hMrpow]
@@ -110,9 +110,10 @@ theorem stageMPC_mul_le_stageConsumption_sub {γ : ℝ} (hγ0 : 0 < γ) (hu : P.
         -- from the induction hypothesis and the Euler equation above the floor at `a₂`
         have hIH : ∀ z', C z' + t ≤ P.stageConsumption k z' b₂ := by
           intro z'
-          have h := ih z' b₁ b₂ hb₁mem hb₂mem hble
+          have h := ih (fun j hj => hslack j (Nat.le_succ_of_le hj)) z' b₁ b₂ hb₁mem hb₂mem hble
           rw [hCdef, htdef]; linarith [h]
-        have heul₂ := P.stage_euler_ge hu hd k z ha₂ hb0 (fun z' => hslack k b₂ hb₂mem z')
+        have heul₂ := P.stage_euler_ge hu hd k z ha₂ hb0
+          (fun z' => hslack k (Nat.le_succ k) b₂ hb₂mem z')
         have hsum : ∑ z', P.transitionMatrix z z' * (P.stageConsumption k z' b₂) ^ (-γ)
             ≤ ∑ z', P.transitionMatrix z z' * (C z' + t) ^ (-γ) :=
           Finset.sum_le_sum fun z' _ => mul_le_mul_of_nonneg_left
@@ -153,10 +154,10 @@ theorem stageMPC_mul_le_stageConsumption_sub {γ : ℝ} (hγ0 : 0 < γ) (hu : P.
 affine ceiling of `Existence` carries, now as a bound on DIFFERENCES rather than on levels, which is
 what the increment argument accumulates. -/
 theorem cohortAssets_sub_le_cohortSlope {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = crraUtility γ)
-    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded)
-    (hslack : ∀ j : ℕ, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z,
-      P.stagePolicy j (b, w) < P.maxSaving (b, w))
-    (k : ℕ) : ∀ (z : Z) (a₁ a₂ : ℝ), a₁ ∈ Icc (0 : ℝ) assetCap → a₂ ∈ Icc (0 : ℝ) assetCap →
+    (hβ : 0 < (P.discount : ℝ)) (hd : P.Unbounded) (k : ℕ)
+    (hslack : ∀ j ≤ k, ∀ b ∈ Icc (0 : ℝ) assetCap, ∀ w : Z,
+      P.stagePolicy j (b, w) < P.maxSaving (b, w)) :
+    ∀ (z : Z) (a₁ a₂ : ℝ), a₁ ∈ Icc (0 : ℝ) assetCap → a₂ ∈ Icc (0 : ℝ) assetCap →
       a₁ ≤ a₂ → P.cohortAssets k (a₂, z) - P.cohortAssets k (a₁, z)
         ≤ P.cohortSlope γ k * (a₂ - a₁) := by
   induction k with
@@ -175,7 +176,7 @@ theorem cohortAssets_sub_le_cohortSlope {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = c
     have hble : b₁ ≤ b₂ := P.stagePolicy_mono (k + 1) ha₁ ha₂ hle
     -- the propensity floor caps the saving increment
     have hb : b₂ - b₁ ≤ (1 - P.stageMPC γ (k + 1)) * ((1 + P.interest) * (a₂ - a₁)) := by
-      have hc := P.stageMPC_mul_le_stageConsumption_sub hγ0 hu hβ hd hslack (k + 1) z a₁ a₂
+      have hc := P.stageMPC_mul_le_stageConsumption_sub hγ0 hu hβ hd (k + 1) hslack z a₁ a₂
         ha₁ ha₂ hle
       have hres : P.resources (a₂, z) - P.resources (a₁, z) = (1 + P.interest) * (a₂ - a₁) := by
         rw [P.resources_eq_of_mem ha₁ z, P.resources_eq_of_mem ha₂ z]; ring
@@ -192,7 +193,8 @@ theorem cohortAssets_sub_le_cohortSlope {γ : ℝ} (hγ0 : 0 < γ) (hu : P.u = c
               - P.transitionMatrix z z' * P.cohortAssets k (b₁, z'))
           ≤ ∑ z', P.transitionMatrix z z' * (P.cohortSlope γ k * (b₂ - b₁)) := by
             refine Finset.sum_le_sum fun z' _ => ?_
-            have := mul_le_mul_of_nonneg_left (ih z' b₁ b₂ hb₁mem hb₂mem hble)
+            have := mul_le_mul_of_nonneg_left
+              (ih (fun j hj => hslack j (Nat.le_succ_of_le hj)) z' b₁ b₂ hb₁mem hb₂mem hble)
               (P.transitionMatrix_nonneg z z')
             linarith [this]
         _ = P.cohortSlope γ k * (b₂ - b₁) := by

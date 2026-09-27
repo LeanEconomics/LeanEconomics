@@ -183,6 +183,16 @@ Proposition~\ref{prop:sharpmom} & \lean{sum\_mul\_rpow\_le\_rpow\_sum\_mul\_sq} 
 Euler sum with numbers, antitone & \lean{eulerSum}, \lean{eulerSum\_anti} & OLG/\allowbreak Interval\allowbreak Euler\\
 Theorem~\ref{thm:intervaleuler}, certifications & \lean{le\_stageConsumption\_of\_cert}, \lean{stageConsumption\_le\_of\_cert}, \lean{stageConsumption\_eq\_resources\_of\_cert} & OLG/\allowbreak Interval\allowbreak Euler\\
 Theorem~\ref{thm:intervaleuler}, between grid points & \lean{le\_of\_chord}, \lean{le\_of\_left\_secant}, \lean{le\_of\_right\_secant}, \lean{stageConsumption\_ge\_chord}, \lean{stageConsumption\_le\_left\_secant}, \lean{stageConsumption\_le\_right\_secant} & OLG/\allowbreak Interval\allowbreak Euler\\
+\midrule
+The checker and its verdict & \lean{enclCheckOf}, \lean{enclCheck\_eq\_true} & EnclCert/\allowbreak Check, OLG/\allowbreak Encl\allowbreak Certified\\
+The calibration as data & \lean{olg7}, \lean{olg7hi}, \lean{nuQ\_invariant} & Models/\allowbreak OLG7\allowbreak Witness, OLG/\allowbreak Encl\allowbreak Final\\
+Rounding and the Euler tests & \lean{mDn\_le}, \lean{le\_mUp}, \lean{eulerSum\_le\_of\_test}, \lean{le\_eulerSum\_of\_test}, \lean{chord\_nat\_le}, \lean{leftSec\_ge}, \lean{rightSec\_ge} & OLG/\allowbreak Encl\allowbreak Bridge\\
+The enclosure between grid points & \lean{encLo\_sound}, \lean{encHi\_sound} & OLG/\allowbreak Encl\allowbreak Bridge\\
+The stage step & \lean{certL\_sound}, \lean{certH\_sound}, \lean{cornerTest\_sound}, \lean{checkStage\_sound}, \lean{checkAllStages\_sound} & OLG/\allowbreak Encl\allowbreak Stage\\
+Cap slack from impatience & \lean{stagePolicy\_lt\_cap\_of\_impatience}, \lean{stageMPC\_ge\_of\_patience\_le}, \lean{slack\_low}, \lean{slack\_high} & OLG/\allowbreak Cap\allowbreak Slack, OLG/\allowbreak Encl\allowbreak Final\\
+Theorem~\ref{thm:envelope}, cohort form & \lean{cohortAssets\_sub\_ge\_of\_failure}, \lean{olgCapital\_sub\_ge\_of\_failure} & OLG/\allowbreak Increment\allowbreak Cohort\\
+Regions, failure, Lipschitz, budget & \lean{encRegions}, \lean{failV\_sound}, \lean{lip\_high}, \lean{cohortSlope\_le\_slopeUp}, \lean{accumulated\_cast}, \lean{budget\_cast} & OLG/\allowbreak Encl\allowbreak Final\\
+Theorem~\ref{thm:encllean} & \lean{increment\_of\_enclCheck}, \lean{olg7\_increment} & OLG/\allowbreak Encl\allowbreak Final, OLG/\allowbreak Encl\allowbreak Theorem\\
 Consumption at most cash on hand & \lean{stageConsumption\_le\_resources} & OLG/\allowbreak Interval\allowbreak Euler\\
 \bottomrule
 \end{longtable}
