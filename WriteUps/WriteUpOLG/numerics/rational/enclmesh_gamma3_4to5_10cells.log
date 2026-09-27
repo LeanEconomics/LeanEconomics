@@ -1,0 +1,60 @@
+gamma 3, bracket [0.0400, 0.0500], 10 cells of width 0.00100, grid 1896 points, D = 1e15, 7 workers
+cell  6 [0.0460,0.0470]: widths on a<=10 at stages 20/40/59: 1.38e-01 2.53e-01 3.68e-01; reach at ages 10/30/60: 13.54 42.25 6.22; 537s
+cell  1 [0.0410,0.0420]: widths on a<=10 at stages 20/40/59: 1.37e-01 2.48e-01 3.61e-01; reach at ages 10/30/60: 13.36 40.67 5.75; 542s
+cell  5 [0.0450,0.0460]: widths on a<=10 at stages 20/40/59: 1.37e-01 2.53e-01 3.68e-01; reach at ages 10/30/60: 13.50 41.90 6.12; 546s
+cell  2 [0.0420,0.0430]: widths on a<=10 at stages 20/40/59: 1.37e-01 2.50e-01 3.64e-01; reach at ages 10/30/60: 13.40 40.97 5.84; 550s
+cell  3 [0.0430,0.0440]: widths on a<=10 at stages 20/40/59: 1.35e-01 2.50e-01 3.66e-01; reach at ages 10/30/60: 13.43 41.27 5.93; 553s
+cell  0 [0.0400,0.0410]: widths on a<=10 at stages 20/40/59: 1.39e-01 2.47e-01 3.54e-01; reach at ages 10/30/60: 13.32 40.37 5.66; 554s
+cell  4 [0.0440,0.0450]: widths on a<=10 at stages 20/40/59: 1.35e-01 2.54e-01 3.67e-01; reach at ages 10/30/60: 13.47 41.57 6.02; 555s
+cell  7 [0.0470,0.0480]: widths on a<=10 at stages 20/40/59: 1.39e-01 2.58e-01 3.70e-01; reach at ages 10/30/60: 13.57 42.58 6.32; 254s
+cell  8 [0.0480,0.0490]: widths on a<=10 at stages 20/40/59: 1.43e-01 2.61e-01 3.76e-01; reach at ages 10/30/60: 13.61 42.92 6.42; 252s
+cell  9 [0.0490,0.0500]: widths on a<=10 at stages 20/40/59: 1.48e-01 2.65e-01 3.80e-01; reach at ages 10/30/60: 13.65 43.25 6.53; 250s
+all cells done in 796s; pairwise certificates:
+  cell  0 |   - . . . . . . . .
+  cell  1 |     - . . . . . . .
+  cell  2 |       - . . . . . .
+  cell  3 |         - . . . . .
+  cell  4 |           - . . . .
+  cell  5 |             - . . .
+  cell  6 |               - . .
+  cell  7 |                 - .
+  cell  8 |                   -
+  cell  9 |                    
+  ( 0, 2) gap>=0.0010: B=5.50290 budget=0.03810 max ebar=0.4509 not
+  ( 0, 3) gap>=0.0020: B=5.33378 budget=0.07559 max ebar=0.4313 not
+  ( 0, 4) gap>=0.0030: B=5.16163 budget=0.11247 max ebar=0.4110 not
+  ( 0, 5) gap>=0.0040: B=4.99308 budget=0.14876 max ebar=0.3948 not
+  ( 0, 6) gap>=0.0050: B=4.84891 budget=0.18447 max ebar=0.3864 not
+  ( 0, 7) gap>=0.0060: B=4.67661 budget=0.21963 max ebar=0.3670 not
+  ( 0, 8) gap>=0.0070: B=4.48354 budget=0.25423 max ebar=0.3476 not
+  ( 0, 9) gap>=0.0080: B=4.27204 budget=0.28830 max ebar=0.3329 not
+  ( 1, 3) gap>=0.0010: B=5.62820 budget=0.03749 max ebar=0.4515 not
+  ( 1, 4) gap>=0.0020: B=5.45952 budget=0.07437 max ebar=0.4323 not
+  ( 1, 5) gap>=0.0030: B=5.29465 budget=0.11066 max ebar=0.4164 not
+  ( 1, 6) gap>=0.0040: B=5.15440 budget=0.14637 max ebar=0.4083 not
+  ( 1, 7) gap>=0.0050: B=4.98625 budget=0.18152 max ebar=0.3892 not
+  ( 1, 8) gap>=0.0060: B=4.79654 budget=0.21612 max ebar=0.3698 not
+  ( 1, 9) gap>=0.0070: B=4.58842 budget=0.25019 max ebar=0.3561 not
+  ( 2, 4) gap>=0.0010: B=5.75754 budget=0.03688 max ebar=0.4550 not
+  ( 2, 5) gap>=0.0020: B=5.59666 budget=0.07317 max ebar=0.4393 not
+  ( 2, 6) gap>=0.0030: B=5.46044 budget=0.10889 max ebar=0.4313 not
+  ( 2, 7) gap>=0.0040: B=5.29648 budget=0.14404 max ebar=0.4123 not
+  ( 2, 8) gap>=0.0050: B=5.11058 budget=0.17864 max ebar=0.3929 not
+  ( 2, 9) gap>=0.0060: B=4.90607 budget=0.21271 max ebar=0.3797 not
+  ( 3, 5) gap>=0.0010: B=5.90065 budget=0.03629 max ebar=0.4604 not
+  ( 3, 6) gap>=0.0020: B=5.76890 budget=0.07200 max ebar=0.4536 not
+  ( 3, 7) gap>=0.0030: B=5.60942 budget=0.10716 max ebar=0.4337 not
+  ( 3, 8) gap>=0.0040: B=5.42746 budget=0.14176 max ebar=0.4149 not
+  ( 3, 9) gap>=0.0050: B=5.22690 budget=0.17583 max ebar=0.4037 not
+  ( 4, 6) gap>=0.0010: B=6.07896 budget=0.03571 max ebar=0.4768 not
+  ( 4, 7) gap>=0.0020: B=5.92395 budget=0.07087 max ebar=0.4576 not
+  ( 4, 8) gap>=0.0030: B=5.74579 budget=0.10547 max ebar=0.4386 not
+  ( 4, 9) gap>=0.0040: B=5.54920 budget=0.13953 max ebar=0.4296 not
+  ( 5, 7) gap>=0.0010: B=6.24519 budget=0.03515 max ebar=0.4874 not
+  ( 5, 8) gap>=0.0020: B=6.07082 budget=0.06975 max ebar=0.4638 not
+  ( 5, 9) gap>=0.0030: B=5.87794 budget=0.10382 max ebar=0.4557 not
+  ( 6, 8) gap>=0.0010: B=6.39972 budget=0.03460 max ebar=0.4905 not
+  ( 6, 9) gap>=0.0020: B=6.21063 budget=0.06867 max ebar=0.4828 not
+  ( 7, 9) gap>=0.0010: B=6.53761 budget=0.03407 max ebar=0.5072 not
+no separation certifies every pair
+EXIT 0

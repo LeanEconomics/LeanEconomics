@@ -12,3 +12,4 @@ numerics/*.mat
 numerics/*.png
 numerics/*.mat
 numerics/*.png
+numerics/rational/cache_*.pkl

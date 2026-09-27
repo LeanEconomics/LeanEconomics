@@ -540,20 +540,24 @@ Lipschitz constants of Theorem~\ref{thm:cohortlip} from a rigorous upper bound o
 \toprule
 $\gamma$ & $2$ & $3$ & $5$\\
 \midrule
-mean failure bound $\bar e_j$ per age & $0.0016$ & $0.0015$ & $0.0030$\\
-accumulated $B$ & $0.0066$ & $0.0086$ & $0.0533$\\
+mean failure bound $\bar e_j$ per age & $0.0016$ & $0.0016$ & $0.0030$\\
+accumulated $B$ & $0.0066$ & $0.0087$ & $0.0549$\\
 budget $D(r_1)-D(r_2)$ & $0.670$ & $0.670$ & $0.670$\\
-margin & $102\times$ & $77\times$ & $12.6\times$\\
+margin & $102\times$ & $77\times$ & $12.2\times$\\
 enclosure width, newborn stage, $a\le10$ & $0.07$ & $0.09$ & $0.10$\\
-run time & $365$ s & $356$ s & $402$ s\\
+run time & $756$ s & $774$ s & $829$ s\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-All three are certified. At $\gamma=2$ and $3$ the per-age bound of $0.0003$ is entirely the
-grid-interval slack at the corner states; at $\gamma=5$ the bound rises to $0.0046$ at the newborn
-age, where Theorem 1 genuinely fails in the top earnings states, and the envelope absorbs it with a
-margin of twelve. The enclosure widths grow by about a fifth per stage from the twentieth stage
+All three are certified. At $\gamma=2$ the per-age bound of $0.0003$ is entirely the
+grid-interval slack at the corner states, at $\gamma=3$ it rises to $0.0007$ at the youngest ages,
+and at $\gamma=5$ to $0.0050$ at the newborn age, where Theorem 1 genuinely fails in the top
+earnings states, and the envelope absorbs it with a margin of twelve. (An earlier run of the same
+code treated zero wealth as a certified corner state even where the household saves there, a
+one-line error in the corner test found while building the derivative certificate below; the
+numbers here are from the corrected code, and the Lean checker, whose corner test was strict from
+the start, was never affected.) The enclosure widths grow by about a fifth per stage from the twentieth stage
 on --- the power-mean amplification of the two-rate chain, now acting on widths rather than on a
 proof --- and reach a tenth of a unit of consumption at the newborn stage, which is harmless because
 the failure bound is dominated at those wealth levels by $-\Delta r\,a$.
@@ -668,3 +672,164 @@ program that was never proved to check what it claimed. The interval Euler step,
 between grid points, cap slack, the reach regions, the envelope and the budget are all proof terms;
 the arithmetic is the one thing evaluated rather than derived. At $\gamma=2$ and $5$ the same
 checker applies with the exponent changed and the run repeated; that has not been done.
+
+\subsubsection*{Finiteness, differentiability and the slope of supply}\label{sec:finite}
+
+Uniqueness being out of reach above $\gamma=1$, the weaker question is whether the number of
+equilibria is finite. Differentiability of $r\mapsto S(r)$ is the wrong property to ask for, in two
+ways. It is false: each stage policy has a kink at the wealth where the borrowing constraint stops
+binding, kinks propagate backward to wherever a policy sends a household onto a kink of the next
+stage, and $S$ inherits finitely many kinks in $r$, at the rates where a cohort's asset path crosses
+one. And it would not help: a smooth excess demand can vanish on a Cantor set. What $S$ has is
+more: under CRRA utility and a finite chain the interior branch of every policy is real-analytic in
+$(a,r)$ by the analytic implicit function theorem applied to the Euler equality, the constrained
+branch is affine, and supply is a finite composition of these along the newborn's paths, so $E=S-D$
+is piecewise real-analytic in $r$ with finitely many pieces, each piece the restriction of a
+function analytic on a neighbourhood. That is the property with a consequence:
+
+\begin{theorem}[Finitely many equilibria on a bracket]\label{thm:finite}
+Let $E$ be continuous on $[a,b]$ and agree on each of finitely many closed pieces
+$[t_i,t_{i+1}]$, $t_0=a\le\dots\le t_n=b$, with a function analytic on a preconnected open
+neighbourhood of the piece. If no piece's analytic extension vanishes identically, $E$ has finitely
+many zeros in $[a,b]$.
+\formal{PiecewiseAnalyticOn, PiecewiseAnalyticOn.finite\_zeros, finite\_zeros\_of\_analyticOnNhd}
+\end{theorem}
+
+The proof is the identity theorem on each piece and compactness: an infinite zero set has an
+accumulation point, at which the extension vanishes on a punctured neighbourhood, hence on the
+whole connected neighbourhood. The piecewise analyticity of $S$ itself is not formalised; the
+theorem records exactly what it would buy. What it buys is a reduction. $E$ vanishes identically on
+a piece only if $S'=D'$ there, and $D'(r)=-\alpha/((1-\alpha)(r+\delta)^2)$ is $-39$ in wage units
+at $4\%$ and $-22$ at $8\%$. Finiteness at the calibration therefore follows from a bound on how
+fast supply can \emph{fall}: any provable $S'(r)>D'(r)$ on the bracket excludes a flat piece. A
+bound of that kind is also, and more importantly, a proof of uniqueness: $E$ is continuous and
+piecewise $C^1$, so $E'>0$ off the finitely many kinks makes $E$ strictly increasing, and there is
+at most one equilibrium. The increment route of Section~\ref{sec:enclcert} is this argument at finite
+$\Delta r$; its grid slack does not vanish with $\Delta r$, which is why it is pairwise. The
+derivative form has no grid slack.
+
+\paragraph{The derivative-form increment.} Differentiating the Euler equality
+$c^{-\gamma}=\beta R\sum_{z'}\pi(z,z')\,c_k(m-c,z')^{-\gamma}$ in $r$ at fixed $a$ gives, with
+$w_{z'}=\beta R\,\pi(z,z')\,c_k^{-\gamma-1}c^{\gamma+1}$ (so that $\sum_{z'}w_{z'}=A\ge1$, the
+power-mean amplification of Section~\ref{sec:thm1}) and $\Psi_x=\sum_{z'}w_{z'}\partial_xc_k$,
+\[
+\frac{\partial c}{\partial r}
+=\frac{-c/(\gamma R)+\Psi_x\,a+\sum_{z'}w_{z'}\,\partial_rc_k(m-c,z')}{1+\Psi_x},
+\qquad
+\frac{\partial g}{\partial r}=a-\frac{\partial c}{\partial r},
+\]
+and $\partial_rc=a$ at the corner. The failure of Theorem 1 in derivative form is
+$e_{k+1}(a,z)=(\partial_rc-a)^+=(-\partial_rg)^+$, and the envelope of Theorem~\ref{thm:envelope}
+divided by $\Delta r$ gives
+$S'(r)\ge-\frac1J\sum_kG_k\sum_z\nu_z\max_{a\le\text{reach}}e_{k+1}(a,z)$. Upper and lower bounds
+$U_k,L_k$ on $\partial_rc_k$ propagate through the display with $U_0=L_0=a$, in three
+strengths (\texttt{numerics/slopebnd.m}, \texttt{slopebnd2.m}, on the true policies): the crude
+recursion replaces $\sum w\,\partial_rc_k$ by $A\max_{z'}U_k$ and $\Psi_x$ by its range
+$[0,A\bar s]$; the weighted recursion keeps $\sum_{z'}w_{z'}U_k$ with the same range for $\Psi_x$;
+the exact one keeps $\Psi_x$ too, and is then the chain rule. The table gives the resulting lower
+bound on $S'(r)$ against $D'(r)$ and the true slope, $J=60$, $\beta=24/25$, the Tauchen chain:
+
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+& $r$ & true $S'$ & $D'$ & crude & weighted & exact & exact, $1\%$ errors\\
+\midrule
+$\gamma=1$ & $4\%$ & $+140$ & $-39$ & $-0.01$ & $-0.00$ & $-0.00$ & $-0.00$\\
+& $8\%$ & $+485$ & $-22$ & $-100$ & $-2.8$ & $-0.00$ & $-0.00$\\
+$\gamma=2$ & $4\%$ & $+76$ & $-39$ & $-110$ & $-1.2$ & $-0.00$ & $-0.00$\\
+& $8\%$ & $+135$ & $-22$ & $-181$ & $-4.9$ & $-0.00$ & $-0.00$\\
+$\gamma=3$ & $4\%$ & $+53$ & $-39$ & $-312$ & $-4.2$ & $-0.00$ & $-0.00$\\
+& $6\%$ & $+62$ & $-29$ & $-314$ & $-6.1$ & $-0.04$ & $-0.23$\\
+& $8\%$ & $+71$ & $-22$ & $-315$ & $-8.1$ & $-0.23$ & $-0.81$\\
+$\gamma=5$ & $4\%$ & $+34$ & $-39$ & $-734$ & $-10.9$ & $-1.13$ & $-2.0$\\
+& $8\%$ & $+35$ & $-22$ & $-602$ & $-14.8$ & $-3.32$ & $-6.0$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Three things are settled by it. The true slope of supply is large and positive everywhere, so
+$E'>0$ and single crossing hold in fact at every $\gamma$ tested, $\gamma=5$ included, where
+Theorem 1 fails pointwise. The exact derivative envelope reproduces this: at $\gamma\le3$ the
+derivative-form failure is exactly zero up to $5.5\%$, and where it is not, at $\gamma=5$ and
+above $6\%$ at $\gamma=3$, the bound sits ten to fifty times above $D'$. And the crude recursion,
+the one a proof from the two Euler inequalities alone would give, is dead: $-312$ at $\gamma=3$
+against $-39$, eight times too loose, its worst state the newborn at zero wealth, the state where
+every pointwise instrument in Section~\ref{sec:thm1} failed. What separates the two is the max over
+tomorrow's states: the \emph{weighted} recursion, which keeps the Euler weights $w_{z'}$ and asks
+nothing of $\Psi_x$ beyond its range, is $-4$ at $\gamma=3$ and $-11$ at $\gamma=5$, a margin of
+four to ten over $D'$. Its ingredients are the consumption functions and their Euler weights,
+which the enclosure certificate bounds, and the sensitivity column shows the bound survives
+ingredient errors of $1\%$ at every stage (every weight, slope and interpolated derivative bound
+perturbed adversarially). A certified version of the weighted recursion on the enclosures, run on
+cells of rates fine enough that the enclosures stay within a percent, would therefore give
+$E'>0$ on the bracket and hence uniqueness at $\mu=3$ --- and at $\mu=5$, where Theorem 1 is false.
+
+\paragraph{The certified recursion.} That version is built for a single rate
+(\texttt{numerics/rational/derivcert.py}): the weighted recursion in exact rational arithmetic on
+the enclosures of Section~\ref{sec:enclcert}, with the bounds on $\partial_rc_k$ carried on grid
+\emph{intervals}, since a derivative has no monotonicity to interpolate with. On an interval
+$[a_i,a_{i+1}]$ the consumption lies between the enclosure at its ends, the saving between
+$m(a_i)-\overline c(a_i)$ and $m(a_{i+1})-\underline c(a_{i+1})$ (saving is monotone), tomorrow's
+consumption in the enclosure at the ends of that range, each weight between its two extreme values,
+$\Psi_x$ in $[0,(\sum w)R]$, and the bound on $\partial_rc_k$ over the range the largest on the grid
+intervals it meets; the corner and the interval straddling it take $\partial_rc=a$ as well. Each grid
+interval is split four ways for the derivative pass, since the spread of consumption across an
+interval enters the weights to the power $\gamma+1$. The result, $\gamma=3$:
+
+\begin{center}
+\begin{tabular}{lrrrl}
+\toprule
+$r$ & $B_d$ (bound on $-S'$) & $|D'(r)|$ & failure by age $1/5/10/30$ & \\
+\midrule
+$4\%$ & $43.1$ & $39.1$ & $1.1/4.8/6.0/0.2$ & not certified, by $10\%$\\
+$6\%$ & $83.1$ & $28.7$ & $1.5/7.5/12.6/0.3$ & not certified\\
+$4\%$, $\gamma=5$ & $187.9$ & $39.1$ & $2.5/16.4/33.6/0.6$ & not certified\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The gap is not the recursion --- with exact ingredients it gives $-4$ --- but the
+enclosures: their widths are $10^{-4}$ up to the twenty-fifth stage and then grow by a seventh per
+stage to $0.07$ at the newborn stage, which is two to seven percent of consumption at low wealth, and
+a perturbation of that size in the weights of a sixty-stage linear recursion compounds to a factor of
+three by the young ages, where the failure lands (ages five to ten, where the true derivative-form
+failure is exactly zero). Closing the last ten percent at $4\%$, the factor of three at $6\%$ and the
+factor of five at $\gamma=5$ therefore needs enclosures an order of magnitude tighter in the last thirty stages --- a finer
+enclosure grid, at four times the cost per rate --- before the bracket can be covered with cells.
+That is the state of the live route: not a proof, but a measured distance from one, at every step
+of which the loss has a name.
+
+\subsubsection*{Uniqueness up to a tolerance: the mesh of rate cells}\label{sec:mesh}
+
+The pairwise certificate of Section~\ref{sec:enclcert} extends in principle to a bracket: partition
+it into cells of width $h$, enclose the stage consumption over each \emph{cell} rather than at a
+rate, certify the increment between every two cells at least $m$ apart, and any two equilibrium
+rates are then within $mh$ of each other. The cell enclosure is the same recursion with the two
+rates at the ends of the cell placed where they hurt: cash on hand $m$ at $R_a$ in the lower test
+and at $R_b$ in the upper, $\beta R_b$ in $\Psi^{\mathrm{lo}}$ and $\beta R_a$ in
+$\Psi^{\mathrm{hi}}$, since $\Psi_R(m_R-c)$ is monotone in $R$ through both; each fixed-rate
+instance is again Theorem~\ref{thm:intervaleuler}. Between cells $i<j$ the failure bound uses the
+gap $\Delta r_{\min}=R_{a,j}-R_{b,i}$ and the budget $D(R_{b,i}-1)-D(R_{a,j}-1)$
+(\texttt{numerics/rational/enclmesh.py}).
+
+It does not work at any useful width, and the reason is instructive. At $\gamma=3$ over
+$[4\%,5\%]$ in ten cells of $0.1$ percentage points, every pair fails: the accumulated bound is
+$B\in[4.6,6.5]$ against budgets of at most $0.25$, and $B$ falls only from $5.9$ to $4.6$ as the
+gap grows from one cell to seven. The cell enclosures are $0.14$ wide at stage $20$ and $0.36$ at
+the newborn stage on $a\le10$, against $2.5\times10^{-4}$ and $0.09$ for an enclosure at a single
+rate, while the true spread of consumption across a cell is at most $|\partial_rc|\,h\le0.02$
+(\texttt{numerics/dcdr.m}: $\partial_rc\in[-1.8,+20]$ on the reach, about half of $a$ at the top).
+The cell enclosure is twenty to seventy times the truth because it prices the budget rate and the
+Euler rate at opposite ends of the cell: the wealth effect through $m$ and the substitution and
+human-wealth effects through $\Psi$ are large and of opposite sign, and only their sum is small.
+Since $B$ is dominated by the young ages at low wealth, where the $-\Delta r\,a$ term buys nothing,
+$B$ scales like $7{,}000h$ against a budget of $36\,\Delta r$, so a pair certifies only when the gap
+exceeds about $190$ cells: a cluster of $0.2$ percentage points would need cells of
+$10^{-5}$, two thousand of them over $[4\%,6\%]$, about forty hours. The route is not wrong, only
+expensive, and the expense is exactly the derivative information the cell enclosure throws away.
+Carrying a Lipschitz bound in the rate instead --- a point enclosure transported by a certified
+$|\partial_rc|$ --- would cut the cell widths to the true spread, but that bound is the weighted
+recursion of Section~\ref{sec:finite}, which on its own already gives $E'>0$; the mesh is
+superseded by it.
+
+

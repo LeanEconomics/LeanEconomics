@@ -99,7 +99,7 @@ def enc_c(lo, hi, zp, ap, want_low, R=None, corner=None):
     """rigorous bound on c_k(ap, zp) from the grid enclosures, by monotonicity and concavity, and
     by the certified corner region [0, astar_lo] where c = m exactly."""
     if ap <= 0: ap = 0
-    if corner is not None and ap <= corner[zp]:
+    if corner is not None and ap < corner[zp]:          # certified for a < corner (corner 0: nothing)
         return m_of(R, zp, ap, not want_low)
     i = bisect.bisect_right(grid, ap) - 1
     if i >= NA - 1:                                            # beyond the grid: valid but loose
@@ -107,8 +107,8 @@ def enc_c(lo, hi, zp, ap, want_low, R=None, corner=None):
     a0, a1 = grid[i], grid[i+1]
     if want_low:
         l0, l1 = lo[zp][i], lo[zp][i+1]
-        if corner is not None and a0 < corner[zp] < ap:        # chord from the certified kink
-            a0 = corner[zp]; l0 = m_of(R, zp, a0, False)
+        if corner is not None and a0 < corner[zp] - 1 and corner[zp] <= ap:   # chord from the last certified point
+            a0 = corner[zp] - 1; l0 = m_of(R, zp, a0, False)
         if l1 >= l0: return l0 + dn((ap - a0) * (l1 - l0), a1 - a0)
         return min(l0, l1)
     else:
@@ -148,13 +148,13 @@ def float_candidates(lo, hi, R, corner=None):
     Pif = [[float(Pi[z][zp]) for zp in range(nz)] for z in range(nz)]
     def enc_f(zp, ap, want_low):
         ap = max(ap, 0.0)
-        if cf is not None and ap <= cf[zp]: return yf[zp] + Rf * ap
+        if cf is not None and ap < cf[zp]: return yf[zp] + Rf * ap
         i = bisect.bisect_right(gridf, ap) - 1
         if i >= NA - 1: return lof[zp][NA-1] if want_low else yf[zp] + Rf * ap
         a0, a1 = gridf[i], gridf[i+1]
         if want_low:
             l0, l1 = lof[zp][i], lof[zp][i+1]
-            if cf is not None and a0 < cf[zp] < ap: a0 = cf[zp]; l0 = yf[zp] + Rf * a0
+            if cf is not None and a0 < cf[zp] and cf[zp] <= ap: a0 = cf[zp]; l0 = yf[zp] + Rf * a0
             return l0 + (ap - a0) * (l1 - l0) / (a1 - a0) if l1 >= l0 else min(l0, l1)
         best = hif[zp][i+1]
         if i >= 1:
@@ -204,7 +204,8 @@ def step(lo, hi, R, corner=None):
     for z in range(nz):
         psi0_lo = psi(lo, hi, R, z, 0, True, corner); psi0_hi = psi(lo, hi, R, z, 0, False, corner)
         # corner certified for a <= astar: y_up + R a <= psi0_lo  (m_up(a) <= psi0_lo)
-        newcorner[z] = max(0, dn((psi0_lo - q2i(y[z], True)) * R.denominator, R.numerator) - 1)
+        yu = q2i(y[z], True)
+        newcorner[z] = dn((psi0_lo - yu) * R.denominator, R.numerator) + 1 if psi0_lo >= yu else 0
         for i in range(NA):
             m_dn = yz[z][0] + Ra[0][i]; m_up = yz[z][1] + Ra[1][i]
             # ----- lower bound: t <= Psi^lo(m - t) certifies t <= c*.  From a candidate t, the value

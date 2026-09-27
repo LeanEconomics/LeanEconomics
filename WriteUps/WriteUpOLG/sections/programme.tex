@@ -21,9 +21,17 @@ $\gamma=3$ that certificate is replayed inside Lean at the pair $4\%$, $4.6\%$
 (Theorem~\ref{thm:encllean}): the interval Euler step, the enclosure, cap slack and the envelope
 are proof terms, and the arithmetic is evaluated by \texttt{native\_decide}. What remains at
 $\mu\in\{3,5\}$ is therefore threefold: the replay at $\gamma=2$ and $5$, which is the same
-checker with the exponent changed; the passage from one pair to a bracket, which needs the
-increment for every pair and a grid that refines with the mesh; and an analytic argument, of
-which Appendix~\ref{app:routes} records four closed with quantified reasons.
+checker with the exponent changed; the passage from one pair to a bracket, for which
+Section~\ref{sec:mesh} measures what a mesh of rate cells delivers; and an analytic argument, of
+which Appendix~\ref{app:routes} records four closed with quantified reasons. Section~\ref{sec:finite}
+adds the one live route: the increment in \emph{derivative} form, which has no grid slack. On the
+true policies its weighted recursion bounds the slope of supply four to ten times above the slope
+of demand at $\gamma\in\{3,5\}$ and survives one-percent ingredient errors; the certified version
+on the present enclosures comes within ten percent of $E'>0$ at $4\%$ and a factor of three at $6\%$,
+the rest being the width of the enclosures in the last thirty stages. Tighter enclosures there, then
+a mesh of cells, would give uniqueness --- at $\mu=5$ included, where Theorem 1 itself is false. Finiteness on its own is Theorem~\ref{thm:finite}: piecewise analyticity
+in the rate, which the model has and the formalisation does not yet, reduces it to the same slope
+bound.
 
 \subsection{Routes that are closed}
 

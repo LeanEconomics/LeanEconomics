@@ -1,73 +1,73 @@
-stage  1: max width on a<=10  R1 1.602e-09  R2 1.630e-09   fallbacks 0+0        4s
-stage  2: max width on a<=10  R1 2.441e-06  R2 2.422e-06   fallbacks 0+0       10s
-stage  3: max width on a<=10  R1 5.011e-05  R2 3.989e-05   fallbacks 0+0       17s
-stage  4: max width on a<=10  R1 7.553e-05  R2 5.680e-05   fallbacks 0+0       24s
-stage  5: max width on a<=10  R1 9.251e-05  R2 3.409e-05   fallbacks 0+0       31s
-stage  6: max width on a<=10  R1 8.747e-05  R2 4.941e-05   fallbacks 0+0       38s
-stage  7: max width on a<=10  R1 8.135e-05  R2 3.935e-05   fallbacks 0+0       44s
-stage  8: max width on a<=10  R1 7.712e-05  R2 3.588e-05   fallbacks 0+0       51s
-stage  9: max width on a<=10  R1 7.364e-05  R2 4.654e-05   fallbacks 0+0       57s
-stage 10: max width on a<=10  R1 7.059e-05  R2 5.514e-05   fallbacks 0+0       64s
-stage 11: max width on a<=10  R1 7.335e-05  R2 5.283e-05   fallbacks 0+0       70s
-stage 12: max width on a<=10  R1 7.462e-05  R2 5.498e-05   fallbacks 0+0       76s
-stage 13: max width on a<=10  R1 7.434e-05  R2 6.806e-05   fallbacks 0+0       83s
-stage 14: max width on a<=10  R1 8.138e-05  R2 7.732e-05   fallbacks 0+0       89s
-stage 15: max width on a<=10  R1 9.074e-05  R2 9.018e-05   fallbacks 0+0       95s
-stage 16: max width on a<=10  R1 1.066e-04  R2 1.109e-04   fallbacks 0+0      101s
-stage 17: max width on a<=10  R1 1.244e-04  R2 1.298e-04   fallbacks 0+0      108s
-stage 18: max width on a<=10  R1 1.550e-04  R2 1.511e-04   fallbacks 0+0      114s
-stage 19: max width on a<=10  R1 1.906e-04  R2 1.901e-04   fallbacks 0+0      120s
-stage 20: max width on a<=10  R1 2.183e-04  R2 2.230e-04   fallbacks 0+0      126s
-stage 21: max width on a<=10  R1 2.604e-04  R2 2.691e-04   fallbacks 0+0      133s
-stage 22: max width on a<=10  R1 3.533e-04  R2 3.302e-04   fallbacks 0+0      139s
-stage 23: max width on a<=10  R1 4.249e-04  R2 4.192e-04   fallbacks 0+0      145s
-stage 24: max width on a<=10  R1 4.927e-04  R2 5.214e-04   fallbacks 0+0      151s
-stage 25: max width on a<=10  R1 5.673e-04  R2 6.255e-04   fallbacks 0+0      158s
-stage 26: max width on a<=10  R1 7.305e-04  R2 7.577e-04   fallbacks 0+0      164s
-stage 27: max width on a<=10  R1 9.646e-04  R2 8.954e-04   fallbacks 0+0      170s
-stage 28: max width on a<=10  R1 1.229e-03  R2 1.110e-03   fallbacks 0+0      177s
-stage 29: max width on a<=10  R1 1.481e-03  R2 1.445e-03   fallbacks 0+0      185s
-stage 30: max width on a<=10  R1 1.762e-03  R2 1.824e-03   fallbacks 0+0      191s
-stage 31: max width on a<=10  R1 2.078e-03  R2 2.260e-03   fallbacks 0+0      199s
-stage 32: max width on a<=10  R1 2.435e-03  R2 2.796e-03   fallbacks 0+0      205s
-stage 33: max width on a<=10  R1 2.879e-03  R2 3.512e-03   fallbacks 0+0      211s
-stage 34: max width on a<=10  R1 3.703e-03  R2 4.300e-03   fallbacks 0+0      217s
-stage 35: max width on a<=10  R1 4.772e-03  R2 5.154e-03   fallbacks 0+0      224s
-stage 36: max width on a<=10  R1 6.033e-03  R2 6.496e-03   fallbacks 0+0      230s
-stage 37: max width on a<=10  R1 7.828e-03  R2 7.799e-03   fallbacks 0+0      237s
-stage 38: max width on a<=10  R1 9.673e-03  R2 9.892e-03   fallbacks 0+0      247s
-stage 39: max width on a<=10  R1 1.144e-02  R2 1.173e-02   fallbacks 0+0      255s
-stage 40: max width on a<=10  R1 1.367e-02  R2 1.407e-02   fallbacks 0+0      261s
-stage 41: max width on a<=10  R1 1.615e-02  R2 1.633e-02   fallbacks 0+0      273s
-stage 42: max width on a<=10  R1 1.865e-02  R2 1.911e-02   fallbacks 0+0      285s
-stage 43: max width on a<=10  R1 2.061e-02  R2 2.223e-02   fallbacks 0+0      293s
-stage 44: max width on a<=10  R1 2.191e-02  R2 2.564e-02   fallbacks 0+0      299s
-stage 45: max width on a<=10  R1 2.325e-02  R2 2.889e-02   fallbacks 0+0      307s
-stage 46: max width on a<=10  R1 2.568e-02  R2 3.223e-02   fallbacks 0+0      314s
-stage 47: max width on a<=10  R1 2.861e-02  R2 3.561e-02   fallbacks 0+0      320s
-stage 48: max width on a<=10  R1 3.097e-02  R2 3.934e-02   fallbacks 0+0      327s
-stage 49: max width on a<=10  R1 3.438e-02  R2 4.333e-02   fallbacks 0+0      335s
-stage 50: max width on a<=10  R1 3.789e-02  R2 4.760e-02   fallbacks 0+0      341s
-stage 51: max width on a<=10  R1 4.098e-02  R2 5.266e-02   fallbacks 0+0      349s
-stage 52: max width on a<=10  R1 4.427e-02  R2 5.815e-02   fallbacks 0+0      356s
-stage 53: max width on a<=10  R1 4.854e-02  R2 6.364e-02   fallbacks 0+0      363s
-stage 54: max width on a<=10  R1 5.296e-02  R2 6.935e-02   fallbacks 0+0      369s
-stage 55: max width on a<=10  R1 5.679e-02  R2 7.517e-02   fallbacks 0+0      376s
-stage 56: max width on a<=10  R1 6.106e-02  R2 8.156e-02   fallbacks 0+0      382s
-stage 57: max width on a<=10  R1 6.508e-02  R2 8.810e-02   fallbacks 0+0      389s
-stage 58: max width on a<=10  R1 6.929e-02  R2 9.469e-02   fallbacks 0+0      395s
-stage 59: max width on a<=10  R1 7.363e-02  R2 1.012e-01   fallbacks 0+0      402s
-reach (max over the two economies) at ages 1,10,30,60: [0.0, 13.286697329810378, 40.98628294845956, 6.661220046897287]
-ebar_j (mean over ages) = 0.00295, max = 0.07049, ages with ebar>0: 60
-B = 0.05330   budget = 0.66964   ->  CERTIFIED   (402s)
-   age  1: ebar 0.00458
-   age  2: ebar 0.00436
-   age  5: ebar 0.00419
-   age 10: ebar 0.00293
-   age 20: ebar 0.00201
+stage  1: max width on a<=10  R1 1.602e-09  R2 1.630e-09   fallbacks 0+0       10s
+stage  2: max width on a<=10  R1 2.441e-06  R2 2.422e-06   fallbacks 0+0       27s
+stage  3: max width on a<=10  R1 5.011e-05  R2 3.989e-05   fallbacks 0+0       40s
+stage  4: max width on a<=10  R1 7.878e-05  R2 5.680e-05   fallbacks 0+0       58s
+stage  5: max width on a<=10  R1 9.064e-05  R2 3.409e-05   fallbacks 0+0       76s
+stage  6: max width on a<=10  R1 8.183e-05  R2 4.941e-05   fallbacks 0+0       92s
+stage  7: max width on a<=10  R1 7.608e-05  R2 5.420e-05   fallbacks 0+0      112s
+stage  8: max width on a<=10  R1 8.070e-05  R2 6.233e-05   fallbacks 0+0      125s
+stage  9: max width on a<=10  R1 7.279e-05  R2 6.176e-05   fallbacks 0+0      141s
+stage 10: max width on a<=10  R1 7.370e-05  R2 6.071e-05   fallbacks 0+0      152s
+stage 11: max width on a<=10  R1 7.830e-05  R2 5.755e-05   fallbacks 0+0      163s
+stage 12: max width on a<=10  R1 8.120e-05  R2 6.080e-05   fallbacks 0+0      174s
+stage 13: max width on a<=10  R1 9.061e-05  R2 6.806e-05   fallbacks 0+0      186s
+stage 14: max width on a<=10  R1 9.439e-05  R2 7.732e-05   fallbacks 0+0      196s
+stage 15: max width on a<=10  R1 1.063e-04  R2 9.018e-05   fallbacks 0+0      203s
+stage 16: max width on a<=10  R1 1.253e-04  R2 1.109e-04   fallbacks 0+0      210s
+stage 17: max width on a<=10  R1 1.414e-04  R2 1.298e-04   fallbacks 0+0      218s
+stage 18: max width on a<=10  R1 1.550e-04  R2 1.511e-04   fallbacks 0+0      232s
+stage 19: max width on a<=10  R1 1.906e-04  R2 1.901e-04   fallbacks 0+0      247s
+stage 20: max width on a<=10  R1 2.393e-04  R2 2.230e-04   fallbacks 0+0      262s
+stage 21: max width on a<=10  R1 2.993e-04  R2 2.691e-04   fallbacks 0+0      273s
+stage 22: max width on a<=10  R1 3.533e-04  R2 3.302e-04   fallbacks 0+0      284s
+stage 23: max width on a<=10  R1 4.249e-04  R2 4.192e-04   fallbacks 0+0      300s
+stage 24: max width on a<=10  R1 4.927e-04  R2 5.214e-04   fallbacks 0+0      321s
+stage 25: max width on a<=10  R1 5.673e-04  R2 6.255e-04   fallbacks 0+0      342s
+stage 26: max width on a<=10  R1 7.305e-04  R2 7.577e-04   fallbacks 0+0      361s
+stage 27: max width on a<=10  R1 9.646e-04  R2 8.954e-04   fallbacks 0+0      376s
+stage 28: max width on a<=10  R1 1.229e-03  R2 1.110e-03   fallbacks 0+0      394s
+stage 29: max width on a<=10  R1 1.481e-03  R2 1.445e-03   fallbacks 0+0      415s
+stage 30: max width on a<=10  R1 1.762e-03  R2 1.824e-03   fallbacks 0+0      431s
+stage 31: max width on a<=10  R1 2.078e-03  R2 2.260e-03   fallbacks 0+0      441s
+stage 32: max width on a<=10  R1 2.435e-03  R2 2.796e-03   fallbacks 0+0      452s
+stage 33: max width on a<=10  R1 2.879e-03  R2 3.512e-03   fallbacks 0+0      466s
+stage 34: max width on a<=10  R1 3.703e-03  R2 4.300e-03   fallbacks 0+0      484s
+stage 35: max width on a<=10  R1 4.772e-03  R2 5.154e-03   fallbacks 0+0      504s
+stage 36: max width on a<=10  R1 6.033e-03  R2 6.496e-03   fallbacks 0+0      523s
+stage 37: max width on a<=10  R1 7.828e-03  R2 7.799e-03   fallbacks 0+0      541s
+stage 38: max width on a<=10  R1 9.673e-03  R2 9.892e-03   fallbacks 0+0      556s
+stage 39: max width on a<=10  R1 1.144e-02  R2 1.173e-02   fallbacks 0+0      576s
+stage 40: max width on a<=10  R1 1.367e-02  R2 1.407e-02   fallbacks 0+0      595s
+stage 41: max width on a<=10  R1 1.615e-02  R2 1.633e-02   fallbacks 0+0      613s
+stage 42: max width on a<=10  R1 1.865e-02  R2 1.911e-02   fallbacks 0+0      625s
+stage 43: max width on a<=10  R1 2.061e-02  R2 2.223e-02   fallbacks 0+0      635s
+stage 44: max width on a<=10  R1 2.191e-02  R2 2.564e-02   fallbacks 0+0      651s
+stage 45: max width on a<=10  R1 2.325e-02  R2 2.889e-02   fallbacks 0+0      672s
+stage 46: max width on a<=10  R1 2.568e-02  R2 3.223e-02   fallbacks 0+0      689s
+stage 47: max width on a<=10  R1 2.861e-02  R2 3.561e-02   fallbacks 0+0      709s
+stage 48: max width on a<=10  R1 3.097e-02  R2 3.934e-02   fallbacks 0+0      723s
+stage 49: max width on a<=10  R1 3.438e-02  R2 4.333e-02   fallbacks 0+0      737s
+stage 50: max width on a<=10  R1 3.789e-02  R2 4.760e-02   fallbacks 0+0      748s
+stage 51: max width on a<=10  R1 4.098e-02  R2 5.266e-02   fallbacks 0+0      759s
+stage 52: max width on a<=10  R1 4.427e-02  R2 5.815e-02   fallbacks 0+0      769s
+stage 53: max width on a<=10  R1 4.854e-02  R2 6.364e-02   fallbacks 0+0      779s
+stage 54: max width on a<=10  R1 5.296e-02  R2 6.935e-02   fallbacks 0+0      788s
+stage 55: max width on a<=10  R1 5.679e-02  R2 7.517e-02   fallbacks 0+0      797s
+stage 56: max width on a<=10  R1 6.106e-02  R2 8.156e-02   fallbacks 0+0      807s
+stage 57: max width on a<=10  R1 6.508e-02  R2 8.810e-02   fallbacks 0+0      815s
+stage 58: max width on a<=10  R1 6.929e-02  R2 9.469e-02   fallbacks 0+0      822s
+stage 59: max width on a<=10  R1 7.363e-02  R2 1.012e-01   fallbacks 0+0      829s
+reach (max over the two economies) at ages 1,10,30,60: [0.0, 14.872994915382312, 42.41078970319991, 6.757687839853076]
+ebar_j (mean over ages) = 0.00299, max = 0.07120, ages with ebar>0: 60
+B = 0.05488   budget = 0.66964   ->  CERTIFIED   (829s)
+   age  1: ebar 0.00469
+   age  2: ebar 0.00495
+   age  5: ebar 0.00428
+   age 10: ebar 0.00302
+   age 20: ebar 0.00202
    age 30: ebar 0.00163
    age 40: ebar 0.00125
    age 50: ebar 0.00063
    age 59: ebar 0.00069
-   age 60: ebar 0.07049
+   age 60: ebar 0.07120
 EXIT 0
