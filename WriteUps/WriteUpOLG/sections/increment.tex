@@ -658,8 +658,10 @@ $B=0.0176$ against the budget $D(4\%)-D(4.6\%)=0.2232$, a margin of $12.7\times$
 \formal{EnclCert.increment\_of\_enclCheck, EnclCert.olg7\_increment}
 \end{theorem}
 
-The theorem depends on \texttt{Lean.ofReduceBool}, the axiom behind \texttt{native\_decide}, in
-addition to the three axioms of classical Mathlib; everything else in it is checked by the kernel.
+The theorem depends on one axiom introduced by \texttt{native\_decide} to stand for the compiled
+evaluation of \lean{enclCheckOf} (\texttt{\#print axioms} lists it beside the three axioms of
+classical Mathlib, and lists only those three for \lean{increment\_of\_enclCheck}); everything
+else in it is checked by the kernel.
 That is a different trust from a proof term --- it trusts the compiler and the interpreter's
 natural-number arithmetic --- and a different one from the Python certificate, which trusted a
 program that was never proved to check what it claimed. The interval Euler step, the enclosure
