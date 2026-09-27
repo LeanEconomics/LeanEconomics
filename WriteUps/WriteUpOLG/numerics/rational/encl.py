@@ -131,6 +131,9 @@ def psi(lo, hi, R, z, ap, want_low, corner=None):
         p = Pi[z][zp]
         S += up(v * p.numerator, p.denominator) if want_low else dn(v * p.numerator, p.denominator)
     S = up(S * bR.numerator, bR.denominator) if want_low else dn(S * bR.numerator, bR.denominator)
+    if S <= 0:                                             # only possible when rounding down (Psi^hi)
+        assert not want_low
+        return 10**6 * D                                   # +infinity for our purposes: c <= m anyway
     return root_neg3(S, hi=not want_low)                   # Psi^lo rounded down, Psi^hi rounded up
 
 def float_candidates(lo, hi, R, corner=None):

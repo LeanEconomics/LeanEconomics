@@ -508,7 +508,63 @@ argument fails from $\gamma\approx1.5$ on. The log case is closed; the rest is n
 It has since been superseded at $\mu=1$. Theorem~\ref{thm:lightind} proves Theorem 1 at every state
 and age for $\gamma\le1$ at every calibration, by Light's induction on the stage values, with no
 computation; the certificate remains as the record of the increment route, which is the only one
-that says anything above $\gamma=1$, and Proposition~\ref{prop:sharpmom} says how far it can go. The certificate is
+that says anything above $\gamma=1$, and Proposition~\ref{prop:sharpmom} says how far its two-rate
+estimate can go. The route itself goes further, with the estimate replaced by an enclosure.
+
+\subsubsection*{The enclosure certificate: $\mu=2,3,5$}\label{sec:enclcert}
+
+For $\gamma\le3.4$ the mass-weighted failure of Theorem 1 is exactly zero, and at $\gamma=5$ it is
+$0.003$ per age against a budget of $0.670$, so the increment route needs only a \emph{rigorous}
+bound on the failure of order $0.01$, and Appendix~\ref{app:routes} records that no primitive ceiling
+on consumption supplies one. A rigorous enclosure of the two policies does
+(\texttt{numerics/rational/encl.py}). It is the endogenous-grid recursion carried in integers over
+$10^{15}$ with every operation rounded outward. The stage-$k+1$ consumption at $(a,z)$ with
+$m=y_z+Ra$ is $m$ where $\Psi_k(0)\ge m$ and otherwise the unique solution of $c=\Psi_k(m-c)$,
+$\Psi_k(a')=\bigl[\beta R\sum_{z'}\pi(z,z')\,c_k(a',z')^{-\gamma}\bigr]^{-1/\gamma}$ (the two Euler
+inequalities, Theorems~\ref{thm:sandwich}'s ingredients); $\Psi_k$ is increasing in $a'$ and in
+$c_k$, so bracketing $c_k$ brackets $\Psi_k$, and since $c\mapsto\Psi(m-c)-c$ is strictly decreasing,
+$c_L\le\Psi^{\mathrm{lo}}(m-c_L)$ certifies $c_L\le c^*$ and $c_H\ge\Psi^{\mathrm{hi}}(m-c_H)$
+certifies $c_H\ge c^*$ --- one rigorous evaluation each, from a floating-point candidate. Between grid
+points the enclosure is closed by monotonicity and concavity of consumption in wealth
+(\lean{stageConsumption\_mono}, \lean{concaveOn\_stageConsumption}): the chord from below, the
+left and right secants from above; and the corner region, where $c=m$ exactly, is certified from
+$\Psi^{\mathrm{lo}}(0)$ at each stage and state. The grid has $1896$ points and reaches $3000$,
+far above the reach of any cohort, because looseness beyond the grid's top creeps inward by a factor
+$1/R$ per stage. The failure at age $j$ and state $z$ is then bounded over grid intervals in the
+cohort's rigorous reach by $\max_i\bigl(\overline c_2(a_{i+1})-\underline c_1(a_i)-\Delta r\,a_i\bigr)^+$,
+weighted by the invariant law, and run through the envelope of Theorem~\ref{thm:envelope} with the
+Lipschitz constants of Theorem~\ref{thm:cohortlip} from a rigorous upper bound on $\Thorn$.
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+$\gamma$ & $2$ & $3$ & $5$\\
+\midrule
+mean failure bound $\bar e_j$ per age & $0.0016$ & $0.0015$ & $0.0030$\\
+accumulated $B$ & $0.0066$ & $0.0086$ & $0.0533$\\
+budget $D(r_1)-D(r_2)$ & $0.670$ & $0.670$ & $0.670$\\
+margin & $102\times$ & $77\times$ & $12.6\times$\\
+enclosure width, newborn stage, $a\le10$ & $0.07$ & $0.09$ & $0.10$\\
+run time & $365$ s & $356$ s & $402$ s\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All three are certified. At $\gamma=2$ and $3$ the per-age bound of $0.0003$ is entirely the
+grid-interval slack at the corner states; at $\gamma=5$ the bound rises to $0.0046$ at the newborn
+age, where Theorem 1 genuinely fails in the top earnings states, and the envelope absorbs it with a
+margin of twelve. The enclosure widths grow by about a fifth per stage from the twentieth stage
+on --- the power-mean amplification of the two-rate chain, now acting on widths rather than on a
+proof --- and reach a tenth of a unit of consumption at the newborn stage, which is harmless because
+the failure bound is dominated at those wealth levels by $-\Delta r\,a$.
+
+What that establishes: at the rational calibration, over $r\in[4\%,6\%]$, at $\gamma\in\{2,3,5\}$
+--- Aiyagari's $\mu=3$ and $\mu=5$ --- capital supply falls more slowly than demand, so the
+stationary equilibrium is unique: a theorem with one computational hypothesis discharged by
+certificate, the standing the logarithmic case had before Theorem~\ref{thm:lightind}. The Lean
+piece it rests on and which is not yet written is the soundness of the interval Euler step above
+against \lean{stage\_euler\_le} and \lean{stage\_euler\_ge}; everything downstream of the failure
+bound is formalised. The certificate is
 \texttt{numerics/rational/cert.py}, with the calibration in \texttt{inputs.py}. Numerics: \texttt{cestep.m}, \texttt{damp.m},
 \texttt{nearfar.m}, \texttt{lyap.m}, \texttt{varbnd.m}, \texttt{varmpc.m}, \texttt{varmax.m},
 \texttt{slopestate.m}, \texttt{tworeg.m}, \texttt{polymax.m}, \texttt{bandb.m}, \texttt{vertcert.m},
