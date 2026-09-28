@@ -1,4 +1,4 @@
 gamma 3, cells [(0.04, 0.04)], grid 1896 (x4 in the derivative pass), D = 1e15
-cell 0 [0.04000,0.04000]: enclosure 468s (widths a<=10 at stage 59: 7.03e-02); derivative recursion 1851s: B_d = 43.0743  |D'| = 39.06  -> not certified; ebar by age 1/2/5/10/30/59/60: 1.0906 1.5455 4.8157 5.9659 0.2323 0.0001 0.0000
-total 2319s
+cell 0 [0.04000,0.04000]: enclosure 2109s (widths a<=10 at stage 59: 2.14e-02); derivative recursion 5080s: B_d = 6.0010  |D'| = 39.06  -> E' > 0 CERTIFIED on the cell; ebar by age 1/2/5/10/30/59/60: 0.4336 0.4506 0.5230 0.3763 0.2299 0.0001 0.0000
+total 7189s
 EXIT 0

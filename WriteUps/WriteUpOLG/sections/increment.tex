@@ -772,32 +772,41 @@ $[a_i,a_{i+1}]$ the consumption lies between the enclosure at its ends, the savi
 $m(a_i)-\overline c(a_i)$ and $m(a_{i+1})-\underline c(a_{i+1})$ (saving is monotone), tomorrow's
 consumption in the enclosure at the ends of that range, each weight between its two extreme values,
 $\Psi_x$ in $[0,(\sum w)R]$, and the bound on $\partial_rc_k$ over the range the largest on the grid
-intervals it meets; the corner and the interval straddling it take $\partial_rc=a$ as well. Each grid
-interval is split four ways for the derivative pass, since the spread of consumption across an
-interval enters the weights to the power $\gamma+1$. The result, $\gamma=3$:
+intervals it meets. The interior formula needs the Euler equality, so it is used only where the
+saving is positive on the whole interval ($m(a_i)-\overline c(a_i)>0$, monotone saving); on every
+other interval, and on the certified corner, $\partial_rc=a$ is covered as well.
+
+The first run of it missed. At $\gamma=3$ and $4\%$ the bound was $43$ against the $39$ needed, at
+$6\%$ $83$ against $29$, and at $\gamma=5$ $188$ against $39$, the failure landing at ages five to ten
+where the true derivative-form failure is exactly zero. The recursion was not at fault --- with exact
+ingredients it gives $4$ --- the enclosures were: their widths were $10^{-4}$ up to the twenty-fifth
+stage and then grew by a seventh per stage to $0.07$ at the newborn stage, and a perturbation of that
+size in the weights of a sixty-stage linear recursion compounds to a factor of three. The growth had
+a cause and a fix. The certificate's candidate for each fixed point was computed on the midpoint of
+the enclosure, so the one-step certified refinement landed a fraction $\Psi_x$ of the width short of
+the certified fixed point at every stage; computing the candidates for the lower and upper fixed
+points on their own sides removes the loss, and cuts the newborn-stage width from $0.07$ to $0.02$
+--- the width the Lean checker, which bisects, had all along. What remains is interpolation slack of
+order $c''h^2$ per stage, accumulated over a fifty-stage transient (raising the grid top a hundredfold
+changes nothing), and a grid four times finer cuts it sixteenfold, to $0.002$. With that:
 
 \begin{center}
 \begin{tabular}{lrrrl}
 \toprule
-$r$ & $B_d$ (bound on $-S'$) & $|D'(r)|$ & failure by age $1/5/10/30$ & \\
+$r$, grid & $B_d$ (bound on $-S'$) & $|D'(r)|$ & failure by age $1/5/10/30$ & \\
 \midrule
-$4\%$ & $43.1$ & $39.1$ & $1.1/4.8/6.0/0.2$ & not certified, by $10\%$\\
-$6\%$ & $83.1$ & $28.7$ & $1.5/7.5/12.6/0.3$ & not certified\\
-$4\%$, $\gamma=5$ & $187.9$ & $39.1$ & $2.5/16.4/33.6/0.6$ & not certified\\
+$4\%$, $1\%$ steps & $6.0$ & $39.1$ & $0.43/0.52/0.38/0.23$ & certified, $6.5\times$\\
+$4\%$, $0.25\%$ steps & $5.2$ & $39.1$ & $0.37/0.36/0.34/0.23$ & certified, $7.5\times$\\
+$6\%$, $0.25\%$ steps & $7.4$ & $28.7$ & $0.44/0.42/0.41/0.28$ & certified, $3.9\times$\\
+$4\%$, $\gamma=5$, $0.25\%$ steps & $12.8$ & $39.1$ & $0.83/0.85/0.78/0.60$ & certified, $3.0\times$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The gap is not the recursion --- with exact ingredients it gives $-4$ --- but the
-enclosures: their widths are $10^{-4}$ up to the twenty-fifth stage and then grow by a seventh per
-stage to $0.07$ at the newborn stage, which is two to seven percent of consumption at low wealth, and
-a perturbation of that size in the weights of a sixty-stage linear recursion compounds to a factor of
-three by the young ages, where the failure lands (ages five to ten, where the true derivative-form
-failure is exactly zero). Closing the last ten percent at $4\%$, the factor of three at $6\%$ and the
-factor of five at $\gamma=5$ therefore needs enclosures an order of magnitude tighter in the last thirty stages --- a finer
-enclosure grid, at four times the cost per rate --- before the bracket can be covered with cells.
-That is the state of the live route: not a proof, but a measured distance from one, at every step
-of which the loss has a name.
+So $E'>0$ is certified at $4\%$ and at $6\%$ for $\gamma=3$, and at $4\%$ for $\gamma=5$, by exact rational arithmetic on the
+enclosures, with the interval Euler step, monotone saving, the propensity floor and the envelope as
+the theorems behind each line. What it does not yet give is $E'>0$ \emph{between} the two rates,
+which is what uniqueness on the bracket needs. XXCELLSXX
 
 \subsubsection*{Uniqueness up to a tolerance: the mesh of rate cells}\label{sec:mesh}
 

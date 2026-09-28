@@ -76,11 +76,12 @@ mbar = sum(nu[i]*raw[i] for i in range(nz)); y = [r/mbar for r in raw]
 def Dem(r): return alpha/((1-alpha)*(r+delta))
 
 # ------------------------------------------------------------------ grid (integers over D)
-AMAX = 3000     # far above the reach: looseness beyond the grid top creeps inward by 1/R per stage
+AMAX = int(os.environ.get('ENCL_AMAX', '3000'))   # grid top; looseness beyond it creeps inward by ~1/R per stage
+STEP_NUM, STEP_DEN = (10025, 10000) if os.environ.get('ENCL_FINE') else (101, 100)   # relative step above 3
 grid = [i * (D // 400) for i in range(0, 1201)]         # 0 .. 3 step 0.0025
 a = grid[-1]
 while a < AMAX * D:
-    a = up(a * 101, 100); grid.append(a)
+    a = up(a * STEP_NUM, STEP_DEN); grid.append(a)
 NA = len(grid)
 gridf = [g / D for g in grid]
 
@@ -135,7 +136,7 @@ def psi(lo, hi, RR, z, ap, want_low, corner=None):
         return 10**6 * D                                   # +infinity for our purposes: c <= m anyway
     return root_neg3(S, hi=not want_low)                   # Psi^lo rounded down, Psi^hi rounded up
 
-def float_candidates(lo, hi, RR, corner=None):
+def float_candidates(lo, hi, RR, corner=None, side='mid'):
     R = (RR[0] + RR[1]) / 2
     """float Newton on the MIDPOINT of the rigorous enclosure logic (same chord/secant/corner
     rules as enc_c, in floats), so the candidate sits within ~1e-12 of the rigorous fixed point."""
@@ -164,7 +165,8 @@ def float_candidates(lo, hi, RR, corner=None):
         s = 0.0
         for zp in range(nz):
             if Pif[z][zp] == 0.0: continue
-            c = 0.5 * (enc_f(zp, ap, True) + enc_f(zp, ap, False))
+            c = (enc_f(zp, ap, True) if side == 'lo' else enc_f(zp, ap, False) if side == 'hi'
+                 else 0.5 * (enc_f(zp, ap, True) + enc_f(zp, ap, False)))
             s += Pif[z][zp] * c ** (-gam)
         return (bR * s) ** (-1.0/gam)
     out = [[None]*NA for _ in range(nz)]
@@ -194,7 +196,7 @@ def step(lo, hi, RR, corner=None):
     """one rigorous stage step for the whole rate cell RR = (Ra, Rb): cash on hand m_dn at Ra and m_up at Rb,
     Psi^lo at Rb, Psi^hi at Ra; the enclosure holds for c_k(a, z; R) at every R in the cell."""
     Ra, Rb = RR
-    cand = float_candidates(lo, hi, RR, corner)
+    cand_lo = float_candidates(lo, hi, RR, corner, 'lo'); cand_hi = float_candidates(lo, hi, RR, corner, 'hi')
     newcorner = [0]*nz
     nlo = [[0]*NA for _ in range(nz)]; nhi = [[0]*NA for _ in range(nz)]
     Rg = [q2i(Ra * F(g, D), False) for g in grid], [q2i(Rb * F(g, D), True) for g in grid]
@@ -212,7 +214,7 @@ def step(lo, hi, RR, corner=None):
             if psi0_lo >= m_up:
                 cL = m_dn                                        # certified corner
             else:
-                cs = cand[z][i] if cand[z][i] is not None else m_dn / D
+                cs = cand_lo[z][i] if cand_lo[z][i] is not None else m_dn / D
                 t = int(cs * (1 - 1e-10) * D)
                 if t >= m_dn: t = m_dn - 1
                 if t <= 0: t = 1
@@ -234,7 +236,7 @@ def step(lo, hi, RR, corner=None):
             if psi0_hi >= m_dn:
                 cH = m_up
             else:
-                cs = cand[z][i] if cand[z][i] is not None else m_up / D
+                cs = cand_hi[z][i] if cand_hi[z][i] is not None else m_up / D
                 t = int(cs * (1 + 1e-10) * D) + 1
                 cH = None
                 for _ in range(6):
@@ -279,7 +281,7 @@ def run_cell(args):
     RR = (Ra, Rb)
     t0 = time.time()
     import pickle
-    cache = f"cache_g{gam}_{Ra.numerator}_{Ra.denominator}_{Rb.numerator}_{Rb.denominator}.pkl"
+    cache = f"cache_{os.environ.get('ENCL_FINE','')}g{gam}_{Ra.numerator}_{Ra.denominator}_{Rb.numerator}_{Rb.denominator}.pkl"
     if os.path.exists(cache):
         with open(cache, "rb") as fh:
             L, r, widths = pickle.load(fh)
@@ -310,6 +312,81 @@ def run_cell(args):
     return ic, L, r, widths, time.time() - t0
 
 NS = int(sys.argv[5]) if len(sys.argv) > 5 else 1      # sub-intervals per grid interval in the derivative pass
+MU = len(sys.argv) > 6 and sys.argv[6] == 'mu'         # carry the recursion in marginal utility
+CRUDE = False                                          # set by the bootstrap for its first, robust pass
+
+
+def stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid, ai, y_dn, y_up, crude=False, cap_by_m=False, kap=None):
+    """one stage of the interval derivative recursion: bounds (Un, Ln) on dc_{k+1}/dr on every grid
+    interval, and the failure En, from the stage-k data (lo_k, hi_k, cor_k, U, Lw) and the stage-(k+1)
+    consumption data (lo1, hi1, cor1).  With cap_by_m the stage-(k+1) consumption is bounded only by the
+    propensity floor and cash on hand (no enclosure needed), for a first pass whose result seeds the
+    transported enclosure."""
+    global CRUDE
+    RR = (Ra, Rb); gF = F(gam); NI = len(fgrid) - 1
+    CRUDE_saved = CRUDE; CRUDE = crude
+    Un = [[None]*NI for _ in range(nz)]; Ln = [[None]*NI for _ in range(nz)]; En = [[None]*NI for _ in range(nz)]
+    for z in range(nz):
+        for i in range(NI):
+            a_lo, a_hi = ai[i], ai[i+1]
+            if cor1 is not None and fgrid[i+1] <= cor1[z]:           # whole interval in the corner region
+                Un[z][i] = a_hi; Ln[z][i] = a_lo; En[z][i] = F(0); continue
+            m_dn_i = y_dn[z] + q2i(Ra * F(fgrid[i], D), False)
+            m_up_i1 = y_up[z] + q2i(Rb * F(fgrid[i+1], D), True)
+            if cap_by_m:                                                  # c in [kappa m, m]: no enclosure needed
+                m_dn_i1 = y_dn[z] + q2i(Ra * F(fgrid[i+1], D), False)
+                cl_i = dn(kap[k+1] * m_dn_i, D); ch_i = y_up[z] + q2i(Rb * F(fgrid[i], D), True)
+                cl_i1 = dn(kap[k+1] * m_dn_i1, D); ch_i1 = m_up_i1
+            else:
+                cl_i = enc_c(lo1, hi1, z, fgrid[i], True, RR, cor1); ch_i = enc_c(lo1, hi1, z, fgrid[i], False, RR, cor1)
+                cl_i1 = enc_c(lo1, hi1, z, fgrid[i+1], True, RR, cor1); ch_i1 = enc_c(lo1, hi1, z, fgrid[i+1], False, RR, cor1)
+            c_lo = F(cl_i, D); c_hi = F(ch_i1, D)
+            x_lo = max(0, m_dn_i - ch_i); x_hi = max(0, m_up_i1 - cl_i1)
+            i1 = bisect.bisect_right(fgrid, x_lo) - 1; i2 = bisect.bisect_right(fgrid, x_hi) - 1
+            i1 = min(max(i1, 0), NI-1); i2 = min(max(i2, 0), NI-1)
+            if x_hi >= grid[NA-1]:                                       # saving beyond the grid top
+                if fgrid[i] <= reach[J-k-2]:
+                    raise RuntimeError(f"saving range leaves the grid: stage {k+1}, z {z}, a_i {fgrid[i]/D:.3f}")
+                Un[z][i] = None; Ln[z][i] = None; En[z][i] = None; continue
+            vup = -c_lo / (gF * Rb); vlo = -c_hi / (gF * Ra); Wsum = F(0); bad = False
+            Wlo_cr = F(0); Ucr = None; Lcr = None
+            for zp in range(nz):
+                p = Pi[z][zp]
+                if p == 0: continue
+                ck_lo = F(enc_c(lo_k, hi_k, zp, x_lo, True, RR, cor_k), D)
+                ck_hi = F(enc_c(lo_k, hi_k, zp, x_hi, False, RR, cor_k), D)
+                if ck_lo <= 0:                                             # no information there (transport fallback)
+                    if fgrid[i] <= reach[J-k-2]:
+                        raise RuntimeError(f"zero lower bound inside the reach: stage {k+1}, z {z}, a_i {fgrid[i]/D:.3f}")
+                    bad = True; break
+                w_lo = beta * Ra * p * c_lo**(gam+1) / ck_hi**(gam+1)
+                w_hi = beta * Rb * p * c_hi**(gam+1) / ck_lo**(gam+1)
+                Wsum += w_hi
+                seg = U[zp][i1:i2+1]; segL = Lw[zp][i1:i2+1]
+                if None in seg:
+                    if fgrid[i] <= reach[J-k-2]:
+                        raise RuntimeError(f"derivative bound read outside its validity: stage {k+1}, z {z}, a_i {grid[i]/D:.3f}")
+                    bad = True; break
+                Umax = max(seg); Lmin = min(segL)
+                vup += (w_hi * Umax if Umax >= 0 else w_lo * Umax)
+                vlo += (w_lo * Lmin if Lmin >= 0 else w_hi * Lmin)
+                Wlo_cr += w_lo
+                Ucr = Umax if Ucr is None else max(Ucr, Umax); Lcr = Lmin if Lcr is None else min(Lcr, Lmin)
+            if bad:
+                Un[z][i] = None; Ln[z][i] = None; En[z][i] = None; continue
+            if CRUDE:                                                  # A max U instead of the weighted sum
+                vup = -c_lo / (gF * Rb) + Wsum * max(Ucr, 0) + Wlo_cr * min(Ucr, 0)
+                vlo = -c_hi / (gF * Ra) + Wsum * min(Lcr, 0) + Wlo_cr * max(Lcr, 0)
+            Pmax = Wsum * Rb                                           # Psi_x in [0, (sum w) R]
+            u = max(vup, (vup + Pmax * a_hi) / (1 + Pmax))
+            l = min(vlo, (vlo + Pmax * a_lo) / (1 + Pmax))
+            if x_lo <= 0 or (cor1 is not None and fgrid[i] < cor1[z]):  # possibly constrained: dc/dr = a there
+                u = max(u, a_hi); l = min(l, a_lo)
+            u = F(up(u.numerator * D, u.denominator), D)               # outward rounding keeps the
+            l = F(dn(l.numerator * D, l.denominator), D)               # denominators bounded
+            Un[z][i] = u; Ln[z][i] = l; En[z][i] = max(F(0), u - a_lo)
+    CRUDE = CRUDE_saved
+    return Un, Ln, En
 
 def deriv_bound(L, reach, Ra, Rb):
     """the rigorous derivative recursion on (sub)intervals of the grid; returns (B_d, ebar list)."""
@@ -331,56 +408,13 @@ def deriv_bound(L, reach, Ra, Rb):
     Lw = [[ai[i] for i in range(NI)] for _ in range(nz)]
     E = [None] * J                                                # E[k+1][z][i] = failure bound on interval i
     E[0] = [[F(0)] * NI for _ in range(nz)]
+    UL = [(U, Lw)]                                                # per-stage derivative bounds, for transport
     y_dn = [q2i(v, False) for v in y]; y_up = [q2i(v, True) for v in y]
     for k in range(0, J-1):
         lo_k, hi_k, cor_k = L[k]; lo1, hi1, cor1 = L[k+1]
-        Un = [[None]*NI for _ in range(nz)]; Ln = [[None]*NI for _ in range(nz)]; En = [[None]*NI for _ in range(nz)]
-        for z in range(nz):
-            for i in range(NI):
-                a_lo, a_hi = ai[i], ai[i+1]
-                if cor1 is not None and fgrid[i+1] <= cor1[z]:           # whole interval in the corner region
-                    Un[z][i] = a_hi; Ln[z][i] = a_lo; En[z][i] = F(0); continue
-                cl_i = enc_c(lo1, hi1, z, fgrid[i], True, RR, cor1); ch_i = enc_c(lo1, hi1, z, fgrid[i], False, RR, cor1)
-                cl_i1 = enc_c(lo1, hi1, z, fgrid[i+1], True, RR, cor1); ch_i1 = enc_c(lo1, hi1, z, fgrid[i+1], False, RR, cor1)
-                c_lo = F(cl_i, D); c_hi = F(ch_i1, D)
-                m_dn_i = y_dn[z] + q2i(Ra * F(fgrid[i], D), False)
-                m_up_i1 = y_up[z] + q2i(Rb * F(fgrid[i+1], D), True)
-                x_lo = max(0, m_dn_i - ch_i); x_hi = max(0, m_up_i1 - cl_i1)
-                i1 = bisect.bisect_right(fgrid, x_lo) - 1; i2 = bisect.bisect_right(fgrid, x_hi) - 1
-                i1 = min(max(i1, 0), NI-1); i2 = min(max(i2, 0), NI-1)
-                if x_hi >= grid[NA-1]:                                       # saving beyond the grid top
-                    if fgrid[i] <= reach[J-k-2]:
-                        raise RuntimeError(f"saving range leaves the grid: stage {k+1}, z {z}, a_i {fgrid[i]/D:.3f}")
-                    Un[z][i] = None; Ln[z][i] = None; En[z][i] = None; continue
-                vup = -c_lo / (gF * Rb); vlo = -c_hi / (gF * Ra); Wsum = F(0); bad = False
-                for zp in range(nz):
-                    p = Pi[z][zp]
-                    if p == 0: continue
-                    ck_lo = F(enc_c(lo_k, hi_k, zp, x_lo, True, RR, cor_k), D)
-                    ck_hi = F(enc_c(lo_k, hi_k, zp, x_hi, False, RR, cor_k), D)
-                    assert ck_lo > 0
-                    w_lo = beta * Ra * p * c_lo**(gam+1) / ck_hi**(gam+1)
-                    w_hi = beta * Rb * p * c_hi**(gam+1) / ck_lo**(gam+1)
-                    Wsum += w_hi
-                    seg = U[zp][i1:i2+1]; segL = Lw[zp][i1:i2+1]
-                    if None in seg:
-                        if fgrid[i] <= reach[J-k-2]:
-                            raise RuntimeError(f"derivative bound read outside its validity: stage {k+1}, z {z}, a_i {grid[i]/D:.3f}")
-                        bad = True; break
-                    Umax = max(seg); Lmin = min(segL)
-                    vup += (w_hi * Umax if Umax >= 0 else w_lo * Umax)
-                    vlo += (w_lo * Lmin if Lmin >= 0 else w_hi * Lmin)
-                if bad:
-                    Un[z][i] = None; Ln[z][i] = None; En[z][i] = None; continue
-                Pmax = Wsum * Rb                                           # Psi_x in [0, (sum w) R]
-                u = max(vup, (vup + Pmax * a_hi) / (1 + Pmax))
-                l = min(vlo, (vlo + Pmax * a_lo) / (1 + Pmax))
-                if cor1 is not None and fgrid[i] < cor1[z]:                # interval straddles the corner
-                    u = max(u, a_hi); l = min(l, a_lo)
-                u = F(up(u.numerator * D, u.denominator), D)               # outward rounding keeps the
-                l = F(dn(l.numerator * D, l.denominator), D)               # denominators bounded
-                Un[z][i] = u; Ln[z][i] = l; En[z][i] = max(F(0), u - a_lo)
+        Un, Ln, En = stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid, ai, y_dn, y_up, CRUDE)
         U, Lw = Un, Ln; E[k+1] = En
+        UL.append((Un, Ln))
     # failure by age (age j has stage J-j), maximised over the reach, nu-weighted
     ebar = []
     for j in range(1, J+1):
@@ -401,23 +435,303 @@ def deriv_bound(L, reach, Ra, Rb):
         if j < J:
             Lj = (1 - F(kap[J-j], D)) * Rb
             e = Lj * e + ebar[j-1]
+    return total / J, ebar, UL, fgrid
+
+
+def deriv_bound_mu(L, reach, Ra, Rb):
+    """The same recursion carried in MARGINAL UTILITY.  With mu = c^{-g} and D_k = d mu_k / dr,
+        D_{k+1} = [ c^{-g}/R - g c^{-g-1} Psi_x a + beta R sum_z' pi D_k(x, z') ] / (1 + Psi_x),
+    the propagation weights are the exact beta R pi(z,z') -- no power of consumption -- so enclosure
+    error enters only the source term (additively) and the max of D_k over the saving range.  The
+    consumption derivative is dc/dr = -D c^{g+1}/g, converted once per stage for the failure bound.
+    Psi_x = sum w d_x c_k lies in [kappa_k R sum w_lo, R sum w_hi] by the propensity floor
+    (stageMPC_mul_le_stageConsumption_sub) and monotone saving."""
+    RR = (Ra, Rb)
+    gF = F(gam)
+    fgrid = []
+    for i in range(NA - 1):
+        for t in range(NS):
+            fgrid.append(grid[i] + (grid[i+1] - grid[i]) * t // NS)
+    fgrid.append(grid[NA-1])
+    NF = len(fgrid); NI = NF - 1
+    ai = [F(g, D) for g in fgrid]
+    y_dn = [q2i(v, False) for v in y]; y_up = [q2i(v, True) for v in y]
+    kap = kappa_lower(Ra)
+    def rnd_hi(v): return F(up(v.numerator * D, v.denominator), D)
+    def rnd_lo(v): return F(dn(v.numerator * D, v.denominator), D)
+    def corner_D(z, i):
+        m_lo = F(y_dn[z] + q2i(Ra * F(fgrid[i], D), False), D); m_hi = F(y_up[z] + q2i(Rb * F(fgrid[i+1], D), True), D)
+        return (-gF * ai[i+1] / m_lo**(gam+1), -gF * ai[i] / m_hi**(gam+1))      # (lo, hi)
+    Dhi = [[None]*NI for _ in range(nz)]; Dlo = [[None]*NI for _ in range(nz)]
+    for z in range(nz):
+        for i in range(NI):
+            l, h = corner_D(z, i); Dlo[z][i] = rnd_lo(l); Dhi[z][i] = rnd_hi(h)
+    E = [None] * J
+    E[0] = [[F(0)] * NI for _ in range(nz)]
+    for k in range(0, J-1):
+        lo_k, hi_k, cor_k = L[k]; lo1, hi1, cor1 = L[k+1]
+        s_lo = F(kap[k], D) * Ra; s_hi = Rb
+        Dhn = [[None]*NI for _ in range(nz)]; Dln = [[None]*NI for _ in range(nz)]; En = [[None]*NI for _ in range(nz)]
+        for z in range(nz):
+            for i in range(NI):
+                a_lo, a_hi = ai[i], ai[i+1]
+                if cor1 is not None and fgrid[i+1] <= cor1[z]:
+                    l, h = corner_D(z, i); Dln[z][i] = rnd_lo(l); Dhn[z][i] = rnd_hi(h); En[z][i] = F(0); continue
+                cl_i = enc_c(lo1, hi1, z, fgrid[i], True, RR, cor1); ch_i = enc_c(lo1, hi1, z, fgrid[i], False, RR, cor1)
+                cl_i1 = enc_c(lo1, hi1, z, fgrid[i+1], True, RR, cor1); ch_i1 = enc_c(lo1, hi1, z, fgrid[i+1], False, RR, cor1)
+                c_lo = F(cl_i, D); c_hi = F(ch_i1, D)
+                m_dn_i = y_dn[z] + q2i(Ra * F(fgrid[i], D), False)
+                m_up_i1 = y_up[z] + q2i(Rb * F(fgrid[i+1], D), True)
+                x_lo = max(0, m_dn_i - ch_i); x_hi = max(0, m_up_i1 - cl_i1)
+                if x_hi >= grid[NA-1]:
+                    if fgrid[i] <= reach[J-k-2]:
+                        raise RuntimeError(f"saving range leaves the grid: stage {k+1}, z {z}, a_i {fgrid[i]/D:.3f}")
+                    Dhn[z][i] = None; Dln[z][i] = None; En[z][i] = None; continue
+                i1 = bisect.bisect_right(fgrid, x_lo) - 1; i2 = bisect.bisect_right(fgrid, x_hi) - 1
+                i1 = min(max(i1, 0), NI-1); i2 = min(max(i2, 0), NI-1)
+                Wlo = F(0); Whi = F(0); Phi = F(0); Plo = F(0); bad = False
+                for zp in range(nz):
+                    p = Pi[z][zp]
+                    if p == 0: continue
+                    ck_lo = F(enc_c(lo_k, hi_k, zp, x_lo, True, RR, cor_k), D)
+                    ck_hi = F(enc_c(lo_k, hi_k, zp, x_hi, False, RR, cor_k), D)
+                    assert ck_lo > 0
+                    Wlo += beta * Ra * p * c_lo**(gam+1) / ck_hi**(gam+1)
+                    Whi += beta * Rb * p * c_hi**(gam+1) / ck_lo**(gam+1)
+                    segh = Dhi[zp][i1:i2+1]; segl = Dlo[zp][i1:i2+1]
+                    if None in segh or None in segl:
+                        if fgrid[i] <= reach[J-k-2]:
+                            raise RuntimeError(f"derivative bound read outside its validity: stage {k+1}, z {z}, a_i {fgrid[i]/D:.3f}")
+                        bad = True; break
+                    dh = max(segh); dl = min(segl)
+                    Phi += beta * (Rb if dh > 0 else Ra) * p * dh
+                    Plo += beta * (Ra if dl > 0 else Rb) * p * dl
+                if bad:
+                    Dhn[z][i] = None; Dln[z][i] = None; En[z][i] = None; continue
+                Ps_lo = s_lo * Wlo; Ps_hi = s_hi * Whi
+                S_hi = c_lo**(-gam) / Ra - gF * Ps_lo * a_lo / c_hi**(gam+1)
+                S_lo = c_hi**(-gam) / Rb - gF * Ps_hi * a_hi / c_lo**(gam+1)
+                N_hi = S_hi + Phi; N_lo = S_lo + Plo
+                dhi = N_hi / (1 + Ps_lo) if N_hi > 0 else N_hi / (1 + Ps_hi)
+                dlo = N_lo / (1 + Ps_hi) if N_lo > 0 else N_lo / (1 + Ps_lo)
+                if cor1 is not None and fgrid[i] < cor1[z]:
+                    l, h = corner_D(z, i); dlo = min(dlo, l); dhi = max(dhi, h)
+                dhi = rnd_hi(dhi); dlo = rnd_lo(dlo)
+                dcdr_hi = (-dlo) * (c_hi**(gam+1) if dlo < 0 else c_lo**(gam+1)) / gF
+                Dhn[z][i] = dhi; Dln[z][i] = dlo; En[z][i] = max(F(0), dcdr_hi - a_lo)
+        Dhi, Dlo = Dhn, Dln; E[k+1] = En
+    ebar = []
+    for j in range(1, J+1):
+        k1 = J - j
+        tot = F(0)
+        for z in range(nz):
+            V = F(0)
+            for i in range(NI):
+                if fgrid[i] > reach[j-1]: break
+                assert E[k1][z][i] is not None
+                if E[k1][z][i] > V: V = E[k1][z][i]
+            tot += nu[z] * V
+        ebar.append(tot)
+    e = F(0); total = F(0)
+    for j in range(1, J+1):
+        total += e
+        if j < J:
+            Lj = (1 - F(kap[J-j], D)) * Rb
+            e = Lj * e + ebar[j-1]
     return total / J, ebar
+
+
+def transport(L0, UL, half, corner_cell):
+    """cell enclosure from the point enclosure L0 at the cell's midpoint and a bound |dc_k/dr| <= U on
+    the cell: c(a; r) = c(a; r0) + int dc/dr, so [lo - U h/2, hi + U h/2] holds for every r in the cell.
+    U at a grid point is the larger bound on the two grid intervals meeting it (the derivative pass runs
+    on the grid itself here, NS = 1)."""
+    out = []
+    for k in range(J):
+        lo0, hi0, _ = L0[k]
+        Un, Ln = UL[k]
+        NI = len(Un[0])
+        lo = []; hi = []
+        for z in range(nz):
+            lz = array('q', lo0[z]); hz = array('q', hi0[z])
+            for i in range(NA):
+                cands = []
+                for ii in (i-1, i):
+                    if 0 <= ii < NI and Un[z][ii] is not None and Ln[z][ii] is not None:
+                        cands.append(max(abs(Un[z][ii]), abs(Ln[z][ii])))
+                if not cands:
+                    lz[i] = 0; hz[i] = q2i(y[z] + F(4, 1) * F(grid[i], D), True)   # no bound: c <= m, loose but valid
+                    continue
+                Ub = max(cands) * half
+                d = up(Ub.numerator * D, Ub.denominator)
+                lz[i] = max(0, lo0[z][i] - d); hz[i] = hi0[z][i] + d
+            lo.append(lz); hi.append(hz)
+        out.append((lo, hi, corner_cell[k]))
+    return out
+
+def cell_bootstrap(ic, Ra, Rb, rounds=3):
+    """certify E' > 0 on the cell [Ra, Rb] by bootstrapping the transport."""
+    global CRUDE
+    h = Rb - Ra; R0 = (Ra + Rb) / 2
+    t0 = time.time()
+    _, C0, reach0, w0, _ = run_cell((ic, Ra, Rb))                  # crude cell enclosure (valid on the cell)
+    _, L0, reachP, wP, _ = run_cell((ic, R0, R0))                  # tight point enclosure at the midpoint
+    print(f"cell {ic} [{float(Ra-1):.5f},{float(Rb-1):.5f}]: crude cell widths at stage 59 {w0[58]:.2e}, point {wP[58]:.2e}; enclosures {time.time()-t0:.0f}s", flush=True)
+    corner_cell = [C0[k][2] for k in range(J)]
+    CRUDE = True
+    Bd, ebar, UL, fgrid = deriv_bound(C0, reach0, Ra, Rb)
+    CRUDE = False
+    print(f"  crude pass on the cell enclosure: B_d = {float(Bd):.2f}; {time.time()-t0:.0f}s", flush=True)
+    Dp = alpha / ((1 - alpha) * (Rb - 1 + delta)**2)
+    for it in range(rounds):
+        C = transport(L0, UL, h / 2, corner_cell)
+        w = max(C[59][1][z][i] - C[59][0][z][i] for z in range(nz) for i in range(NA) if grid[i] <= 10*D) / D
+        Bd, ebar, UL, fgrid = deriv_bound(C, reach0, Ra, Rb)
+        print(f"  round {it+1}: transported widths at stage 59 (a<=10) {w:.2e}; B_d = {float(Bd):.3f} vs |D'| = {float(Dp):.2f} -> {'CERTIFIED' if Bd < Dp else 'not yet'}; ebar 1/5/10/30: " + " ".join(f"{float(ebar[j-1]):.4f}" for j in (1,5,10,30)) + f"; {time.time()-t0:.0f}s", flush=True)
+        if Bd < Dp: break
+    return ic, bool(Bd < Dp), float(Bd), float(Dp)
+
+
+def transport_stage(L0k, Un, Ln, h2, RR):
+    """the enclosure at every grid point over the cell from the point enclosure at its midpoint and the
+    derivative bounds on the two grid intervals meeting the point: c(a; r) = c(a; r0) + int dc/dr."""
+    lo0, hi0, _ = L0k
+    NI = len(Un[0])
+    lo = []; hi = []
+    for z in range(nz):
+        lz = array('q', lo0[z]); hz = array('q', hi0[z])
+        for i in range(NA):
+            cands = [max(abs(Un[z][ii]), abs(Ln[z][ii])) for ii in (i-1, i)
+                     if 0 <= ii < NI and Un[z][ii] is not None and Ln[z][ii] is not None]
+            if not cands:
+                lz[i] = 0; hz[i] = q2i(y[z] + RR[1] * F(grid[i], D), True)          # c <= m: loose, valid
+                continue
+            d = (max(cands) * h2); d = up(d.numerator * D, d.denominator)
+            m_up = q2i(y[z] + RR[1] * F(grid[i], D), True)
+            lz[i] = max(0, lo0[z][i] - d); hz[i] = min(hi0[z][i] + d, m_up)
+        lo.append(lz); hi.append(hz)
+    return lo, hi
+
+def deriv_bound_transport(L0, reachP, Ra, Rb, C0=None):
+    """E' > 0 on the cell [Ra, Rb] from the point enclosure L0 at its midpoint: at each stage the
+    derivative bound over the cell is seeded by the propensity floor (phase A), the cell enclosure of the
+    stage is the point enclosure transported by that seed, and the bound is recomputed on it (phase B)."""
+    assert NS == 1
+    RR = (Ra, Rb); h2 = (Rb - Ra) / 2
+    fgrid = list(grid); NI = NA - 1
+    ai = [F(g, D) for g in grid]
+    y_dn = [q2i(v, False) for v in y]; y_up = [q2i(v, True) for v in y]
+    kap = kappa_lower(Ra)
+    # the terminal stage over the cell: c = m exactly
+    lo0 = [array('q', [y_dn[z] + q2i(Ra * F(g, D), False) for g in grid]) for z in range(nz)]
+    hi0 = [array('q', [y_up[z] + q2i(Rb * F(g, D), True) for g in grid]) for z in range(nz)]
+    C = [(lo0, hi0, None)]
+    U = [[ai[i+1] for i in range(NI)] for _ in range(nz)]
+    Lw = [[ai[i] for i in range(NI)] for _ in range(nz)]
+    E = [[[F(0)] * NI for _ in range(nz)]]
+    reach_proxy = [r + D for r in reachP]                          # provisional: the cell's reach is checked after
+    t0 = time.time()
+    for k in range(0, J-1):
+        lo_k, hi_k, cor_k = C[k]
+        if C0 is not None:                                             # seed: the crude cell enclosure's stage k+1
+            UnA, LnA, _ = stage_pass(lo_k, hi_k, cor_k, C0[k+1][0], C0[k+1][1], C0[k+1][2], U, Lw, k, reach_proxy, Ra, Rb, fgrid, ai, y_dn, y_up)
+        else:
+            UnA, LnA, _ = stage_pass(lo_k, hi_k, cor_k, None, None, None, U, Lw, k, reach_proxy, Ra, Rb, fgrid, ai, y_dn, y_up, crude=True, cap_by_m=True, kap=kap)
+        # the cell's certified corner at stage k+1: y_up + Rb a <= Psi^lo(0) from the stage-k cell data
+        cor1 = []
+        for z in range(nz):
+            p0 = psi(lo_k, hi_k, RR, z, 0, True, cor_k)
+            cor1.append(dn((p0 - y_up[z]) * Rb.denominator, Rb.numerator) + 1 if p0 >= y_up[z] else 0)
+        lo1, hi1 = transport_stage(L0[k+1], UnA, LnA, h2, RR)
+        Un, Ln, En = stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach_proxy, Ra, Rb, fgrid, ai, y_dn, y_up)
+        lo1, hi1 = transport_stage(L0[k+1], Un, Ln, h2, RR)
+        C.append((lo1, hi1, cor1)); U, Lw = Un, Ln; E.append(En)
+        if k % 10 == 9:
+            w = max(hi1[z][i] - lo1[z][i] for z in range(nz) for i in range(NA) if grid[i] <= 10*D) / D
+            print(f"    stage {k+1}: cell widths on a<=10 {w:.2e}; {time.time()-t0:.0f}s", flush=True)
+    # the reach over the cell, from the transported enclosures
+    r = [0]
+    for j in range(1, J):
+        kk = J - j; lo_, hi_, cc_ = C[kk]
+        best = 0
+        for z in range(nz):
+            g = q2i(y[z] + Rb * F(r[-1], D), True) - enc_c(lo_, hi_, z, r[-1], True, RR, cc_)
+            best = max(best, g)
+        r.append(max(best, 0))
+    ebar = []
+    for j in range(1, J+1):
+        k1 = J - j
+        tot = F(0)
+        for z in range(nz):
+            V = F(0)
+            for i in range(NI):
+                if grid[i] > r[j-1]: break
+                if E[k1][z][i] is None:
+                    raise RuntimeError(f"no derivative bound inside the cell's reach: age {j}, z {z}, a {grid[i]/D:.3f}")
+                if E[k1][z][i] > V: V = E[k1][z][i]
+            tot += nu[z] * V
+        ebar.append(tot)
+    e = F(0); total = F(0)
+    for j in range(1, J+1):
+        total += e
+        if j < J:
+            Lj = (1 - F(kap[J-j], D)) * Rb
+            e = Lj * e + ebar[j-1]
+    return total / J, ebar, r
+
+def cell_certify(ic, Ra, Rb):
+    R0 = (Ra + Rb) / 2
+    t0 = time.time()
+    _, L0, reachP, wP, dt = run_cell((ic, R0, R0))
+    _, C0, reach0, w0, dt0 = run_cell((ic, Ra, Rb))                  # crude cell enclosure, the seed
+    Bd, ebar, rc = deriv_bound_transport(L0, reachP, Ra, Rb, C0)
+    Dp = alpha / ((1 - alpha) * (Rb - 1 + delta)**2)
+    print(f"cell {ic} [{float(Ra-1):.5f},{float(Rb-1):.5f}]: point enclosure {dt:.0f}s (width at stage 59 {wP[58]:.2e}); B_d = {float(Bd):.3f} vs |D'| = {float(Dp):.2f} -> {'CERTIFIED' if Bd < Dp else 'NOT'}; ebar 1/2/5/10/30: " + " ".join(f"{float(ebar[j-1]):.4f}" for j in (1,2,5,10,30)) + f"; reach 10/30/60: {rc[9]/D:.1f} {rc[29]/D:.1f} {rc[59]/D:.1f}; {time.time()-t0:.0f}s", flush=True)
+    return ic, bool(Bd < Dp), float(Bd), float(Dp)
 
 def main():
     rlo, rhi, ncell = F(sys.argv[2]), F(sys.argv[3]), int(sys.argv[4])
+    if len(sys.argv) > 6 and sys.argv[6] == 'cells':
+        assert NS == 1
+        h = (rhi - rlo) / ncell
+        cells = [(i, 1 + rlo + i*h, 1 + rlo + (i+1)*h) for i in range(ncell)]
+        nproc = int(os.environ.get("ENCL_PROCS", "7"))
+        print(f"gamma {gam}, transported cells: {ncell} of width {float(h):.5f} on [{float(rlo):.4f},{float(rhi):.4f}], grid {NA}", flush=True)
+        t0 = time.time()
+        with Pool(min(nproc, len(cells))) as pool:
+            res = pool.starmap(cell_certify, cells)
+        allok = all(ok for _, ok, _, _ in res)
+        for ic, ok, Bd, Dp in sorted(res):
+            print(f"  cell {ic}: B_d = {Bd:.3f} vs {Dp:.2f} {'CERTIFIED' if ok else 'NOT'}", flush=True)
+        print(("ALL CELLS CERTIFIED: E' > 0 on the bracket" if allok else "NOT all cells certified") + f"; {time.time()-t0:.0f}s", flush=True)
+        return
+    if len(sys.argv) > 6 and sys.argv[6] == 'boot':
+        assert NS == 1, "the bootstrap transports on the grid itself"
+        h = (rhi - rlo) / ncell
+        cells = [(i, 1 + rlo + i*h, 1 + rlo + (i+1)*h) for i in range(ncell)]
+        nproc = int(os.environ.get("ENCL_PROCS", "7"))
+        print(f"gamma {gam}, bootstrap over {ncell} cells of width {float(h):.5f} on [{float(rlo):.4f},{float(rhi):.4f}], grid {NA}", flush=True)
+        t0 = time.time()
+        with Pool(min(nproc, len(cells))) as pool:
+            res = pool.starmap(cell_bootstrap, cells)
+        allok = all(ok for _, ok, _, _ in res)
+        for ic, ok, Bd, Dp in sorted(res):
+            print(f"  cell {ic}: B_d = {Bd:.3f} vs {Dp:.2f} {'CERTIFIED' if ok else 'NOT'}", flush=True)
+        print(("ALL CELLS CERTIFIED: E' > 0 on the bracket" if allok else "NOT all cells certified") + f"; {time.time()-t0:.0f}s", flush=True)
+        return
     if ncell == 0:
         cells = [(0, 1 + rlo, 1 + rlo)]
     else:
         h = (rhi - rlo) / ncell
         cells = [(i, 1 + rlo + i*h, 1 + rlo + (i+1)*h) for i in range(ncell)]
     nproc = int(os.environ.get("ENCL_PROCS", "7"))
-    print(f"gamma {gam}, cells {[(float(c[1]-1), float(c[2]-1)) for c in cells]}, grid {NA} (x{NS} in the derivative pass), D = 1e15", flush=True)
+    print(f"gamma {gam}, cells {[(float(c[1]-1), float(c[2]-1)) for c in cells]}, grid {NA} (x{NS} in the derivative pass{', marginal-utility form' if MU else ''}), D = 1e15", flush=True)
     t0 = time.time()
     with Pool(min(nproc, len(cells))) as pool:
         for ic, L, r, widths, dt in pool.imap_unordered(run_cell, cells):
             Ra, Rb = cells[ic][1], cells[ic][2]
             t1 = time.time()
-            Bd, ebar = deriv_bound(L, r, Ra, Rb)
+            out = (deriv_bound_mu if MU else deriv_bound)(L, r, Ra, Rb); Bd, ebar = out[0], out[1]
             Dp = alpha / ((1 - alpha) * (Rb - 1 + delta)**2)               # |D'| at the cell's top rate
             print(f"cell {ic} [{float(Ra-1):.5f},{float(Rb-1):.5f}]: enclosure {dt:.0f}s (widths a<=10 at stage 59: {widths[58]:.2e}); "
                   f"derivative recursion {time.time()-t1:.0f}s: B_d = {float(Bd):.4f}  |D'| = {float(Dp):.2f}  "

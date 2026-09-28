@@ -22,7 +22,7 @@ which must be below the budget D(r1) - D(r2).
 """
 from fractions import Fraction as F
 from math import comb
-import sys, time, bisect
+import sys, time, bisect, os
 
 D = 10**15
 def up(n, d):  return -((-n) // d)
@@ -82,11 +82,12 @@ budget = alpha/((1-alpha)*(R1-1+delta)) - alpha/((1-alpha)*(R2-1+delta))
 dr = R2 - R1
 
 # ------------------------------------------------------------------ grid (integers over D)
-AMAX = 3000     # far above the reach: looseness beyond the grid top creeps inward by 1/R per stage
+AMAX = int(os.environ.get('ENCL_AMAX', '3000'))   # grid top; looseness beyond it creeps inward by ~1/R per stage
+STEP_NUM, STEP_DEN = (10025, 10000) if os.environ.get('ENCL_FINE') else (101, 100)   # relative step above 3
 grid = [i * (D // 400) for i in range(0, 1201)]         # 0 .. 3 step 0.0025
 a = grid[-1]
 while a < AMAX * D:
-    a = up(a * 101, 100); grid.append(a)
+    a = up(a * STEP_NUM, STEP_DEN); grid.append(a)
 NA = len(grid)
 gridf = [g / D for g in grid]
 
@@ -139,7 +140,7 @@ def psi(lo, hi, R, z, ap, want_low, corner=None):
         return 10**6 * D                                   # +infinity for our purposes: c <= m anyway
     return root_neg3(S, hi=not want_low)                   # Psi^lo rounded down, Psi^hi rounded up
 
-def float_candidates(lo, hi, R, corner=None):
+def float_candidates(lo, hi, R, corner=None, side='mid'):
     """float Newton on the MIDPOINT of the rigorous enclosure logic (same chord/secant/corner
     rules as enc_c, in floats), so the candidate sits within ~1e-12 of the rigorous fixed point."""
     lof = [[v / D for v in row] for row in lo]; hif = [[v / D for v in row] for row in hi]
@@ -167,7 +168,8 @@ def float_candidates(lo, hi, R, corner=None):
         s = 0.0
         for zp in range(nz):
             if Pif[z][zp] == 0.0: continue
-            c = 0.5 * (enc_f(zp, ap, True) + enc_f(zp, ap, False))
+            c = (enc_f(zp, ap, True) if side == 'lo' else enc_f(zp, ap, False) if side == 'hi'
+                 else 0.5 * (enc_f(zp, ap, True) + enc_f(zp, ap, False)))
             s += Pif[z][zp] * c ** (-gam)
         return (bR * s) ** (-1.0/gam)
     out = [[None]*NA for _ in range(nz)]
@@ -195,7 +197,7 @@ def float_candidates(lo, hi, R, corner=None):
 
 def step(lo, hi, R, corner=None):
     """one rigorous stage step: from stage-k enclosures (+ certified corner) to stage k+1."""
-    cand = float_candidates(lo, hi, R, corner)
+    cand_lo = float_candidates(lo, hi, R, corner, 'lo'); cand_hi = float_candidates(lo, hi, R, corner, 'hi')
     newcorner = [0]*nz
     nlo = [[0]*NA for _ in range(nz)]; nhi = [[0]*NA for _ in range(nz)]
     Ra = [q2i(R * F(g, D), False) for g in grid], [q2i(R * F(g, D), True) for g in grid]
@@ -213,7 +215,7 @@ def step(lo, hi, R, corner=None):
             if psi0_lo >= m_up:
                 cL = m_dn                                        # certified corner
             else:
-                cs = cand[z][i] if cand[z][i] is not None else m_dn / D
+                cs = cand_lo[z][i] if cand_lo[z][i] is not None else m_dn / D
                 t = int(cs * (1 - 1e-10) * D)
                 if t >= m_dn: t = m_dn - 1
                 if t <= 0: t = 1
@@ -235,7 +237,7 @@ def step(lo, hi, R, corner=None):
             if psi0_hi >= m_dn:
                 cH = m_up
             else:
-                cs = cand[z][i] if cand[z][i] is not None else m_up / D
+                cs = cand_hi[z][i] if cand_hi[z][i] is not None else m_up / D
                 t = int(cs * (1 + 1e-10) * D) + 1
                 cH = None
                 for _ in range(6):
