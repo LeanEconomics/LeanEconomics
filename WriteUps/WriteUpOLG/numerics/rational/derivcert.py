@@ -282,7 +282,9 @@ def run_cell(args):
     t0 = time.time()
     import pickle
     cache = f"cache_{os.environ.get('ENCL_FINE','')}g{gam}_{Ra.numerator}_{Ra.denominator}_{Rb.numerator}_{Rb.denominator}.pkl"
-    if os.path.exists(cache):
+    if os.environ.get("ENCL_NOCACHE"):
+        cache = None
+    if cache is not None and os.path.exists(cache):
         with open(cache, "rb") as fh:
             L, r, widths = pickle.load(fh)
         return ic, L, r, widths, 0.0
@@ -307,8 +309,9 @@ def run_cell(args):
             g = q2i(y[z] + Rb * F(r[-1], D), True) - enc_c(lo_, hi_, z, r[-1], True, RR, cc_)
             best = max(best, g)
         r.append(max(best, 0))
-    with open(cache, "wb") as fh:
-        pickle.dump((L, r, widths), fh)
+    if cache is not None:
+        with open(cache, "wb") as fh:
+            pickle.dump((L, r, widths), fh)
     return ic, L, r, widths, time.time() - t0
 
 NS = int(sys.argv[5]) if len(sys.argv) > 5 else 1      # sub-intervals per grid interval in the derivative pass
@@ -341,6 +344,10 @@ def stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid
                 cl_i = enc_c(lo1, hi1, z, fgrid[i], True, RR, cor1); ch_i = enc_c(lo1, hi1, z, fgrid[i], False, RR, cor1)
                 cl_i1 = enc_c(lo1, hi1, z, fgrid[i+1], True, RR, cor1); ch_i1 = enc_c(lo1, hi1, z, fgrid[i+1], False, RR, cor1)
             c_lo = F(cl_i, D); c_hi = F(ch_i1, D)
+            if c_lo <= 0:                                                # no information on this stage's consumption here
+                if fgrid[i] <= reach[J-k-2]:
+                    raise RuntimeError(f"zero consumption bound inside the reach: stage {k+1}, z {z}, a_i {fgrid[i]/D:.3f}")
+                Un[z][i] = None; Ln[z][i] = None; En[z][i] = None; continue
             x_lo = max(0, m_dn_i - ch_i); x_hi = max(0, m_up_i1 - cl_i1)
             i1 = bisect.bisect_right(fgrid, x_lo) - 1; i2 = bisect.bisect_right(fgrid, x_hi) - 1
             i1 = min(max(i1, 0), NI-1); i2 = min(max(i2, 0), NI-1)
@@ -592,7 +599,7 @@ def cell_bootstrap(ic, Ra, Rb, rounds=3):
     return ic, bool(Bd < Dp), float(Bd), float(Dp)
 
 
-def transport_stage(L0k, Un, Ln, h2, RR):
+def transport_stage(L0k, Un, Ln, h2, RR, C0k=None):
     """the enclosure at every grid point over the cell from the point enclosure at its midpoint and the
     derivative bounds on the two grid intervals meeting the point: c(a; r) = c(a; r0) + int dc/dr."""
     lo0, hi0, _ = L0k
@@ -603,8 +610,11 @@ def transport_stage(L0k, Un, Ln, h2, RR):
         for i in range(NA):
             cands = [max(abs(Un[z][ii]), abs(Ln[z][ii])) for ii in (i-1, i)
                      if 0 <= ii < NI and Un[z][ii] is not None and Ln[z][ii] is not None]
-            if not cands:
-                lz[i] = 0; hz[i] = q2i(y[z] + RR[1] * F(grid[i], D), True)          # c <= m: loose, valid
+            if not cands:                                            # no assumption here: the crude cell
+                if C0k is not None:                                  # enclosure, valid without one
+                    lz[i] = C0k[0][z][i]; hz[i] = C0k[1][z][i]
+                else:
+                    lz[i] = 0; hz[i] = q2i(y[z] + RR[1] * F(grid[i], D), True)
                 continue
             d = (max(cands) * h2); d = up(d.numerator * D, d.denominator)
             m_up = q2i(y[z] + RR[1] * F(grid[i], D), True)
@@ -679,6 +689,140 @@ def deriv_bound_transport(L0, reachP, Ra, Rb, C0=None):
             e = Lj * e + ebar[j-1]
     return total / J, ebar, r
 
+
+def deriv_bound_fixed(L0, UL0, reachP, Ra, Rb, lam, C0=None):
+    """E' > 0 on the cell [Ra, Rb] with the transport FROZEN at lam times the midpoint's own derivative
+    bound and verified afterwards.  Assume |dc_k/dr| <= M_k := lam * U0_k on the cell; then the cell
+    enclosure is C_k = L0_k -+ M_k h/2, the derivative pass on the C_k gives U_k, and if U_k < M_k
+    strictly on every interval that carries an assumption, the assumption holds on the whole cell: the
+    set of rates at which every C_k holds is closed, contains the midpoint, and by the bound U_k < M_k
+    and continuity of c in r is open in the cell as well (a continuation argument).  No feedback."""
+    assert NS == 1
+    RR = (Ra, Rb); h2 = (Rb - Ra) / 2
+    fgrid = list(grid); NI = NA - 1
+    ai = [F(g, D) for g in grid]
+    y_dn = [q2i(v, False) for v in y]; y_up = [q2i(v, True) for v in y]
+    kap = kappa_lower(Ra)
+    lamF = F(lam); muF = F(MU_FLOOR)
+    def scaled(UL):
+        # M = lam * max(|U0|, |L0|, a_hi) + mu: the assumed bound covers the constrained case dc/dr = a on
+        # every interval (the cell pass may find saving non-positive where the point pass did not), and an
+        # absolute floor mu keeps tiny point bounds from failing the ratio test
+        Un, Ln = UL
+        Mu = [[None]*len(Un[0]) for _ in range(nz)]; Ml = [[None]*len(Un[0]) for _ in range(nz)]
+        for z in range(nz):
+            for i in range(len(Un[0])):
+                if Un[z][i] is None or Ln[z][i] is None: continue
+                if grid[i] > ASSUME_TOP * D: continue                  # no assumption far above the reach
+                m_ = lamF * max(abs(Un[z][i]), abs(Ln[z][i])) + muF          # the floor mu covers the
+                                                                             # near-corner intervals
+                Mu[z][i] = m_; Ml[z][i] = -m_
+        return Mu, Ml
+    M = [scaled(UL0[k]) for k in range(J)]
+    reach_proxy = [r + D for r in reachP]
+    t0 = time.time()
+    for rnd in range(6):
+        # the frozen cell enclosures and their corners
+        lo0 = [array('q', [y_dn[z] + q2i(Ra * F(g, D), False) for g in grid]) for z in range(nz)]
+        hi0 = [array('q', [y_up[z] + q2i(Rb * F(g, D), True) for g in grid]) for z in range(nz)]
+        C = [(lo0, hi0, None)]
+        for k in range(1, J):
+            lo_k, hi_k = transport_stage(L0[k], M[k][0], M[k][1], h2, RR, None if C0 is None else C0[k])
+            lo_p, hi_p, cor_p = C[k-1]
+            cor = []
+            for z in range(nz):
+                p0 = psi(lo_p, hi_p, RR, z, 0, True, cor_p)
+                cor.append(dn((p0 - y_up[z]) * Rb.denominator, Rb.numerator) + 1 if p0 >= y_up[z] else 0)
+            C.append((lo_k, hi_k, cor))
+        # the derivative pass on the frozen enclosures
+        U = [[ai[i+1] for i in range(NI)] for _ in range(nz)]
+        Lw = [[ai[i] for i in range(NI)] for _ in range(nz)]
+        E = [[[F(0)] * NI for _ in range(nz)]]
+        ULc = [(U, Lw)]
+        for k in range(0, J-1):
+            lo_k, hi_k, cor_k = C[k]; lo1, hi1, cor1 = C[k+1]
+            Un, Ln, En = stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach_proxy, Ra, Rb, fgrid, ai, y_dn, y_up)
+            U, Lw = Un, Ln; E.append(En); ULc.append((Un, Ln))
+        # verification: U < M wherever an assumption was made; drop assumptions the pass could not check
+        worst = F(0); nbad = 0; ndrop = 0
+        for k in range(1, J):
+            Mu, Ml = M[k]; Un, Ln = ULc[k]
+            # where the pass gives no bound the assumption is unverifiable: drop it, and with it every
+            # assumption at that stage from ten percent below (the zone creeps inward by four percent a
+            # round, so this converges in a couple of rounds instead of a dozen)
+            for z in range(nz):
+                for i in range(NI):
+                    if Mu[z][i] is None: continue
+                    if Un[z][i] is None:
+                        Mu[z][i] = None; Ml[z][i] = None; ndrop += 1; continue
+                    m_ = max(abs(Mu[z][i]), abs(Ml[z][i])); u_ = max(abs(Un[z][i]), abs(Ln[z][i]))
+                    if m_ == 0:
+                        if u_ > 0: nbad += 1
+                        continue
+                    ratio = u_ / m_
+                    if ratio >= 1:
+                        nbad += 1
+                        if nbad <= 5: print(f"      violation: stage {k}, z {z}, a {grid[i]/D:.4f}, U0-based M {float(m_):.4f}, cell U {float(u_):.4f}, cell L {float(Ln[z][i]):.4f}", flush=True)
+                    if ratio > worst: worst = ratio
+        print(f"    round {rnd+1}: max U/M = {float(worst):.3f}, violations {nbad}, assumptions dropped {ndrop}; {time.time()-t0:.0f}s", flush=True)
+        if nbad == 0 and ndrop == 0: break
+        if nbad > 0: return None, None, None, float(worst)
+    if nbad > 0 or ndrop > 0:
+        return None, None, None, float(worst)
+    # certified: the reach over the cell and the failure bound
+    r = [0]
+    for j in range(1, J):
+        kk = J - j; lo_, hi_, cc_ = C[kk]
+        best = 0
+        for z in range(nz):
+            g = q2i(y[z] + Rb * F(r[-1], D), True) - enc_c(lo_, hi_, z, r[-1], True, RR, cc_)
+            best = max(best, g)
+        r.append(max(best, 0))
+    ebar = []
+    for j in range(1, J+1):
+        k1 = J - j
+        tot = F(0)
+        for z in range(nz):
+            V = F(0)
+            for i in range(NI):
+                if grid[i] > r[j-1]: break
+                if E[k1][z][i] is None:
+                    raise RuntimeError(f"no derivative bound inside the cell's reach: age {j}, z {z}, a {grid[i]/D:.3f}")
+                if E[k1][z][i] > V: V = E[k1][z][i]
+            tot += nu[z] * V
+        ebar.append(tot)
+    e = F(0); total = F(0)
+    for j in range(1, J+1):
+        total += e
+        if j < J:
+            Lj = (1 - F(kap[J-j], D)) * Rb
+            e = Lj * e + ebar[j-1]
+    return total / J, ebar, r, float(worst)
+
+def _cell_star(c):
+    return cell_certify_fixed(*c)
+
+def cell_certify_fixed(ic, Ra, Rb):
+    R0 = (Ra + Rb) / 2
+    t0 = time.time()
+    _, L0, reachP, wP, dt = run_cell((ic, R0, R0))
+    _, C0, reach0, w0, dt0 = run_cell((ic, Ra, Rb))                  # crude cell enclosure: the fallback
+    Bd0, ebar0, UL0, _ = deriv_bound(L0, reachP, R0, R0)
+    Dp = alpha / ((1 - alpha) * (Rb - 1 + delta)**2)
+    print(f"cell {ic} [{float(Ra-1):.5f},{float(Rb-1):.5f}]: point enclosure {dt:.0f}s, point B_d = {float(Bd0):.3f}; {time.time()-t0:.0f}s", flush=True)
+    for lam in LAMS:
+        Bd, ebar, rc, worst = deriv_bound_fixed(L0, UL0, reachP, Ra, Rb, lam, C0)
+        if Bd is None:
+            print(f"  lambda {lam}: assumption not verified (max U/M {worst:.3f}); {time.time()-t0:.0f}s", flush=True)
+            continue
+        print(f"  lambda {lam}: verified (max U/M {worst:.3f}); B_d = {float(Bd):.3f} vs |D'| = {float(Dp):.2f} -> {'CERTIFIED' if Bd < Dp else 'NOT'}; ebar 1/2/5/10/30: " + " ".join(f"{float(ebar[j-1]):.4f}" for j in (1,2,5,10,30)) + f"; {time.time()-t0:.0f}s", flush=True)
+        return ic, bool(Bd < Dp), float(Bd), float(Dp)
+    return ic, False, float('inf'), float(Dp)
+
+LAMS = [int(v) for v in os.environ.get("ENCL_LAMS", "2,4,8").split(",")]
+MU_FLOOR = F(os.environ.get("ENCL_MU", "1/50"))
+ASSUME_TOP = int(os.environ.get("ENCL_ASSUME_TOP", "1500"))   # assumptions only below this wealth
+
 def cell_certify(ic, Ra, Rb):
     R0 = (Ra + Rb) / 2
     t0 = time.time()
@@ -691,6 +835,32 @@ def cell_certify(ic, Ra, Rb):
 
 def main():
     rlo, rhi, ncell = F(sys.argv[2]), F(sys.argv[3]), int(sys.argv[4])
+    if len(sys.argv) > 6 and sys.argv[6] == 'fixed':
+        assert NS == 1
+        h = (rhi - rlo) / ncell
+        cells = [(i, 1 + rlo + i*h, 1 + rlo + (i+1)*h) for i in range(ncell)]
+        nproc = int(os.environ.get("ENCL_PROCS", "7"))
+        print(f"gamma {gam}, frozen-transport cells: {ncell} of width {float(h):.5f} on [{float(rlo):.4f},{float(rhi):.4f}], grid {NA}, lambdas {LAMS}, mu {MU_FLOOR}", flush=True)
+        t0 = time.time()
+        resfile = os.environ.get("ENCL_RESULTS")                     # resumable: one line per finished cell
+        done = {}
+        if resfile and os.path.exists(resfile):
+            for line in open(resfile):
+                parts = line.split()
+                if len(parts) >= 4 and parts[0] == "cell":
+                    done[int(parts[1])] = parts[2] == "CERTIFIED"
+        todo = [c for c in cells if c[0] not in done]
+        print(f"{len(done)} cells already done, {len(todo)} to run", flush=True)
+        res = list(done.items())
+        with Pool(min(nproc, max(1, len(todo)))) as pool:
+            for ic, ok, Bd, Dp in pool.starmap(cell_certify_fixed, todo, chunksize=1) if False else pool.imap_unordered(_cell_star, todo):
+                res.append((ic, ok))
+                if resfile:
+                    with open(resfile, "a") as fh:
+                        fh.write(f"cell {ic} {'CERTIFIED' if ok else 'NOT'} B_d {Bd:.4f} Dp {Dp:.3f} r [{float(cells[ic][1]-1):.5f},{float(cells[ic][2]-1):.5f}]\n")
+        allok = all(ok for _, ok in res) and len(res) == ncell
+        print(("ALL CELLS CERTIFIED: E' > 0 on the bracket" if allok else f"NOT all cells certified ({sum(1 for _, ok in res if ok)} of {ncell})") + f"; {time.time()-t0:.0f}s", flush=True)
+        return
     if len(sys.argv) > 6 and sys.argv[6] == 'cells':
         assert NS == 1
         h = (rhi - rlo) / ncell

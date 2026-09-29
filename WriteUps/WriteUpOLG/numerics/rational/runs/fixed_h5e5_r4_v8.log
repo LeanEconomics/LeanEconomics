@@ -1,0 +1,7 @@
+gamma 3, frozen-transport cells: 1 of width 0.00005 on [0.0400,0.0401], grid 1896, lambdas [2, 3], mu 1
+0 cells already done, 1 to run
+cell 0 [0.04000,0.04005]: point enclosure 0s, point B_d = 11.818; 784s
+    round 1: max U/M = 0.866, violations 0, assumptions dropped 0; 553s
+  lambda 2: verified (max U/M 0.866); B_d = 25.265 vs |D'| = 39.03 -> CERTIFIED; ebar 1/2/5/10/30: 0.6053 0.7218 1.4071 2.4082 0.5460; 1352s
+ALL CELLS CERTIFIED: E' > 0 on the bracket; 1352s
+EXIT 0
