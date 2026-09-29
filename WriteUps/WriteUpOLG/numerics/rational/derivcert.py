@@ -831,6 +831,7 @@ def _cell_star(c):
 
 def cell_certify_fixed(ic, Ra, Rb):
     R0 = (Ra + Rb) / 2
+    ic = str(ic)
     t0 = time.time()
     _, L0, reachP, wP, dt = run_cell((ic, R0, R0))
     C0 = None                                                        # the fallback above the zone is never read
@@ -867,28 +868,55 @@ def main():
     if len(sys.argv) > 6 and sys.argv[6] == 'fixed':
         assert NS == 1
         h = (rhi - rlo) / ncell
-        cells = [(i, 1 + rlo + i*h, 1 + rlo + (i+1)*h) for i in range(ncell)]
+        cells = {str(i): (1 + rlo + i*h, 1 + rlo + (i+1)*h) for i in range(ncell)}
         nproc = int(os.environ.get("ENCL_PROCS", "7"))
-        print(f"gamma {gam}, frozen-transport cells: {ncell} of width {float(h):.5f} on [{float(rlo):.4f},{float(rhi):.4f}], grid {NA}, lambdas {LAMS}, mu {MU_FLOOR}", flush=True)
+        print(f"gamma {gam}, frozen-transport cells: {ncell} of width {float(h):.5f} on [{float(rlo):.4f},{float(rhi):.4f}], grid {NA}, lambdas {LAMS}, mu {MU_FLOOR}; a cell that fails is split in two", flush=True)
         t0 = time.time()
         resfile = os.environ.get("ENCL_RESULTS")                     # resumable: one line per finished cell
-        done = {}
-        if resfile and os.path.exists(resfile):
+        done = {}                                                    # id -> ok  (a failed cell is replaced by
+        if resfile and os.path.exists(resfile):                      #  its halves id+'L', id+'R')
             for line in open(resfile):
                 parts = line.split()
                 if len(parts) >= 4 and parts[0] == "cell":
-                    done[int(parts[1])] = parts[2] == "CERTIFIED"
-        todo = [c for c in cells if c[0] not in done]
+                    done[parts[1]] = parts[2] == "CERTIFIED"
+        def halves(cid, Ra, Rb):
+            Rm = (Ra + Rb) / 2
+            return [(cid + "L", Ra, Rm), (cid + "R", Rm, Rb)]
+        # rebuild the frontier from the results file: failed cells were split
+        todo = []
+        frontier = [(cid, Ra, Rb) for cid, (Ra, Rb) in cells.items()]
+        while frontier:
+            cid, Ra, Rb = frontier.pop()
+            if cid in done:
+                if not done[cid]:
+                    frontier.extend(halves(cid, Ra, Rb))
+            else:
+                todo.append((cid, Ra, Rb))
         print(f"{len(done)} cells already done, {len(todo)} to run", flush=True)
-        res = list(done.items())
+        minw = F(os.environ.get("ENCL_MINWIDTH", "1/100000"))        # do not split below this width
         with Pool(min(nproc, max(1, len(todo)))) as pool:
-            for ic, ok, Bd, Dp in pool.starmap(cell_certify_fixed, todo, chunksize=1) if False else pool.imap_unordered(_cell_star, todo):
-                res.append((ic, ok))
-                if resfile:
-                    with open(resfile, "a") as fh:
-                        fh.write(f"cell {ic} {'CERTIFIED' if ok else 'NOT'} B_d {Bd:.4f} Dp {Dp:.3f} r [{float(cells[ic][1]-1):.5f},{float(cells[ic][2]-1):.5f}]\n")
-        allok = all(ok for _, ok in res) and len(res) == ncell
-        print(("ALL CELLS CERTIFIED: E' > 0 on the bracket" if allok else f"NOT all cells certified ({sum(1 for _, ok in res if ok)} of {ncell})") + f"; {time.time()-t0:.0f}s", flush=True)
+            pending = {}
+            def submit(c):
+                pending[c[0]] = (pool.apply_async(_cell_star, (c,)), c)
+            for c in todo: submit(c)
+            while pending:
+                finished = [cid for cid, (r, c) in pending.items() if r.ready()]
+                if not finished:
+                    time.sleep(10); continue
+                for cid in finished:
+                    r, c = pending.pop(cid)
+                    ic, ok, Bd, Dp = r.get()
+                    _, Ra, Rb = c
+                    done[cid] = ok
+                    if resfile:
+                        with open(resfile, "a") as fh:
+                            fh.write(f"cell {cid} {'CERTIFIED' if ok else 'NOT'} B_d {Bd:.4f} Dp {Dp:.3f} r [{float(Ra-1):.5f},{float(Rb-1):.5f}]\n")
+                    if not ok and Rb - Ra > minw:
+                        for hc in halves(cid, Ra, Rb): submit(hc)
+        leaves_ok = all(ok for ok in done.values() if True)
+        # the bracket is covered when every leaf is certified: a failed cell that was split does not count
+        bad = [cid for cid, ok in done.items() if not ok and not (cid + "L" in done and cid + "R" in done)]
+        print(("ALL CELLS CERTIFIED: E' > 0 on the bracket" if not bad else f"NOT all cells certified: {bad}") + f"; {time.time()-t0:.0f}s", flush=True)
         return
     if len(sys.argv) > 6 and sys.argv[6] == 'cells':
         assert NS == 1

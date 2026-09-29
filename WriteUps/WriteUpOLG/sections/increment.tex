@@ -820,16 +820,19 @@ closed, contains the midpoint, and is open by the strict bound and the continuit
 the rate, so it is the whole cell; the assumption is thereby proved and the bound with it. Two
 refinements make it run: assumptions are confined to the wealth zone the recursion actually reads
 (closed under the saving map by the propensity floor, about $20$ to $110$ in wealth), and an absolute
-floor $\mu=1$ covers the near-corner states the cell pass cannot see are constrained. On cells of
-$0.005$ percentage points, $\gamma=3$, the assumption verifies with a margin of a third at $4\%$,
-$5\%$ and $6\%$; the bound on the cell is $2.1$ to $2.5$ times the midpoint's, and on the one-percent
-grid that certifies $E'>0$ on the cell at $4\%$ ($25.3$ against $39.0$) but not at $5\%$ ($37.2$
-against $33.3$) or $6\%$ ($53.9$ against $28.7$). The inflation is the transport width at high
-wealth, of order $U^0h$, standing beside enclosure widths of the same order; the finer enclosure grid
-removes the second but not the first. Covering $[4\%,6\%]$ takes four hundred such cells at forty
-minutes to an hour and a half each --- one to three days of computation --- and the high end needs
-the fine grid. The machinery is built and resumable (\texttt{derivcert.py}, mode \texttt{fixed});
-the bracket is compute, not mathematics, and has not been run.
+floor $\mu=1$ covers the near-corner states the cell pass cannot see are constrained. Outside the zone the
+enclosure falls back to the propensity floor and cash on hand, which need no assumption. On cells of
+$0.005$ percentage points at $\gamma=3$ the assumption verifies with a margin of a third, and on the
+fine grid the certified bound on the cell is nine percent above the midpoint's: $6.9$ against $33.3$
+at $5\%$ and $8.1$ against $28.7$ at $6\%$, so $E'>0$ holds on those cells. The width is sharp: cells
+of $0.02$ points fail the verification by nine percent at every multiplier $\lambda$, because the
+transport width scales with $\lambda$ and so does the bound it produces, and cells of $0.1$ points
+fail it forty times over. Each cell costs half an hour (the midpoint enclosure, its derivative pass
+and the cell's), so $[4\%,6\%]$ is two hundred cells of $0.01$ points, split automatically where
+they fail, about a day of computation on seven cores; the run is resumable (\texttt{derivcert.py},
+mode \texttt{fixed}, results in \texttt{runs/}) and was started as this was written. Its outcome, if
+every cell certifies, is $E'>0$ on $[4\%,6\%]$, hence at most one equilibrium rate there, with the
+same standing as Theorem~\ref{thm:encllean}: proof terms for every step but the arithmetic.
 
 \subsubsection*{Uniqueness up to a tolerance: the mesh of rate cells}\label{sec:mesh}
 

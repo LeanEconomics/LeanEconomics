@@ -1,0 +1,20 @@
+gamma 3, frozen-transport cells: 1 of width 0.00020 on [0.0600,0.0602], grid 3968, lambdas [2, 3], mu 1
+0 cells already done, 1 to run
+cell 0 [0.06000,0.06020]: point enclosure 396s, point B_d = 7.388; 1370s
+    assumption zone: stage 0 31.8, stage 30 137.3, stage 59 2.0
+      violation: stage 55, z 5, a 21.2460, U0-based M 97.7262, cell U 98.2762, cell L -98.2762
+      violation: stage 55, z 6, a 21.2460, U0-based M 108.0597, cell U 109.5133, cell L -109.5133
+      violation: stage 56, z 2, a 16.4280, U0-based M 68.5415, cell U 68.8904, cell L -68.8904
+      violation: stage 56, z 3, a 16.4280, U0-based M 73.2237, cell U 73.9685, cell L -73.9685
+      violation: stage 56, z 4, a 16.4280, U0-based M 79.1855, cell U 80.6021, cell L -80.6021
+    round 1: max U/M = 1.105, violations 3363, assumptions dropped 0; 837s
+  lambda 2: assumption not verified (max U/M 1.105); 2216s
+    assumption zone: stage 0 31.8, stage 30 137.3, stage 59 2.0
+      violation: stage 56, z 6, a 16.4280, U0-based M 145.8181, cell U 145.9172, cell L -145.9172
+      violation: stage 57, z 4, a 11.5817, U0-based M 100.5896, cell U 100.7633, cell L -100.7633
+      violation: stage 57, z 5, a 11.5817, U0-based M 112.7284, cell U 114.3983, cell L -114.3983
+      violation: stage 57, z 6, a 11.5817, U0-based M 128.8729, cell U 132.9962, cell L -132.9962
+      violation: stage 58, z 2, a 6.7876, U0-based M 65.4702, cell U 65.5951, cell L -65.5951
+    round 1: max U/M = 1.092, violations 928, assumptions dropped 0; 640s
+  lambda 3: assumption not verified (max U/M 1.092); 2866s
+NOT all cells certified (0 of 1); 2866s

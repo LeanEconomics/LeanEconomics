@@ -1,0 +1,12 @@
+gamma 3, frozen-transport cells: 1 of width 0.00100 on [0.0400,0.0410], grid 3968, lambdas [2, 3], mu 1
+0 cells already done, 1 to run
+cell 0 [0.04000,0.04100]: point enclosure 395s, point B_d = 5.272; 1359s
+    assumption zone: stage 0 26.3, stage 30 122.8, stage 59 2.0
+      violation: stage 24, z 6, a 20.3122, U0-based M 44.5043, cell U 44.5797, cell L -44.5797
+      violation: stage 24, z 6, a 20.3630, U0-based M 44.5644, cell U 44.6630, cell L -44.6630
+      violation: stage 24, z 6, a 20.4139, U0-based M 44.6011, cell U 44.7460, cell L -44.7460
+      violation: stage 24, z 6, a 20.4649, U0-based M 44.6665, cell U 44.8368, cell L -44.8368
+      violation: stage 24, z 6, a 20.5161, U0-based M 44.7325, cell U 44.9309, cell L -44.9309
+    round 1: max U/M = 37.272, violations 521218, assumptions dropped 0; 874s
+  lambda 2: assumption not verified (max U/M 37.272); 2242s
+    assumption zone: stage 0 26.3, stage 30 122.8, stage 59 2.0
