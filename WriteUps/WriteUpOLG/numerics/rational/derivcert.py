@@ -317,9 +317,10 @@ def run_cell(args):
 NS = int(sys.argv[5]) if len(sys.argv) > 5 else 1      # sub-intervals per grid interval in the derivative pass
 MU = len(sys.argv) > 6 and sys.argv[6] == 'mu'         # carry the recursion in marginal utility
 CRUDE = False                                          # set by the bootstrap for its first, robust pass
+NONE_REASON = {}                                       # diagnostics: why the last stage pass gave no bound
 
 
-def stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid, ai, y_dn, y_up, crude=False, cap_by_m=False, kap=None):
+def stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid, ai, y_dn, y_up, crude=False, cap_by_m=False, kap=None, zone_top=None):
     """one stage of the interval derivative recursion: bounds (Un, Ln) on dc_{k+1}/dr on every grid
     interval, and the failure En, from the stage-k data (lo_k, hi_k, cor_k, U, Lw) and the stage-(k+1)
     consumption data (lo1, hi1, cor1).  With cap_by_m the stage-(k+1) consumption is bounded only by the
@@ -328,10 +329,13 @@ def stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid
     global CRUDE
     RR = (Ra, Rb); gF = F(gam); NI = len(fgrid) - 1
     CRUDE_saved = CRUDE; CRUDE = crude
+    NONE_REASON.clear()
     Un = [[None]*NI for _ in range(nz)]; Ln = [[None]*NI for _ in range(nz)]; En = [[None]*NI for _ in range(nz)]
     for z in range(nz):
         for i in range(NI):
             a_lo, a_hi = ai[i], ai[i+1]
+            if zone_top is not None and fgrid[i] > zone_top:         # never read: skip
+                Un[z][i] = None; Ln[z][i] = None; En[z][i] = None; continue
             if cor1 is not None and fgrid[i+1] <= cor1[z]:           # whole interval in the corner region
                 Un[z][i] = a_hi; Ln[z][i] = a_lo; En[z][i] = F(0); continue
             m_dn_i = y_dn[z] + q2i(Ra * F(fgrid[i], D), False)
@@ -347,6 +351,7 @@ def stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid
             if c_lo <= 0:                                                # no information on this stage's consumption here
                 if fgrid[i] <= reach[J-k-2]:
                     raise RuntimeError(f"zero consumption bound inside the reach: stage {k+1}, z {z}, a_i {fgrid[i]/D:.3f}")
+                NONE_REASON[(z, i)] = "c_lo<=0"
                 Un[z][i] = None; Ln[z][i] = None; En[z][i] = None; continue
             x_lo = max(0, m_dn_i - ch_i); x_hi = max(0, m_up_i1 - cl_i1)
             i1 = bisect.bisect_right(fgrid, x_lo) - 1; i2 = bisect.bisect_right(fgrid, x_hi) - 1
@@ -354,6 +359,7 @@ def stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid
             if x_hi >= grid[NA-1]:                                       # saving beyond the grid top
                 if fgrid[i] <= reach[J-k-2]:
                     raise RuntimeError(f"saving range leaves the grid: stage {k+1}, z {z}, a_i {fgrid[i]/D:.3f}")
+                NONE_REASON[(z, i)] = f"x_hi {x_hi/D:.2f} beyond grid"
                 Un[z][i] = None; Ln[z][i] = None; En[z][i] = None; continue
             vup = -c_lo / (gF * Rb); vlo = -c_hi / (gF * Ra); Wsum = F(0); bad = False
             Wlo_cr = F(0); Ucr = None; Lcr = None
@@ -365,6 +371,7 @@ def stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid
                 if ck_lo <= 0:                                             # no information there (transport fallback)
                     if fgrid[i] <= reach[J-k-2]:
                         raise RuntimeError(f"zero lower bound inside the reach: stage {k+1}, z {z}, a_i {fgrid[i]/D:.3f}")
+                    NONE_REASON[(z, i)] = f"ck_lo<=0 at x_lo {x_lo/D:.2f} zp {zp}"
                     bad = True; break
                 w_lo = beta * Ra * p * c_lo**(gam+1) / ck_hi**(gam+1)
                 w_hi = beta * Rb * p * c_hi**(gam+1) / ck_lo**(gam+1)
@@ -373,6 +380,7 @@ def stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach, Ra, Rb, fgrid
                 if None in seg:
                     if fgrid[i] <= reach[J-k-2]:
                         raise RuntimeError(f"derivative bound read outside its validity: stage {k+1}, z {z}, a_i {grid[i]/D:.3f}")
+                    NONE_REASON[(z, i)] = f"U_k None in x-range [{x_lo/D:.2f},{x_hi/D:.2f}] zp {zp}"
                     bad = True; break
                 Umax = max(seg); Lmin = min(segL)
                 vup += (w_hi * Umax if Umax >= 0 else w_lo * Umax)
@@ -599,7 +607,7 @@ def cell_bootstrap(ic, Ra, Rb, rounds=3):
     return ic, bool(Bd < Dp), float(Bd), float(Dp)
 
 
-def transport_stage(L0k, Un, Ln, h2, RR, C0k=None):
+def transport_stage(L0k, Un, Ln, h2, RR, C0k=None, kap_k=None):
     """the enclosure at every grid point over the cell from the point enclosure at its midpoint and the
     derivative bounds on the two grid intervals meeting the point: c(a; r) = c(a; r0) + int dc/dr."""
     lo0, hi0, _ = L0k
@@ -610,11 +618,13 @@ def transport_stage(L0k, Un, Ln, h2, RR, C0k=None):
         for i in range(NA):
             cands = [max(abs(Un[z][ii]), abs(Ln[z][ii])) for ii in (i-1, i)
                      if 0 <= ii < NI and Un[z][ii] is not None and Ln[z][ii] is not None]
-            if not cands:                                            # no assumption here: the crude cell
-                if C0k is not None:                                  # enclosure, valid without one
-                    lz[i] = C0k[0][z][i]; hz[i] = C0k[1][z][i]
+            if not cands:                                            # no assumption here: a bound valid
+                if C0k is not None:                                  # without one -- the crude cell enclosure
+                    lz[i] = C0k[0][z][i]; hz[i] = C0k[1][z][i]       # or the propensity floor and cash on hand
                 else:
-                    lz[i] = 0; hz[i] = q2i(y[z] + RR[1] * F(grid[i], D), True)
+                    m_dn = q2i(y[z] + RR[0] * F(grid[i], D), False)
+                    lz[i] = dn(kap_k * m_dn, D) if kap_k is not None else 0
+                    hz[i] = q2i(y[z] + RR[1] * F(grid[i], D), True)
                 continue
             d = (max(cands) * h2); d = up(d.numerator * D, d.denominator)
             m_up = q2i(y[z] + RR[1] * F(grid[i], D), True)
@@ -715,8 +725,8 @@ def deriv_bound_fixed(L0, UL0, reachP, Ra, Rb, lam, C0=None):
     for k in range(J - 1, -1, -1):
         zr = int(F(reachP[J - 1 - k], 1) * F(6, 5)) + 2 * D
         if k < J - 1:
-            nxt = (1 - F(kap[k+1], D)) * (F(ymax_up, D) + Rb * F(Zk[k+1], D))
-            zn = up(nxt.numerator * D, nxt.denominator) + D
+            nxt = (1 - F(kap[k+1], D)) * (F(ymax_up, D) + Rb * F(Zk[k+1], D)) + 2   # two units of slack
+            zn = up(nxt.numerator * D, nxt.denominator)
             zr = max(zr, zn)
         Zk[k] = zr
     print(f"    assumption zone: stage 0 {Zk[0]/D:.1f}, stage 30 {Zk[30]/D:.1f}, stage 59 {Zk[59]/D:.1f}", flush=True)
@@ -743,7 +753,7 @@ def deriv_bound_fixed(L0, UL0, reachP, Ra, Rb, lam, C0=None):
         hi0 = [array('q', [y_up[z] + q2i(Rb * F(g, D), True) for g in grid]) for z in range(nz)]
         C = [(lo0, hi0, None)]
         for k in range(1, J):
-            lo_k, hi_k = transport_stage(L0[k], M[k][0], M[k][1], h2, RR, None if C0 is None else C0[k])
+            lo_k, hi_k = transport_stage(L0[k], M[k][0], M[k][1], h2, RR, None if C0 is None else C0[k], kap[k])
             lo_p, hi_p, cor_p = C[k-1]
             cor = []
             for z in range(nz):
@@ -754,11 +764,11 @@ def deriv_bound_fixed(L0, UL0, reachP, Ra, Rb, lam, C0=None):
         U = [[ai[i+1] for i in range(NI)] for _ in range(nz)]
         Lw = [[ai[i] for i in range(NI)] for _ in range(nz)]
         E = [[[F(0)] * NI for _ in range(nz)]]
-        ULc = [(U, Lw)]
+        ULc = [(U, Lw)]; reasons = [{}]
         for k in range(0, J-1):
             lo_k, hi_k, cor_k = C[k]; lo1, hi1, cor1 = C[k+1]
-            Un, Ln, En = stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach_proxy, Ra, Rb, fgrid, ai, y_dn, y_up)
-            U, Lw = Un, Ln; E.append(En); ULc.append((Un, Ln))
+            Un, Ln, En = stage_pass(lo_k, hi_k, cor_k, lo1, hi1, cor1, U, Lw, k, reach_proxy, Ra, Rb, fgrid, ai, y_dn, y_up, zone_top=Zk[k+1] + 2 * D)
+            U, Lw = Un, Ln; E.append(En); ULc.append((Un, Ln)); reasons.append(dict(NONE_REASON))
         # verification: U < M wherever an assumption was made; drop assumptions the pass could not check
         worst = F(0); nbad = 0; ndrop = 0
         for k in range(1, J):
@@ -770,6 +780,7 @@ def deriv_bound_fixed(L0, UL0, reachP, Ra, Rb, lam, C0=None):
                 for i in range(NI):
                     if Mu[z][i] is None: continue
                     if Un[z][i] is None:
+                        if ndrop < 3: print(f"      dropped: stage {k}, z {z}, a {grid[i]/D:.3f} (zone to {Zk[k]/D:.1f}): {reasons[k].get((z, i), '?')}", flush=True)
                         Mu[z][i] = None; Ml[z][i] = None; ndrop += 1; continue
                     m_ = max(abs(Mu[z][i]), abs(Ml[z][i])); u_ = max(abs(Un[z][i]), abs(Ln[z][i]))
                     if m_ == 0:
