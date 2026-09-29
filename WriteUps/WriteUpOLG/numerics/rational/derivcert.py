@@ -704,7 +704,23 @@ def deriv_bound_fixed(L0, UL0, reachP, Ra, Rb, lam, C0=None):
     y_dn = [q2i(v, False) for v in y]; y_up = [q2i(v, True) for v in y]
     kap = kappa_lower(Ra)
     lamF = F(lam); muF = F(MU_FLOOR)
-    def scaled(UL):
+    # the derivative bound at stage k and wealth a only matters inside a zone Z_k closed under reading:
+    # an interval at (k+1, a') reads stage-k values at the saving x <= (1 - kappa_{k+1})(y_max + R a')
+    # (propensity floor), and the failure is evaluated inside the age's reach; so
+    #   Z_{J-1} = reach + margin,  Z_k = max(reach_age + margin, (1 - kappa_{k+1})(y_max + R Z_{k+1})),
+    # which stays bounded (about 330) because (1 - kappa) R < 1.  Assumptions and their verification are
+    # confined to a <= Z_k; above, the crude cell enclosure stands in and is never read from the zone.
+    ymax_up = max(y_up)
+    Zk = [None] * J
+    for k in range(J - 1, -1, -1):
+        zr = int(F(reachP[J - 1 - k], 1) * F(6, 5)) + 2 * D
+        if k < J - 1:
+            nxt = (1 - F(kap[k+1], D)) * (F(ymax_up, D) + Rb * F(Zk[k+1], D))
+            zn = up(nxt.numerator * D, nxt.denominator) + D
+            zr = max(zr, zn)
+        Zk[k] = zr
+    print(f"    assumption zone: stage 0 {Zk[0]/D:.1f}, stage 30 {Zk[30]/D:.1f}, stage 59 {Zk[59]/D:.1f}", flush=True)
+    def scaled(UL, k):
         # M = lam * max(|U0|, |L0|, a_hi) + mu: the assumed bound covers the constrained case dc/dr = a on
         # every interval (the cell pass may find saving non-positive where the point pass did not), and an
         # absolute floor mu keeps tiny point bounds from failing the ratio test
@@ -713,12 +729,12 @@ def deriv_bound_fixed(L0, UL0, reachP, Ra, Rb, lam, C0=None):
         for z in range(nz):
             for i in range(len(Un[0])):
                 if Un[z][i] is None or Ln[z][i] is None: continue
-                if grid[i] > ASSUME_TOP * D: continue                  # no assumption far above the reach
+                if grid[i] > min(ASSUME_TOP * D, Zk[k]): continue      # no assumption where it is not used
                 m_ = lamF * max(abs(Un[z][i]), abs(Ln[z][i])) + muF          # the floor mu covers the
                                                                              # near-corner intervals
                 Mu[z][i] = m_; Ml[z][i] = -m_
         return Mu, Ml
-    M = [scaled(UL0[k]) for k in range(J)]
+    M = [scaled(UL0[k], k) for k in range(J)]
     reach_proxy = [r + D for r in reachP]
     t0 = time.time()
     for rnd in range(6):
@@ -806,7 +822,9 @@ def cell_certify_fixed(ic, Ra, Rb):
     R0 = (Ra + Rb) / 2
     t0 = time.time()
     _, L0, reachP, wP, dt = run_cell((ic, R0, R0))
-    _, C0, reach0, w0, dt0 = run_cell((ic, Ra, Rb))                  # crude cell enclosure: the fallback
+    C0 = None                                                        # the fallback above the zone is never read
+    if os.environ.get("ENCL_CRUDE"):
+        _, C0, reach0, w0, dt0 = run_cell((ic, Ra, Rb))
     Bd0, ebar0, UL0, _ = deriv_bound(L0, reachP, R0, R0)
     Dp = alpha / ((1 - alpha) * (Rb - 1 + delta)**2)
     print(f"cell {ic} [{float(Ra-1):.5f},{float(Rb-1):.5f}]: point enclosure {dt:.0f}s, point B_d = {float(Bd0):.3f}; {time.time()-t0:.0f}s", flush=True)

@@ -806,7 +806,30 @@ $4\%$, $\gamma=5$, $0.25\%$ steps & $12.8$ & $39.1$ & $0.83/0.85/0.78/0.60$ & ce
 So $E'>0$ is certified at $4\%$ and at $6\%$ for $\gamma=3$, and at $4\%$ for $\gamma=5$, by exact rational arithmetic on the
 enclosures, with the interval Euler step, monotone saving, the propensity floor and the envelope as
 the theorems behind each line. What it does not yet give is $E'>0$ \emph{between} the two rates,
-which is what uniqueness on the bracket needs. XXCELLSXX
+which is what uniqueness on the bracket needs.
+
+\paragraph{From rates to a bracket.} Between two rates the derivative bound must hold at every rate,
+so the enclosures must be valid on a \emph{cell} of rates. The cell enclosure of Section~\ref{sec:mesh}
+is too loose to feed the recursion, whose weights carry consumption to the power $\gamma+1$; a cell
+enclosure that is fed back from the recursion's own derivative bound diverges for the same reason. What
+works is to freeze the transport and verify it: assume $|\partial_rc_k|\le M_k:=\lambda U^0_k+\mu$ on
+the cell, with $U^0_k$ the bound at the cell's midpoint, transport the midpoint enclosure by
+$M_kh/2$, run the recursion on the transported enclosures, and check $U_k<M_k$ strictly wherever an
+assumption was made. The set of rates in the cell at which every transported enclosure holds is
+closed, contains the midpoint, and is open by the strict bound and the continuity of consumption in
+the rate, so it is the whole cell; the assumption is thereby proved and the bound with it. Two
+refinements make it run: assumptions are confined to the wealth zone the recursion actually reads
+(closed under the saving map by the propensity floor, about $20$ to $110$ in wealth), and an absolute
+floor $\mu=1$ covers the near-corner states the cell pass cannot see are constrained. On cells of
+$0.005$ percentage points, $\gamma=3$, the assumption verifies with a margin of a third at $4\%$,
+$5\%$ and $6\%$; the bound on the cell is $2.1$ to $2.5$ times the midpoint's, and on the one-percent
+grid that certifies $E'>0$ on the cell at $4\%$ ($25.3$ against $39.0$) but not at $5\%$ ($37.2$
+against $33.3$) or $6\%$ ($53.9$ against $28.7$). The inflation is the transport width at high
+wealth, of order $U^0h$, standing beside enclosure widths of the same order; the finer enclosure grid
+removes the second but not the first. Covering $[4\%,6\%]$ takes four hundred such cells at forty
+minutes to an hour and a half each --- one to three days of computation --- and the high end needs
+the fine grid. The machinery is built and resumable (\texttt{derivcert.py}, mode \texttt{fixed});
+the bracket is compute, not mathematics, and has not been run.
 
 \subsubsection*{Uniqueness up to a tolerance: the mesh of rate cells}\label{sec:mesh}
 
