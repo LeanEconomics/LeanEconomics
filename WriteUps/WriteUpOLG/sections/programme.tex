@@ -32,8 +32,10 @@ and with the enclosure's fixed points computed on the right side of the enclosur
 passes at $4\%$ and $6\%$ for $\gamma=3$ and at $4\%$ for $\gamma=5$, where Theorem 1 itself is
 false. Between the rates the bound must hold on cells, and the transported cell certificate is built
 and verified (Section~\ref{sec:finite}); on cells of $0.005$ points on the fine grid it certifies at $4\%$, $5\%$
-and $6\%$ within nine percent of the single-rate bounds, and the run over the whole of $[4\%,6\%]$
---- two hundred cells, about a day --- was started as this was written. Finiteness on its own is Theorem~\ref{thm:finite}: piecewise analyticity
+and $6\%$ within nine percent of the single-rate bounds, and over the whole of $[4\%,6\%]$ every one
+of the two hundred cells certifies, the bound at most a third of the demand slope
+(Theorem~\ref{thm:bracket}): $E'>0$ on the bracket, hence at most one equilibrium rate there, at
+$\gamma=3$ by certificate, with the arithmetic not yet replayed in Lean. Finiteness on its own is Theorem~\ref{thm:finite}: piecewise analyticity
 in the rate, which the model has and the formalisation does not yet, reduces it to the same slope
 bound.
 
