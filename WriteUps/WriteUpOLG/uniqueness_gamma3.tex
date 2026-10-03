@@ -1,0 +1,759 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1.1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{enumitem}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\leanunderscore}{\char`\_\hskip 0pt plus 0.4pt\relax}
+\newcommand{\lean}[1]{\begingroup\ttfamily\small\let\_\leanunderscore #1\endgroup}
+\newcommand{\formal}[1]{\par\noindent\begingroup\footnotesize\raggedright\emph{Formal statement:} \lean{#1}.\par\endgroup}
+\newcommand{\Thorn}{\text{\th}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+
+\onehalfspacing
+\tolerance=600 \emergencystretch=1.5em
+
+\title{A Unique Stationary Equilibrium at Relative Risk Aversion Three:\\
+How the Result Is Built}
+\author{LeanEconomics Org [mostly Claude]\thanks{The Lean development described here is at
+\url{https://github.com/LeanEconomics/LeanEconomics}. It was written mostly by Claude (Anthropic),
+an AI coding model, working under the direction of Robert Kirkby (Victoria University of
+Wellington). This note is a self-contained account of one result of the overlapping-generations
+write-up in the same repository, \emph{Overlapping Generations in Lean: The Life-Cycle Household},
+which it cites as the companion; the results it builds on are stated with their formal names and
+not reproved. It is a project record, not a paper for submission.}}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+In a life-cycle economy with uninsurable earnings risk, a borrowing constraint, sixty-period lives
+and relative risk aversion three, at one rational calibration, there is exactly one stationary
+equilibrium interest rate in $[4\%,6\%]$. The route is single crossing in derivative form: excess
+demand for capital is strictly increasing on the bracket because the firm's demand falls faster
+than household supply can, and a certified lower bound on the slope of supply, built from rigorous
+enclosures of the sixty consumption functions, sits at most a third of the way to the slope of
+demand. The note states the results the construction rests on --- the stage properties of the
+finite backward induction, the propensity floor, the cohort envelope, continuity of supply, the
+interval Euler step --- and then explains how they are assembled: the derivative of consumption in
+the rate from the Euler equality, the interval recursion that bounds it on grid intervals, the
+frozen-transport argument that carries a bound from a rate to a cell of rates by continuation, and
+the two hundred cells that cover the bracket. Every step but the arithmetic is a theorem; the
+arithmetic is exact rational arithmetic rounded outward, evaluated by a program rather than
+replayed in the kernel. The note closes with what that standing is and what would raise it.
+\end{abstract}
+
+\section{Introduction}
+
+The companion write-up proves that the stationary equilibrium of a life-cycle Bewley economy is
+unique at logarithmic utility, by Light's three theorems in the life-cycle setting: saving rises
+with the interest rate at every state (Theorem 1), ordered policies give ordered capital supply
+(Theorem 2), and a rising supply meets the firm's falling demand at most once (Theorem 3). Above
+logarithmic utility Theorem 1 is false in fact --- at relative risk aversion five it fails pointwise
+at the youngest ages in the top earnings states --- and no analytic route around it is known. What
+this note records is the result that reaches $\gamma=3$ anyway, and the construction that reaches it.
+
+The result is a statement about one economy at one calibration. Fix sixty-period lives, a
+seven-state earnings chain, $\beta=24/25$, $\gamma=3$, and a Cobb--Douglas firm. Then on the
+interest-rate bracket $[4\%,6\%]$ there is exactly one stationary equilibrium. The argument is single
+crossing, but not in the form Theorem 1 supplies. Single crossing needs only that excess demand
+$E(r)=S(r)-D(r)$, supply minus demand for capital, be strictly increasing; and since demand falls
+steeply at the calibration, supply may fall too, as long as it falls more slowly. The construction
+certifies a lower bound on the slope of supply, $S'(r)\ge-B_d$ with $B_d\le9.2$, against a demand
+slope of magnitude at least $28.7$, everywhere on the bracket; and it certifies that supply is below
+demand at $4\%$ and above it at $6\%$. Continuity of supply, which is a theorem, then gives an
+equilibrium in the bracket, and strict monotonicity of $E$ gives at most one.
+
+The word \emph{certifies} carries the standing of the result and the note is careful with it. Three
+kinds of statement appear. Theorems checked by the Lean kernel, which are stated with their formal
+names and not reproved: these are the companion's. Paper arguments, which are short and are given
+in full here: the derivative of the Euler equality, the mean-value link from a derivative bound to a
+secant bound, and a continuation argument. And arithmetic, which is exact rational arithmetic
+rounded outward, carried out by a program; its inequalities are instances of the formalised
+interval Euler step and of the recursions this note writes down, but the program that evaluates
+them has not been replayed in the kernel. Section~\ref{sec:standing} tabulates which step is which.
+
+The note is organised as a construction. Section~\ref{sec:economy} fixes the economy and states the
+theorem. Section~\ref{sec:known} states the known results. Section~\ref{sec:slope} reduces
+uniqueness to a bound on the slope of supply, Section~\ref{sec:deriv} derives the derivative of
+consumption in the rate and the envelope that turns its failure into a slope bound,
+Section~\ref{sec:encl} describes the enclosures of the consumption functions,
+Section~\ref{sec:recursion} the interval recursion that bounds the derivative,
+Section~\ref{sec:cell} the passage from a rate to a cell of rates, Section~\ref{sec:bracket} the
+covering of the bracket, Section~\ref{sec:level} the endpoint certificate, and
+Section~\ref{sec:proof} assembles the proof. Section~\ref{sec:standing} is about standing and what
+remains.
+
+\section{The economy and the statement}\label{sec:economy}
+
+\subsection{Households}
+
+A household lives $J=60$ periods, is born with no assets, and dies leaving nothing. Earnings
+$y(z)$ follow a finite Markov chain with transition matrix $\pi$ on $n_z=7$ states; the gross
+return on assets is $R=1+r$; cash on hand is $m=Ra+y(z)$; saving $a'$ is bounded below by a zero
+borrowing limit and above by an artefactual cap $\bar a$; utility is CRRA, $u'(c)=c^{-\gamma}$, with
+$\gamma=3$ and discount factor $\beta$. Periods are counted from the end of life. With $k$ periods
+still to come after the present one, the continuation value is the $k$-th Bellman iterate from
+zero,
+\[
+  V_k=T^k0,\qquad (Tv)(a,z)=\max_{a'\in[0,\bar a]}\Bigl\{u(m-a')+\beta\sum_{z'}\pi(z,z')\,v(a',z')\Bigr\},
+\]
+the stage-$k$ policy is $g_k=\operatorname{policyOf}V_k$ and the stage-$k$ consumption is
+$c_k=m-g_k$ (\lean{stageValue}, \lean{stagePolicy}, \lean{stageConsumption}). Age $j$ of life is
+stage $k=J-1-j$; in the last period the household consumes its cash on hand, $c_0=m$. The problem is
+a finite backward induction, so every property of the stage policies is proved by induction on $k$
+with an explicit base case, and nothing is a fixed point.
+
+\subsection{Earnings}
+
+The chain is the Rouwenhorst discretisation with persistence $\rho=9/10$ on seven states. Its
+invariant law is binomial, $\nu=(1,6,15,20,15,6,1)/64$, and the earnings levels are the seven
+values $(0.301,0.449,0.670,1,1.492,2.226,3.320)$ divided by their $\nu$-mean $1.1266$, so that mean
+earnings are one:
+\[
+  y=(0.2672,\ 0.3986,\ 0.5947,\ 0.8876,\ 1.3244,\ 1.9759,\ 2.9470).
+\]
+All of these are rationals, and so is every quantity the certificate computes.
+
+\subsection{The firm and the equilibrium}
+
+Technology is Cobb--Douglas with capital share $\alpha=9/25$ and depreciation $\delta=2/25$. In
+wage units --- capital per unit of the wage, the normalisation homotheticity allows --- the firm's
+demand for capital at rate $r$ is
+\[
+  D(r)=\frac{\alpha}{(1-\alpha)(r+\delta)},\qquad
+  D'(r)=-\frac{\alpha}{(1-\alpha)(r+\delta)^2},
+\]
+so $D(4\%)=4.6875$, $D(6\%)=4.0179$, and $|D'|$ falls from $39.06$ at $4\%$ to $28.70$ at $6\%$.
+
+Every cohort is born with no assets and an earnings state drawn from $\nu$; cohorts have equal
+weight. Write $(\mathcal S_kh)(a,z)=\sum_{z'}\pi(z,z')\,h(g_k(a,z),z')$ for the expectation of $h$
+next period (\lean{stageStep}). The assets a household holds over the rest of its life, seen from its
+current state, satisfy
+\[
+  A_0(a,z)=a,\qquad A_{k+1}(a,z)=a+(\mathcal S_{k+1}A_k)(a,z)
+\]
+(\lean{cohortAssets}), and capital supply per head is
+\[
+  S(r)=\frac1J\sum_z\nu(z)\,A_{J-1}(0,z)
+\]
+(\lean{olgCapital}): a finite sum of finite sums, with no stationary distribution anywhere. A
+stationary equilibrium is a rate at which $S(r)=D(r)$.
+
+\subsection{The statement}
+
+\begin{theorem}[Uniqueness on the bracket at $\gamma=3$]\label{thm:main}
+In the economy above, with $J=60$, $\beta=24/25$, $\gamma=3$, the seven-state chain, $\alpha=9/25$
+and $\delta=2/25$, there is exactly one stationary equilibrium interest rate in $[4\%,6\%]$.
+Specifically: $S$ is continuous on the bracket, $S(4\%)<D(4\%)$ and $S(6\%)>D(6\%)$, so an
+equilibrium exists in $(4\%,6\%)$; and $E=S-D$ is strictly increasing on $[4\%,6\%]$, so there is
+at most one.
+\end{theorem}
+
+The theorem does not say that there is no equilibrium below $4\%$ or above $6\%$. The companion's
+existence theorem brackets the equilibrium of a closely related calibration in $[2.78\%,7.67\%]$
+by proof term with numerically checked hypotheses, and the computed equilibrium sits near $5\%$;
+extending the slope certificate to the ends of that bracket is machine time, not new argument, and
+Section~\ref{sec:standing} returns to it.
+
+\section{The results the construction rests on}\label{sec:known}
+
+Each result below is a theorem of the companion development, checked by the Lean kernel, and is
+used here as a black box. The formal name follows each statement.
+
+\paragraph{Stage properties.} At every stage $k$, every state and every asset level in the region:
+consumption is positive (\lean{stageConsumption\_pos}); saving and consumption are both nondecreasing
+in assets (\lean{stagePolicy\_mono}, \lean{stageConsumption\_mono}); consumption is concave in assets
+(\lean{concaveOn\_stageConsumption}, Carroll--Kimball); and the two Euler inequalities hold, under the
+cap,
+\[
+  \beta R\sum_{z'}\pi(z,z')\,u'\bigl(c_k(g_{k+1}(a,z),z')\bigr)\ \le\ u'\bigl(c_{k+1}(a,z)\bigr),
+\]
+at every state (\lean{stage\_euler\_le}), and the reverse inequality at every state where the
+household saves (\lean{stage\_euler\_ge}). Where the household saves, the two together are the Euler
+\emph{equality}.
+
+\paragraph{The propensity floor.} Let $\Thorn=(\beta R)^{1/\gamma}$ and define the finite-horizon
+minimal propensities to consume by $\kappa_0=1$, $\kappa_{k+1}=\kappa_kR/(\Thorn+\kappa_kR)$, so that
+$1/\kappa_k=\sum_{i\le k}(\Thorn/R)^i$ (\lean{stageMPC}). Then $c_k(a,z)\ge\kappa_km$
+(\lean{stageMPC\_mul\_le\_stageConsumption}), and, the sharper statement that the argument needs, the
+propensity to consume out of assets is at least $\kappa_k$:
+\begin{equation}\label{eq:mpcfloor}
+  \kappa_kR\,(a_2-a_1)\ \le\ c_k(a_2,z)-c_k(a_1,z),\qquad a_1\le a_2,
+\end{equation}
+so saving is Lipschitz in assets with constant $(1-\kappa_k)R$
+(\lean{stageMPC\_mul\_le\_stageConsumption\_sub}). A lower bound on $\kappa_k$ follows from any upper
+bound $t\ge\Thorn$ as $1/\sum_{i\le k}(t/R)^i$ (\lean{stageMPC\_ge\_of\_patience\_le}).
+
+\paragraph{The cohort slope.} With $G_0=1$ and $G_{k+1}=1+G_k(1-\kappa_{k+1})R$
+(\lean{cohortSlope}), accumulated assets are Lipschitz in assets,
+$A_k(a_2,z)-A_k(a_1,z)\le G_k(a_2-a_1)$ for $a_1\le a_2$ in the region
+(\lean{cohortAssets\_sub\_le\_cohortSlope}).
+
+\paragraph{The earnings marginal.} Since $\nu$ is invariant for $\pi$ and the cohort is born from
+$\nu$, the $\nu$-weighted expectation of any function of the earnings state is unchanged by any
+number of steps of the cohort recursion (\lean{sum\_mul\_incomeStep\_iterate}). An expectation of a
+failure over the cohort is therefore bounded by $\sum_z\nu(z)\,\sup_a(\text{failure at }(a,z))$:
+exact in earnings, worst-case only in assets.
+
+\paragraph{Theorem 1 is an affine bound.} Since $a'=Ra+y(z)-c$ at either rate, for $r_1<r_2$,
+\begin{equation}\label{eq:thm1}
+  g_k(a,z;r_2)\ge g_k(a,z;r_1)\quad\Longleftrightarrow\quad
+  c_k(a,z;r_2)-c_k(a,z;r_1)\le(r_2-r_1)\,a
+\end{equation}
+(\lean{stagePolicy\_le\_iff\_consumption\_le}). The failure of Theorem 1 at a state is the positive
+part of the excess of the left side over the right.
+
+\paragraph{The cohort envelope.} Couple the two economies on a common earnings path from the common
+start $a_0=0$. If, at every age, the failure of Theorem 1 at the lower-rate state is at most $e_j$ in
+$\nu$-expectation and the higher-rate saving is Lipschitz with constant $L_j$ in assets, then
+\begin{equation}\label{eq:envelope}
+  S(r_2)-S(r_1)\ \ge\ -\frac1J\sum_{j}f_j,\qquad f_0=0,\quad f_{j+1}=L_jf_j+e_j,
+\end{equation}
+which in cohort form, with the regions of the lower-rate economy and $G_k$ as the accumulated
+Lipschitz constants, is \lean{olgCapital\_sub\_ge\_of\_failure}. The pointwise ordering of the
+policies is not assumed; its failure is priced.
+
+\paragraph{Continuity, existence, single crossing.} Capital supply is continuous in the rate
+(\lean{continuousOn\_olgSupply}); if it lies below a continuous demand at the bottom of an interval
+and above it at the top, the two meet (\lean{exists\_olgEquilibrium}); and a supply that never falls
+meets a strictly falling demand at most once (\lean{olgEquilibriumRate\_unique}). The last is used
+here in its elementary form --- a strictly increasing $E$ has at most one zero --- which needs no
+theorem.
+
+\paragraph{Reachable regions.} The artefactual cap must be slack where the household can be. A
+family of asset sets, one per stage, each inside $[0,\bar a]$, each carried by the next stage's
+policy into the previous set, and on each of which the policy stays strictly below the cap, is a
+reachable family (\lean{StageRegions}); a cohort born with nothing stays in its family
+(\lean{reachRegions}), and every stage property above holds on any reachable family. Below, the
+family is the enclosure's own reach: the sets $[0,\rho_j]$ with $\rho_j$ the certified maximal
+assets at age $j$, about $44$ at most, far below any cap the computation uses.
+
+\paragraph{The interval Euler step.} Let $E_k(x)=\beta R\sum_{z'}\pi(z,z')\,x(z')^{-\gamma}$ and
+$m=y_z+Ra$.
+\begin{itemize}[leftmargin=1.5em,itemsep=0pt]
+\item If $0<c_L\le m$ and $E_k(\ell)\le c_L^{-\gamma}$ for numbers $\ell(z')\le c_k(m-c_L,z')$, then
+  $c_L\le c_{k+1}(a,z)$ (\lean{le\_stageConsumption\_of\_cert}).
+\item If $0<c_H\le m$, $m-c_H$ lies in the region, and $c_H^{-\gamma}\le E_k(h)$ for numbers
+  $h(z')\ge c_k(m-c_H,z')$, then $c_{k+1}(a,z)\le c_H$ (\lean{stageConsumption\_le\_of\_cert}).
+\item If $E_k(\ell)\le m^{-\gamma}$ for $\ell(z')\le c_k(0,z')$, then $c_{k+1}(a,z)=m$: the
+  household is at the corner (\lean{stageConsumption\_eq\_resources\_of\_cert}).
+\item Between grid points a concave nondecreasing function lies above the chord of lower bounds at
+  two points and below the left secant extended forward and the right secant extended backward
+  (\lean{le\_of\_chord}, \lean{le\_of\_left\_secant}, \lean{le\_of\_right\_secant}).
+\end{itemize}
+These are the only inequalities the enclosure of Section~\ref{sec:encl} ever asserts.
+
+\section{Uniqueness as a bound on the slope of supply}\label{sec:slope}
+
+Single crossing asks that $E=S-D$ be strictly increasing on the bracket. Since
+$D'(r)\le-28.7$ on $[4\%,6\%]$, that holds as soon as supply does not fall faster than demand:
+\begin{equation}\label{eq:target}
+  S'(r)\ >\ D'(r)\quad\text{on }[4\%,6\%],\qquad\text{equivalently}\qquad -S'(r)\ <\ |D'(r)|.
+\end{equation}
+Two remarks fix what \eqref{eq:target} means and what it does not need.
+
+First, $S$ is not differentiable everywhere. Each stage policy has a kink at the asset level where
+the borrowing constraint stops binding; kinks propagate backward to wherever a policy sends a
+household onto a kink of the next stage; and $S$, a finite composition of the policies along the
+newborn's paths, inherits finitely many kinks in $r$. Off the kinks every policy is real-analytic in
+$(a,r)$ by the analytic implicit function theorem applied to the Euler equality, so $S$ is continuous
+and piecewise $C^1$ with finitely many pieces, each extending $C^1$ to its closed piece. A
+continuous, piecewise-$C^1$ function with positive derivative on each open piece is strictly
+increasing. So \eqref{eq:target}, read on the open pieces, suffices. (The companion's finiteness
+theorem, \lean{PiecewiseAnalyticOn.finite\_zeros}, is the same observation one level down: piecewise
+analytic with no flat piece gives finitely many zeros. It is not needed here, because
+\eqref{eq:target} gives the stronger conclusion directly.)
+
+Second, the true slope of supply is large and positive --- about $+53$ at $4\%$ and $+62$ at $6\%$
+on the solved model --- so \eqref{eq:target} holds in fact with room to spare, and a proof of it may
+be lossy by more than the true slope and still close. The construction below certifies
+$S'\ge-B_d$ with $B_d$ between $6.5$ and $9.2$: a bound that does not even know supply rises, and
+is still a third of what is needed.
+
+The link from a derivative bound to the secant inequality that single crossing is usually stated
+with is the mean value theorem, and it is worth writing down because it is the step that the
+formalised envelope \eqref{eq:envelope} does not take.
+
+\begin{lemma}[From the derivative to the secant]\label{lem:mvt}
+Let $r_1<r_2$ lie in a cell on which, for every stage $k$, every earnings state and every asset level
+in the stage's region, $c_k(a,z;\cdot)$ is continuous and piecewise $C^1$ in the rate with finitely
+many pieces, and suppose
+\[
+  \bigl(\partial_rc_k(a,z;r)-a\bigr)^+\ \le\ \varepsilon_k(a,z)\qquad\text{at every $r$ in the cell off the kinks.}
+\]
+Then the failure of Theorem 1 between $r_1$ and $r_2$ at $(a,z)$ is at most
+$(r_2-r_1)\,\varepsilon_k(a,z)$, and the envelope \eqref{eq:envelope} gives
+\[
+  \frac{S(r_2)-S(r_1)}{r_2-r_1}\ \ge\ -\frac1J\sum_kG_k\sum_z\nu(z)\max_{a\in\text{reach}}\varepsilon_k(a,z)\ =:\ -B_d .
+\]
+\end{lemma}
+
+\begin{proof}
+A continuous, piecewise-$C^1$ function is absolutely continuous, so
+$c_k(a,z;r_2)-c_k(a,z;r_1)-(r_2-r_1)a=\int_{r_1}^{r_2}(\partial_rc_k-a)\,dr\le(r_2-r_1)\varepsilon_k(a,z)$,
+and the positive part is bounded by the same. Insert $e_j=(r_2-r_1)\sum_z\nu(z)\max_a\varepsilon$
+and $L_j=(1-\kappa_k)R_2$ into \eqref{eq:envelope}; the accumulation
+$f_j$ is linear in the $e$'s, and $\sum_j f_j$ with the $L_j$ above is $\sum_k G_k e$ by the
+definition of $G$, with $R_2$ in place of $R$. Divide by $r_2-r_1$.
+\end{proof}
+
+So the whole problem is to certify, on every cell of a partition of the bracket, a bound
+$\varepsilon_k(a,z)$ on the \emph{derivative-form failure} $(\partial_rc_k-a)^+$ at every state in
+the cohort's reach, and to check $B_d<\min_{\text{cell}}|D'|$. The rest of the note is that
+certificate.
+
+\section{The derivative of consumption in the rate}\label{sec:deriv}
+
+\subsection{The formula}
+
+Fix a stage $k$, an earnings state $z$ and an asset level $a$ at which the household saves, so that
+the Euler equality holds:
+\[
+  c^{-\gamma}=\beta R\sum_{z'}\pi(z,z')\,c_k(x,z')^{-\gamma},\qquad x=m-c=Ra+y(z)-c,
+\]
+with $c=c_{k+1}(a,z)$. Differentiate in $r$ at fixed $a$, using $\partial_rR=1$ and
+$\partial_rx=a-\partial_rc$:
+\[
+  -\gamma c^{-\gamma-1}\,\partial_rc
+  =\beta\sum_{z'}\pi\,c_k^{-\gamma}
+   -\gamma\beta R\sum_{z'}\pi\,c_k^{-\gamma-1}\bigl[\partial_xc_k\,(a-\partial_rc)+\partial_rc_k\bigr].
+\]
+Multiply by $-c^{\gamma+1}/\gamma$ and use the Euler equality on the first term,
+$\beta c^{\gamma+1}\sum\pi c_k^{-\gamma}=c/R$. With the \emph{Euler weights}
+\begin{equation}\label{eq:weights}
+  w_{z'}=\beta R\,\pi(z,z')\,c_k(x,z')^{-\gamma-1}\,c^{\gamma+1},\qquad
+  A=\sum_{z'}w_{z'},\qquad \Psi_x=\sum_{z'}w_{z'}\,\partial_xc_k(x,z'),
+\end{equation}
+this is $\partial_rc=-c/(\gamma R)+\Psi_x(a-\partial_rc)+\sum_{z'}w_{z'}\partial_rc_k$, hence
+\begin{equation}\label{eq:dcdr}
+  \partial_rc_{k+1}(a,z)
+  =\frac{-\dfrac{c}{\gamma R}+\Psi_x\,a+\sum_{z'}w_{z'}\,\partial_rc_k(x,z')}{1+\Psi_x},
+  \qquad
+  \partial_rg_{k+1}=a-\partial_rc_{k+1}.
+\end{equation}
+At a corner, $c=m$ and $\partial_rc=a$ exactly. In the last period, $c_0=m$ and
+$\partial_rc_0=a$ everywhere; that is the terminal condition of a backward recursion in which
+\eqref{eq:dcdr} is the step.
+
+The three ingredients of the step are bounded by things the construction controls. The weights
+$w_{z'}$ are built from consumption at two consecutive stages; $A$ is the power-mean amplification
+of the companion's Section 7, close to one. The slope $\partial_xc_k$ of next period's consumption in
+next period's assets lies in $[\kappa_kR,R]$ by the propensity floor \eqref{eq:mpcfloor} and
+monotone saving, so $\Psi_x\in[\kappa_kR\,A,\,R\,A]$. And $\partial_rc_k$ is the previous step's
+output.
+
+\subsection{The derivative-form failure and the three recursions}
+
+The failure of Theorem 1 in derivative form is
+\[
+  e_{k+1}(a,z)=\bigl(\partial_rc_{k+1}(a,z)-a\bigr)^+=\bigl(-\partial_rg_{k+1}(a,z)\bigr)^+ ,
+\]
+the amount by which saving falls with the rate. Rewriting \eqref{eq:dcdr},
+\[
+  \partial_rc_{k+1}-a
+  =\frac{-\dfrac{c}{\gamma R}-a+\sum_{z'}w_{z'}\,\partial_rc_k(x,z')}{1+\Psi_x},
+\]
+so the failure at stage $k+1$ is driven by $\sum_{z'}w_{z'}\partial_rc_k$ exceeding
+$a+c/(\gamma R)$, damped by $1+\Psi_x$. Upper and lower bounds $U_k\ge\partial_rc_k\ge L_k$ propagate
+through \eqref{eq:dcdr} from $U_0=L_0=a$: the numerator's upper bound uses $U_k$ where
+$w_{z'}>0$, the smallest admissible $c$ and the largest admissible $a$; and the denominator's
+range is the range of $\Psi_x$.
+
+How much is kept of \eqref{eq:dcdr} decides whether the bound is useful, and the companion measured
+three versions on the solved model. The \emph{crude} recursion replaces $\sum w\,\partial_rc_k$ by
+$A\max_{z'}U_k$ and $\Psi_x$ by its range; it is what a proof from the two Euler inequalities alone
+would deliver, and it is dead --- $B_d=312$ at $\gamma=3$ against $39$ needed, its worst state the
+newborn at zero wealth. The \emph{weighted} recursion keeps $\sum_{z'}w_{z'}U_k$ with the Euler
+weights and asks nothing of $\Psi_x$ beyond its range; it gives $B_d\approx4$, a margin of ten. The
+\emph{exact} recursion keeps $\Psi_x$ too and is the chain rule. What separates the crude from the
+weighted recursion is a single max over tomorrow's states, and that is the lesson the certificate is
+built on: the weights $w_{z'}$ must be carried, which means the consumption functions at two
+consecutive stages must be enclosed tightly enough that the weights are known to a few percent. The
+companion's sensitivity check --- every weight, slope and interpolated bound perturbed adversarially
+by one percent --- leaves the weighted bound at about $4.2$, so enclosures of that quality suffice.
+
+\section{Enclosing the consumption functions}\label{sec:encl}
+
+\subsection{The endogenous-grid recursion, in intervals}
+
+The enclosure is the endogenous-grid recursion of the Euler equality, run in integers over
+$D=10^{15}$ with every operation rounded outward (\texttt{numerics/rational/encl.py}, shared by
+\texttt{derivcert.py}). At stage $k+1$, state $z$ and asset level $a$ with $m=y_z+Ra$, consumption
+is $m$ where $\Psi_k(0)\ge m$ and otherwise the unique solution of $c=\Psi_k(m-c)$, where
+\[
+  \Psi_k(a')=\Bigl[\beta R\sum_{z'}\pi(z,z')\,c_k(a',z')^{-\gamma}\Bigr]^{-1/\gamma}
+\]
+is the consumption today that makes the Euler equality hold against saving $a'$. $\Psi_k$ is
+increasing in $a'$ (monotone consumption) and increasing in $c_k$, so bracketing $c_k$ brackets
+$\Psi_k$: from stage-$k$ bounds $\underline c_k\le c_k\le\overline c_k$ on the grid, build
+$\Psi^{\mathrm{lo}}_k$ from $\underline c_k$ with every rounding downward and $\Psi^{\mathrm{hi}}_k$
+from $\overline c_k$ with every rounding upward. Since $c\mapsto\Psi(m-c)-c$ is strictly decreasing,
+\[
+  c_L\le\Psi^{\mathrm{lo}}_k(m-c_L)\ \Rightarrow\ c_L\le c_{k+1}(a,z),\qquad
+  c_H\ge\Psi^{\mathrm{hi}}_k(m-c_H)\ \Rightarrow\ c_H\ge c_{k+1}(a,z),
+\]
+which are exactly the first two clauses of the interval Euler step, with $\ell=\underline c_k$ and
+$h=\overline c_k$ read at $m-c_L$ and $m-c_H$. Each certified bound costs one rigorous evaluation
+of $\Psi$ from a floating-point candidate; if the candidate fails, one rigorous iteration of
+$\Psi$ is itself certified (since $\Psi^{\mathrm{lo}}$ is nondecreasing, $\Psi^{\mathrm{lo}}(m-t)$
+for $t\ge c^*$ is a certified lower bound), and after six iterations a bisection in rational
+arithmetic is the fallback. The corner region $[0,a^*]$ on which $c=m$ exactly is certified at each
+stage and state from $\Psi^{\mathrm{lo}}_k(0)$: wherever $y_z+Ra\le\Psi^{\mathrm{lo}}_k(0)$, the
+third clause of the interval Euler step applies. The terminal stage is exact, $c_0=m$.
+
+\subsection{Between grid points}
+
+Consumption is enclosed at the grid points; the recursion needs it at the saving $m-c$, which is not
+a grid point. Monotonicity and concavity close the gap: on $[a_i,a_{i+1}]$ the function lies above
+the chord of the two lower bounds, and below each of three upper bounds --- the right endpoint's
+upper bound (monotonicity), the left secant through the bounds at $a_{i-1},a_i$ extended forward, and
+the right secant through the bounds at $a_{i+1},a_{i+2}$ extended backward --- of which the smallest
+is taken. Above the certified corner the chord is anchored at the corner itself, where consumption
+is known exactly. These are the last clause of the interval Euler step.
+
+\subsection{The grid, and the widths}
+
+The grid has $1200$ points from $0$ to $3$ in steps of $0.0025$ and then relative steps of
+$0.25\%$ up to $3000$: $3968$ points in all. The top is far above the reach of any cohort (about
+$44$) because unavailability beyond the grid's top creeps inward by a factor of about $1/R$ per
+stage and must never reach the cohort's region; the fine spacing is for the derivative recursion,
+whose interpolation slack is of order $c''h^2$ per stage accumulated over a transient of some fifty
+stages. Two details of the implementation mattered for the widths. The floating-point candidate for
+each certified fixed point must be computed on its own side of the enclosure --- the lower
+candidate from $\Psi^{\mathrm{lo}}$, the upper from $\Psi^{\mathrm{hi}}$ --- or each stage loses a
+fraction $\Psi_x$ of the width; and the corner test must be strict (the corner at zero wealth is
+certified only where the household demonstrably does not save there). With both, the enclosure
+width at the newborn stage over the cohort's region is $0.0023$ at $4\%$ and $0.0015$ at $6\%$,
+against consumption of order one, which is what the weights need.
+
+What the enclosure delivers at a single rate is, at every stage $k$, every state $z$ and every
+grid point $a_i$, certified numbers $\underline c_k(a_i,z)\le c_k(a_i,z)\le\overline c_k(a_i,z)$ and
+a certified corner $a^*_k(z)$, each one an instance of the interval Euler step; and from these, by
+the chord and secants, bounds at every asset level up to the grid's top. The cohort's reach
+$\rho_j$ is computed from the same data: $\rho_0=0$ and $\rho_{j+1}=\max_z\bigl(m(\rho_j)-
+\underline c_{J-1-j}(\rho_j,z)\bigr)$, the most any household can hold at age $j+1$, since saving is
+nondecreasing in assets.
+
+\section{The interval recursion for the derivative}\label{sec:recursion}
+
+A derivative has no monotonicity or concavity to interpolate with, so the bounds on $\partial_rc_k$
+are carried on grid \emph{intervals} rather than at grid points: $U_k[z][i]\ge\partial_rc_k(a,z)\ge
+L_k[z][i]$ for every $a\in[a_i,a_{i+1}]$. The terminal values are $U_0[z][i]=a_{i+1}$ and
+$L_0[z][i]=a_i$, since $\partial_rc_0=a$. One step, from stage $k$ to stage $k+1$ on the interval
+$[a_i,a_{i+1}]$ at state $z$, evaluates \eqref{eq:dcdr} with every ingredient replaced by its range
+over the interval and rounded outward:
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt]
+\item today's consumption $c\in[\underline c_{k+1}(a_i,z),\overline c_{k+1}(a_{i+1},z)]$, by
+  monotonicity;
+\item today's saving $x=m-c\in[m(a_i)-\overline c_{k+1}(a_i,z),\ m(a_{i+1})-\underline c_{k+1}(a_{i+1},z)]$,
+  since saving is nondecreasing in assets;
+\item tomorrow's consumption $c_k(x,z')$ in the enclosure at the two ends of that $x$-range, by
+  monotonicity;
+\item each weight $w_{z'}$ between its two extreme values over those ranges, and $\Psi_x$ in
+  $[\kappa_kR\,A,\,R\,A]$ with $A=\sum w$ and $\kappa_k$ from its certified lower bound;
+\item $\partial_rc_k(x,z')$ between the smallest $L_k$ and the largest $U_k$ over the grid intervals
+  that the $x$-range meets.
+\end{itemize}
+The interior formula needs the Euler equality, so it is used only where saving is positive on the
+whole interval, $m(a_i)-\overline c_{k+1}(a_i,z)>0$. On every other interval --- those inside the
+certified corner, where $\partial_rc=a$ exactly, and those that straddle the point where the
+constraint stops binding, where the household may be at the corner at some $a$ in the interval ---
+the bounds are widened to cover $\partial_rc=a$ as well: $U\leftarrow\max(U,a_{i+1})$,
+$L\leftarrow\min(L,a_i)$. Beyond the grid's top no bound is available, and that unavailability
+creeps inward from $3000$ by about one interval per stage, never approaching the reach.
+
+The failure bound on the interval is $\varepsilon_{k+1}[z][i]=(U_{k+1}[z][i]-a_i)^+$, the largest
+value $\partial_rc-a$ can take there. By Lemma~\ref{lem:mvt} what enters the envelope is, for each
+age $j$ (stage $J-j$), $\sum_z\nu(z)\max\{\varepsilon_{J-j}[z][i]:a_i\le\rho_{j-1}\}$, the maximum
+over the intervals inside the reach; and then
+\[
+  B_d=\frac1J\sum_{j=1}^{J}f_j,\qquad f_1=0,\quad
+  f_{j+1}=(1-\kappa_{J-j})R\,f_j+\sum_z\nu(z)\max_{\text{reach}}\varepsilon_{J-j}[z][\cdot],
+\]
+with $\kappa$ its certified lower bound (which makes $1-\kappa$ an upper bound) and $R$ the gross
+rate. Every number in this display is a rational, computed exactly.
+
+At a single rate on the fine grid this gives, for $\gamma=3$, $B_d=5.2$ at $4\%$ against
+$|D'|=39.1$ and $B_d=7.4$ at $6\%$ against $28.7$; and for $\gamma=5$, $B_d=12.8$ at $4\%$. The
+failure is concentrated at the youngest ages --- about $0.4$ per age at ages one to ten, $0.23$ at
+age thirty --- which is where the enclosures are widest and where, on the solved model, the true
+derivative-form failure is exactly zero at $\gamma=3$: the bound is interpolation slack, not
+economics. That is why the grid is fine.
+
+\section{From a rate to a cell of rates}\label{sec:cell}
+
+Lemma~\ref{lem:mvt} needs the derivative-form failure bounded at every rate in the cell, so the
+enclosures the recursion reads must hold at every rate in the cell. A direct cell enclosure --- the
+same endogenous-grid recursion with the two rates at the ends of the cell placed where each hurts
+--- is valid but too loose: its widths are twenty to seventy times the single-rate widths on cells
+of a tenth of a percentage point, and the recursion's weights carry consumption to the power
+$\gamma+1$. A cell enclosure fed back from the recursion's own derivative bound diverges for the
+same reason. What works is to \emph{freeze} the transport and verify it afterwards.
+
+\subsection{The frozen transport}
+
+Let $h$ be the cell's width and $r_0$ its midpoint. Run the point enclosure at $r_0$ to get
+$[\underline c^0_k,\overline c^0_k]$ at every stage, state and grid point, and run the derivative
+recursion at $r_0$ to get $U^0_k$. Now \emph{assume} that on the cell, at every stage and every
+state on a wealth zone $Z_k$ to be specified,
+\begin{equation}\label{eq:assume}
+  |\partial_rc_k(a,z;r)|\ \le\ M_k[z][i]:=\lambda\,\max\bigl(|U^0_k[z][i]|,|L^0_k[z][i]|\bigr)+\mu,
+  \qquad a\in[a_i,a_{i+1}]\subset Z_k,
+\end{equation}
+with $\lambda=2$ and $\mu=1$. Under the assumption, consumption at any rate in the cell is within
+$M_kh/2$ of its value at the midpoint, so the transported enclosure
+\[
+  \underline c_k(a_i,z)=\underline c^0_k(a_i,z)-M_kh/2,\qquad
+  \overline c_k(a_i,z)=\overline c^0_k(a_i,z)+M_kh/2
+\]
+holds on the whole cell on the zone. Outside the zone the enclosure falls back to bounds that need
+no assumption at all: the propensity floor $\kappa_km$ from below, read at the lower rate, and cash
+on hand $m$ from above, read at the upper rate. Then run the derivative recursion on the transported
+enclosures, with every rate-dependent quantity taken at whichever end of the cell makes the bound
+larger, to get bounds $U_k$ valid at every rate in the cell \emph{at which the transported
+enclosure holds}, and check, on every interval where \eqref{eq:assume} was assumed,
+\begin{equation}\label{eq:verify}
+  \max\bigl(|U_k[z][i]|,|L_k[z][i]|\bigr)\ <\ M_k[z][i]\qquad\text{strictly.}
+\end{equation}
+
+\begin{lemma}[Continuation]\label{lem:cont}
+Suppose that for every stage $k$, state $z$ and asset level $a$ in the cohort's region,
+$r\mapsto c_k(a,z;r)$ is continuous and piecewise $C^1$ on the cell with finitely many pieces, the
+derivative extending continuously to each closed piece; and that the derivative recursion is sound:
+whenever the transported enclosure holds at a rate $r$ in the cell on the zone, and the fallback
+bounds outside it, the recursion's output satisfies $L_k\le\partial_rc_k(\cdot;r)\le U_k$ on every
+interval, one-sidedly at kinks. If \eqref{eq:verify} holds wherever \eqref{eq:assume} was assumed,
+then \eqref{eq:assume} is true on the whole cell, and so the transported enclosure and the bounds
+$U_k,L_k$ hold at every rate in the cell.
+\end{lemma}
+
+\begin{proof}
+Let $T$ be the set of $t\in[0,h/2]$ such that $|c_k(a,z;r)-c_k(a,z;r_0)|\le M_k|r-r_0|$ for all
+$|r-r_0|\le t$, all stages, states and asset levels in the zone. $T$ contains $0$, and is closed
+because each inequality is non-strict and $c_k$ is continuous in $r$. Let $t\in T$ with $t<h/2$. For
+every $r$ with $|r-r_0|\le t$ the transported enclosure holds (the midpoint enclosure holds at
+$r_0$, and consumption has moved by at most $M_kt\le M_kh/2$), so by soundness
+$|\partial_rc_k|\le\max(|U_k|,|L_k|)<M_k$ on the zone at $r$, one-sidedly at kinks. The one-sided
+derivatives at $r_0\pm t$ are strictly below $M_k$, and the derivative extends continuously to the
+closed pieces, so there is $\varepsilon>0$ with $|\partial_rc_k|<M_k$ on
+$|r-r_0|<t+\varepsilon$ off the kinks; by absolute continuity
+$|c_k(r)-c_k(r_0)|\le\int|\partial_rc_k|\le M_k|r-r_0|$ there, so $t+\varepsilon/2\in T$. A closed
+subset of $[0,h/2]$ that contains $0$ and has no largest element below $h/2$ is all of $[0,h/2]$.
+\end{proof}
+
+The hypotheses of the lemma are the regularity of Section~\ref{sec:slope} and the soundness of the
+recursion, which is Section~\ref{sec:recursion} read with the cell's rate range in place of a rate.
+The lemma is the one piece of the construction that is neither a formalised theorem nor arithmetic:
+it is a paper argument, and a short one.
+
+\subsection{What makes it run}
+
+Three refinements were needed, and each failed version is recorded in the companion.
+
+\emph{The zone.} The assumption \eqref{eq:assume} cannot be made on the whole grid: near the grid's
+top the midpoint bounds $U^0$ are enormous and the transported widths with them, and a few grid
+points just below the top then fail \eqref{eq:verify}. The assumption is confined to the zone the
+recursion actually reads from the cohort's region, $Z_{J-1}=[0,1.2\rho+2]$ at the newborn stage and
+$Z_k=[0,\max(1.2\rho_{\mathrm{age}}+2,\ (1-\kappa_{k+1})(y_{\max}+R\sup Z_{k+1})+2)]$ working
+backward, which is closed under the saving map by the propensity floor; its top runs from about
+$32$ at the newborn stage through $137$ at stage thirty to $2$ at the last stage. The recursion
+skips intervals above the zone, where the fallback bounds would make the rationals enormous without
+being read.
+
+\emph{The floor $\mu$.} Near the corner the midpoint bound $U^0$ is of order $a$, tiny, and the
+cell pass --- which cannot see that the household is constrained at every rate in the cell ---
+returns a bound above $\lambda U^0$. The additive floor $\mu=1$ covers those states.
+
+\emph{The multiplier $\lambda$ does not help.} Cells of $0.02$ percentage points fail
+\eqref{eq:verify} by nine percent at every $\lambda$ tried, because the transported width scales
+with $\lambda$ and so does the bound it produces; cells of $0.1$ points fail it forty times over.
+Cells of $0.01$ points verify at a ratio of $0.75$, and cells of $0.005$ at $0.63$. The width is
+what it is: $0.01$ percentage points at the present enclosure quality.
+
+The cost of the cell is the \emph{inflation} of $B_d$ over the midpoint's: at $5\%$ the cell
+bound is $6.9$ against a midpoint bound of $6.3$, nine percent; at $6\%$, $8.1$ against $7.4$. The
+transport does not spoil the margin.
+
+\section{Covering the bracket}\label{sec:bracket}
+
+The bracket $[4\%,6\%]$ is partitioned into two hundred cells of $0.01$ percentage points. For each
+cell the certificate runs the point enclosure at the midpoint (about twenty-four minutes on the fine
+grid), the derivative recursion at the midpoint, the transported enclosure and the cell recursion,
+and the verification \eqref{eq:verify}; a cell that failed would be split in two and both halves
+rerun, down to a minimum width of $0.001$ points. The run is resumable, with one line per finished
+cell in \texttt{numerics/rational/runs/bracket\_g3\_4to6.txt}, and took about forty hours of
+wall-clock time on seven cores, at eighty-four minutes per cell.
+
+No cell needed splitting. Every cell certified at its first width, with the verification ratio
+$\max|U|/M$ between $0.744$ and $0.751$ on every one of them, and the certified bounds are:
+
+\begin{center}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+sub-range & $\max B_d$ & $\min|D'|$ & worst $B_d/|D'|$ & cells\\
+\midrule
+$[4.0\%,4.5\%]$ & $7.13$ & $36.00$ & $0.198$ & $50$\\
+$[4.5\%,5.0\%]$ & $7.82$ & $33.28$ & $0.235$ & $50$\\
+$[5.0\%,5.5\%]$ & $8.50$ & $30.86$ & $0.275$ & $50$\\
+$[5.5\%,6.0\%]$ & $9.15$ & $28.70$ & $0.319$ & $50$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+$B_d$ rises smoothly from $6.47$ at the bottom of the bracket to $9.15$ at the top, while $|D'|$
+falls, so the worst ratio, $0.319$, sits at the top cell $[5.99\%,6.00\%]$. On every cell
+$B_d<\min_{\text{cell}}|D'|$, with a margin of at least three. By Lemma~\ref{lem:mvt} applied cell
+by cell, for any two rates $r_1<r_2$ in the same cell,
+\[
+  E(r_2)-E(r_1)\ \ge\ (r_2-r_1)\bigl(\min\nolimits_{\text{cell}}|D'|-B_d\bigr)\ >\ 0,
+\]
+and since adjacent cells share an endpoint, $E$ is strictly increasing on the whole bracket.
+
+\section{The bracket contains an equilibrium}\label{sec:level}
+
+Strict monotonicity of $E$ gives at most one zero. For exactly one, $E$ must change sign on the
+bracket, and the same enclosures certify that it does (\texttt{numerics/rational/levelcert.py}).
+Run the cohort-assets recursion of Section~\ref{sec:economy} with the \emph{interval} policy. At a
+grid point $a_i$ and state $z$ the saving $g_{k+1}(a_i,z)$ lies in
+$[m(a_i)-\overline c_{k+1}(a_i,z),\ m(a_{i+1})-\underline c_{k+1}(a_i,z)]^+$ by the enclosure; $A_k$ is
+nondecreasing in assets, because saving is and the recursion preserves monotone functions; so a lower
+bound on $A_{k+1}(a_i,z)$ is $a_i$ plus the $\pi$-expectation of the lower bound on $A_k$ read at the
+grid point \emph{below} the lower bound on saving, and an upper bound is the same with upper bounds
+and the grid point \emph{above}, each rounded outward. Sixty steps from $A_0=a$ give
+$S(r)\in[\underline S,\overline S]$:
+
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+$r$ & $S(r)$ certified & $D(r)$ & verdict\\
+\midrule
+$4\%$ & $[3.821,\,3.966]$ & $4.6875$ & $S<D$\\
+$6\%$ & $[4.950,\,5.159]$ & $4.0179$ & $S>D$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The widths are the grid rounding of sixty compositions and are of no consequence against gaps of
+$0.72$ and $0.93$. So $E(4\%)<0<E(6\%)$.
+
+\section{Proof of Theorem~\ref{thm:main}}\label{sec:proof}
+
+$S$ is continuous on $[4\%,6\%]$ (\lean{continuousOn\_olgSupply}); the hypotheses of that theorem
+are the stage properties on a reachable family, and the enclosure's reach, $\rho_j\le44$, is such a
+family for any cap above it, with cap slack certified by the enclosure itself (the upper bound on
+saving never approaches the grid's top). $D$ is continuous. By Section~\ref{sec:level},
+$S(4\%)<D(4\%)$ and $S(6\%)>D(6\%)$, so by the intermediate value theorem
+(\lean{exists\_olgEquilibrium}) there is a rate in $(4\%,6\%)$ with $S=D$. By
+Section~\ref{sec:bracket}, $E=S-D$ is strictly increasing on $[4\%,6\%]$, so that rate is the only
+one in the bracket. \qed
+
+Read backwards, the proof uses: the certified endpoint levels (Section~\ref{sec:level}, arithmetic
+on the enclosures); the certified slope bound on every cell (Sections~\ref{sec:recursion}
+and~\ref{sec:cell}, arithmetic on the enclosures plus Lemma~\ref{lem:cont}); the enclosures
+themselves (Section~\ref{sec:encl}, instances of the interval Euler step); Lemma~\ref{lem:mvt} and
+the derivative formula \eqref{eq:dcdr} (paper); and the companion's theorems of
+Section~\ref{sec:known} (kernel-checked).
+
+\section{Standing, and what remains}\label{sec:standing}
+
+\subsection{What kind of result this is}
+
+\begin{center}
+\begin{tabular}{@{}p{0.47\textwidth}p{0.47\textwidth}@{}}
+\toprule
+step & standing\\
+\midrule
+stage properties, propensity floor, cohort slope, earnings marginal, cohort envelope, continuity,
+existence, interval Euler step, chord and secants & theorems, checked by the Lean kernel\\[2pt]
+the derivative formula \eqref{eq:dcdr}; Lemma~\ref{lem:mvt}; Lemma~\ref{lem:cont};
+piecewise-$C^1$ regularity of the policies in the rate & paper arguments, given above\\[2pt]
+the enclosures at two hundred midpoints and two endpoints; the derivative recursion on each cell;
+the verification \eqref{eq:verify}; the endpoint levels & exact rational arithmetic, rounded
+outward, evaluated by \texttt{derivcert.py} and \texttt{levelcert.py}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The arithmetic row is where the standing is weakest, and it is weak in a specific way: each
+inequality the programs check is an instance of a formalised theorem (the enclosure) or of a
+recursion written out in Sections~\ref{sec:recursion}--\ref{sec:level} (the derivative bound, the
+level bound), but the programs that evaluate them were not proved to evaluate what this note says
+they evaluate. The companion has already removed that gap once, for the pairwise enclosure
+certificate at $(4\%,4.6\%)$: a Lean checker over naturals, its verdict established by
+\texttt{native\_decide} in a quarter of an hour, and a bridge from the checker's inequalities to the
+theorems behind them (\lean{enclCheck\_eq\_true}, \lean{olg7\_increment}). The derivative certificate
+has the same shape, with three additions: the interval recursion of Section~\ref{sec:recursion} as a
+checker, the level recursion of Section~\ref{sec:level}, and Lemma~\ref{lem:cont} as a theorem, the
+one genuinely new piece of mathematics. At eighty-four minutes per cell in Python, two hundred cells
+in compiled Lean is a weekend of machine time, not a new argument.
+
+\subsection{What the theorem does not say}
+
+It is one calibration: one chain, one $\beta$, one $\gamma$, one technology. Nothing transfers to a
+neighbouring calibration except by rerunning the certificate, which is the price of a certificate
+over a proof. It is one bracket: outside $[4\%,6\%]$ the slope bound has not been run, so an
+equilibrium below $4\%$ or above $6\%$ is not excluded by this note; the companion's existence
+bracket for the Tauchen variant of the calibration is $[2.78\%,7.67\%]$, and the certified reach
+suggests the same for this one, so the honest statement is uniqueness \emph{on the bracket} until the
+cells cover the existence bracket. And it is $\gamma=3$: the same run at $\gamma=5$, where the
+single-rate bound is $12.8$ against $39$ at $4\%$, is the same command with one argument changed and
+about the same machine time, but it has not been run.
+
+\subsection{What would raise it}
+
+In order of return on effort. A \emph{transported} derivative bound in place of the constant
+multiple $\lambda U^0$ in \eqref{eq:assume} --- carrying the assumption through the recursion
+rather than freezing it --- should admit cells three to five times wider, since the verification
+ratio is pinned at $0.75$ by the constant multiple and not by the margin. The $\gamma=5$ bracket,
+which turns the theorem into a statement about Aiyagari's second calibration. The Lean replay of the
+derivative checker with Lemma~\ref{lem:cont}, which turns the certificate into a theorem with one
+\texttt{native\_decide} axiom. And the formalisation of piecewise analyticity of the stage policies
+in the rate, which the regularity hypotheses of Lemmas~\ref{lem:mvt} and~\ref{lem:cont} rest on and
+which is at present a paper argument from the analytic implicit function theorem.
+
+\appendix
+\section{Reproduction}
+
+All files are under \texttt{WriteUps/WriteUpOLG/numerics/rational/} in the repository.
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt]
+\item The bracket run (two hundred cells, resumable, results appended to the file named):\\
+  \texttt{ENCL\_FINE=fine ENCL\_NOCACHE=1 ENCL\_MU=1 ENCL\_LAMS=2 ENCL\_PROCS=7}\\
+  \texttt{ENCL\_RESULTS=runs/bracket\_g3\_4to6.txt python3 derivcert.py 3 0.04 0.06 200 1 fixed}
+\item Its summary (leaves, splits, worst margin, coverage): \texttt{python3 runs/bracket\_summary.py
+  runs/bracket\_g3\_4to6.txt 0.04 0.06}.
+\item A single rate, for the first table of Section~\ref{sec:recursion}:
+  \texttt{ENCL\_FINE=fine python3 derivcert.py 3 0.04 0.04 0}.
+\item The endpoint levels: \texttt{ENCL\_FINE=fine python3 levelcert.py 3 1/25} and
+  \texttt{... 3 3/50}.
+\item The derivative-form measurements on the solved model, which motivated the weighted recursion:
+  \texttt{numerics/slopebnd.m}, \texttt{slopebnd2.m}, \texttt{dcdr.m}.
+\end{itemize}
+The calibration is in the header of \texttt{derivcert.py}: $J=60$, $n_z=7$, $\beta=24/25$,
+$\rho=9/10$, $\alpha=9/25$, $\delta=2/25$, the Rouwenhorst chain, the seven earnings levels and
+their binomial invariant law, the grid, and $D=10^{15}$.
+
+\bibliographystyle{ecta}
+\nocite{Aiyagari1994,Light2020,CarrollKimball1996,Huggett1996}
+\bibliography{refs}
+
+\end{document}
