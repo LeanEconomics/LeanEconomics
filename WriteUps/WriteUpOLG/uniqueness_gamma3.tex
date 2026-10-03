@@ -635,7 +635,7 @@ Strict monotonicity of $E$ gives at most one zero. For exactly one, $E$ must cha
 bracket, and the same enclosures certify that it does (\texttt{numerics/rational/levelcert.py}).
 Run the cohort-assets recursion of Section~\ref{sec:economy} with the \emph{interval} policy. At a
 grid point $a_i$ and state $z$ the saving $g_{k+1}(a_i,z)$ lies in
-$[m(a_i)-\overline c_{k+1}(a_i,z),\ m(a_{i+1})-\underline c_{k+1}(a_i,z)]^+$ by the enclosure; $A_k$ is
+$[m(a_i)-\overline c_{k+1}(a_i,z),\ m(a_i)-\underline c_{k+1}(a_i,z)]^+$ by the enclosure, with $m(a_i)$ rounded down in the first and up in the second; $A_k$ is
 nondecreasing in assets, because saving is and the recursion preserves monotone functions; so a lower
 bound on $A_{k+1}(a_i,z)$ is $a_i$ plus the $\pi$-expectation of the lower bound on $A_k$ read at the
 grid point \emph{below} the lower bound on saving, and an upper bound is the same with upper bounds
