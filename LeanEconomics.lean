@@ -150,3 +150,6 @@ import LeanEconomics.OLG.MPCBound
 import LeanEconomics.OLG.LowerSandwich
 import LeanEconomics.OLG.Incidence
 import LeanEconomics.Econometrics.ApproxLikelihood
+import LeanEconomics.Distribution.RandomMap
+import LeanEconomics.Econometrics.ApproxLikelihoodModel
+import LeanEconomics.Econometrics.ApproxPosterior

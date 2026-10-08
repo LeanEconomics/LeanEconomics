@@ -48,17 +48,16 @@ The bound is sharp in its dependence on `T` (`log_prod_div_prod_const`): with ev
 equal to `M` and every computed one equal to `M + ε`, the log likelihood ratio is exactly
 `T log (1 + ε / M)`.
 
-## What is a hypothesis, not a theorem
+## The hypotheses
 
-* The per-period density error `|q t - p t| ≤ ε` uniformly in `t` (FRS's Lemma 6). FRS justify
-  uniformity in `t` by "the model is stationary"; it is a genuine stability condition on the
-  inverted filter, and is taken here as a hypothesis.
-* The coupling of the two invariant distributions. It is supplied as a measure `P` on a space `X`
-  with two maps `a b : X → S` (the exact and computed initial states) and `dist (a x) (b x) ≤ ρ`
-  `P`-almost everywhere. `dist_iterate_le` and `dist_step_le_of_le` prove the pathwise half of
-  the construction: the band `dist ≤ δ / (1 - α)` is invariant under the joint chain driven by
-  common shocks. Producing an invariant measure of the joint chain on that band is
-  Krylov–Bogolyubov, which Mathlib does not have.
+The theorems here take three hypotheses: the per-period density error `|q t - p t| ≤ ε`
+uniformly in `t` (FRS's Lemma 6, which FRS justify only by "the model is stationary"), a
+log-Lipschitz bound in the initial state for the EXACT densities (none is needed for the computed
+ones), and a coupling of the two invariant distributions, supplied as a measure `P` on a space
+`X` with maps `a b : X → S` and `dist (a x) (b x) ≤ ρ` `P`-almost everywhere.
+`ApproxLikelihoodModel` derives all three from primitives: the coupling by Krylov–Bogolyubov
+for the joint chain on the band `dist ≤ δ / (1 - α)`, and the other two in the case where the
+measurement shock alone is recovered from the data.
 -/
 
 open Finset MeasureTheory Real
@@ -288,6 +287,54 @@ theorem lik_le_exp_mul_lik (hξ : 0 < ξ) (hp : ∀ t s ω, ξ ≤ p t s ω) (hq
     (Filter.Eventually.of_forall fun x ↦ integral_nonneg (hcondq_nonneg (b x)))
     (hintP.const_mul _) hae
 
+/-- The other direction of Proposition 2′. The order of the two moves is reversed: first move the
+initial state within the EXACT model (so the log-Lipschitz bound is needed only for `p`), then
+switch to the computed model at the computed initial state. Needs the lower bound `ξ` on `q`
+and integrability of `q`'s likelihood. -/
+theorem lik_le_exp_mul_lik_rev (hξ : 0 < ξ) (hq : ∀ t s ω, ξ ≤ q t s ω)
+    (hp : ∀ t s ω, 0 ≤ p t s ω) (hpq : ∀ t s ω, |q t s ω - p t s ω| ≤ ε) (hℓ : ∀ t, 0 ≤ ℓ t)
+    (hlip : ∀ t s s' ω, p t s' ω ≤ exp (ℓ t * dist s s') * p t s ω)
+    (hρ : ∀ᵐ x ∂P, dist (a x) (b x) ≤ ρ)
+    (hintQ : ∀ s, Integrable (condLik q s) Q)
+    (hintP : Integrable (fun x ↦ initLik q Q (b x)) P) :
+    lik p Q P a ≤ exp (Fintype.card ι * (ε / ξ) + (∑ t, ℓ t) * ρ) * lik q Q P b := by
+  set C := Fintype.card ι * (ε / ξ)
+  have hcond : ∀ s s' ω, condLik p s ω ≤ exp (C + (∑ t, ℓ t) * dist s' s) * condLik q s' ω := by
+    intro s s' ω
+    have h1 : condLik p s ω ≤ exp (∑ t, ℓ t * dist s' s) * condLik p s' ω :=
+      prod_le_exp_sum_mul_prod univ (fun t _ ↦ hp t s ω) (fun t _ ↦ hlip t s' s ω)
+    rw [← sum_mul] at h1
+    have h2 : condLik p s' ω ≤ exp C * condLik q s' ω :=
+      prod_le_exp_card_mul_prod univ hξ (fun t _ ↦ hq t s' ω) (fun t _ ↦ hp t s' ω)
+        (fun t _ ↦ by rw [abs_sub_comm]; exact hpq t s' ω)
+    calc condLik p s ω ≤ exp ((∑ t, ℓ t) * dist s' s) * condLik p s' ω := h1
+      _ ≤ exp ((∑ t, ℓ t) * dist s' s) * (exp C * condLik q s' ω) := by gcongr
+      _ = exp (C + (∑ t, ℓ t) * dist s' s) * condLik q s' ω := by rw [exp_add]; ring
+  have hcondp_nonneg : ∀ s ω, 0 ≤ condLik p s ω := fun s ω ↦ prod_nonneg fun t _ ↦ hp t s ω
+  have hcondq_nonneg : ∀ s ω, 0 ≤ condLik q s ω :=
+    fun s ω ↦ prod_nonneg fun t _ ↦ (hξ.trans_le (hq t s ω)).le
+  have hinit : ∀ s s', initLik p Q s ≤ exp (C + (∑ t, ℓ t) * dist s' s) * initLik q Q s' := by
+    intro s s'
+    unfold initLik
+    rw [← integral_const_mul]
+    exact integral_mono_of_nonneg (Filter.Eventually.of_forall (hcondp_nonneg s))
+      ((hintQ s').const_mul _) (Filter.Eventually.of_forall (hcond s s'))
+  have hinitq_nonneg : ∀ s, 0 ≤ initLik q Q s := fun s ↦ integral_nonneg (hcondq_nonneg s)
+  have hK : 0 ≤ ∑ t, ℓ t := sum_nonneg fun t _ ↦ hℓ t
+  have hae : ∀ᵐ x ∂P, initLik p Q (a x) ≤ exp (C + (∑ t, ℓ t) * ρ) * initLik q Q (b x) := by
+    filter_upwards [hρ] with x hx
+    calc initLik p Q (a x) ≤ exp (C + (∑ t, ℓ t) * dist (b x) (a x)) * initLik q Q (b x) :=
+          hinit _ _
+      _ ≤ exp (C + (∑ t, ℓ t) * ρ) * initLik q Q (b x) := by
+          gcongr
+          · exact hinitq_nonneg _
+          · rw [dist_comm]; exact hx
+  unfold lik
+  rw [← integral_const_mul]
+  exact integral_mono_of_nonneg
+    (Filter.Eventually.of_forall fun x ↦ integral_nonneg (hcondp_nonneg (a x)))
+    (hintP.const_mul _) hae
+
 omit [PseudoMetricSpace S] in
 /-- With probability measures, the likelihood is at least `ξ ^ T`, so in particular positive. -/
 theorem pow_le_lik [IsProbabilityMeasure Q] [IsProbabilityMeasure P] (hξ : 0 < ξ)
@@ -307,27 +354,23 @@ theorem pow_le_lik [IsProbabilityMeasure Q] [IsProbabilityMeasure P] (hξ : 0 < 
 
 /-- **Proposition 2′ (corrected FRS Proposition 2), two-sided multiplicative form.** Let `p` be
 the exact and `q` the computed conditional densities, both bounded below by `ξ > 0` and within
-`ε` of each other (`ε = χ δ` in FRS's notation), both with log-Lipschitz constants `ℓ t` in the
-initial state, and let `P` couple the exact initial state `a` with the computed one `b` within
+`ε` of each other (`ε = χ δ` in FRS's notation), the EXACT densities with log-Lipschitz
+constants `ℓ t` in the initial state (nothing of the kind is needed of the computed ones), and let `P` couple the exact initial state `a` with the computed one `b` within
 `ρ` (`ρ = δ / (1 - α)` under pathwise contraction). Then with `T = card ι` and `K = ∑ ℓ`,
 
   `L_j ≤ exp (T ε / ξ + K ρ) · L`   and   `L ≤ exp (T ε / ξ + K ρ) · L_j`. -/
 theorem likelihood_le_exp_mul (hξ : 0 < ξ) (hp : ∀ t s ω, ξ ≤ p t s ω)
     (hq : ∀ t s ω, ξ ≤ q t s ω) (hpq : ∀ t s ω, |q t s ω - p t s ω| ≤ ε) (hℓ : ∀ t, 0 ≤ ℓ t)
     (hlipp : ∀ t s s' ω, p t s' ω ≤ exp (ℓ t * dist s s') * p t s ω)
-    (hlipq : ∀ t s s' ω, q t s' ω ≤ exp (ℓ t * dist s s') * q t s ω)
     (hρ : ∀ᵐ x ∂P, dist (a x) (b x) ≤ ρ)
     (hintQp : ∀ s, Integrable (condLik p s) Q) (hintQq : ∀ s, Integrable (condLik q s) Q)
     (hintPp : Integrable (fun x ↦ initLik p Q (a x)) P)
     (hintPq : Integrable (fun x ↦ initLik q Q (b x)) P) :
     lik q Q P b ≤ exp (Fintype.card ι * (ε / ξ) + (∑ t, ℓ t) * ρ) * lik p Q P a ∧
       lik p Q P a ≤ exp (Fintype.card ι * (ε / ξ) + (∑ t, ℓ t) * ρ) * lik q Q P b := by
-  refine ⟨lik_le_exp_mul_lik hξ hp (fun t s ω ↦ (hξ.trans_le (hq t s ω)).le) hpq hℓ hlipp hρ
-    hintQp hintPp, ?_⟩
-  refine lik_le_exp_mul_lik hξ hq (fun t s ω ↦ (hξ.trans_le (hp t s ω)).le)
-    (fun t s ω ↦ by rw [abs_sub_comm]; exact hpq t s ω) hℓ hlipq ?_ hintQq hintPq
-  filter_upwards [hρ] with x hx
-  rwa [dist_comm]
+  exact ⟨lik_le_exp_mul_lik hξ hp (fun t s ω ↦ (hξ.trans_le (hq t s ω)).le) hpq hℓ hlipp hρ
+    hintQp hintPp, lik_le_exp_mul_lik_rev hξ hq (fun t s ω ↦ (hξ.trans_le (hp t s ω)).le) hpq hℓ
+    hlipp hρ hintQq hintPq⟩
 
 /-- **Proposition 2′, log form.** Under probability measures,
 
@@ -338,13 +381,12 @@ theorem abs_log_likelihood_sub_le [IsProbabilityMeasure Q] [IsProbabilityMeasure
     (hξ : 0 < ξ) (hp : ∀ t s ω, ξ ≤ p t s ω)
     (hq : ∀ t s ω, ξ ≤ q t s ω) (hpq : ∀ t s ω, |q t s ω - p t s ω| ≤ ε) (hℓ : ∀ t, 0 ≤ ℓ t)
     (hlipp : ∀ t s s' ω, p t s' ω ≤ exp (ℓ t * dist s s') * p t s ω)
-    (hlipq : ∀ t s s' ω, q t s' ω ≤ exp (ℓ t * dist s s') * q t s ω)
     (hρ : ∀ᵐ x ∂P, dist (a x) (b x) ≤ ρ)
     (hintQp : ∀ s, Integrable (condLik p s) Q) (hintQq : ∀ s, Integrable (condLik q s) Q)
     (hintPp : Integrable (fun x ↦ initLik p Q (a x)) P)
     (hintPq : Integrable (fun x ↦ initLik q Q (b x)) P) :
     |log (lik q Q P b) - log (lik p Q P a)| ≤ Fintype.card ι * (ε / ξ) + (∑ t, ℓ t) * ρ := by
-  obtain ⟨h1, h2⟩ := likelihood_le_exp_mul hξ hp hq hpq hℓ hlipp hlipq hρ hintQp hintQq
+  obtain ⟨h1, h2⟩ := likelihood_le_exp_mul hξ hp hq hpq hℓ hlipp hρ hintQp hintQq
     hintPp hintPq
   have hL : 0 < lik p Q P a := (pow_pos hξ _).trans_le (pow_le_lik hξ hp hintQp hintPp)
   have hLj : 0 < lik q Q P b := (pow_pos hξ _).trans_le (pow_le_lik hξ hq hintQq hintPq)
@@ -387,13 +429,12 @@ theorem abs_log_likelihood_sub_le_of_geometric {T : ℕ} {p q : Fin T → S → 
     (hc : 0 ≤ c) (hα0 : 0 ≤ α) (hα1 : α < 1) (hδ : 0 ≤ δ)
     (hgeom : ∀ t, ℓ t ≤ c * α ^ (t : ℕ))
     (hlipp : ∀ t s s' ω, p t s' ω ≤ exp (ℓ t * dist s s') * p t s ω)
-    (hlipq : ∀ t s s' ω, q t s' ω ≤ exp (ℓ t * dist s s') * q t s ω)
     (hρ : ∀ᵐ x ∂P, dist (a x) (b x) ≤ δ / (1 - α))
     (hintQp : ∀ s, Integrable (condLik p s) Q) (hintQq : ∀ s, Integrable (condLik q s) Q)
     (hintPp : Integrable (fun x ↦ initLik p Q (a x)) P)
     (hintPq : Integrable (fun x ↦ initLik q Q (b x)) P) :
     |log (lik q Q P b) - log (lik p Q P a)| ≤ T * (ε / ξ) + c * δ / (1 - α) ^ 2 := by
-  have h := abs_log_likelihood_sub_le hξ hp hq hpq hℓ hlipp hlipq hρ hintQp hintQq hintPp hintPq
+  have h := abs_log_likelihood_sub_le hξ hp hq hpq hℓ hlipp hρ hintQp hintQq hintPp hintPq
   have hK := sum_le_of_geometric hc hα0 hα1 hgeom
   have h1 : 0 < 1 - α := by linarith
   have hρ0 : 0 ≤ δ / (1 - α) := div_nonneg hδ h1.le

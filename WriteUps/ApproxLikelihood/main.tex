@@ -54,8 +54,11 @@ likelihood: under the paper's lower bound on densities, a pathwise version of it
 condition, and a Lipschitz condition on the log density in the initial state,
 $|\log L_j(y^T) - \log L(y^T)| \le (T\chi/\xi + K/(1-\alpha))\,\delta$. The dependence on $T$ is
 sharp. The average log-likelihood error is therefore $O(\delta)$ uniformly in $T$, which is the
-quantity Ackerberg, Geweke and Hahn identify as relevant for estimation. The core of the argument
-is formalised in Lean~4 with Mathlib.
+quantity Ackerberg, Geweke and Hahn identify as relevant for estimation. The argument
+is formalised in Lean~4 with Mathlib, including the existence of the coupling of invariant
+distributions (by Krylov--Bogolyubov), the derivation of the hypotheses from primitives in the
+case where the measurement shock alone is recovered from the data, and explicit bounds on the
+resulting posteriors.
 \end{abstract}
 
 \section{Setting}
@@ -132,8 +135,8 @@ $\xi \le p_t(s,\omega)$, $\xi \le q_t(s,\omega)$ and $|q_t(s,\omega) - p_t(s,\om
 \end{assumption}
 
 \begin{assumption}[Log-Lipschitz in the initial state]\label{h:lip}
-There are $\ell_t \ge 0$ with $p_t(s',\omega) \le e^{\ell_t d(s,s')} p_t(s,\omega)$ and likewise
-for $q_t$, for all $s, s', \omega$. Write $K = \sum_{t=1}^T \ell_t$.
+There are $\ell_t \ge 0$ with $p_t(s',\omega) \le e^{\ell_t d(s,s')} p_t(s,\omega)$ for all
+$s, s', \omega$. Write $K = \sum_{t=1}^T \ell_t$. Only the \emph{exact} densities need this.
 \end{assumption}
 
 \begin{assumption}[Coupled initial states]\label{h:coup}
@@ -168,9 +171,13 @@ over $\omega$, $\int \prod_t q_t(s',\cdot)\,\dd Q \le e^{T\varepsilon/\xi + K d(
 $d(a(x),b(x)) \le \rho$ almost surely, and integrate against $P$: $L_j \le e^D L$.
 \formal{lik\_le\_exp\_mul\_lik}
 
-The reverse inequality is the same argument with the roles of the two models exchanged. Since the
-densities are at least $\xi$ and $Q, P$ are probability measures, $L, L_j \ge \xi^T > 0$, and
-taking logs gives the second form.
+For the reverse inequality, take the two moves in the other order: first move the initial state
+from $a(x)$ to $b(x)$ \emph{within the exact model} (Step 3), then switch to the computed model at
+$b(x)$ (Step 2, with the roles of $p$ and $q$ exchanged, which uses $\xi \le q_t$). This is why
+Hypothesis~\ref{h:lip} is needed only for the exact densities.
+\formal{lik\_le\_exp\_mul\_lik\_rev}
+\noindent Since the densities are at least $\xi$ and $Q, P$ are probability measures,
+$L, L_j \ge \xi^T > 0$, and taking logs gives the second form.
 \end{proof}
 
 \begin{remark}[Sharpness in $T$]
@@ -182,61 +189,114 @@ $\log L_j - \log L = T(c\delta - \delta^2/2)/\sigma^2$, again linear in $T$.
 \end{remark}
 \formal{log\_prod\_div\_prod\_const}
 
-\section{The hypotheses}\label{sec:hyp}
+\section{The hypotheses from primitives}\label{sec:hyp}
 
 Hypothesis~\ref{h:err} is FRS's Assumptions 4 and 8 and the conclusion of their Lemma~6, stated
 uniformly in $t$. Hypotheses~\ref{h:lip} and~\ref{h:coup} replace their Condition~1 and the
-Santos--Peralta-Alva bound used in (12). We now say when they hold.
+Santos--Peralta-Alva bound used in (12). We derive all three from primitives on the model, with
+proofs in the appendices. Two of FRS's assumptions are strengthened.
 
-\paragraph{The coupling.} Strengthen Condition~1 from contraction in mean to \emph{pathwise}
-contraction: $d(\varphi(s,w), \varphi(s',w)) \le \alpha\, d(s,s')$ for every shock $w$. Drive the
-exact and computed chains by the same shocks. One step gives
+\begin{itemize}[leftmargin=1.5em]
+\item \emph{Pathwise contraction.} Condition~1 is strengthened from contraction in mean to
+contraction for every shock: $d(\varphi(s,w), \varphi(s',w)) \le \alpha\, d(s,s')$ for all $w$.
+\item \emph{No $W_2$.} We take $\dim V_t = \dim Y_t$, so that the measurement shock alone is
+recovered from the data. The state path $s_{t+1} = \varphi(s_t, \omega_t)$ is then a function of
+the initial state and the shock path only, and the conditional density of the $t$-th observation
+is $f_t(s_{t})$ for a function $f_t$ of the current state: the density of $V$ at
+$g^{-1}(y_t; s)$ times the Jacobian.
+\end{itemize}
+
+\begin{theorem}[Proposition 2$'$ from primitives]\label{thm:prim}
+Let $S$ be a compact metric space and $W$ a measurable space carrying the shock law $\nu$. Let
+$\varphi, \varphi_j : S \times W \to S$ be jointly measurable and continuous in the state, with
+$\varphi$ a pathwise $\alpha$-contraction ($0 \le \alpha < 1$) and
+$d(\varphi_j(s,w), \varphi(s,w)) \le \delta$. Suppose each chain has a unique invariant
+distribution, $\mu^*$ and $\mu_j^*$. Let the measurable per-state densities $f_t, f_{j,t}$ take
+values in $[\xi, M]$ with $\xi > 0$, satisfy $|f_{j,t} - f_t| \le \eta$, and let each $f_t$ be
+$c$-Lipschitz. Then for every sample length $T$ and every law $Q$ of the shock path,
 \[
-  d\bigl(\varphi_j(s',w), \varphi(s,w)\bigr) \le \alpha\, d(s',s) + \delta,
+  \bigl|\log L_j(y^T) - \log L(y^T)\bigr| \le
+  \frac{T}{\xi}\Bigl(\eta + \frac{c\,\delta}{1-\alpha}\Bigr) + \frac{c\,\alpha}{\xi}
+  \frac{\delta}{(1-\alpha)^2}.
 \]
-so the band $D_\rho = \{(s,s') : d(s,s') \le \rho\}$, $\rho = \delta/(1-\alpha)$, is invariant
-under the joint chain, and from any starting pair
-$d(s_{j,t}, s_t) \le \alpha^t d(s_{j,0}, s_0) + \delta/(1-\alpha)$.
-\formal{dist\_step\_le, dist\_step\_le\_of\_le, dist\_iterate\_le}
-\noindent On a compact state space with continuous transitions the joint chain restricted to the
-compact band $D_\rho$ has an invariant probability measure (Krylov--Bogolyubov). Its marginals
-are invariant for each chain, so by uniqueness they are $\mu^*$ and $\mu_j^*$, and that measure
-is the $P$ of Hypothesis~\ref{h:coup}. This last step is not formalised: Mathlib does not yet have
-Krylov--Bogolyubov. It also needs uniqueness of the computed invariant distribution, which FRS
-do not assume.
+\end{theorem}
+\formal{abs\_log\_likelihood\_sub\_le\_of\_primitives}
 
-\paragraph{The Lipschitz constants, and Lemma~6 uniformly in $t$.} Consider the case
-$\dim V_t = \dim Y_t$, so that $W_2$ is empty and $V_t$ alone is recovered from the data:
-$s_t$ is then a function of $(s_0, \omega)$ alone and $v_t = g^{-1}(y_t; s_t)$. Pathwise
-contraction gives $d(s_t(s_0,\omega), s_t(s_0',\omega)) \le \alpha^t d(s_0, s_0')$
-\formal{dist\_iterate\_exact\_le}
-\noindent so if $\log p_t$ is $c$-Lipschitz in the current state $s_t$ (true when the density of
-$V$ and the inverse of $g$ are Lipschitz and the density is bounded below), then
-$\ell_t \le c\alpha^t$ and $K \le c/(1-\alpha)$, uniformly in $T$. In the same case
-$d(s_{j,t}, s_t) \le \delta/(1-\alpha)$ from a common initial state, which gives
-Hypothesis~\ref{h:err} with $\varepsilon = \chi\delta$ for a $\chi$ that does not depend on $t$.
-These two sentences are an argument on paper; only the pathwise distance bounds are formal.
+\noindent Measurability and integrability of all the integrands are derived, not assumed. The
+three ingredients:
+\begin{itemize}[leftmargin=1.5em]
+\item \emph{The coupling} (Appendix~\ref{app:coupling}). Drive both chains with the same shocks.
+The band $\{(s,s') : d(s',s) \le \delta/(1-\alpha)\}$ is compact and invariant under the joint
+chain, so by Krylov--Bogolyubov the joint chain has an invariant probability measure on it. Its
+marginals are invariant for each chain, hence equal to $\mu^*$ and $\mu_j^*$.
+\item \emph{Lemma~6 uniformly in $t$} (Appendix~\ref{app:prim}). The computed and exact state
+paths from a common initial state stay within $\delta/(1-\alpha)$ of each other, so
+$|q_t - p_t| \le \eta + c\delta/(1-\alpha)$ for every $t$.
+\item \emph{Lipschitz in the initial state} (Appendix~\ref{app:prim}). The exact chain forgets its
+initial state at rate $\alpha^t$, so $\ell_t = (c\alpha/\xi)\alpha^t$ and
+$K \le c\alpha/(\xi(1-\alpha))$ for every $T$.
+\end{itemize}
 
 When $W_2$ is not empty, the recovered shocks depend on the data and on the whole past path, and
 Hypotheses~\ref{h:err} and~\ref{h:lip} become a stability condition on the inverted filter. It is
 not implied by FRS's Condition~1, and we have not found a primitive condition that delivers it.
+The nearest results are on forgetting of the initial condition in hidden Markov models
+\citep{BickelRitovRyden1998,DoucMoulinesRyden2004} and on uniform-in-time approximation of
+nonlinear filters \citep{LeGlandOudjane2004}. They assume a transition density bounded above and
+below, which does not fit FRS's setting, where the state moves by a deterministic map of the
+shocks.
+
+The general form with geometric decay, without the no-$W_2$ structure, is:
 
 \begin{corollary}[Constants uniform in $T$]\label{cor:uniform}
-If in addition $\ell_t \le c\alpha^t$ and $\rho = \delta/(1-\alpha)$, then for every $T$
+Under Hypotheses~\ref{h:err}--\ref{h:coup}, if $\ell_t \le c\alpha^t$ and
+$\rho = \delta/(1-\alpha)$, then for every $T$
 \[
-  \bigl|\log L_j(y^T) - \log L(y^T)\bigr| \le \Bigl(\frac{T\chi}{\xi}
-  + \frac{c}{(1-\alpha)^2}\Bigr)\delta,
-\]
-and so
-\[
+  \bigl|\log L_j(y^T) - \log L(y^T)\bigr| \le \frac{T\varepsilon}{\xi}
+  + \frac{c\,\delta}{(1-\alpha)^2},
+  \qquad
   \frac{1}{T}\bigl|\log L_j(y^T) - \log L(y^T)\bigr| \le
-  \Bigl(\frac{\chi}{\xi} + \frac{c}{T(1-\alpha)^2}\Bigr)\delta .
+  \frac{\varepsilon}{\xi} + \frac{c\,\delta}{T(1-\alpha)^2}.
 \]
 \end{corollary}
 \formal{abs\_log\_likelihood\_sub\_le\_of\_geometric}
 
 This is FRS's bound, $T\cdot\mathrm{const}\cdot\delta + \mathrm{const}\cdot\delta/(1-\alpha)$,
 with the level replaced by the log.
+
+\section{Posteriors}\label{sec:post}
+
+Suppose Proposition~2$'$ holds at every parameter value $\gamma$ with a common $D$, so that
+$e^{-D}L(\gamma) \le L_j(\gamma) \le e^{D}L(\gamma)$ for all $\gamma$. Write
+$\pi(\gamma \mid y^T) = L(\gamma)/Z$ and $\pi_j(\gamma\mid y^T) = L_j(\gamma)/Z_j$ for the
+posterior densities with respect to a prior $\pi_0$, with $Z = \int L\,\dd\pi_0$ and
+$Z_j = \int L_j\,\dd\pi_0$.
+
+\begin{proposition}[Posteriors]\label{prop:post}
+If $L, L_j > 0$ are $\pi_0$-integrable and $Z > 0$, then
+\begin{enumerate}[label=(\roman*),leftmargin=2em]
+\item $Z_j \le e^{D} Z$ and $Z \le e^{D} Z_j$;
+\item $L_j(\gamma')/L_j(\gamma) \le e^{2D}\, L(\gamma')/L(\gamma)$ for all $\gamma, \gamma'$, so
+Metropolis--Hastings acceptance ratios are off by at most a factor $e^{2D}$;
+\item $\pi_j(\gamma\mid y^T) \le e^{2D}\,\pi(\gamma\mid y^T)$, and symmetrically;
+\item $\int |\pi_j - \pi|\,\dd\pi_0 \le e^{2D} - 1$, so the total variation distance between the
+posteriors is at most $(e^{2D}-1)/2$;
+\item for measurable $h$ with $|h| \le B$, the posterior expectations satisfy
+$|\mathbb{E}_j[h \mid y^T] - \mathbb{E}[h\mid y^T]| \le B\,(e^{2D}-1)$.
+\end{enumerate}
+\end{proposition}
+\formal{evidence\_le\_exp\_mul, ratio\_le\_exp\_mul\_ratio, postDens\_le\_exp\_mul,
+integral\_abs\_postDens\_sub\_le, abs\_integral\_postDens\_sub\_le}
+
+Part (v) replaces FRS's Corollary~4, which asserts convergence $E_j(h\mid y^T) \to E(h\mid y^T)$
+without a rate, with an explicit bound. The closest result in the literature is the
+approximation theorem of \citet[Theorem~4.9 of arXiv:1302.6989v4]{DashtiStuart2017}, building on
+\citet{CotterDashtiStuart2010}: if the negative log-likelihoods satisfy
+$|\Phi - \Phi_N| \le M_2(\|u\|)\,\psi(N)$, then the Hellinger distance between the posteriors is
+at most $C\psi(N)$ for $N$ large. Proposition~2$'$ supplies exactly that hypothesis, with
+$\Phi = -\log L$ and $\psi = \delta$ (and $M_2$ proportional to $T$). Proposition~\ref{prop:post}
+is the version with explicit constants that holds for every $\delta$; the proofs are in
+Appendix~\ref{app:post}.
 
 \section{What survives of FRS's conclusions}
 
@@ -245,26 +305,151 @@ with the level replaced by the log.
 FRS describe. In relative terms $|L_j/L - 1| \le e^{D} - 1 \approx D$ while $D$ is small, so
 FRS's message ``the error is of order $T\delta$'' is correct for the \emph{relative} error of the
 likelihood. Their statement for the absolute error is false.
-\item \emph{Likelihood ratios and Metropolis--Hastings (FRS Corollary 1).} For two parameter
-values, $L_j(\gamma')/L_j(\gamma)$ lies within a factor $e^{\pm 2D}$ of $L(\gamma')/L(\gamma)$,
-which bounds the error in every acceptance probability.
-\item \emph{Posteriors.} If the hypotheses hold uniformly in $\gamma$, the marginal likelihoods
-are within $e^{\pm D}$ of each other, so the posterior density ratio
-$p_j(\gamma\mid y^T)/p(\gamma\mid y^T)$ lies in $[e^{-2D}, e^{2D}]$, and the total variation
-distance between the two posteriors is at most $e^{2D} - 1$. This is not formalised.
+\item \emph{Likelihood ratios, Metropolis--Hastings, posteriors (FRS Corollaries 1--4).} All hold
+with explicit constants $e^{\pm 2D}$ (Proposition~\ref{prop:post}).
 \item \emph{Estimation.} The average log likelihood $\frac1T\log L_j$ is within $O(\delta)$ of
-$\frac1T\log L$, uniformly in $T$ (Corollary~\ref{cor:uniform}). This is the object
-\citet{AGH2009} identify as relevant for the maximum likelihood estimator, and it agrees with
-their conclusion that approximation error of order $\delta$ moves the estimator's probability
-limit by $O(\delta)$, not by more as $T$ grows. A sup bound on the objective alone gives only
-$O(\sqrt{\delta})$ for the maximiser under quadratic identification; their $O(\delta)$ rate
-uses closeness of derivatives as well.
+$\frac1T\log L$, uniformly in $T$ (Theorem~\ref{thm:prim}, Corollary~\ref{cor:uniform}). This is
+the object \citet{AGH2009} identify as relevant for the maximum likelihood estimator, and it
+agrees with their conclusion that approximation error of order $\delta$ moves the estimator's
+probability limit by $O(\delta)$, not by more as $T$ grows. A sup bound on the objective alone
+gives only $O(\sqrt{\delta})$ for the maximiser under quadratic identification; their $O(\delta)$
+rate uses closeness of derivatives as well.
 \end{itemize}
 
 What does not survive is FRS's conclusion that linearisation ``is due to fail as the sample size
 grows'' because the likelihood levels diverge. The levels of both likelihoods go to zero or
 infinity like $M^T$ anyway. What grows is the log-likelihood gap, and it grows no faster than the
-log likelihood itself, so the average stays $O(\delta)$.
+log likelihood itself, so the average stays $O(\delta)$. And the posterior bounds of
+Proposition~\ref{prop:post} degrade as $e^{2D}$ with $D \propto T\delta$: for Bayesian inference
+FRS's warning stands, in the corrected form that $T\delta$ should be small.
+
+\appendix
+
+\section{The coupling of the invariant distributions}\label{app:coupling}
+
+\begin{lemma}[Krylov--Bogolyubov for a random map]\label{lem:kb}
+Let $X$ be a nonempty compact metric space, $\nu$ a probability measure on a measurable space $W$,
+and $F : X \times W \to X$ jointly measurable with $F(\cdot, w)$ continuous for each $w$. Then the
+chain $X_{t+1} = F(X_t, W_{t+1})$, $W_t \sim \nu$ i.i.d., has an invariant probability measure:
+there is $\mu$ with $(\mu \otimes \nu) \circ F^{-1} = \mu$.
+\end{lemma}
+\formal{RandomMap.exists\_isInvariant}
+
+\begin{proof}
+Write $T\mu = (\mu\otimes\nu)\circ F^{-1}$ and $(Mh)(x) = \int h(F(x,w))\,\nu(\dd w)$ for bounded
+continuous $h$. By change of variables and Fubini, $\int h\,\dd(T\mu) = \int Mh\,\dd\mu$
+(\lean{integral\_push}). By dominated convergence ($h$ is bounded and $F(\cdot,w)$ is continuous),
+$Mh$ is continuous (\lean{continuous\_markovFn}): this is the Feller property, and with the
+duality it makes $T$ weakly continuous. Start from a Dirac measure $\mu_0$ and form the Cesàro
+averages $\bar\mu_n = \frac{1}{n+1}\sum_{k=0}^n T^k\mu_0$. The difference
+$\int Mh\,\dd\bar\mu_n - \int h\,\dd\bar\mu_n$ telescopes to
+$\frac{1}{n+1}(\int h\,\dd T^{n+1}\mu_0 - \int h\,\dd\mu_0)$, which is at most $2\|h\|/(n+1)$
+(\lean{integral\_cesaro\_sub}). By Prokhorov's theorem the probability measures on compact $X$ form
+a compact space, so $(\bar\mu_n)$ has a cluster point $\mu$. By weak continuity,
+$\int Mh\,\dd\mu = \int h\,\dd\mu$ for every bounded continuous $h$, i.e.
+$\int h\,\dd(T\mu) = \int h\,\dd\mu$, and so $T\mu = \mu$.
+\end{proof}
+
+\noindent The repository already proved this for the income fluctuation problem
+(\lean{exists\_isStationary} in \lean{Distribution/Stationary}), where the shock is finite; the
+general version
+differs only in the duality and the Feller step.
+
+\begin{theorem}[The coupling]\label{thm:coupling}
+Let $S$ be a nonempty compact metric space, $\varphi, \varphi_j$ jointly measurable and continuous
+in the state, $\varphi$ a pathwise $\alpha$-contraction, $d(\varphi_j(s,w), \varphi(s,w)) \le
+\delta$, $\delta \ge 0$. If $\mu^*$ is the unique invariant distribution of $\varphi$ and $\mu_j^*$
+the unique invariant distribution of $\varphi_j$, there is a probability measure $P$ on the band
+$B_\rho = \{(s,s') : d(s',s) \le \rho\}$, $\rho = \delta/(1-\alpha)$, whose first and second
+marginals are $\mu^*$ and $\mu_j^*$.
+\end{theorem}
+\formal{exists\_coupling}
+
+\begin{proof}
+$B_\rho$ is closed in the compact space $S\times S$, so compact, and nonempty since it contains
+the diagonal. Define the joint map $G((s,s'), w) = (\varphi(s,w), \varphi_j(s',w))$. It maps
+$B_\rho$ into itself: $d(\varphi_j(s',w), \varphi(s,w)) \le d(\varphi_j(s',w),\varphi(s',w)) +
+d(\varphi(s',w),\varphi(s,w)) \le \delta + \alpha\rho = \rho$ (\lean{dist\_step\_le\_of\_le}). It
+is jointly measurable and continuous in the state pair (\lean{jointChain}). By
+Lemma~\ref{lem:kb} there is an invariant probability measure $P$ on $B_\rho$. Taking the first
+marginal commutes with one step of the chain, because the first coordinate of $G$ is $\varphi$ of
+the first coordinate: $(P_1\otimes\nu)\circ\varphi^{-1} = ((P\otimes\nu)\circ G^{-1})_1 = P_1$
+(\lean{push\_map\_marginal}). So $P_1$ is invariant for $\varphi$, and $P_1 = \mu^*$ by
+uniqueness. The same argument gives $P_2 = \mu_j^*$.
+\end{proof}
+
+\noindent The theorem needs uniqueness of the computed chain's invariant distribution, which FRS
+do not assume. Without it the conclusion holds for \emph{some} invariant distribution of the
+computed chain, the one the coupling selects.
+
+\section{The densities from primitives}\label{app:prim}
+
+Let $s_t(s_0,\omega)$ be the exact state path ($s_0$ given, $s_{t+1} = \varphi(s_t, \omega_t)$)
+and $s_{j,t}$ the computed one (\lean{statePath}). The likelihood's factors are
+$p_t(s_0,\omega) = f_t(s_{t+1}(s_0,\omega))$ and $q_t = f_{j,t}(s_{j,t+1})$ (\lean{densPath}).
+
+\begin{lemma}[Paths]\label{lem:paths}
+For all $s_0, s_0', \omega, t$:
+(a) $d(s_{j,t}(s_0,\omega), s_t(s_0,\omega)) \le \delta/(1-\alpha)$;
+(b) $d(s_t(s_0,\omega), s_t(s_0',\omega)) \le \alpha^t d(s_0, s_0')$.
+\end{lemma}
+\formal{dist\_statePath\_le, dist\_statePath\_exact\_le}
+
+\begin{proof}
+(a) With $d_t = d(s_{j,t}, s_t)$, one step gives $d_{t+1} \le \alpha d_t + \delta$
+(\lean{dist\_step\_le}), so by induction $d_t \le \alpha^t d_0 + \delta/(1-\alpha)$
+(\lean{dist\_iterate\_le}), and $d_0 = 0$. (b) Induction on $t$ using the contraction.
+\end{proof}
+
+\begin{lemma}[Lemma 6, uniformly in $t$]\label{lem:unif}
+$|q_t(s_0,\omega) - p_t(s_0,\omega)| \le \eta + c\,\delta/(1-\alpha)$ for all $t, s_0, \omega$.
+\end{lemma}
+\formal{abs\_densPath\_sub\_le}
+
+\begin{proof}
+With $x = s_{t+1}$ and $y = s_{j,t+1}$,
+$|f_{j,t}(y) - f_t(x)| \le |f_{j,t}(y) - f_t(y)| + |f_t(y) - f_t(x)| \le \eta + c\,d(y,x)$, and
+$d(y,x) \le \delta/(1-\alpha)$ by Lemma~\ref{lem:paths}(a).
+\end{proof}
+
+\begin{lemma}[Log-Lipschitz in the initial state]\label{lem:loglip}
+$p_t(s_0', \omega) \le \exp\bigl((c\alpha/\xi)\,\alpha^t\, d(s_0, s_0')\bigr)\, p_t(s_0, \omega)$.
+\end{lemma}
+\formal{densPath\_le\_exp\_mul}
+
+\begin{proof}
+With $x = s_{t+1}(s_0,\omega)$ and $x' = s_{t+1}(s_0',\omega)$,
+$|f_t(x') - f_t(x)| \le c\,d(x,x') \le c\,\alpha^{t+1} d(s_0,s_0')$ by Lemma~\ref{lem:paths}(b).
+Since $f_t(x) \ge \xi$, the one-factor step of Proposition~\ref{prop:main} turns this additive
+bound into the multiplicative bound $f_t(x') \le e^{c\alpha^{t+1}d(s_0,s_0')/\xi} f_t(x)$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:prim}]
+Theorem~\ref{thm:coupling} gives the coupling $P$ on the band, with $\rho = \delta/(1-\alpha)$.
+Lemma~\ref{lem:unif} is Hypothesis~\ref{h:err} with $\varepsilon = \eta + c\delta/(1-\alpha)$.
+Lemma~\ref{lem:loglip} is Hypothesis~\ref{h:lip} with $\ell_t = (c\alpha/\xi)\alpha^t$, and
+$\sum_{t<T}\alpha^t \le 1/(1-\alpha)$ (\lean{sum\_le\_of\_geometric}). Corollary~\ref{cor:uniform}
+then bounds the log-likelihood gap for the likelihoods written against $P$. Those equal the
+likelihoods against $\mu^*$ and $\mu_j^*$ by change of variables along the marginal maps.
+
+Measurability is derived. The state path is jointly measurable in $(s_0, \omega)$ by induction
+(\lean{measurable\_statePath}), so the conditional likelihood $\prod_t f_t(s_{t+1})$ is jointly
+measurable. By Fubini its integral over $\omega$ is measurable in $s_0$
+(\lean{integrable\_densPath}). The bounds $0 \le \prod_t f_t \le M^T$ give integrability against
+every probability measure.
+\end{proof}
+
+\section{Proofs for the posteriors}\label{app:post}
+
+\begin{proof}[Proof of Proposition~\ref{prop:post}]
+(i) Integrate $L_j \le e^D L$ against the prior. (ii) $L_j(\gamma') \le e^D L(\gamma')$ and
+$1/L_j(\gamma) \le e^D/L(\gamma)$. (iii) Divide $L_j(\gamma) \le e^D L(\gamma)$ by
+$Z_j \ge e^{-D} Z$. (iv) Write $a = \pi_j(\gamma\mid y^T)$, $b = \pi(\gamma\mid y^T)$, both
+positive. By (iii) applied both ways, $a \le e^{2D} b$ and $b \le e^{2D} a$. Hence
+$a - b \le (e^{2D}-1)\,b$, and $b - a \le b - e^{-2D} b = (1 - e^{-2D})\,b \le (e^{2D}-1)\,b$,
+so $|a - b| \le (e^{2D}-1)\,b$ (\lean{abs\_postDens\_sub\_le}). Integrate, using
+$\int b\,\dd\pi_0 = 1$. (v) $|\int h(a - b)\,\dd\pi_0| \le B \int|a-b|\,\dd\pi_0$, then (iv).
+\end{proof}
 
 \section{The formal development}
 
@@ -274,30 +459,42 @@ log likelihood itself, so the average stays $O(\delta)$.
 \toprule
 Result & Lean name \\
 \midrule
-One factor, additive to multiplicative error & \lean{le\_exp\_div\_mul} \\
+\multicolumn{2}{@{}l}{\emph{\lean{Econometrics/ApproxLikelihood}}} \\
+One factor, additive to multiplicative & \lean{le\_exp\_div\_mul} \\
 Corrected product step (14) & \lean{prod\_le\_exp\_card\_mul\_prod} \\
-FRS's step (14) cannot hold (Prop.~\ref{prop:gap}) & \lean{not\_exists\_linear\_bound\_prod\_sub} \\
+FRS's step (14) cannot hold & \lean{not\_exists\_linear\_bound\_prod\_sub} \\
 Sharpness in $T$ & \lean{log\_prod\_div\_prod\_const} \\
-Coupled chain: one step, invariant band & \lean{dist\_step\_le}, \lean{dist\_step\_le\_of\_le} \\
-Coupled chain: path bound & \lean{dist\_iterate\_le} \\
-Exact chain forgets its initial state & \lean{dist\_iterate\_exact\_le} \\
-Likelihood bounded below by $\xi^T$ & \lean{pow\_le\_lik} \\
-Proposition 2$'$, one direction & \lean{lik\_le\_exp\_mul\_lik} \\
-Proposition 2$'$, two-sided form & \lean{likelihood\_le\_exp\_mul} \\
+Coupled chain: one step, band, path & \lean{dist\_step\_le\_of\_le}, \lean{dist\_iterate\_le} \\
+Proposition 2$'$, both directions & \lean{lik\_le\_exp\_mul\_lik}, \lean{\ldots\_rev} \\
 Proposition 2$'$, log form & \lean{abs\_log\_likelihood\_sub\_le} \\
 Corollary~\ref{cor:uniform} & \lean{abs\_log\_likelihood\_sub\_le\_of\_geometric} \\
+\midrule
+\multicolumn{2}{@{}l}{\emph{\lean{Distribution/RandomMap}}} \\
+Lemma~\ref{lem:kb} (Krylov--Bogolyubov) & \lean{RandomMap.exists\_isInvariant} \\
+\midrule
+\multicolumn{2}{@{}l}{\emph{\lean{Econometrics/ApproxLikelihoodModel}}} \\
+Theorem~\ref{thm:coupling} (coupling) & \lean{exists\_coupling} \\
+Lemma~\ref{lem:paths} & \lean{dist\_statePath\_le}, \lean{dist\_statePath\_exact\_le} \\
+Lemma~\ref{lem:unif} & \lean{abs\_densPath\_sub\_le} \\
+Lemma~\ref{lem:loglip} & \lean{densPath\_le\_exp\_mul} \\
+Theorem~\ref{thm:prim} & \lean{abs\_log\_likelihood\_sub\_le\_of\_primitives} \\
+\midrule
+\multicolumn{2}{@{}l}{\emph{\lean{Econometrics/ApproxPosterior}}} \\
+Proposition~\ref{prop:post} (i)--(iii) & \lean{evidence\_le\_exp\_mul}, \lean{postDens\_le\_exp\_mul} \\
+Proposition~\ref{prop:post} (iv) & \lean{integral\_abs\_postDens\_sub\_le} \\
+Proposition~\ref{prop:post} (v) & \lean{abs\_integral\_postDens\_sub\_le} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The likelihood is formalised as $\int_X \int_\Omega \prod_t p_t(a(x), \omega)\,\dd Q\,\dd P$ for
-an arbitrary finite index set of periods, a pseudometric state space and arbitrary measure spaces
-of shock paths and couplings. Using the coupling space $X$ rather than the marginal $\mu^*$
-avoids a measurability hypothesis on $s \mapsto \int\prod_t p_t(s,\cdot)\,\dd Q$; when
-$a = \mathrm{Prod.fst}$ and that map is measurable the two agree by change of variables. Not
-formalised: the existence of the coupling (Krylov--Bogolyubov), the verification of
-Hypotheses~\ref{h:err} and~\ref{h:lip} from primitives in the case with no $W_2$, and the
-posterior bounds.
+\noindent Paths are relative to \lean{LeanEconomics/}. The library builds without \lean{sorry}, and every
+result above depends only on Lean's three standard axioms (\lean{propext},
+\lean{Classical.choice}, \lean{Quot.sound}).
+
+What remains informal: the reduction of FRS's measurement equation to per-state densities $f_t$
+(the density of $V$ at $g^{-1}(y_t;s)$ times the Jacobian) and the bound $\eta = O(\delta)$ on
+their error at a fixed state, which is FRS's Lemma~6 argument without the time dimension; and the
+case with $W_2$ present, discussed in Section~\ref{sec:hyp}.
 
 \bibliographystyle{plainnat}
 \bibliography{refs}
