@@ -1,0 +1,305 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1.1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{enumitem}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{assumption}{Hypothesis}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\leanunderscore}{\char`\_\hskip 0pt plus 0.4pt\relax}
+\newcommand{\lean}[1]{\begingroup\ttfamily\small\let\_\leanunderscore #1\endgroup}
+\newcommand{\formal}[1]{\par\noindent\begingroup\footnotesize\raggedright\emph{Formal statement:} \lean{#1}.\par\endgroup}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\dd}{\mathrm{d}}
+
+\onehalfspacing
+\tolerance=600 \emergencystretch=1.5em
+
+\title{The Likelihood of a Computed Dynamic Model:\\ Proposition 2 of
+Fern\'andez-Villaverde, Rubio-Ram\'irez and Santos, Corrected}
+\author{LeanEconomics Org [mostly Claude]\thanks{The Lean development is
+\texttt{LeanEconomics/Econometrics/ApproxLikelihood.lean} in
+\url{https://github.com/LeanEconomics/LeanEconomics}. It was written mostly by Claude (Anthropic),
+an AI coding model, working under the direction of Robert Kirkby (Victoria University of
+Wellington); every result marked with a formal statement was checked by the Lean kernel and uses
+only Lean's three standard axioms.}}
+\date{October 2026\\[0.5em]\small Draft}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Proposition 2 of \citet{FRS2006} bounds the gap between the exact and the computed likelihood of
+a dynamic model by a term linear in the sample length, $T B\chi\delta$, with constants that do not
+depend on $T$. \citet{AGH2009}, following \citet{Geweke2007}, show by a Gaussian counterexample
+that this is false. We locate the error in a single step of the proof: a difference of two
+$T$-fold products of densities is bounded as if the other $T-1$ factors were absent, so that the
+``constant'' $B$ is really $M^{T-1}$, where $M$ bounds the density. We then show that the
+proposition survives, with the same shape, once it is stated for the \emph{logarithm} of the
+likelihood: under the paper's lower bound on densities, a pathwise version of its contraction
+condition, and a Lipschitz condition on the log density in the initial state,
+$|\log L_j(y^T) - \log L(y^T)| \le (T\chi/\xi + K/(1-\alpha))\,\delta$. The dependence on $T$ is
+sharp. The average log-likelihood error is therefore $O(\delta)$ uniformly in $T$, which is the
+quantity Ackerberg, Geweke and Hahn identify as relevant for estimation. The core of the argument
+is formalised in Lean~4 with Mathlib.
+\end{abstract}
+
+\section{Setting}
+
+\citet{FRS2006} (FRS) study a state-space model
+\[
+  S_t = \varphi(S_{t-1}, W_t;\gamma), \qquad Y_t = g(S_t, V_t;\gamma),
+\]
+with compact supports, a unique invariant distribution $\mu^*$ of the state, and computed
+approximations $\varphi_j, g_j$ satisfying $\|\varphi_j - \varphi\| \le \delta$ and
+$\|g_j - g\| \le \delta$ in the sup norm. The shock $W_t$ is split as $(W_{1t}, W_{2t})$, where
+$(W_{2t}, V_t)$ is recovered from the data by inverting the system. Write
+$\omega = W_1^T$ for the unobserved shock path and
+\[
+  p_t(s,\omega) = p\bigl(y_t \mid W_1^t = \omega_{\le t},\, S_0 = s,\, y^{t-1};\gamma\bigr)
+\]
+for the conditional density of the $t$-th observation, with $q_t$ its counterpart under
+$(\varphi_j, g_j)$. Then
+\[
+  L(y^T) = \int\!\!\int \prod_{t=1}^T p_t(s,\omega)\, Q(\dd\omega)\,\mu^*(\dd s), \qquad
+  L_j(y^T) = \int\!\!\int \prod_{t=1}^T q_t(s,\omega)\, Q(\dd\omega)\,\mu_j^*(\dd s),
+\]
+where $Q$ is the law of $W_1^T$ and $\mu_j^*$ the invariant distribution of the computed chain.
+FRS's Assumptions~4 and~8 give a lower bound $p_t, q_t \ge \xi > 0$; their Lemma~6 gives
+$|q_t - p_t| \le \chi\delta$; and their Condition~1 is the mean contraction
+$\int \|\varphi(S,W) - \varphi(S',W)\|\,\dd Q(W) \le \alpha \|S - S'\|$ with $\alpha < 1$.
+
+\paragraph{FRS's Proposition 2.} Under Assumptions 1--11 and Condition 1, there are constants
+$B$ and $L$ such that, for all $T$,
+\[
+  \bigl| L_j(y^T) - L(y^T) \bigr| < \Bigl(T B \chi + \frac{L}{1-\alpha}\Bigr)\delta .
+\]
+
+\section{Where the proof fails}
+
+FRS split the gap as $|L_j - L| \le |\int F\,\dd\mu_j^* - \int F\,\dd\mu^*| +
+|\int (F_j - F)\,\dd\mu_j^*|$, with $F = \int\prod_t p_t\,\dd Q$ and $F_j = \int \prod_t q_t
+\,\dd Q$. Their bound (14) on the second term is $T B\chi\delta$. But the telescoping identity
+\[
+  \prod_{t=1}^T q_t - \prod_{t=1}^T p_t
+  = \sum_{t=1}^T \Bigl(\prod_{s<t} q_s\Bigr)(q_t - p_t)\Bigl(\prod_{s>t} p_s\Bigr)
+\]
+places $T-1$ density factors beside each error $q_t - p_t$. With $M$ a bound on the densities the
+honest bound is $T M^{T-1}\chi\delta$, and $M^{T-1}$ is not a constant: it grows exponentially
+when $M > 1$ and vanishes exponentially when $M < 1$. This is exactly the factor
+$(\sigma\sqrt{2\pi})^{-(T-1)}$ in Ackerberg, Geweke and Hahn's sharp bound for the Gaussian
+location model. The step cannot be repaired with any $T$-free constant:
+
+\begin{proposition}\label{prop:gap}
+Let $M > 1$ and $\varepsilon > 0$. There is no $B$ such that
+$|(M+\varepsilon)^T - M^T| \le T B\varepsilon$ for every $T \in \mathbb{N}$.
+\end{proposition}
+\formal{not\_exists\_linear\_bound\_prod\_sub}
+
+\begin{proof}
+By Bernoulli's inequality $(M+\varepsilon)^{n+1} - M^{n+1} \ge (n+1)\varepsilon M^n$, so the bound
+would force $M^n \le B$ for all $n$.
+\end{proof}
+
+Two further steps let constants depend on $T$ without comment. The Lipschitz constant of
+$F$ in $S_0$, used in (12), is ``different for each $t$, but since $t$ is finite, we can set a
+global $L$''; the proposition is then stated ``for all $T$''. And Lemma~6's $\chi$ is asserted
+for all $t$ ``since the model is stationary'', although the recovered $(v_t, s_t, w_{2t})$ depend
+on a $t$-fold composition of the transition. We return to both in Section~\ref{sec:hyp}.
+
+\section{The corrected proposition}
+
+The accumulation of error that FRS describe is real, but it is \emph{multiplicative}: it holds
+for the log likelihood, or equivalently the likelihood ratio, and not for the level.
+
+\begin{assumption}[Uniform per-period error]\label{h:err}
+$\xi \le p_t(s,\omega)$, $\xi \le q_t(s,\omega)$ and $|q_t(s,\omega) - p_t(s,\omega)| \le
+\varepsilon$ for all $t, s, \omega$, with $\xi > 0$. In FRS's notation $\varepsilon = \chi\delta$.
+\end{assumption}
+
+\begin{assumption}[Log-Lipschitz in the initial state]\label{h:lip}
+There are $\ell_t \ge 0$ with $p_t(s',\omega) \le e^{\ell_t d(s,s')} p_t(s,\omega)$ and likewise
+for $q_t$, for all $s, s', \omega$. Write $K = \sum_{t=1}^T \ell_t$.
+\end{assumption}
+
+\begin{assumption}[Coupled initial states]\label{h:coup}
+There is a probability measure $P$ on a space $X$ and maps $a, b : X \to S$ whose laws are
+$\mu^*$ and $\mu_j^*$, with $d(a(x), b(x)) \le \rho$ for $P$-almost every $x$.
+\end{assumption}
+
+\begin{proposition}[Proposition 2$'$]\label{prop:main}
+Under Hypotheses~\ref{h:err}--\ref{h:coup}, and integrability of the likelihood integrands,
+\[
+  e^{-D} L(y^T) \le L_j(y^T) \le e^{D} L(y^T), \qquad D = \frac{T\varepsilon}{\xi} + K\rho,
+\]
+equivalently $\bigl|\log L_j(y^T) - \log L(y^T)\bigr| \le D$.
+\end{proposition}
+\formal{likelihood\_le\_exp\_mul, abs\_log\_likelihood\_sub\_le}
+
+\begin{proof}
+\emph{Step 1 (one factor).} If $\xi \le p$ and $|q - p| \le \varepsilon$ then
+$q \le p + \varepsilon \le p(1 + \varepsilon/\xi) \le e^{\varepsilon/\xi} p$.
+\formal{le\_exp\_div\_mul}
+
+\emph{Step 2 (the product; this replaces FRS's (14)).} Multiplying Step 1 over $t$,
+$\prod_t q_t \le e^{T\varepsilon/\xi} \prod_t p_t$ pointwise in $(s,\omega)$.
+\formal{prod\_le\_exp\_card\_mul\_prod}
+
+\emph{Step 3 (moving the initial state).} Multiplying Hypothesis~\ref{h:lip} over $t$,
+$\prod_t p_t(s',\omega) \le e^{K d(s,s')} \prod_t p_t(s,\omega)$.
+
+\emph{Step 4 (integrating; this replaces FRS's (12)).} Combining Steps 2 and 3 and integrating
+over $\omega$, $\int \prod_t q_t(s',\cdot)\,\dd Q \le e^{T\varepsilon/\xi + K d(s,s')}
+\int \prod_t p_t(s,\cdot)\,\dd Q$ for all $s, s'$. Put $s = a(x)$, $s' = b(x)$, use
+$d(a(x),b(x)) \le \rho$ almost surely, and integrate against $P$: $L_j \le e^D L$.
+\formal{lik\_le\_exp\_mul\_lik}
+
+The reverse inequality is the same argument with the roles of the two models exchanged. Since the
+densities are at least $\xi$ and $Q, P$ are probability measures, $L, L_j \ge \xi^T > 0$, and
+taking logs gives the second form.
+\end{proof}
+
+\begin{remark}[Sharpness in $T$]
+With every exact density equal to $M$ and every computed one to $M + \varepsilon$,
+$\log L_j - \log L = T \log(1 + \varepsilon/M)$ exactly. The bound cannot grow more slowly than
+linearly in $T$. In Ackerberg, Geweke and Hahn's location model restricted to a compact support,
+taking every $y_t$ at the same point $\gamma + c$ gives
+$\log L_j - \log L = T(c\delta - \delta^2/2)/\sigma^2$, again linear in $T$.
+\end{remark}
+\formal{log\_prod\_div\_prod\_const}
+
+\section{The hypotheses}\label{sec:hyp}
+
+Hypothesis~\ref{h:err} is FRS's Assumptions 4 and 8 and the conclusion of their Lemma~6, stated
+uniformly in $t$. Hypotheses~\ref{h:lip} and~\ref{h:coup} replace their Condition~1 and the
+Santos--Peralta-Alva bound used in (12). We now say when they hold.
+
+\paragraph{The coupling.} Strengthen Condition~1 from contraction in mean to \emph{pathwise}
+contraction: $d(\varphi(s,w), \varphi(s',w)) \le \alpha\, d(s,s')$ for every shock $w$. Drive the
+exact and computed chains by the same shocks. One step gives
+\[
+  d\bigl(\varphi_j(s',w), \varphi(s,w)\bigr) \le \alpha\, d(s',s) + \delta,
+\]
+so the band $D_\rho = \{(s,s') : d(s,s') \le \rho\}$, $\rho = \delta/(1-\alpha)$, is invariant
+under the joint chain, and from any starting pair
+$d(s_{j,t}, s_t) \le \alpha^t d(s_{j,0}, s_0) + \delta/(1-\alpha)$.
+\formal{dist\_step\_le, dist\_step\_le\_of\_le, dist\_iterate\_le}
+\noindent On a compact state space with continuous transitions the joint chain restricted to the
+compact band $D_\rho$ has an invariant probability measure (Krylov--Bogolyubov). Its marginals
+are invariant for each chain, so by uniqueness they are $\mu^*$ and $\mu_j^*$, and that measure
+is the $P$ of Hypothesis~\ref{h:coup}. This last step is not formalised: Mathlib does not yet have
+Krylov--Bogolyubov. It also needs uniqueness of the computed invariant distribution, which FRS
+do not assume.
+
+\paragraph{The Lipschitz constants, and Lemma~6 uniformly in $t$.} Consider the case
+$\dim V_t = \dim Y_t$, so that $W_2$ is empty and $V_t$ alone is recovered from the data:
+$s_t$ is then a function of $(s_0, \omega)$ alone and $v_t = g^{-1}(y_t; s_t)$. Pathwise
+contraction gives $d(s_t(s_0,\omega), s_t(s_0',\omega)) \le \alpha^t d(s_0, s_0')$
+\formal{dist\_iterate\_exact\_le}
+\noindent so if $\log p_t$ is $c$-Lipschitz in the current state $s_t$ (true when the density of
+$V$ and the inverse of $g$ are Lipschitz and the density is bounded below), then
+$\ell_t \le c\alpha^t$ and $K \le c/(1-\alpha)$, uniformly in $T$. In the same case
+$d(s_{j,t}, s_t) \le \delta/(1-\alpha)$ from a common initial state, which gives
+Hypothesis~\ref{h:err} with $\varepsilon = \chi\delta$ for a $\chi$ that does not depend on $t$.
+These two sentences are an argument on paper; only the pathwise distance bounds are formal.
+
+When $W_2$ is not empty, the recovered shocks depend on the data and on the whole past path, and
+Hypotheses~\ref{h:err} and~\ref{h:lip} become a stability condition on the inverted filter. It is
+not implied by FRS's Condition~1, and we have not found a primitive condition that delivers it.
+
+\begin{corollary}[Constants uniform in $T$]\label{cor:uniform}
+If in addition $\ell_t \le c\alpha^t$ and $\rho = \delta/(1-\alpha)$, then for every $T$
+\[
+  \bigl|\log L_j(y^T) - \log L(y^T)\bigr| \le \Bigl(\frac{T\chi}{\xi}
+  + \frac{c}{(1-\alpha)^2}\Bigr)\delta,
+\]
+and so
+\[
+  \frac{1}{T}\bigl|\log L_j(y^T) - \log L(y^T)\bigr| \le
+  \Bigl(\frac{\chi}{\xi} + \frac{c}{T(1-\alpha)^2}\Bigr)\delta .
+\]
+\end{corollary}
+\formal{abs\_log\_likelihood\_sub\_le\_of\_geometric}
+
+This is FRS's bound, $T\cdot\mathrm{const}\cdot\delta + \mathrm{const}\cdot\delta/(1-\alpha)$,
+with the level replaced by the log.
+
+\section{What survives of FRS's conclusions}
+
+\begin{itemize}[leftmargin=1.5em]
+\item \emph{Error accumulates with $T$.} True of the log likelihood, at exactly the linear rate
+FRS describe. In relative terms $|L_j/L - 1| \le e^{D} - 1 \approx D$ while $D$ is small, so
+FRS's message ``the error is of order $T\delta$'' is correct for the \emph{relative} error of the
+likelihood. Their statement for the absolute error is false.
+\item \emph{Likelihood ratios and Metropolis--Hastings (FRS Corollary 1).} For two parameter
+values, $L_j(\gamma')/L_j(\gamma)$ lies within a factor $e^{\pm 2D}$ of $L(\gamma')/L(\gamma)$,
+which bounds the error in every acceptance probability.
+\item \emph{Posteriors.} If the hypotheses hold uniformly in $\gamma$, the marginal likelihoods
+are within $e^{\pm D}$ of each other, so the posterior density ratio
+$p_j(\gamma\mid y^T)/p(\gamma\mid y^T)$ lies in $[e^{-2D}, e^{2D}]$, and the total variation
+distance between the two posteriors is at most $e^{2D} - 1$. This is not formalised.
+\item \emph{Estimation.} The average log likelihood $\frac1T\log L_j$ is within $O(\delta)$ of
+$\frac1T\log L$, uniformly in $T$ (Corollary~\ref{cor:uniform}). This is the object
+\citet{AGH2009} identify as relevant for the maximum likelihood estimator, and it agrees with
+their conclusion that approximation error of order $\delta$ moves the estimator's probability
+limit by $O(\delta)$, not by more as $T$ grows. A sup bound on the objective alone gives only
+$O(\sqrt{\delta})$ for the maximiser under quadratic identification; their $O(\delta)$ rate
+uses closeness of derivatives as well.
+\end{itemize}
+
+What does not survive is FRS's conclusion that linearisation ``is due to fail as the sample size
+grows'' because the likelihood levels diverge. The levels of both likelihoods go to zero or
+infinity like $M^T$ anyway. What grows is the log-likelihood gap, and it grows no faster than the
+log likelihood itself, so the average stays $O(\delta)$.
+
+\section{The formal development}
+
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Result & Lean name \\
+\midrule
+One factor, additive to multiplicative error & \lean{le\_exp\_div\_mul} \\
+Corrected product step (14) & \lean{prod\_le\_exp\_card\_mul\_prod} \\
+FRS's step (14) cannot hold (Prop.~\ref{prop:gap}) & \lean{not\_exists\_linear\_bound\_prod\_sub} \\
+Sharpness in $T$ & \lean{log\_prod\_div\_prod\_const} \\
+Coupled chain: one step, invariant band & \lean{dist\_step\_le}, \lean{dist\_step\_le\_of\_le} \\
+Coupled chain: path bound & \lean{dist\_iterate\_le} \\
+Exact chain forgets its initial state & \lean{dist\_iterate\_exact\_le} \\
+Likelihood bounded below by $\xi^T$ & \lean{pow\_le\_lik} \\
+Proposition 2$'$, one direction & \lean{lik\_le\_exp\_mul\_lik} \\
+Proposition 2$'$, two-sided form & \lean{likelihood\_le\_exp\_mul} \\
+Proposition 2$'$, log form & \lean{abs\_log\_likelihood\_sub\_le} \\
+Corollary~\ref{cor:uniform} & \lean{abs\_log\_likelihood\_sub\_le\_of\_geometric} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The likelihood is formalised as $\int_X \int_\Omega \prod_t p_t(a(x), \omega)\,\dd Q\,\dd P$ for
+an arbitrary finite index set of periods, a pseudometric state space and arbitrary measure spaces
+of shock paths and couplings. Using the coupling space $X$ rather than the marginal $\mu^*$
+avoids a measurability hypothesis on $s \mapsto \int\prod_t p_t(s,\cdot)\,\dd Q$; when
+$a = \mathrm{Prod.fst}$ and that map is measurable the two agree by change of variables. Not
+formalised: the existence of the coupling (Krylov--Bogolyubov), the verification of
+Hypotheses~\ref{h:err} and~\ref{h:lip} from primitives in the case with no $W_2$, and the
+posterior bounds.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}
