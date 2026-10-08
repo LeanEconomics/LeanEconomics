@@ -854,6 +854,43 @@ with the continuation lemma the one genuinely new piece. Theorem~\ref{thm:finite
 the conclusion: strict monotonicity of $E$ on the bracket gives uniqueness there directly, and
 finiteness with it.
 
+\paragraph{Outside the bracket, by proof term.} Below and above the bracket the level bounds of
+Section~\ref{sec:eqm} take over, and there the computation is cheap enough to replay inside Lean.
+On a cell of rates $[r_1,r_2]$ every ingredient of the affine ceiling
+(Proposition~\ref{prop:affceil}) is monotone in the rate or in the patience factor
+$\Thorn=(\beta R)^{1/3}$: $\kappa_k$ rises with $R$ and falls with $\Thorn$, human wealth falls
+with $R$, and the power mean in the risk-adjusted human wealth is monotone in its arguments. A
+checker (\texttt{EnclCert/Outer.lean}) brackets $\Thorn$ by rational cube-root bounds, runs the
+recursions for $\kappa_k$, $\bar H$, $G_k$ and the intercept $\bar F_k$ with each ingredient at the
+end of the cell that makes the bound larger, rounding outward over $D=10^{12}$, and compares the
+ceiling with $D(r_2)$. Every stored value is re-verified by an exact integer inequality with
+denominators cleared, and those inequalities, not the recursions, are what the bridge
+(\texttt{OLG/OuterBridge.lean}) turns into the hypotheses of \lean{olgCapital\_le\_cohortCeil}.
+The slackness hypothesis of that theorem is discharged from impatience at every stage:
+$\kappa_k\ge1-\Thorn/R$ gives it wherever $\Thorn<R$, and where the rate is negative enough that
+$y_{\max}+r\bar a\le0$ it holds outright. The floor side is the clamped floor
+(Proposition~\ref{prop:clampfloor}) on a grid of $650$ asset levels, read at the grid point below
+the certified saving floor since $\Lambda_k$ is monotone in assets, with the reach hypothesis of
+\lean{le\_olgCapital\_at} checked at the top of the cell; the cap is $10^6$, which the reach at
+$20\%$ needs. The meshes are $165$ cells from $-8\%$ to $2.3\%$, down to $0.005$ points at the
+top where the ceiling crosses demand near $2.35\%$, and $121$ cells from $8.7\%$ to $20\%$, the
+floor crossing demand near $8.4\%$. Both verdicts are \texttt{native\_decide}
+(\lean{lowCheck\_eq\_true}, \lean{highCheck\_eq\_true}, about four minutes of compiled arithmetic
+each), and the bridge is checked by the kernel.
+
+\begin{theorem}[{No equilibrium outside $[2.3\%,8.7\%]$}]\label{thm:outer}
+For the seven-state life cycle at the rational calibration with $\gamma=3$, $\beta=24/25$ and cap
+$10^6$, capital supply is strictly below demand at every rate in $(-8\%,2.3\%]$ and strictly above
+it at every rate in $[8.7\%,20\%]$.
+\formal{EnclCert.olg7\_supply\_lt\_demand\_low, EnclCert.olg7\_demand\_lt\_supply\_high}
+\end{theorem}
+
+With Theorem~\ref{thm:bracket} this leaves $[2.3\%,4\%)$ and $(6\%,8.7\%]$ as the only rates
+below $20\%$ neither excluded by proof term nor covered by the slope certificate. The slope
+certificate extends to them by machine time alone, about $440$ cells; beyond $20\%$ the question
+is about the artefactual cap rather than the economy, since a lifetime of feasible saving at
+higher rates exceeds any fixed cap and the formal model is the capped one.
+
 \subsubsection*{Uniqueness up to a tolerance: the mesh of rate cells}\label{sec:mesh}
 
 The pairwise certificate of Section~\ref{sec:enclcert} extends in principle to a bracket: partition

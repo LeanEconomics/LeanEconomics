@@ -20,9 +20,13 @@ name = "LeanEconomics"
 
 [[lean_lib]]
 name = "EnclCert"
-roots = ["EnclCert.Check"]
+roots = ["EnclCert.Check", "EnclCert.Outer"]
 precompileModules = true
 
 [[lean_exe]]
 name = "enclcert"
 root = "EnclCertMain"
+
+[[lean_exe]]
+name = "outercert"
+root = "OuterCertMain"

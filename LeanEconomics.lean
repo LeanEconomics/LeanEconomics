@@ -144,6 +144,10 @@ import LeanEconomics.OLG.EnclFinal
 import LeanEconomics.OLG.EnclTheorem
 import LeanEconomics.OLG.EnclCertified
 import LeanEconomics.Models.OLG7Witness
+import LeanEconomics.Models.OLG7Cap
+import LeanEconomics.OLG.OuterBridge
+import LeanEconomics.OLG.OuterCertified
+import LeanEconomics.OLG.OuterTheorem
 import LeanEconomics.OLG.CertaintyEquivalent
 import LeanEconomics.OLG.BorrowingLimit
 import LeanEconomics.OLG.MPCBound

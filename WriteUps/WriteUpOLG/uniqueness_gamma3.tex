@@ -674,6 +674,62 @@ themselves (Section~\ref{sec:encl}, instances of the interval Euler step); Lemma
 the derivative formula \eqref{eq:dcdr} (paper); and the companion's theorems of
 Section~\ref{sec:known} (kernel-checked).
 
+\section{Outside the bracket, by proof term}\label{sec:outer}
+
+Below and above the bracket the question changes character. Near the equilibrium only the slope
+certificate can separate supply from demand, because the proved level bounds are too loose there;
+away from it the level bounds of the companion suffice, and they are cheap enough to evaluate inside
+Lean on whole ranges of rates.
+
+\paragraph{The two bounds.} The companion proves an affine ceiling on accumulated assets,
+$A_k(a,z)\le\bar F_k(z)+G_ka$ with $\bar F$ an explicit recursion in $\kappa_k$, the cohort slope
+$G_k$ and a risk-adjusted human wealth built from power means of exponent $-\gamma$, valid whenever
+the cap is slack everywhere (\lean{olgCapital\_le\_cohortCeil}); and a clamped floor, the recursion
+$\Lambda_0(z,a)=a$, $\Lambda_{k+1}(z,a)=a+\sum_{z'}\pi(z,z')\Lambda_k(z',\Phi_{k+1}(z,a))$ with
+$\Phi$ the saving floor $\max\{0,(1-\kappa_k)(y_z+Ra)-\kappa_kH_k(z)\}$, valid whenever a lifetime
+of feasible saving stays under the cap (\lean{le\_olgCapital\_at}). Supply is at most the
+$\nu$-average of $\bar F_{59}$ and at least that of $\Lambda_{59}(\cdot,0)$, each over sixty.
+
+\paragraph{From a rate to a cell.} Every ingredient is monotone in the rate $R$ or in the patience
+factor $\Thorn=(\beta R)^{1/3}$: $\kappa_k$ rises with $R$ and falls with $\Thorn$, human wealth
+falls with $R$, the cohort slope rises with $R$ and falls with $\kappa$, and the power mean is
+monotone in its arguments. On a cell $[r_1,r_2]$ a checker (\texttt{EnclCert/Outer.lean})
+brackets $\Thorn$ by rational cube-root bounds, runs each recursion with every ingredient taken at
+the end of the cell that makes the bound larger, rounding outward over $D=10^{12}$, and compares
+the ceiling with demand at $r_2$ or the floor with demand at $r_1$. The floor is carried on a grid of
+$650$ asset levels and read at the grid point below the certified saving floor, which is sound
+because $\Lambda_k$ is monotone in assets. Every stored value is re-verified by an exact integer
+inequality with denominators cleared, and only those inequalities are used by the bridge
+(\texttt{OLG/OuterBridge.lean}), which proves by induction on the stage that each stored number
+bounds the real quantity it stands for, discharges the slackness hypothesis of the ceiling from
+impatience at every stage (the limiting propensity $1-\Thorn/R$ where $\Thorn<R$, and
+$y_{\max}+r\bar a\le0$ at rates negative enough), and checks the reach hypothesis of the floor at
+the top of the cell. The cap is $10^6$, which the reach at $20\%$ needs; the ceiling side is
+indifferent to it.
+
+\paragraph{The meshes.} The ceiling crosses demand near $2.35\%$ and the floor near $8.4\%$ at this
+calibration. The low mesh is $165$ cells from $-8\%$ to $2.3\%$, of $0.1$ points to $1.5\%$,
+$0.02$ to $2.1\%$ and $0.005$ to $2.3\%$; the high mesh is $121$ cells from $8.7\%$ to $20\%$, of
+$0.01$ points to $9.5\%$, $0.1$ to $12\%$ and $0.5$ to $20\%$. Both verdicts are established by
+\texttt{native\_decide} (\lean{lowCheck\_eq\_true}, \lean{highCheck\_eq\_true}), about four
+minutes of compiled arithmetic each; a covering lemma puts every rate of a range in some cell of an
+increasing mesh.
+
+\begin{theorem}[{No equilibrium outside $[2.3\%,8.7\%]$}]\label{thm:outer}
+At $\gamma=3$ and the calibration of Section~\ref{sec:economy} with cap $10^6$, capital supply is
+strictly below demand at every rate in $(-8\%,2.3\%]$ and strictly above it at every rate in
+$[8.7\%,20\%]$.
+\formal{EnclCert.olg7\_supply\_lt\_demand\_low, EnclCert.olg7\_demand\_lt\_supply\_high}
+\end{theorem}
+
+Unlike Theorem~\ref{thm:main}, this one is a Lean theorem: its only axiom beyond classical Mathlib
+is the one \texttt{native\_decide} introduces for the two compiled verdicts. What it leaves
+uncovered below $20\%$ is $[2.3\%,4\%)$ and $(6\%,8.7\%]$, where neither bound separates supply
+from demand and only the slope certificate of Sections~\ref{sec:recursion}--\ref{sec:bracket} can;
+extending that certificate to those ranges is about $440$ further cells of the same run. Above
+$20\%$ the formal model's cap starts to bind for a household that saves everything feasible, and
+the capped economy stops being the one of interest.
+
 \section{Standing, and what remains}\label{sec:standing}
 
 \subsection{What kind of result this is}
@@ -711,11 +767,10 @@ in compiled Lean is a weekend of machine time, not a new argument.
 
 It is one calibration: one chain, one $\beta$, one $\gamma$, one technology. Nothing transfers to a
 neighbouring calibration except by rerunning the certificate, which is the price of a certificate
-over a proof. It is one bracket: outside $[4\%,6\%]$ the slope bound has not been run, so an
-equilibrium below $4\%$ or above $6\%$ is not excluded by this note; the companion's existence
-bracket for the Tauchen variant of the calibration is $[2.78\%,7.67\%]$, and the certified reach
-suggests the same for this one, so the honest statement is uniqueness \emph{on the bracket} until the
-cells cover the existence bracket. And it is $\gamma=3$: the same run at $\gamma=5$, where the
+over a proof. It is one bracket, nearly: Theorem~\ref{thm:outer} excludes every rate in $(-8\%,2.3\%]$ and in
+$[8.7\%,20\%]$ by proof term, so what remains open below $20\%$ is $[2.3\%,4\%)$ and
+$(6\%,8.7\%]$, where the slope certificate has not yet been run; until it is, the honest statement
+is uniqueness on $[4\%,6\%]$ with no equilibrium outside $[2.3\%,8.7\%]$. And it is $\gamma=3$: the same run at $\gamma=5$, where the
 single-rate bound is $12.8$ against $39$ at $4\%$, is the same command with one argument changed and
 about the same machine time, but it has not been run.
 

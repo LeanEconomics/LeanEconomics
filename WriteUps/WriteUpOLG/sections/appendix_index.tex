@@ -195,6 +195,10 @@ Regions, failure, Lipschitz, budget & \lean{encRegions}, \lean{failV\_sound}, \l
 Theorem~\ref{thm:encllean} & \lean{increment\_of\_enclCheck}, \lean{olg7\_increment} & OLG/\allowbreak Encl\allowbreak Final, OLG/\allowbreak Encl\allowbreak Theorem\\
 \midrule
 Theorem~\ref{thm:finite} & \lean{PiecewiseAnalyticOn}, \lean{PiecewiseAnalyticOn.finite\_zeros}, \lean{finite\_zeros\_of\_analyticOnNhd} & Analysis/\allowbreak Piecewise\allowbreak Analytic\\
+The outer-range checker & \lean{cellCeilOK}, \lean{cellFloorOK}, \lean{lowCheck}, \lean{highCheck} & EnclCert/\allowbreak Outer\\
+Its verdicts & \lean{lowCheck\_eq\_true}, \lean{highCheck\_eq\_true} & OLG/\allowbreak Outer\allowbreak Certified\\
+The cell bridge & \lean{olgCapital\_lt\_demand\_of\_cell}, \lean{demand\_lt\_olgCapital\_of\_cell} & OLG/\allowbreak Outer\allowbreak Bridge\\
+Theorem~\ref{thm:outer} & \lean{olg7\_supply\_lt\_demand\_low}, \lean{olg7\_demand\_lt\_supply\_high} & OLG/\allowbreak Outer\allowbreak Theorem\\
 Consumption at most cash on hand & \lean{stageConsumption\_le\_resources} & OLG/\allowbreak Interval\allowbreak Euler\\
 \bottomrule
 \end{longtable}
