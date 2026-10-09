@@ -305,6 +305,9 @@ Finally, $L$ and $L_j$ are at least $\xi^T > 0$, since the densities are at leas
 and $P$ are probability measures, so taking logarithms gives the second form.
 \end{proof}
 
+\noindent Appendix~\ref{app:frsproof} gives the same result with the proof laid out step by step
+as FRS's proof of Proposition~2, so that the two can be read side by side.
+
 \begin{remark}[Sharpness]
 The dependence of $D$ on $T$ cannot be improved. With every exact density equal to $M$ and every
 computed density equal to $M + \varepsilon$, $\log L_j - \log L = T\log(1 + \varepsilon/M)$, which
@@ -420,6 +423,113 @@ likelihood levels once $T\delta$ is not small.
 
 \newpage
 \appendix
+
+\section{The proof in FRS's layout}\label{app:frsproof}
+
+This appendix proves Corrected Proposition~2$'$ following the structure of FRS's proof of
+Proposition~2 as closely as possible, with the same decomposition, the same two terms and their
+equation numbers, primed. In FRS's notation, define for each initial state $S_0$
+\[
+  f_T(S_0) = \int \prod_{t=1}^T p_t(S_0,\omega)\,Q(\dd\omega), \qquad
+  f_{jT}(S_0) = \int \prod_{t=1}^T p_{j,t}(S_0,\omega)\,Q(\dd\omega),
+\]
+so that $L(y^T) = \int f_T\,\dd\mu^*$ and $L_j(y^T) = \int f_{jT}\,\dd\mu_j^*$, as in FRS's proof of
+Proposition~1. (In Section~\ref{sec:main} these are $F$ and $F_j$.) All four integrals below are
+at least $\xi^T > 0$, so their logarithms are defined.
+
+\paragraph{The decomposition.} FRS split the level difference by adding and subtracting
+$\int f_T\,\dd\mu_j^*$. We split the log difference in the same way:
+\begin{equation}\label{eq:decomp}
+  \log L_j - \log L
+  = \underbrace{\Bigl[\log\!\int f_{jT}\,\dd\mu_j^* - \log\!\int f_T\,\dd\mu_j^*\Bigr]}_{
+      \text{model change, distribution }\mu_j^*\text{ fixed}}
+  + \underbrace{\Bigl[\log\!\int f_T\,\dd\mu_j^* - \log\!\int f_T\,\dd\mu^*\Bigr]}_{
+      \text{distribution change, exact model fixed}} .
+\end{equation}
+The second term is the one FRS bound in (12), the first the one they bound in (13)--(14).
+
+\paragraph{Step 1: regularity of $f_T$ in the initial state.} FRS show, using their Lemma~5,
+that $f_T$ is Lipschitz in $S_0$ with constant $L_F$, and remark that the constant differs with
+$T$. Here the corresponding fact is that $\log f_T$ is Lipschitz with constant $K_T$: by
+Lemma~\ref{lem:move}, $\prod_t p_t(s',\omega) \le e^{K_T d(s,s')}\prod_t p_t(s,\omega)$ for every
+$\omega$, and integrating over $\omega$,
+\begin{equation}\label{eq:loglipF}
+  f_T(s') \le e^{K_T d(s,s')}\,f_T(s) \qquad \text{for all } s, s' \in S .
+\end{equation}
+The dependence of $K_T$ on $T$ is explicit, and under geometric decay of the $\ell_t$
+(Corollary~\ref{cor:uniform}) it is bounded uniformly in $T$.
+
+\paragraph{Step 2: the distribution term, (12$'$).} FRS bound the second term of their
+decomposition by $L_F\delta/(1-\alpha)$, applying Theorem~6 of \citet{SantosPeraltaAlva2005} under
+Condition~1. We use the coupling of Assumption~\ref{a:coup} instead. By change of variables and
+\eqref{eq:loglipF} with $s = a(x)$, $s' = b(x)$, $d(a(x),b(x)) \le \rho$,
+\[
+  \int f_T\,\dd\mu_j^* = \int_X f_T(b(x))\,P(\dd x) \le e^{K_T\rho}\int_X f_T(a(x))\,P(\dd x)
+  = e^{K_T\rho}\int f_T\,\dd\mu^* ,
+\]
+and, exchanging the roles of $a$ and $b$, $\int f_T\,\dd\mu^* \le e^{K_T\rho}\int f_T\,\dd\mu_j^*$.
+Hence
+\begin{equation}\tag{12$'$}\label{eq:12p}
+  \Bigl|\log\!\int f_T\,\dd\mu_j^* - \log\!\int f_T\,\dd\mu^*\Bigr| \le K_T\,\rho .
+\end{equation}
+Only the exact model enters this term, which is why Assumption~\ref{a:lip} is needed only for
+the exact densities.
+
+\paragraph{Step 3: the model term, (13$'$).} FRS write the first term of their decomposition as
+the integral of $f_{jT} - f_T$ against $\mu_j^*$, their (13). On the log scale the first term
+of \eqref{eq:decomp} is the log of a ratio of two integrals against the same measure,
+\begin{equation}\tag{13$'$}\label{eq:13p}
+  \log\!\int f_{jT}\,\dd\mu_j^* - \log\!\int f_T\,\dd\mu_j^*
+  = \log \frac{\int f_{jT}\,\dd\mu_j^*}{\int f_T\,\dd\mu_j^*} ,
+\end{equation}
+so it is enough to bound $f_{jT}/f_T$ pointwise.
+
+\paragraph{Step 4: bounding the model term, (14$'$).} This is the step that fails in FRS. They
+apply Lemma~6, $|p_{j,t} - p_t| \le \chi\delta$, to bound $|f_{jT} - f_T|$ by $TB\chi\delta$; as
+Section~\ref{sec:error} shows, the telescoping identity \eqref{eq:telescope} puts $T-1$ density
+factors beside each $\chi\delta$, so no $T$-free $B$ exists. Bounding the ratio instead, Lemma~6
+in the form of Assumption~\ref{a:err} gives, by Lemma~\ref{lem:factor},
+\[
+  e^{-T\varepsilon/\xi}\prod_t p_t(s,\omega) \le \prod_t p_{j,t}(s,\omega)
+  \le e^{T\varepsilon/\xi}\prod_t p_t(s,\omega)
+\]
+for all $s$ and $\omega$. Integrating over $\omega$ gives
+$e^{-T\varepsilon/\xi}f_T \le f_{jT} \le e^{T\varepsilon/\xi}f_T$ pointwise, then integrating
+against $\mu_j^*$ gives the same bounds for the two integrals in \eqref{eq:13p}, so
+\begin{equation}\tag{14$'$}\label{eq:14p}
+  \Bigl|\log\!\int f_{jT}\,\dd\mu_j^* - \log\!\int f_T\,\dd\mu_j^*\Bigr| \le
+  \frac{T\varepsilon}{\xi} \;=\; \frac{T\chi\delta}{\xi} .
+\end{equation}
+
+\paragraph{Step 5: conclusion.} Putting together \eqref{eq:12p} and \eqref{eq:14p} in
+\eqref{eq:decomp} delivers the result:
+\[
+  \bigl|\log L_j(y^T) - \log L(y^T)\bigr| \le \frac{T\chi\delta}{\xi} + K_T\rho ,
+\]
+which, with $\rho = \delta/(1-\alpha)$ and $K_T \le K$ bounded in $T$, is
+$(T\chi/\xi + K/(1-\alpha))\,\delta$, the form of FRS's bound with the level replaced by the log.
+\qed
+
+\medskip
+\noindent The correspondence with FRS's proof is:
+
+\begin{center}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+& FRS, Proposition 2 & Corrected Proposition 2$'$ \\
+\midrule
+Decomposition & add and subtract $\int f_T\,\dd\mu_j^*$ & the same, in logs \eqref{eq:decomp} \\
+Regularity in $S_0$ & $f_T$ is $L_F$-Lipschitz (Lemma 5) & $\log f_T$ is $K_T$-Lipschitz
+  \eqref{eq:loglipF} \\
+Distribution term & (12): $L_F\delta/(1-\alpha)$, Santos--Peralta-Alva & (12$'$): $K_T\rho$,
+  coupling \\
+Model term & (13)--(14): $TB\chi\delta$, Lemma 6 (fails) & (13$'$)--(14$'$): $T\chi\delta/\xi$,
+  Lemma 6 \\
+Conclusion & triangle inequality & triangle inequality \\
+\bottomrule
+\end{tabular}
+\end{center}
 
 \section{The assumptions from primitives}\label{app:prim}
 
@@ -548,7 +658,10 @@ page. The development builds without unproved steps (\lean{sorry}), and every re
 on Lean's three standard axioms (\lean{propext}, \lean{Classical.choice}, \lean{Quot.sound}). The
 formal likelihood is $\int_X\int_\Omega\prod_t p_t(a(x),\omega)\,\dd Q\,\dd P$ for an arbitrary
 finite set of periods; Theorem~\ref{thm:prim} converts it to the form against $\mu^*$ by change of
-variables. Paths are relative to \lean{LeanEconomics/}.
+variables. Paths are relative to \lean{LeanEconomics/}. The formal proof of Corrected
+Proposition~2$'$ assembles Lemmas~\ref{lem:factor} and~\ref{lem:move} pointwise before integrating,
+as in Section~\ref{sec:main}, rather than through the decomposition of
+Appendix~\ref{app:frsproof}; the result proved is the same.
 
 \begin{center}
 \small
