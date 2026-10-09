@@ -63,7 +63,7 @@ Markov chains, coupling.
 
 \section{Introduction}
 
-Likelihood-based estimation of a dynamic model uses an approximated policy function, so the researcher evaluates the likelihood $L_j$ of the computed model rather than the likelihood $L$ of the exact one. \citet{FRS2006} (henceforth, FRS) asked how the two are related, in particular how numerical error incurred in solving the dynamic model affects likelihood-based estimation of that model. Their Proposition~1 shows that $L_j \to L$ for a fixed sample as the computed transition and measurement equations converge to the exact ones. Their Proposition~2 quantifies the speed: if the computed equations are within $\delta$ of the exact ones in the sup norm, then $|L_j(y^T) - L(y^T)| < (TB\chi + L/(1-\alpha)) \delta$, with constants independent of the sample size $T$. FRS drew three conclusions from it, emphasised in their abstract and introduction: that ``second order approximation errors in the policy function \ldots\ have first order effects on the likelihood function''; that the error ``gets compounded with the size of the sample'', so the accuracy of the solution must improve as $T$ grows if the computed likelihood is to stay close to the exact one; and hence that linearisation, which fixes $\delta$, ``is due to fail as the sample size grows''. They also used the proposition to motivate a likelihood-ratio diagnostic for solution accuracy.
+Likelihood-based estimation of a dynamic model uses an approximated policy function, so the researcher evaluates the likelihood $L_j$ of the computed model rather than the likelihood $L$ of the exact one. \citet{FRS2006} (henceforth, FRS) asked how the two are related, in particular how numerical error incurred in solving the dynamic model affects likelihood-based estimation of that model. Their Proposition~1 shows that $L_j \to L$ for a fixed sample as the computed transition and measurement equations converge to the exact ones. Their Proposition~2 quantifies the speed: if the computed equations are within $\delta$ of the exact ones in the sup norm, then $|L_j(y^T) - L(y^T)| < (TB\chi + L_F/(1-\alpha)) \delta$, with constants independent of the sample size $T$.\footnote{Here $L_F$ is a Lipschitz constant of an integrated conditional likelihood (Section~\ref{sec:error}). FRS denote it $L$, the same symbol as the likelihood; we write $L_F$ throughout to avoid the clash.} FRS drew three conclusions from it, emphasised in their abstract and introduction: that ``second order approximation errors in the policy function \ldots\ have first order effects on the likelihood function''; that the error ``gets compounded with the size of the sample'', so the accuracy of the solution must improve as $T$ grows if the computed likelihood is to stay close to the exact one; and hence that linearisation, which fixes $\delta$, ``is due to fail as the sample size grows''. They also used the proposition to motivate a likelihood-ratio diagnostic for solution accuracy.
 
 \citet{AGH2009} (henceforth, AGH), following an unpublished note by \citet{Geweke2007}, showed that
 Proposition~2 is false. In the static Gaussian location model $y_t = \gamma + v_t$, approximated
@@ -119,44 +119,47 @@ FRS consider the state-space system
 \]
 with compact supports for the state and the i.i.d.\ shocks, and a unique invariant distribution
 $\mu^*$ of the state. The shock is partitioned as $W_t = (W_{1t}, W_{2t})$, where
-$(W_{2t}, V_t)$ is recovered from the data by inverting the system (FRS's Assumption~3). We fix
-$\gamma$ and the data $y^T$ and suppress both. Write $\omega = W_1^T$ for the unobserved shock
+$(W_{2t}, V_t)$ is recovered from the data by inverting the system (FRS's Assumption~3). Here $T$ is
+the number of observations in the data $y^T = (y_1, \ldots, y_T)$, and the likelihoods below are
+the exact integrals implied by each model, not simulation estimates of them; the error from
+evaluating them by simulation, for example with a particle filter, is a separate matter that
+neither FRS nor this comment addresses. We fix $\gamma$ and the data $y^T$ and suppress both. Write $\omega = W_1^T$ for the unobserved shock
 path, with law $Q$, and
 \[
   p_t(s,\omega) = p\bigl(y_t \mid W_1^t = \omega_{\le t},\, S_0 = s,\, y^{t-1}\bigr)
 \]
-for the conditional density of the $t$-th observation, with $q_t$ its counterpart under the
-computed equations $(\varphi_j, g_j)$, whose invariant distribution is $\mu^*_j$. The two
+for the conditional density of the $t$-th observation, with $p_{j,t}$ (FRS's
+$p_j(y_t \mid W_1^t, S_0, y^{t-1})$) its counterpart under the computed equations $(\varphi_j, g_j)$, whose invariant distribution is $\mu^*_j$. The two
 likelihoods are\footnote{FRS's displays write the integral over $W_1^T$ period by period, as a
 product of integrals. Since $p_t$ depends on the whole history $\omega_{\le t}$, the likelihood
 is the integral of the product. Nothing below depends on the distinction.}
 \[
   L(y^T) = \int_S\int_\Omega \prod_{t=1}^T p_t(s,\omega)\, Q(\dd\omega)\,\mu^*(\dd s),
   \qquad
-  L_j(y^T) = \int_S\int_\Omega \prod_{t=1}^T q_t(s,\omega)\, Q(\dd\omega)\,\mu_j^*(\dd s).
+  L_j(y^T) = \int_S\int_\Omega \prod_{t=1}^T p_{j,t}(s,\omega)\, Q(\dd\omega)\,\mu_j^*(\dd s).
 \]
 FRS's Assumptions~4 and~8 bound the densities below by $\xi > 0$; their Lemma~6 gives
-$|q_t - p_t| \le \chi\delta$ when $\|\varphi_j - \varphi\| \le \delta$ and
+$|p_{j,t} - p_t| \le \chi\delta$ when $\|\varphi_j - \varphi\| \le \delta$ and
 $\|g_j - g\| \le \delta$; and their Condition~1 is the mean contraction
 $\int \|\varphi(s,w) - \varphi(s',w)\|\,Q(\dd w) \le \alpha\|s - s'\|$ with $\alpha < 1$.
 
 \paragraph{FRS's Proposition 2.} \emph{Under Assumptions 1--11 and Condition 1, if
 $\|\varphi_j - \varphi\| \le \delta$ and $\|g_j - g\| \le \delta$, there are positive constants
-$B$ and $L$ such that, for all $T$, $|L_j(y^T) - L(y^T)| < (TB\chi + L/(1-\alpha))\delta$.}
+$B$ and $L_F$ such that, for all $T$, $|L_j(y^T) - L(y^T)| < (TB\chi + L_F/(1-\alpha))\delta$.}
 
 \medskip
 The proof writes $F(s) = \int\prod_t p_t(s,\cdot)\,\dd Q$ and
-$F_j(s) = \int\prod_t q_t(s,\cdot)\,\dd Q$ and splits
+$F_j(s) = \int\prod_t p_{j,t}(s,\cdot)\,\dd Q$ and splits
 \[
   |L_j - L| \le \Bigl|\int F\,\dd\mu_j^* - \int F\,\dd\mu^*\Bigr| + \int |F_j - F|\,\dd\mu_j^* .
 \]
-The first term is bounded in FRS's (12) by $L\delta/(1-\alpha)$, using a result of
-\citet{SantosPeraltaAlva2005} with $L$ a Lipschitz constant of $F$. The second is bounded in their
+The first term is bounded in FRS's (12) by $L_F\delta/(1-\alpha)$, using a result of
+\citet{SantosPeraltaAlva2005} with $L_F$ a Lipschitz constant of $F$. The second is bounded in their
 (14) by $TB\chi\delta$, from Lemma~6 and a bound $B$ on the densities. Step (14) is where the
 proof fails. A difference of two products satisfies the telescoping identity
 \begin{equation}\label{eq:telescope}
-  \prod_{t=1}^T q_t - \prod_{t=1}^T p_t
-  = \sum_{t=1}^T \Bigl(\prod_{s<t} q_s\Bigr)\,(q_t - p_t)\,\Bigl(\prod_{s>t} p_s\Bigr),
+  \prod_{t=1}^T p_{j,t} - \prod_{t=1}^T p_t
+  = \sum_{t=1}^T \Bigl(\prod_{s<t} p_{j,s}\Bigr)\,(p_{j,t} - p_t)\,\Bigl(\prod_{s>t} p_s\Bigr),
 \end{equation}
 so each of the $T$ per-period errors is multiplied by $T-1$ densities. With $M$ an upper bound on
 the densities, the bound that follows is $TM^{T-1}\chi\delta$, and $M^{T-1}$ depends on $T$. No
@@ -174,7 +177,7 @@ false since $M > 1$.
 \end{proof}
 
 Two further steps let constants depend on $T$ without comment. In (12), the Lipschitz constant of
-$F$ is ``different for each $t$, but since $t$ is finite, we can set a global $L$'', although the
+$F$ is ``different for each $t$, but since $t$ is finite, we can set a global $L$'' (our $L_F$), although the
 proposition is asserted for all $T$. And Lemma~6 asserts $\chi$ for all $t$ ``since the model is
 stationary'', although the recovered $(v_t, s_t, w_{2t})$ depend on a $t$-fold composition of the
 transition, whose sensitivity to $\delta$ can accumulate with $t$. The corrected proposition below
@@ -210,7 +213,7 @@ three assumptions; Appendix~\ref{app:prim} derives all three from primitives.
 
 \begin{assumption}[Per-period error, uniformly in $t$]\label{a:err}
 There are $\xi > 0$ and $\varepsilon \ge 0$ such that $p_t(s,\omega) \ge \xi$,
-$q_t(s,\omega) \ge \xi$ and $|q_t(s,\omega) - p_t(s,\omega)| \le \varepsilon$ for all $t$, $s$
+$p_{j,t}(s,\omega) \ge \xi$ and $|p_{j,t}(s,\omega) - p_t(s,\omega)| \le \varepsilon$ for all $t$, $s$
 and $\omega$.
 \end{assumption}
 
@@ -247,19 +250,19 @@ equivalently $|\log L_j(y^T) - \log L(y^T)| \le D$.
 The proof uses two lemmas.
 
 \begin{lemma}\label{lem:factor}
-If $p \ge \xi > 0$ and $|q - p| \le \varepsilon$, then $q \le e^{\varepsilon/\xi}\,p$. Hence,
+If $b \ge \xi > 0$ and $|a - b| \le \varepsilon$, then $a \le e^{\varepsilon/\xi}\,b$. Hence,
 under Assumption~\ref{a:err}, for all $s$ and $\omega$,
 \[
-  \prod_{t=1}^T q_t(s,\omega) \le e^{T\varepsilon/\xi}\prod_{t=1}^T p_t(s,\omega)
+  \prod_{t=1}^T p_{j,t}(s,\omega) \le e^{T\varepsilon/\xi}\prod_{t=1}^T p_t(s,\omega)
   \qquad\text{and}\qquad
-  \prod_{t=1}^T p_t(s,\omega) \le e^{T\varepsilon/\xi}\prod_{t=1}^T q_t(s,\omega).
+  \prod_{t=1}^T p_t(s,\omega) \le e^{T\varepsilon/\xi}\prod_{t=1}^T p_{j,t}(s,\omega).
 \]
 \end{lemma}
 
 \begin{proof}
-$q \le p + \varepsilon \le p + (\varepsilon/\xi)\,p = (1 + \varepsilon/\xi)\,p \le
-e^{\varepsilon/\xi}\,p$, using $p/\xi \ge 1$ and $1 + x \le e^x$. The product bounds follow by
-multiplying $T$ such inequalities between nonnegative numbers; the second uses $q_t \ge \xi$.
+$a \le b + \varepsilon \le b + (\varepsilon/\xi)\,b = (1 + \varepsilon/\xi)\,b \le
+e^{\varepsilon/\xi}\,b$, using $b/\xi \ge 1$ and $1 + x \le e^x$. The product bounds follow by
+multiplying $T$ such inequalities between nonnegative numbers; the second uses $p_{j,t} \ge \xi$.
 \end{proof}
 
 \begin{lemma}\label{lem:move}
@@ -273,13 +276,13 @@ Multiply the inequalities $p_t(s',\omega) \le e^{\ell_t d(s,s')}\,p_t(s,\omega)$
 
 \begin{proof}[Proof of Proposition~\ref{prop:main}]
 Write $F(s) = \int \prod_t p_t(s,\omega)\,Q(\dd\omega)$ and
-$F_j(s) = \int \prod_t q_t(s,\omega)\,Q(\dd\omega)$. By Assumption~\ref{a:coup} and change of
+$F_j(s) = \int \prod_t p_{j,t}(s,\omega)\,Q(\dd\omega)$. By Assumption~\ref{a:coup} and change of
 variables, $L = \int_X F(a(x))\,P(\dd x)$ and $L_j = \int_X F_j(b(x))\,P(\dd x)$.
 
 \emph{Upper bound.} For all $s$, $s'$ and $\omega$, Lemma~\ref{lem:factor} and then
 Lemma~\ref{lem:move} give
 \[
-  \prod_t q_t(s',\omega) \le e^{T\varepsilon/\xi}\prod_t p_t(s',\omega)
+  \prod_t p_{j,t}(s',\omega) \le e^{T\varepsilon/\xi}\prod_t p_t(s',\omega)
   \le e^{T\varepsilon/\xi + K_T d(s,s')}\prod_t p_t(s,\omega).
 \]
 Integrating over $\omega$, $F_j(s') \le e^{T\varepsilon/\xi + K_T d(s,s')}F(s)$. Put $s = a(x)$ and
@@ -291,7 +294,7 @@ $L_j \le e^{D} L$.
 exact model, then change model. For all $s$, $s'$ and $\omega$,
 \[
   \prod_t p_t(s,\omega) \le e^{K_T d(s',s)}\prod_t p_t(s',\omega)
-  \le e^{K_T d(s',s) + T\varepsilon/\xi}\prod_t q_t(s',\omega),
+  \le e^{K_T d(s',s) + T\varepsilon/\xi}\prod_t p_{j,t}(s',\omega),
 \]
 by Lemma~\ref{lem:move} and the second part of Lemma~\ref{lem:factor}. Integrating over $\omega$
 and then, with $s = a(x)$ and $s' = b(x)$, over $P$ gives $L \le e^{D}L_j$. This ordering is why
@@ -420,7 +423,7 @@ that $W_1 = W$ and the measurement shock alone is recovered from the data. The s
 defined by $s_0$ given and $s_{t} = \varphi(s_{t-1},\omega_t)$, is then a function
 $s_t(s_0,\omega)$ of the initial state and the shock path only, and
 $p_t(s_0,\omega) = f_t(s_{t}(s_0,\omega))$ for a function $f_t$ of the current state: the density
-of $V$ at $g^{-1}(y_t; s)$ times the Jacobian. Similarly $q_t = f_{j,t}(s_{j,t})$, with $s_{j,t}$
+of $V$ at $g^{-1}(y_t; s)$ times the Jacobian. Similarly $p_{j,t} = f_{j,t}(s_{j,t})$, with $s_{j,t}$
 the computed path. We assume throughout that the state space $S$ is a nonempty compact metric
 space, that $\varphi$ and $\varphi_j$ are jointly measurable and continuous in the state, that
 $\varphi$ is a pathwise $\alpha$-contraction, $d(\varphi(s,w), \varphi(s',w)) \le \alpha\,d(s,s')$
