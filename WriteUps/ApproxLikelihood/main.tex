@@ -14,6 +14,7 @@
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{corollary}[theorem]{Corollary}
+\newtheorem*{newpropii}{New Proposition~2$'$}
 \theoremstyle{definition}
 \newtheorem{assumption}{Assumption}
 \renewcommand{\theassumption}{A\arabic{assumption}}
@@ -84,7 +85,7 @@ $\Delta_j$ as given rather than deriving it from the policy-function error $\del
 dynamics of the state.
 
 This comment locates the step of FRS's proof that fails and proves a corrected
-Proposition~2$'$ that keeps their intent. The correction is to bound the logarithm of the
+New Proposition~2$'$ that keeps their intent. The correction is to bound the logarithm of the
 likelihood rather than its level. That is the scale on which likelihoods are used in estimation,
 and it turns FRS's bound on the absolute error into a bound on the relative error $|L_j/L - 1|$.
 The bound keeps FRS's form: under a pathwise version of their contraction condition, the
@@ -105,7 +106,7 @@ Section~\ref{sec:error} locates the error: step (14) of FRS's appendix bounds a 
 $T$-fold products of densities by $TB\chi\delta$, but the telescoping identity places $T-1$
 density factors beside each per-period error, so $B$ is really the $(T-1)$-th power of a bound on
 the density. It also gives a counterexample that, unlike AGH's, satisfies FRS's compact-support
-assumption. Section~\ref{sec:main} states and proves Proposition~2$'$. Section~\ref{sec:implications}
+assumption. Section~\ref{sec:main} states and proves New Proposition~2$'$. Section~\ref{sec:implications}
 draws the consequences for estimation and for Bayesian inference, where FRS's corollaries hold
 with explicit constants. Appendix~\ref{app:prim} derives the assumptions of the corrected
 proposition from primitives in the case where the measurement shock alone is recovered from the
@@ -238,14 +239,14 @@ $\rho = \delta/(1-\alpha)$ if Condition~1 is strengthened from contraction in me
 for every shock, $d(\varphi(s,w), \varphi(s',w)) \le \alpha\,d(s,s')$ for all $w$, and the
 computed chain's invariant distribution is unique (Theorem~\ref{thm:coupling} in the appendix).
 
-\begin{proposition}[Proposition~2$'$]\label{prop:main}
+\begin{newpropii}
 Under Assumptions~\ref{a:err}--\ref{a:coup},
 \[
   e^{-D}\,L(y^T) \;\le\; L_j(y^T) \;\le\; e^{D}\,L(y^T),
   \qquad D = \frac{T\varepsilon}{\xi} + K_T\,\rho ,
 \]
 equivalently $|\log L_j(y^T) - \log L(y^T)| \le D$.
-\end{proposition}
+\end{newpropii}
 
 The proof uses two lemmas.
 
@@ -274,10 +275,13 @@ p_t(s,\omega)$ for all $s$, $s'$ and $\omega$.
 Multiply the inequalities $p_t(s',\omega) \le e^{\ell_t d(s,s')}\,p_t(s,\omega)$ over $t$.
 \end{proof}
 
-\begin{proof}[Proof of Proposition~\ref{prop:main}]
-Write $F(s) = \int \prod_t p_t(s,\omega)\,Q(\dd\omega)$ and
-$F_j(s) = \int \prod_t p_{j,t}(s,\omega)\,Q(\dd\omega)$. By Assumption~\ref{a:coup} and change of
-variables, $L = \int_X F(a(x))\,P(\dd x)$ and $L_j = \int_X F_j(b(x))\,P(\dd x)$.
+\begin{proof}[Proof of New Proposition~2$'$]
+Integrate out the shock path:
+\[
+  F(s) = \int \prod_t p_t(s,\omega)\,Q(\dd\omega), \qquad
+  F_j(s) = \int \prod_t p_{j,t}(s,\omega)\,Q(\dd\omega).
+\]
+By Assumption~\ref{a:coup} and a change of variables, $L = \int_X F(a(x))\,P(\dd x)$ and $L_j = \int_X F_j(b(x))\,P(\dd x)$.
 
 \emph{Upper bound.} For all $s$, $s'$ and $\omega$, Lemma~\ref{lem:factor} and then
 Lemma~\ref{lem:move} give
@@ -329,7 +333,7 @@ every $T$,
 \end{corollary}
 
 \begin{proof}
-$K_T \le c\sum_{t\ge0}\alpha^t = c/(1-\alpha)$; substitute into Proposition~\ref{prop:main}.
+$K_T \le c\sum_{t\ge0}\alpha^t = c/(1-\alpha)$; substitute into New Proposition~2$'$.
 \end{proof}
 
 In the case where the measurement shock alone is recovered from the data
@@ -369,7 +373,7 @@ not address.
 
 \paragraph{Bayesian inference.} FRS's Corollaries~1--4 assert that likelihood ratios, marginal
 likelihoods, posteriors and posterior expectations of the computed model converge to their exact
-counterparts. Proposition~\ref{prop:main} makes these quantitative. Suppose its conclusion holds
+counterparts. New Proposition~2$'$ makes these quantitative. Suppose its conclusion holds
 at every parameter value with a common $D$, and let $\pi(\cdot\mid y^T) = L/Z$ and
 $\pi_j(\cdot\mid y^T) = L_j/Z_j$ be the posterior densities with respect to a prior $\pi_0$, where
 $Z = \int L\,\dd\pi_0$ and $Z_j = \int L_j\,\dd\pi_0$.
@@ -392,7 +396,7 @@ asserts convergence without a rate, with an explicit bound. The closest result w
 approximation theorem of \citet[Theorem 4.9 in the arXiv version]{DashtiStuart2017}, building on
 \citet{CotterDashtiStuart2010}: if the negative log likelihoods satisfy
 $|\Phi - \Phi_N| \le M_2(\|u\|)\psi(N)$, the Hellinger distance between the posteriors is at most
-$C\psi(N)$ for $N$ large. Proposition~\ref{prop:main} supplies that hypothesis with
+$C\psi(N)$ for $N$ large. New Proposition~2$'$ supplies that hypothesis with
 $\Phi = -\log L$ and $\psi = \delta$. Proposition~\ref{prop:post} is the version with explicit
 constants, and it holds for every $\delta$.
 
@@ -489,7 +493,7 @@ $d_t \le \alpha^t d_0 + \delta/(1-\alpha)$ by induction, and $d_0 = 0$. (b) Indu
 the contraction.
 \end{proof}
 
-\begin{theorem}[Proposition~2$'$ from primitives]\label{thm:prim}
+\begin{theorem}[New Proposition~2$'$ from primitives]\label{thm:prim}
 Suppose each chain has a unique invariant distribution, the measurable functions $f_t, f_{j,t}$
 take values in $[\xi, M]$ with $\xi > 0$, $|f_{j,t} - f_t| \le \eta$, and each $f_t$ is
 $c$-Lipschitz. Then for every $T$ and every law $Q$ of the shock path,
@@ -512,7 +516,7 @@ $f_t(x') \le e^{(c/\xi)\alpha^t d(s_0,s_0')}f_t(x)$. This is Assumption~\ref{a:l
 $\ell_t = (c/\xi)\alpha^t$, so $K_T \le (c/\xi)\sum_{t\ge1}\alpha^t = c\alpha/(\xi(1-\alpha))$.
 
 \emph{Assumption~\ref{a:coup}} is Theorem~\ref{thm:coupling}, with $\rho = \delta/(1-\alpha)$.
-Proposition~\ref{prop:main} now gives
+New Proposition~2$'$ now gives
 $D = T\varepsilon/\xi + K_T\rho$, which is at most the stated bound.
 
 \emph{Measurability.} The state path is jointly measurable in $(s_0,\omega)$, by induction on $t$,
@@ -556,8 +560,8 @@ Proposition~\ref{prop:gap} & \lean{not\_exists\_linear\_bound\_prod\_sub} \\
 Log ratio linear in $T$ (Example~\ref{ex:compact}, Remark) & \lean{log\_prod\_div\_prod\_const} \\
 Lemma~\ref{lem:factor} & \lean{le\_exp\_div\_mul}, \lean{prod\_le\_exp\_card\_mul\_prod} \\
 Lemma~\ref{lem:move} & \lean{prod\_le\_exp\_sum\_mul\_prod} \\
-Proposition~\ref{prop:main}, the two bounds & \lean{lik\_le\_exp\_mul\_lik}, \lean{\ldots\_rev} \\
-Proposition~\ref{prop:main}, log form & \lean{abs\_log\_likelihood\_sub\_le} \\
+New Proposition~2$'$, the two bounds & \lean{lik\_le\_exp\_mul\_lik}, \lean{\ldots\_rev} \\
+New Proposition~2$'$, log form & \lean{abs\_log\_likelihood\_sub\_le} \\
 Corollary~\ref{cor:uniform} & \lean{abs\_log\_likelihood\_sub\_le\_of\_geometric} \\
 Coupled chain: band, path bound & \lean{dist\_step\_le\_of\_le}, \lean{dist\_iterate\_le} \\
 \midrule
