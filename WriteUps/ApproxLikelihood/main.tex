@@ -6,7 +6,7 @@
 \usepackage{booktabs}
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
-\usepackage{natbib}
+\usepackage[round,semicolon]{natbib}
 \usepackage{setspace}
 \usepackage{enumitem}
 
@@ -44,7 +44,7 @@ of this comment were produced with the assistance of Claude (Anthropic), an AI m
 
 \begin{abstract}
 \noindent
-Proposition~2 of \citet{FRS2006} bounds the difference between the exact and the computed
+Proposition~2 of \cite*{FRS2006} bounds the difference between the exact and the computed
 likelihood of a dynamic model by a term linear in the sample size. \citet{AGH2009} showed by
 counterexample that the proposition is false, and argued that a corrected bound on likelihood
 levels would be uninformative about estimation; they did not locate the error in the proof or
@@ -84,10 +84,7 @@ fruitful endeavor''. Their constructive results are for the static model, and th
 $\Delta_j$ as given rather than deriving it from the policy-function error $\delta$ and the
 dynamics of the state.
 
-This comment locates the step of FRS's proof that fails and proves a corrected
-Corrected Proposition~2$'$ that keeps their intent. The correction is to bound the logarithm of the
-likelihood rather than its level. That is the scale on which likelihoods are used in estimation,
-and it turns FRS's bound on the absolute error into a bound on the relative error $|L_j/L - 1|$.
+This comment locates the step of FRS's proof that fails and proves a corrected Proposition~2$'$ that keeps their intent. The correction is to bound the logarithm of the likelihood rather than its level. That is the scale on which likelihoods are used in estimation, and it turns FRS's bound on the absolute error into a bound on the relative error $|L_j/L - 1|$.
 The bound keeps FRS's form: under a pathwise version of their contraction condition, the
 log-likelihood error is at most $(T\chi/\xi + K/(1-\alpha))\delta$, linear in $T$, and this rate
 cannot be improved. FRS's three conclusions then hold in modified form. First, an approximation
@@ -418,6 +415,10 @@ then, FRS's warning stands with $\sqrt{T}$ in place of $T$: approximation error 
 inference, classical or Bayesian, once $\sqrt{T}\delta$ is not small, and for comparisons of
 likelihood levels once $T\delta$ is not small.
 
+\bibliographystyle{ecta}
+\bibliography{refs}
+
+\newpage
 \appendix
 
 \section{The assumptions from primitives}\label{app:prim}
@@ -586,8 +587,5 @@ Proposition~\ref{prop:post} (v) & \lean{abs\_integral\_postDens\_sub\_le} \\
 \noindent Example~\ref{ex:compact} is verified only through its algebraic core
 (\lean{log\_prod\_div\_prod\_const}, and Proposition~\ref{prop:gap}); the construction of the
 density $f$ is not formalised.
-
-\bibliographystyle{plainnat}
-\bibliography{refs}
 
 \end{document}
