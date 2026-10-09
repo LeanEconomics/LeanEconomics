@@ -53,8 +53,9 @@ and show that the proposition holds, with the same form of bound, for the logari
 likelihood: $|\log L_j(y^T) - \log L(y^T)| \le (T\chi/\xi + K/(1-\alpha))\,\delta$ under a
 pathwise version of the paper's contraction condition. The dependence on $T$ is sharp. The
 average log likelihood is therefore within $O(\delta)$ of its exact value uniformly in the sample
-size, and the computed posterior is within $(e^{2D}-1)/2$ of the exact one in total variation,
-where $D$ is the bound.
+size, so the effect of a fixed approximation error on point estimates does not grow with $T$;
+relative to sampling uncertainty it matters once $\sqrt{T}\delta$ is not small. FRS's Bayesian
+corollaries hold with explicit, if conservative, constants.
 
 \medskip\noindent\textsc{Keywords:} Approximation error, likelihood, computed dynamic models,
 Markov chains, coupling.
@@ -62,21 +63,9 @@ Markov chains, coupling.
 
 \section{Introduction}
 
-Likelihood-based estimation of a dynamic model uses an approximated policy function, so the
-researcher evaluates the likelihood $L_j$ of the computed model rather than the likelihood $L$ of
-the exact one. \citet{FRS2006} (FRS) asked how the two are related. Their Proposition~1 shows that
-$L_j \to L$ for a fixed sample as the computed transition and measurement equations converge to
-the exact ones. Their Proposition~2 quantifies the speed: if the computed equations are within
-$\delta$ of the exact ones in the sup norm, then $|L_j(y^T) - L(y^T)| < (TB\chi + L/(1-\alpha))
-\delta$, with constants independent of the sample size $T$. FRS drew three conclusions from it,
-emphasised in their abstract and introduction: that ``second order approximation errors in the
-policy function \ldots\ have first order effects on the likelihood function''; that the error
-``gets compounded with the size of the sample'', so the accuracy of the solution must improve as
-$T$ grows if the computed likelihood is to stay close to the exact one; and hence that
-linearisation, which fixes $\delta$, ``is due to fail as the sample size grows''. They also used
-the proposition to motivate a likelihood-ratio diagnostic for solution accuracy.
+Likelihood-based estimation of a dynamic model uses an approximated policy function, so the researcher evaluates the likelihood $L_j$ of the computed model rather than the likelihood $L$ of the exact one. \citet{FRS2006} (henceforth, FRS) asked how the two are related, in particular how numerical error incurred in solving the dynamic model affects likelihood-based estimation of that model. Their Proposition~1 shows that $L_j \to L$ for a fixed sample as the computed transition and measurement equations converge to the exact ones. Their Proposition~2 quantifies the speed: if the computed equations are within $\delta$ of the exact ones in the sup norm, then $|L_j(y^T) - L(y^T)| < (TB\chi + L/(1-\alpha)) \delta$, with constants independent of the sample size $T$. FRS drew three conclusions from it, emphasised in their abstract and introduction: that ``second order approximation errors in the policy function \ldots\ have first order effects on the likelihood function''; that the error ``gets compounded with the size of the sample'', so the accuracy of the solution must improve as $T$ grows if the computed likelihood is to stay close to the exact one; and hence that linearisation, which fixes $\delta$, ``is due to fail as the sample size grows''. They also used the proposition to motivate a likelihood-ratio diagnostic for solution accuracy.
 
-\citet{AGH2009} (AGH), following an unpublished note by \citet{Geweke2007}, showed that
+\citet{AGH2009} (henceforth, AGH), following an unpublished note by \citet{Geweke2007}, showed that
 Proposition~2 is false. In the static Gaussian location model $y_t = \gamma + v_t$, approximated
 by $y_t = \gamma + \delta + v_t$, they computed a sharp bound on $|L_j - L|$ of order
 $(\sigma\sqrt{2\pi})^{-(T-1)}$. This grows exponentially in $T$ when $\sigma < 1/\sqrt{2\pi}$ and
@@ -94,25 +83,33 @@ fruitful endeavor''. Their constructive results are for the static model, and th
 $\Delta_j$ as given rather than deriving it from the policy-function error $\delta$ and the
 dynamics of the state.
 
-This comment fills those gaps. Section~\ref{sec:error} locates the error: step (14) of FRS's
-appendix bounds a difference of two $T$-fold products of densities by $TB\chi\delta$, but the
-telescoping identity places $T-1$ density factors beside each per-period error, so $B$ is really
-the $(T-1)$-th power of a bound on the density. We also give a counterexample that, unlike AGH's,
-satisfies FRS's compact-support assumption. Section~\ref{sec:main} shows that the proposition
-holds, with the same form of bound, for the log likelihood. Under FRS's lower bound on the
-densities and a pathwise strengthening of their contraction condition,
-\[
-  \bigl|\log L_j(y^T) - \log L(y^T)\bigr| \le \Bigl(\frac{T\chi}{\xi} +
-  \frac{K}{1-\alpha}\Bigr)\delta ,
-\]
-and the dependence on $T$ cannot be improved. FRS's intuition that per-period errors accumulate
-linearly with the sample is therefore correct for the log likelihood, which is the scale on which
-likelihoods are used. Section~\ref{sec:implications} draws the consequences: the average log
-likelihood is within $O(\delta)$ of its exact value uniformly in $T$, which is the dynamic
-analogue of the level part of AGH's $\Delta_j$ and agrees with their conclusion about estimation;
-and FRS's Bayesian corollaries hold with explicit constants. Appendix~\ref{app:prim} derives the
-assumptions of the corrected proposition from primitives in the case where the measurement shock
-alone is recovered from the data.
+This comment locates the step of FRS's proof that fails and proves a corrected
+Proposition~2$'$ that keeps their intent. The correction is to bound the logarithm of the
+likelihood rather than its level. That is the scale on which likelihoods are used in estimation,
+and it turns FRS's bound on the absolute error into a bound on the relative error $|L_j/L - 1|$.
+The bound keeps FRS's form: under a pathwise version of their contraction condition, the
+log-likelihood error is at most $(T\chi/\xi + K/(1-\alpha))\delta$, linear in $T$, and this rate
+cannot be improved. FRS's three conclusions then hold in modified form. First, an approximation
+error of order $\delta$ in the policy function moves the log likelihood by $O(T\delta)$, but the
+average log likelihood by only $O(\delta)$, uniformly in $T$; this is AGH's ``second order errors
+have second order effects'', now derived in FRS's dynamic setting rather than assumed. Second, the
+effect on point estimates does not compound with the sample size. Sampling uncertainty, however,
+shrinks like $1/\sqrt{T}$, so approximation error matters for inference, classical or Bayesian,
+once $\sqrt{T}\delta$ is not small. Third, linearisation, which fixes $\delta$, does not fail as
+the sample grows in the sense FRS claimed, but its bias does grow relative to standard errors.
+Their likelihood-ratio diagnostic survives: the log likelihood ratio between two approximations
+differs by $O(T\delta)$, against sampling noise of order $\sqrt{T}$, so the diagnostic detects
+approximation error in roughly the regime where it matters.
+
+Section~\ref{sec:error} locates the error: step (14) of FRS's appendix bounds a difference of two
+$T$-fold products of densities by $TB\chi\delta$, but the telescoping identity places $T-1$
+density factors beside each per-period error, so $B$ is really the $(T-1)$-th power of a bound on
+the density. It also gives a counterexample that, unlike AGH's, satisfies FRS's compact-support
+assumption. Section~\ref{sec:main} states and proves Proposition~2$'$. Section~\ref{sec:implications}
+draws the consequences for estimation and for Bayesian inference, where FRS's corollaries hold
+with explicit constants. Appendix~\ref{app:prim} derives the assumptions of the corrected
+proposition from primitives in the case where the measurement shock alone is recovered from the
+data.
 
 \section{The setting and the error in the proof}\label{sec:error}
 
@@ -400,11 +397,19 @@ constants, and it holds for every $\delta$.
 sample size grows'' because the exact and computed likelihoods diverge does not survive as stated:
 both levels go to zero or infinity like $M^T$ anyway, and the log-likelihood gap grows no faster
 than the log likelihood itself. For classical estimation based on the average log likelihood, a
-fixed $\delta$ produces an error that does not grow with $T$. For Bayesian inference, however, the
-bounds of Proposition~\ref{prop:post} degrade like $e^{2D}$ with $D \propto T\delta$, and in
-Example~\ref{ex:compact} the likelihood ratio between the exact and the computed model is
-$(1+\delta)^T$. In that corrected form FRS's warning stands: for posterior inference and for
-likelihood-ratio comparisons, $T\delta$ must be small.
+fixed $\delta$ produces a bias in point estimates that does not grow with $T$, and the same is
+true of posterior means in AGH's example. What grows is the bias relative to sampling
+uncertainty, which shrinks like $1/\sqrt{T}$: AGH's Theorem~4 requires $\sqrt{T}\Delta_j \to 0$
+for the approximation to leave the asymptotic distribution unaffected, and in regular models the
+Bernstein--von Mises theorem gives the same condition for posteriors. The bounds of
+Proposition~\ref{prop:post}, which degrade like $e^{2D}$ with $D \propto T\delta$, are
+conservative by comparison: in AGH's Gaussian example the total variation distance between the
+exact and computed posteriors is of order $\sqrt{T}\delta/\sigma$, not $T\delta$. Likelihood
+ratios themselves do move by a factor of order $e^{T\delta}$; in Example~\ref{ex:compact} the
+ratio between the exact and the computed likelihood is exactly $(1+\delta)^T$. In corrected form,
+then, FRS's warning stands with $\sqrt{T}$ in place of $T$: approximation error matters for
+inference, classical or Bayesian, once $\sqrt{T}\delta$ is not small, and for comparisons of
+likelihood levels once $T\delta$ is not small.
 
 \appendix
 
