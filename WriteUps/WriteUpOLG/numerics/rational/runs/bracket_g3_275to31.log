@@ -1,0 +1,143 @@
+gamma 3, frozen-transport cells: 35 of width 0.00010 on [0.0275,0.0310], grid 3968, lambdas [2], mu 1; a cell that fails is split in two
+0 cells already done, 35 to run
+cell 33 [0.03080,0.03090]: point enclosure 1061s, point B_d = 4.263; 2683s
+    assumption zone: stage 0 23.7, stage 30 114.5, stage 59 2.0
+cell 30 [0.03050,0.03060]: point enclosure 1066s, point B_d = 4.234; 2702s
+    assumption zone: stage 0 23.7, stage 30 114.2, stage 59 2.0
+cell 32 [0.03070,0.03080]: point enclosure 1058s, point B_d = 4.254; 2765s
+    assumption zone: stage 0 23.7, stage 30 114.4, stage 59 2.0
+cell 31 [0.03060,0.03070]: point enclosure 1061s, point B_d = 4.243; 2768s
+    assumption zone: stage 0 23.7, stage 30 114.3, stage 59 2.0
+cell 29 [0.03040,0.03050]: point enclosure 1048s, point B_d = 4.224; 2778s
+    assumption zone: stage 0 23.7, stage 30 114.2, stage 59 2.0
+cell 34 [0.03090,0.03100]: point enclosure 1059s, point B_d = 4.273; 2779s
+    assumption zone: stage 0 23.8, stage 30 114.5, stage 59 2.0
+cell 28 [0.03030,0.03040]: point enclosure 1056s, point B_d = 4.214; 2786s
+    assumption zone: stage 0 23.6, stage 30 114.1, stage 59 2.0
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1477s
+  lambda 2: verified (max U/M 0.740); B_d = 5.211 vs |D'| = 45.74 -> CERTIFIED; ebar 1/2/5/10/30: 0.4272 0.4345 0.4288 0.3724 0.2280; 4176s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1507s
+  lambda 2: verified (max U/M 0.740); B_d = 5.173 vs |D'| = 45.98 -> CERTIFIED; ebar 1/2/5/10/30: 0.4260 0.4326 0.4273 0.3700 0.2264; 4223s
+    round 1: max U/M = 0.741, violations 0, assumptions dropped 0; 1522s
+  lambda 2: verified (max U/M 0.741); B_d = 5.223 vs |D'| = 45.65 -> CERTIFIED; ebar 1/2/5/10/30: 0.4281 0.4351 0.4302 0.3729 0.2281; 4320s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1564s
+  lambda 2: verified (max U/M 0.740); B_d = 5.197 vs |D'| = 45.82 -> CERTIFIED; ebar 1/2/5/10/30: 0.4266 0.4340 0.4275 0.3713 0.2276; 4342s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1584s
+  lambda 2: verified (max U/M 0.740); B_d = 5.184 vs |D'| = 45.90 -> CERTIFIED; ebar 1/2/5/10/30: 0.4262 0.4331 0.4271 0.3705 0.2267; 4367s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1663s
+  lambda 2: verified (max U/M 0.740); B_d = 5.149 vs |D'| = 46.15 -> CERTIFIED; ebar 1/2/5/10/30: 0.4241 0.4317 0.4254 0.3687 0.2258; 4467s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1715s
+  lambda 2: verified (max U/M 0.740); B_d = 5.160 vs |D'| = 46.07 -> CERTIFIED; ebar 1/2/5/10/30: 0.4243 0.4320 0.4258 0.3693 0.2260; 4505s
+cell 26 [0.03010,0.03020]: point enclosure 815s, point B_d = 4.195; 2427s
+    assumption zone: stage 0 23.6, stage 30 113.9, stage 59 2.0
+cell 27 [0.03020,0.03030]: point enclosure 898s, point B_d = 4.204; 2586s
+    assumption zone: stage 0 23.6, stage 30 114.0, stage 59 2.0
+cell 25 [0.03000,0.03010]: point enclosure 783s, point B_d = 4.185; 2487s
+    assumption zone: stage 0 23.6, stage 30 113.9, stage 59 2.0
+cell 23 [0.02980,0.02990]: point enclosure 869s, point B_d = 4.167; 2555s
+    assumption zone: stage 0 23.5, stage 30 113.7, stage 59 2.0
+cell 24 [0.02990,0.03000]: point enclosure 853s, point B_d = 4.176; 2581s
+    assumption zone: stage 0 23.6, stage 30 113.8, stage 59 2.0
+cell 22 [0.02970,0.02980]: point enclosure 810s, point B_d = 4.157; 2552s
+    assumption zone: stage 0 23.5, stage 30 113.7, stage 59 2.0
+cell 21 [0.02960,0.02970]: point enclosure 782s, point B_d = 4.148; 2525s
+    assumption zone: stage 0 23.5, stage 30 113.6, stage 59 2.0
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1408s
+  lambda 2: verified (max U/M 0.740); B_d = 5.137 vs |D'| = 46.24 -> CERTIFIED; ebar 1/2/5/10/30: 0.4240 0.4310 0.4260 0.3683 0.2255; 4010s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1581s
+  lambda 2: verified (max U/M 0.740); B_d = 5.125 vs |D'| = 46.32 -> CERTIFIED; ebar 1/2/5/10/30: 0.4236 0.4305 0.4246 0.3677 0.2253; 4027s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1610s
+  lambda 2: verified (max U/M 0.739); B_d = 5.112 vs |D'| = 46.40 -> CERTIFIED; ebar 1/2/5/10/30: 0.4232 0.4298 0.4230 0.3675 0.2252; 4116s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1473s
+  lambda 2: verified (max U/M 0.739); B_d = 5.077 vs |D'| = 46.66 -> CERTIFIED; ebar 1/2/5/10/30: 0.4220 0.4281 0.4224 0.3656 0.2240; 4043s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1631s
+  lambda 2: verified (max U/M 0.739); B_d = 5.089 vs |D'| = 46.57 -> CERTIFIED; ebar 1/2/5/10/30: 0.4225 0.4288 0.4226 0.3662 0.2243; 4199s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1662s
+  lambda 2: verified (max U/M 0.739); B_d = 5.101 vs |D'| = 46.49 -> CERTIFIED; ebar 1/2/5/10/30: 0.4228 0.4294 0.4232 0.3666 0.2250; 4261s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1616s
+  lambda 2: verified (max U/M 0.739); B_d = 5.066 vs |D'| = 46.74 -> CERTIFIED; ebar 1/2/5/10/30: 0.4207 0.4278 0.4221 0.3653 0.2238; 4160s
+cell 20 [0.02950,0.02960]: point enclosure 715s, point B_d = 4.138; 2544s
+    assumption zone: stage 0 23.5, stage 30 113.5, stage 59 2.0
+cell 17 [0.02920,0.02930]: point enclosure 725s, point B_d = 4.111; 2315s
+    assumption zone: stage 0 23.4, stage 30 113.3, stage 59 2.0
+cell 19 [0.02940,0.02950]: point enclosure 942s, point B_d = 4.129; 2786s
+    assumption zone: stage 0 23.4, stage 30 113.4, stage 59 2.0
+cell 16 [0.02910,0.02920]: point enclosure 732s, point B_d = 4.101; 2475s
+    assumption zone: stage 0 23.4, stage 30 113.2, stage 59 2.0
+cell 15 [0.02900,0.02910]: point enclosure 870s, point B_d = 4.091; 2453s
+    assumption zone: stage 0 23.4, stage 30 113.1, stage 59 2.0
+cell 18 [0.02930,0.02940]: point enclosure 936s, point B_d = 4.120; 2628s
+    assumption zone: stage 0 23.4, stage 30 113.4, stage 59 2.0
+cell 14 [0.02890,0.02900]: point enclosure 775s, point B_d = 4.081; 2499s
+    assumption zone: stage 0 23.3, stage 30 113.1, stage 59 2.0
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1454s
+  lambda 2: verified (max U/M 0.739); B_d = 5.019 vs |D'| = 47.08 -> CERTIFIED; ebar 1/2/5/10/30: 0.4185 0.4248 0.4191 0.3626 0.2227; 3783s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1689s
+  lambda 2: verified (max U/M 0.740); B_d = 5.055 vs |D'| = 46.83 -> CERTIFIED; ebar 1/2/5/10/30: 0.4200 0.4271 0.4211 0.3646 0.2237; 4248s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1495s
+  lambda 2: verified (max U/M 0.739); B_d = 5.044 vs |D'| = 46.91 -> CERTIFIED; ebar 1/2/5/10/30: 0.4199 0.4264 0.4202 0.3634 0.2233; 4297s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1511s
+  lambda 2: verified (max U/M 0.739); B_d = 4.995 vs |D'| = 47.26 -> CERTIFIED; ebar 1/2/5/10/30: 0.4168 0.4244 0.4179 0.3613 0.2217; 3983s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1556s
+  lambda 2: verified (max U/M 0.739); B_d = 5.006 vs |D'| = 47.17 -> CERTIFIED; ebar 1/2/5/10/30: 0.4174 0.4246 0.4184 0.3623 0.2219; 4046s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1611s
+  lambda 2: verified (max U/M 0.740); B_d = 5.031 vs |D'| = 47.00 -> CERTIFIED; ebar 1/2/5/10/30: 0.4191 0.4257 0.4199 0.3630 0.2229; 4257s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1558s
+  lambda 2: verified (max U/M 0.740); B_d = 4.986 vs |D'| = 47.34 -> CERTIFIED; ebar 1/2/5/10/30: 0.4163 0.4243 0.4174 0.3608 0.2215; 4075s
+cell 13 [0.02880,0.02890]: point enclosure 759s, point B_d = 4.072; 2385s
+    assumption zone: stage 0 23.3, stage 30 113.0, stage 59 2.0
+cell 10 [0.02850,0.02860]: point enclosure 796s, point B_d = 4.045; 2474s
+    assumption zone: stage 0 23.3, stage 30 112.8, stage 59 2.0
+cell 12 [0.02870,0.02880]: point enclosure 905s, point B_d = 4.063; 2680s
+    assumption zone: stage 0 23.3, stage 30 112.9, stage 59 2.0
+cell 9 [0.02840,0.02850]: point enclosure 859s, point B_d = 4.035; 2523s
+    assumption zone: stage 0 23.2, stage 30 112.7, stage 59 2.0
+cell 11 [0.02860,0.02870]: point enclosure 931s, point B_d = 4.054; 2670s
+    assumption zone: stage 0 23.3, stage 30 112.8, stage 59 2.0
+cell 7 [0.02820,0.02830]: point enclosure 889s, point B_d = 4.016; 2565s
+    assumption zone: stage 0 23.2, stage 30 112.5, stage 59 2.0
+cell 8 [0.02830,0.02840]: point enclosure 899s, point B_d = 4.026; 2626s
+    assumption zone: stage 0 23.2, stage 30 112.6, stage 59 2.0
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1506s
+  lambda 2: verified (max U/M 0.739); B_d = 4.973 vs |D'| = 47.43 -> CERTIFIED; ebar 1/2/5/10/30: 0.4159 0.4241 0.4163 0.3603 0.2210; 3905s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1432s
+  lambda 2: verified (max U/M 0.740); B_d = 4.927 vs |D'| = 47.78 -> CERTIFIED; ebar 1/2/5/10/30: 0.4150 0.4215 0.4137 0.3579 0.2197; 3971s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1534s
+  lambda 2: verified (max U/M 0.740); B_d = 4.962 vs |D'| = 47.52 -> CERTIFIED; ebar 1/2/5/10/30: 0.4157 0.4236 0.4156 0.3597 0.2208; 4230s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1521s
+  lambda 2: verified (max U/M 0.739); B_d = 4.951 vs |D'| = 47.61 -> CERTIFIED; ebar 1/2/5/10/30: 0.4156 0.4232 0.4149 0.3591 0.2205; 4207s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1437s
+  lambda 2: verified (max U/M 0.739); B_d = 4.900 vs |D'| = 47.96 -> CERTIFIED; ebar 1/2/5/10/30: 0.4121 0.4202 0.4123 0.3568 0.2190; 4017s
+    round 1: max U/M = 0.739, violations 0, assumptions dropped 0; 1689s
+  lambda 2: verified (max U/M 0.739); B_d = 4.940 vs |D'| = 47.69 -> CERTIFIED; ebar 1/2/5/10/30: 0.4155 0.4228 0.4147 0.3585 0.2199; 4175s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1623s
+  lambda 2: verified (max U/M 0.740); B_d = 4.914 vs |D'| = 47.87 -> CERTIFIED; ebar 1/2/5/10/30: 0.4134 0.4209 0.4129 0.3571 0.2195; 4265s
+cell 6 [0.02810,0.02820]: point enclosure 784s, point B_d = 4.005; 2482s
+    assumption zone: stage 0 23.2, stage 30 112.5, stage 59 2.0
+cell 4 [0.02790,0.02800]: point enclosure 751s, point B_d = 3.986; 2443s
+    assumption zone: stage 0 23.1, stage 30 112.3, stage 59 2.0
+cell 5 [0.02800,0.02810]: point enclosure 819s, point B_d = 3.996; 2590s
+    assumption zone: stage 0 23.2, stage 30 112.4, stage 59 2.0
+cell 1 [0.02760,0.02770]: point enclosure 893s, point B_d = 3.958; 2465s
+    assumption zone: stage 0 23.1, stage 30 112.1, stage 59 2.0
+cell 3 [0.02780,0.02790]: point enclosure 843s, point B_d = 3.976; 2537s
+    assumption zone: stage 0 23.1, stage 30 112.3, stage 59 2.0
+cell 2 [0.02770,0.02780]: point enclosure 839s, point B_d = 3.967; 2652s
+    assumption zone: stage 0 23.1, stage 30 112.2, stage 59 2.0
+cell 0 [0.02750,0.02760]: point enclosure 877s, point B_d = 3.948; 2532s
+    assumption zone: stage 0 23.1, stage 30 112.0, stage 59 2.0
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1612s
+  lambda 2: verified (max U/M 0.740); B_d = 4.887 vs |D'| = 48.05 -> CERTIFIED; ebar 1/2/5/10/30: 0.4111 0.4195 0.4114 0.3557 0.2186; 4108s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1384s
+  lambda 2: verified (max U/M 0.740); B_d = 4.861 vs |D'| = 48.23 -> CERTIFIED; ebar 1/2/5/10/30: 0.4092 0.4178 0.4090 0.3543 0.2183; 3844s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1469s
+  lambda 2: verified (max U/M 0.740); B_d = 4.873 vs |D'| = 48.14 -> CERTIFIED; ebar 1/2/5/10/30: 0.4100 0.4185 0.4098 0.3550 0.2185; 4070s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1359s
+  lambda 2: verified (max U/M 0.740); B_d = 4.848 vs |D'| = 48.31 -> CERTIFIED; ebar 1/2/5/10/30: 0.4089 0.4169 0.4079 0.3537 0.2182; 3913s
+    round 1: max U/M = 0.740, violations 0, assumptions dropped 0; 1249s
+  lambda 2: verified (max U/M 0.740); B_d = 4.836 vs |D'| = 48.40 -> CERTIFIED; ebar 1/2/5/10/30: 0.4085 0.4160 0.4070 0.3530 0.2179; 3914s
+    round 1: max U/M = 0.741, violations 0, assumptions dropped 0; 1491s
+  lambda 2: verified (max U/M 0.741); B_d = 4.823 vs |D'| = 48.49 -> CERTIFIED; ebar 1/2/5/10/30: 0.4078 0.4153 0.4062 0.3526 0.2177; 3970s
+    round 1: max U/M = 0.741, violations 0, assumptions dropped 0; 1307s
+  lambda 2: verified (max U/M 0.741); B_d = 4.811 vs |D'| = 48.58 -> CERTIFIED; ebar 1/2/5/10/30: 0.4072 0.4144 0.4058 0.3521 0.2169; 3852s
+ALL CELLS CERTIFIED: E' > 0 on the bracket; 20821s
