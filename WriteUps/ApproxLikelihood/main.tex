@@ -114,8 +114,10 @@ approximation error in the conditional densities does not grow along the sample,
 forgets the initial state, and the exact and computed stationary distributions are close. As FRS
 do in their Lemmas~5 and~6, Appendix~\ref{app:prim} derives these assumptions from conditions on
 the model, now with constants uniform in the sample size; this requires restricting FRS's class to
-models in which every observable is measured with error and the state transition contracts for
-every realisation of the shocks. A supplementary appendix provides a formalisation of all these results in Lean, verifying
+models in which every observable is measured with error and the state transition contracts, in a
+metric of our choosing, for every realisation of the shocks. This holds globally in the
+Brock--Mirman model FRS use in their own application and, for small enough shocks, in any
+determinate DSGE model. A supplementary appendix provides a formalisation of all these results in Lean, verifying
 their correctness.
 
 \section{The setting and the error in the proof}\label{sec:error}
@@ -362,7 +364,9 @@ first two from conditions on the model in their Lemmas~5 and~6, but without cons
 $T$. Appendix~\ref{app:prim} carries out the corrected derivation: all three assumptions hold, with
 $\varepsilon = \eta + c\delta/(1-\alpha)$, $K_T \le c\alpha/(\xi(1-\alpha))$ and
 $\rho = \delta/(1-\alpha)$, in models in which every observable is measured with error and the
-state transition contracts for every realisation of the shocks. Whether they can be derived in FRS's
+state transition contracts, in a metric of our choosing, for every realisation of the shocks. This
+holds globally in the Brock--Mirman model of FRS's application and, for small enough shocks, in
+any determinate DSGE model. Whether they can be derived in FRS's
 full class, with only contraction in mean, remains open.
 
 \section{Implications}\label{sec:implications}
@@ -655,6 +659,101 @@ probability measure.
 per-state densities $f_t$, and the bound $\eta = O(\delta)$ on their error at a fixed state, which
 is FRS's Lemma~6 argument without the time dimension.
 
+\subsection{The choice of metric, and local contraction}
+
+\begin{remark}[The metric is ours to choose]\label{rem:metric}
+Nothing in this appendix uses the Euclidean distance. The arguments need only a metric $d$ on the
+state space $S$ such that $(S,d)$ is compact, $\varphi$ is an $\alpha$-contraction in $d$ for every
+shock, $d(\varphi_j(s,w), \varphi(s,w)) \le \delta$, and the densities $f_t$ are $c$-Lipschitz in
+$d$. Two devices make the contraction condition much weaker than it first appears. The first is a
+change of coordinates, such as logarithms for multiplicative laws of motion. The second is a
+weighted metric across components of the state. If $s = (x, \zeta)$, where $\zeta$ is an
+exogenous process with $|\zeta' - \tilde\zeta'| \le \rho_z\,|\zeta - \tilde\zeta|$ for every
+shock, $\rho_z < 1$, and the endogenous component satisfies
+$|x' - \tilde x'| \le a\,|x - \tilde x| + b\,|\zeta - \tilde\zeta|$ with $a < 1$, then in the
+metric $d = |x - \tilde x| + \lambda|\zeta - \tilde\zeta|$ with $\lambda > b/(1-\rho_z)$ the
+transition is a contraction for every shock, with factor $\max(a, \rho_z + b/\lambda) < 1$. The
+endogenous state need only contract in its own argument; the effect of the exogenous state on it
+is absorbed by the weight. The price is in the constants: as the factor approaches one, the
+$T$-independent term $c\,\alpha\,\delta/(\xi(1-\alpha)^2)$ of Theorem~\ref{thm:prim} grows.
+\end{remark}
+
+The next result shows that contraction for every shock holds, in a suitable norm, near any stable
+steady state when the shocks are small. Write $\|\cdot\|$ for a norm on $\R^n$ and $|\cdot|$ for a
+norm on the shock space $\R^m$, and $D_s\varphi$ for the Jacobian of $\varphi$ with respect to the
+state.
+
+\begin{proposition}[Local contraction]\label{prop:local}
+Let $\varphi : \R^n \times \R^m \to \R^n$ be continuously differentiable, with a deterministic
+steady state $\bar s = \varphi(\bar s, 0)$, and let $\|\cdot\|$ be a norm on $\R^n$ in which the
+operator norm of $A = D_s\varphi(\bar s, 0)$ satisfies $\|A\| < \alpha$ for some $\alpha < 1$.
+Then there are $r > 0$ and $\eta > 0$ such that, writing $B = \{s : \|s - \bar s\| \le r\}$, for
+every shock with $|w| \le \eta$:
+\begin{enumerate}[label=(\roman*),leftmargin=2em]
+\item $\|\varphi(s,w) - \varphi(s',w)\| \le \alpha\,\|s - s'\|$ for all $s, s' \in B$;
+\item for every $\delta \in [0, (1-\alpha)r/2]$ and every $\varphi_j$ with
+$\|\varphi_j(s,w) - \varphi(s,w)\| \le \delta$, $\varphi_j(s,w) \in B$ for all $s \in B$.
+\end{enumerate}
+Hence, if the shocks are supported in $\{|w| \le \eta\}$, the results of this appendix apply with
+$S = B$ and $d(s,s') = \|s - s'\|$.
+\end{proposition}
+
+\begin{proof}
+The map $(s,w) \mapsto D_s\varphi(s,w)$ is continuous, so there is $\varepsilon > 0$ such that
+$\|D_s\varphi(s,w)\| \le \alpha$ and $\|D_w\varphi(s,w)\| \le C$, for some $C$, whenever
+$\|s - \bar s\| < \varepsilon$ and $|w| < \varepsilon$. Take $r = \varepsilon/2$ and fix $w$ with
+$|w| \le \eta \le r$. The ball $B$ is convex, so the mean value inequality gives (i). Applied in
+$w$ along the segment from $0$ to $w$, it also gives $\|\varphi(\bar s, w) - \bar s\| \le C|w|$.
+For $s \in B$,
+\[
+  \|\varphi_j(s,w) - \bar s\| \le \|\varphi_j(s,w) - \varphi(s,w)\| + \|\varphi(s,w) -
+  \varphi(\bar s, w)\| + \|\varphi(\bar s,w) - \bar s\| \le \delta + \alpha r + C|w| ,
+\]
+which is at most $r$ when $\delta \le (1-\alpha)r/2$ and $|w| \le \eta = \min(r, (1-\alpha)r/(2C))$.
+This is (ii); taking $\varphi_j = \varphi$ shows that $B$ is invariant under $\varphi$ too.
+\end{proof}
+
+\noindent A norm with $\|A\| < 1$ exists whenever the spectral radius of $A$ is below one
+\citep[Lemma 5.6.10]{HornJohnson2013}, and then any $\alpha$ between $\|A\|$ and one will do.
+
+\subsection{Benchmark models}
+
+\paragraph{Brock--Mirman (global).} With log utility, Cobb--Douglas production and full
+depreciation, the model FRS use in their own application, the policy function is known exactly:
+$k' = \theta\beta z k^\theta$, with $\theta < 1$ the capital share. Let
+$\log z' = \rho_z\log z + \epsilon$ with $0 \le \rho_z < 1$ and $|\epsilon| \le \bar\epsilon$. In the
+coordinates $x = \log k$ and $\zeta = \log z$,
+\[
+  x' = \log(\theta\beta) + \zeta + \theta x, \qquad \zeta' = \rho_z\zeta + \epsilon .
+\]
+The rectangle $|\zeta| \le \bar\zeta = \bar\epsilon/(1-\rho_z)$,
+$x \in [(\log(\theta\beta) - \bar\zeta)/(1-\theta), (\log(\theta\beta) + \bar\zeta)/(1-\theta)]$ is
+compact and invariant, and in the metric of Remark~\ref{rem:metric}, with $a = \theta$, $b = 1$ and
+any $\lambda > 1/(1-\rho_z)$, the transition contracts for every shock with factor
+$\max(\theta, \rho_z + 1/\lambda) < 1$. This holds for any size of shock, with no local argument.
+
+\paragraph{Real business cycle model (local).} With partial depreciation and CRRA utility the
+policy function has no closed form. At the deterministic steady state the Jacobian of the state
+transition $(k, \zeta) \mapsto (k', \zeta')$ is triangular, with eigenvalues $\rho_z$ and the stable
+root $\nu_k \in (0,1)$ of the saddle path, so its spectral radius is below one. The policy
+depends on the scale $\sigma$ of the shocks; applying Proposition~\ref{prop:local} to
+$(s, (w, \sigma)) \mapsto \varphi_\sigma(s, w)$, which requires the policy to be continuously
+differentiable in $\sigma$ as well, as the perturbation approach presumes, gives contraction for
+every shock on a ball around the steady state once the shocks are small enough.
+
+\paragraph{New Keynesian models (global or local).} In the basic three-equation model the only
+states are the exogenous shocks, $s' = Rs + \epsilon$ with $R$ diagonal and entries $|\rho_i| < 1$
+(or the nonlinear analogue in logarithms), which contract for every shock in the max-norm with
+factor $\max_i|\rho_i|$, globally. Models with endogenous states, such as interest-rate smoothing,
+price dispersion, habits or capital, fall under Proposition~\ref{prop:local}: a determinate
+equilibrium satisfies the conditions of \citet{BlanchardKahn1980}, under which the state transition
+of the linearised solution has all its eigenvalues inside the unit circle. With the same proviso
+on the dependence of the policy on the shock scale, these models contract for every shock near
+the steady state when the shocks are small. The same argument covers the real business cycle
+model above, and determinate DSGE models generally.
+
+\subsection{Beyond this class}
+
 When $W_{2t}$ is also recovered from the data, Assumptions~\ref{a:err} and~\ref{a:lip} amount to a
 stability condition on the inverted filter. FRS's Condition~1 does not imply it, and we know of no
 primitive condition in their setting that does. The closest results, on forgetting of the initial
@@ -712,6 +811,13 @@ Theorem~\ref{thm:prim}, Assumption~\ref{a:err} & \lean{abs\_densPath\_sub\_le} \
 Theorem~\ref{thm:prim}, Assumption~\ref{a:lip} & \lean{densPath\_le\_exp\_mul} \\
 Theorem~\ref{thm:prim} & \lean{abs\_log\_likelihood\_sub\_le\_of\_primitives} \\
 \midrule
+\multicolumn{2}{@{}l}{\emph{\lean{Econometrics/LocalContraction}}} \\
+Remark~\ref{rem:metric} (weighted metric) & \lean{weighted\_contraction}, \\
+ & \lean{weighted\_factor\_lt\_one} \\
+Proposition~\ref{prop:local} & \lean{local\_contraction} \\
+Brock--Mirman: contraction & \lean{brockMirman\_contraction} \\
+Brock--Mirman: invariant rectangle & \lean{brockMirman\_mapsTo} \\
+\midrule
 \multicolumn{2}{@{}l}{\emph{\lean{Econometrics/ApproxPosterior}}} \\
 Proposition~\ref{prop:post} (i)--(iii) & \lean{evidence\_le\_exp\_mul}, \lean{postDens\_le\_exp\_mul} \\
 Proposition~\ref{prop:post} (iv) & \lean{integral\_abs\_postDens\_sub\_le} \\
@@ -720,7 +826,13 @@ Proposition~\ref{prop:post} (v) & \lean{abs\_integral\_postDens\_sub\_le} \\
 \end{tabular}
 \end{center}
 
-\noindent Example~\ref{ex:compact} is verified only through its algebraic core
+\noindent Not formalised in Appendix~\ref{app:prim}: the existence of a norm with $\|A\| < 1$
+when the spectral radius of $A$ is below one, which is cited; the spectral facts used for the real
+business cycle and New Keynesian models (the stable root of the saddle path, the
+Blanchard--Kahn conditions, and smooth dependence of the policy on the shock scale); and the
+step that instantiates Theorem~\ref{thm:prim} on the Brock--Mirman rectangle with the weighted
+metric, of which the contraction and invariance are verified but the metric-space construction is
+not. Example~\ref{ex:compact} is verified only through its algebraic core
 (\lean{log\_prod\_div\_prod\_const}, and Proposition~\ref{prop:gap}); the construction of the
 density $f$ is not formalised.
 
