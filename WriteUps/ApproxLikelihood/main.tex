@@ -31,12 +31,15 @@
 \tolerance=600 \emergencystretch=1.5em
 
 \title{Comment on ``Convergence Properties of the Likelihood of\\ Computed Dynamic Models'':
-A Corrected Proposition~2}
-\author{Robert Kirkby\thanks{Victoria University of Wellington. Every result in this comment
-has been verified in the Lean~4 proof assistant with the Mathlib library; Appendix~\ref{app:lean}
-lists the correspondence, and the code is at
-\url{https://github.com/LeanEconomics/LeanEconomics}. The formal development and a first draft
-of this comment were produced with the assistance of Claude (Anthropic), an AI model.}}
+A Corrected Proposition~2\thanks{Every result in this comment has been verified in the Lean~4
+proof assistant with the Mathlib library; Appendix~\ref{app:lean} lists the correspondence, and the
+code is at \url{https://github.com/LeanEconomics/LeanEconomics}. The formal development and a
+first draft of this comment were produced with the assistance of Claude (Anthropic), an AI
+model.}}
+\author{Jes\'us Fern\'andez-Villaverde\thanks{University of Pennsylvania.}
+\and Robert Kirkby\thanks{Victoria University of Wellington.}
+\and Juan F. Rubio-Ram\'irez\thanks{Emory University.}
+\and Manuel S. Santos\thanks{University of Miami.}}
 \date{October 2026\\[0.5em]\small Draft}
 
 \begin{document}
@@ -45,14 +48,14 @@ of this comment were produced with the assistance of Claude (Anthropic), an AI m
 \begin{abstract}
 \noindent
 Proposition~2 of \cite*{FRS2006} bounds the difference between the exact and the computed
-likelihood of a dynamic model by a term linear in the sample size. \citet{AGH2009} showed by
-counterexample that the proposition is false, and argued that a corrected bound on likelihood
-levels would be uninformative about estimation; they did not locate the error in the proof or
+likelihood of a dynamic model by a term linear in the sample size. \cite*{AGH2009} showed by
+counterexample that the proposition is false; they did not locate the error in the proof or
 state a corrected result for the dynamic setting. We locate the error, a single step in which a
 difference of two $T$-fold products of densities is bounded as if the other factors were absent,
 and show that the proposition holds, with the same form of bound, for the logarithm of the
 likelihood: $|\log L_j(y^T) - \log L(y^T)| \le (T\chi/\xi + K/(1-\alpha))\,\delta$ under a
-pathwise version of the paper's contraction condition. The dependence on $T$ is sharp. The
+pathwise version of the paper's contraction condition. Linearity in the sample size $T$ holds,
+but now in the log, rather than the level, of the likelihood. The
 average log likelihood is therefore within $O(\delta)$ of its exact value uniformly in the sample
 size, so the effect of a fixed approximation error on point estimates does not grow with $T$;
 relative to sampling uncertainty it matters once $\sqrt{T}\delta$ is not small. FRS's Bayesian
@@ -64,7 +67,7 @@ Markov chains, coupling.
 
 \section{Introduction}
 
-Likelihood-based estimation of a dynamic model uses an approximated policy function, so the researcher evaluates the likelihood $L_j$ of the computed model rather than the likelihood $L$ of the exact one. \citet{FRS2006} (henceforth, FRS) asked how the two are related, in particular how numerical error incurred in solving the dynamic model affects likelihood-based estimation of that model. Their Proposition~1 shows that $L_j \to L$ for a fixed sample as the computed transition and measurement equations converge to the exact ones. Their Proposition~2 quantifies the speed: if the computed equations are within $\delta$ of the exact ones in the sup norm, then $|L_j(y^T) - L(y^T)| < (TB\chi + L_F/(1-\alpha)) \delta$, with constants independent of the sample size $T$.\footnote{Here $L_F$ is a Lipschitz constant of an integrated conditional likelihood (Section~\ref{sec:error}). FRS denote it $L$, the same symbol as the likelihood; we write $L_F$ throughout to avoid the clash.} FRS drew three conclusions from it, emphasised in their abstract and introduction: that ``second order approximation errors in the policy function \ldots\ have first order effects on the likelihood function''; that the error ``gets compounded with the size of the sample'', so the accuracy of the solution must improve as $T$ grows if the computed likelihood is to stay close to the exact one; and hence that linearisation, which fixes $\delta$, ``is due to fail as the sample size grows''. They also used the proposition to motivate a likelihood-ratio diagnostic for solution accuracy.
+Likelihood-based estimation of a structural dynamic model uses an approximated policy function, so the researcher evaluates the likelihood $L_j$ of the computed model rather than the likelihood $L$ of the exact one. \citet{FRS2006} (henceforth, FRS) asked how the two are related, in particular how numerical error incurred in solving the structural dynamic model affects likelihood-based estimation of that model. Their Proposition~1 shows that $L_j \to L$ for a fixed sample as the computed transition and measurement equations converge to the exact ones. Their Proposition~2 quantifies the speed: if the computed equations are within $\delta$ of the exact ones in the sup norm, then $|L_j(y^T) - L(y^T)| < (TB\chi + L_F/(1-\alpha)) \delta$, with constants independent of the sample size $T$.\footnote{Here $L_F$ is a Lipschitz constant of an integrated conditional likelihood (Section~\ref{sec:error}). FRS denote it $L$, the same symbol as the likelihood; we write $L_F$ throughout to avoid the clash. The rest of our notation closely follows theirs.} FRS drew three conclusions from it, emphasised in their abstract and introduction: that ``second order approximation errors in the policy function \ldots\ have first order effects on the likelihood function''; that the error ``gets compounded with the size of the sample'', so the accuracy of the solution must improve as $T$ grows if the computed likelihood is to stay close to the exact one; and hence that linearisation, which fixes $\delta$, ``is due to fail as the sample size grows''. They also used the proposition to motivate a likelihood-ratio diagnostic for solution accuracy.
 
 \citet{AGH2009} (henceforth, AGH), following an unpublished note by \citet{Geweke2007}, showed that
 Proposition~2 is false. In the static Gaussian location model $y_t = \gamma + v_t$, approximated
@@ -107,7 +110,8 @@ assumption. Section~\ref{sec:main} states and proves Corrected Proposition~2$'$.
 draws the consequences for estimation and for Bayesian inference, where FRS's corollaries hold
 with explicit constants. Appendix~\ref{app:prim} derives the assumptions of the corrected
 proposition from primitives in the case where the measurement shock alone is recovered from the
-data.
+data. A supplementary appendix provides a formalisation of all these results in Lean, verifying
+their correctness.
 
 \section{The setting and the error in the proof}\label{sec:error}
 
@@ -115,20 +119,23 @@ FRS consider the state-space system
 \[
   S_t = \varphi(S_{t-1}, W_t;\gamma), \qquad Y_t = g(S_t, V_t;\gamma),
 \]
-with compact supports for the state and the i.i.d.\ shocks, and a unique invariant distribution
+where $\gamma$ is the vector of structural parameters, with compact supports for the state and
+the i.i.d.\ shocks, and a unique invariant distribution
 $\mu^*$ of the state. The shock is partitioned as $W_t = (W_{1t}, W_{2t})$, where
 $(W_{2t}, V_t)$ is recovered from the data by inverting the system (FRS's Assumption~3). Here $T$ is
 the number of observations in the data $y^T = (y_1, \ldots, y_T)$, and the likelihoods below are
 the exact integrals implied by each model, not simulation estimates of them; the error from
 evaluating them by simulation, for example with a particle filter, is a separate matter that
-neither FRS nor this comment addresses. We fix $\gamma$ and the data $y^T$ and suppress both. Write $\omega = W_1^T$ for the unobserved shock
+neither FRS nor this comment addresses.
+
+We fix $\gamma$ and the data $y^T$ and suppress both from our notation. Write $\omega = W_1^T$ for the unobserved shock
 path, with law $Q$, and
 \[
   p_t(s,\omega) = p\bigl(y_t \mid W_1^t = \omega_{\le t},\, S_0 = s,\, y^{t-1}\bigr)
 \]
 for the conditional density of the $t$-th observation, with $p_{j,t}$ (FRS's
 $p_j(y_t \mid W_1^t, S_0, y^{t-1})$) its counterpart under the computed equations $(\varphi_j, g_j)$, whose invariant distribution is $\mu^*_j$. The two
-likelihoods are\footnote{FRS's displays write the integral over $W_1^T$ period by period, as a
+likelihoods are\footnote{FRS write the integral over $W_1^T$ period by period, as a
 product of integrals. Since $p_t$ depends on the whole history $\omega_{\le t}$, the likelihood
 is the integral of the product. Nothing below depends on the distinction.}
 \[
@@ -136,9 +143,11 @@ is the integral of the product. Nothing below depends on the distinction.}
   \qquad
   L_j(y^T) = \int_S\int_\Omega \prod_{t=1}^T p_{j,t}(s,\omega)\, Q(\dd\omega)\,\mu_j^*(\dd s).
 \]
-FRS's Assumptions~4 and~8 bound the densities below by $\xi > 0$; their Lemma~6 gives
+FRS's Assumptions~4 and~8 bound the densities below by $\xi > 0$. Their Lemma~6 gives
 $|p_{j,t} - p_t| \le \chi\delta$ when $\|\varphi_j - \varphi\| \le \delta$ and
-$\|g_j - g\| \le \delta$; and their Condition~1 is the mean contraction
+$\|g_j - g\| \le \delta$ (it bounds the error in the conditional densities when the numerical
+errors in the policy function and the measurement equation are bounded). Their Condition~1 is the
+mean contraction
 $\int \|\varphi(s,w) - \varphi(s',w)\|\,Q(\dd w) \le \alpha\|s - s'\|$ with $\alpha < 1$.
 
 \paragraph{FRS's Proposition 2.} \emph{Under Assumptions 1--11 and Condition 1, if
@@ -205,8 +214,10 @@ like $M^T$, but the log-likelihood gap is linear in $T$, as FRS's argument sugge
 
 \section{The corrected proposition}\label{sec:main}
 
-The accumulation of error that FRS describe is multiplicative. It holds for the log likelihood,
-equivalently for the likelihood ratio $L_j/L$, and not for the level. We state the result under
+The accumulation of error that FRS describe is multiplicative. This was problematic for
+Proposition~2 in levels, but can be side-stepped by working with the log likelihood, or with the
+likelihood ratio $L_j/L$. We prove a corrected Proposition~2$'$ by working with the log
+likelihood. We state the result under
 three assumptions; Appendix~\ref{app:prim} derives all three from primitives.
 
 \begin{assumption}[Per-period error, uniformly in $t$]\label{a:err}
@@ -305,8 +316,10 @@ Finally, $L$ and $L_j$ are at least $\xi^T > 0$, since the densities are at leas
 and $P$ are probability measures, so taking logarithms gives the second form.
 \end{proof}
 
-\noindent Appendix~\ref{app:frsproof} gives the same result with the proof laid out step by step
-as FRS's proof of Proposition~2, so that the two can be read side by side.
+\noindent Our approach to the proof of Corrected Proposition~2$'$ differs from FRS's approach to
+their Proposition~2. To demonstrate that the correction is just about fixing line (14) of their
+proof, Appendix~\ref{app:frsproof} gives the same result with the proof laid out step by step as
+FRS's proof of Proposition~2, so that the two can be read side by side.
 
 \begin{remark}[Sharpness]
 The dependence of $D$ on $T$ cannot be improved. With every exact density equal to $M$ and every
@@ -369,7 +382,7 @@ agrees with AGH's conclusion that approximation error of order $\delta$ moves th
 probability limit by $O(\delta)$, and not by more as $T$ grows. A bound on the level of the
 objective alone delivers only $O(\sqrt\delta)$ for the maximiser under quadratic identification;
 AGH's $O(\Delta_j)$ rate also uses closeness of the first two derivatives, which our result does
-not address.
+not require.
 
 \paragraph{Bayesian inference.} FRS's Corollaries~1--4 assert that likelihood ratios, marginal
 likelihoods, posteriors and posterior expectations of the computed model converge to their exact
@@ -421,7 +434,6 @@ likelihood levels once $T\delta$ is not small.
 \bibliographystyle{ecta}
 \bibliography{refs}
 
-\newpage
 \appendix
 
 \section{The proof in FRS's layout}\label{app:frsproof}
