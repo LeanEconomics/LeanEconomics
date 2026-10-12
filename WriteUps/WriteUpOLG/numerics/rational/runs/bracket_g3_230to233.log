@@ -1,0 +1,15 @@
+gamma 3, frozen-transport cells: 3 of width 0.00010 on [0.0230,0.0233], grid 3968, lambdas [2], mu 1; a cell that fails is split in two
+0 cells already done, 3 to run
+cell 2 [0.02320,0.02330]: point enclosure 357s, point B_d = 3.537; 1253s
+    assumption zone: stage 0 22.2, stage 30 108.9, stage 59 2.0
+cell 1 [0.02310,0.02320]: point enclosure 357s, point B_d = 3.529; 1259s
+    assumption zone: stage 0 22.2, stage 30 108.8, stage 59 2.0
+cell 0 [0.02300,0.02310]: point enclosure 357s, point B_d = 3.520; 1261s
+    assumption zone: stage 0 22.2, stage 30 108.8, stage 59 2.0
+    round 1: max U/M = 0.737, violations 0, assumptions dropped 0; 775s
+  lambda 2: verified (max U/M 0.737); B_d = 4.276 vs |D'| = 52.71 -> CERTIFIED; ebar 1/2/5/10/30: 0.3713 0.3766 0.3703 0.3234 0.2031; 2037s
+    round 1: max U/M = 0.737, violations 0, assumptions dropped 0; 776s
+  lambda 2: verified (max U/M 0.737); B_d = 4.264 vs |D'| = 52.82 -> CERTIFIED; ebar 1/2/5/10/30: 0.3708 0.3757 0.3694 0.3230 0.2029; 2044s
+    round 1: max U/M = 0.737, violations 0, assumptions dropped 0; 777s
+  lambda 2: verified (max U/M 0.737); B_d = 4.254 vs |D'| = 52.92 -> CERTIFIED; ebar 1/2/5/10/30: 0.3705 0.3752 0.3690 0.3226 0.2021; 2046s
+ALL CELLS CERTIFIED: E' > 0 on the bracket; 2050s
