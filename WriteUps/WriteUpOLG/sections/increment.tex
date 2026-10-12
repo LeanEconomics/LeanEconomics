@@ -828,20 +828,26 @@ at $5\%$ and $8.1$ against $28.7$ at $6\%$, so $E'>0$ holds on those cells. The 
 of $0.02$ points fail the verification by nine percent at every multiplier $\lambda$, because the
 transport width scales with $\lambda$ and so does the bound it produces, and cells of $0.1$ points
 fail it forty times over. Each cell costs about an hour and a half on the fine grid (the midpoint enclosure, its derivative pass and
-the cell's), so $[4\%,6\%]$ was run as two hundred cells of $0.01$ points on seven cores, split
-automatically where they fail (\texttt{derivcert.py}, mode \texttt{fixed}; the run is resumable and
-its results are one line per cell in \texttt{runs/bracket\_g3\_4to6.txt}). It took about 40 hours
-of wall-clock time. No cell needed splitting: every cell certified at its first width, with the
-assumption verified at a ratio of at most $0.75$. The largest certified bound on the fall of supply
-over any cell is $9.15$, against a demand slope of at least $28.7$ in magnitude; the worst ratio,
-$0.32$, sits at the top of the bracket where demand is flattest, and at the bottom the bound is $6.5$
-against $39.0$.
+the cell's), so $[4\%,6\%]$ was run first as two hundred cells of $0.01$ points on seven cores,
+split automatically where they fail (\texttt{derivcert.py}, mode \texttt{fixed}; each run is
+resumable and its results are one line per cell in \texttt{runs/bracket\_g3\_*.txt}), and the
+bracket was then extended downward in five further runs to $2.3\%$, where Theorem~\ref{thm:outer}
+takes over: $370$ cells in all, about $470$ processor-hours at $76$ minutes per cell. No cell needed
+splitting: every cell certified at its first width, with the assumption verified at a ratio of about
+three quarters. The largest certified bound on the fall of supply over any cell is $9.15$, against a
+demand slope of at least $28.7$ in magnitude; the worst ratio, $0.32$, sits at the top of the bracket
+where demand is flattest, and at the bottom the bound is $4.3$ against $52.7$. The same enclosures
+certify the levels at two rates (\texttt{levelcert.py}, the cohort-assets recursion run on the
+interval policy, read at the grid point below the saving floor and above the saving ceiling):
+$S(4\%)\in[3.82,3.97]$ against $D(4\%)=4.69$ and $S(6\%)\in[4.95,5.16]$ against $D(6\%)=4.02$,
+so with Theorem~\ref{thm:cont} an equilibrium exists in $(4\%,6\%)$.
 
 \begin{theorem}[$E'>0$ on the bracket, by certificate]\label{thm:bracket}
 At $\gamma=3$ and the calibration of Section~\ref{sec:enclcert}, on every cell of the partition of
-$[4\%,6\%]$ into two hundred cells the certified bound $B_d$ on $-S'$ is strictly below $|D'|$.
-Hence excess demand is strictly increasing on $[4\%,6\%]$, and the model has at most one
-equilibrium interest rate in that bracket.
+$[2.3\%,6\%]$ into $370$ cells the certified bound $B_d$ on $-S'$ is strictly below $|D'|$.
+Hence excess demand is strictly increasing on $[2.3\%,6\%]$, and the model has at most one
+equilibrium interest rate in that bracket; with the certified endpoint levels and continuity, it
+has exactly one, in $(4\%,6\%)$.
 \end{theorem}
 
 Its standing is one step below Theorem~\ref{thm:encllean}. The interval Euler step, monotone
@@ -885,9 +891,11 @@ it at every rate in $[8.7\%,20\%]$.
 \formal{EnclCert.olg7\_supply\_lt\_demand\_low, EnclCert.olg7\_demand\_lt\_supply\_high}
 \end{theorem}
 
-With Theorem~\ref{thm:bracket} this leaves $[2.3\%,4\%)$ and $(6\%,8.7\%]$ as the only rates
-below $20\%$ neither excluded by proof term nor covered by the slope certificate. The slope
-certificate extends to them by machine time alone, about $440$ cells; beyond $20\%$ the question
+With Theorem~\ref{thm:bracket} this leaves $(6\%,8.7\%]$ as the only range below $20\%$ neither
+excluded by proof term nor covered by the slope certificate: on $(-8\%,6\%]$ there is exactly one
+stationary equilibrium, none in $(-8\%,2.3\%]$ by proof term, at most one in $[2.3\%,6\%]$ by
+certificate, and one in $(4\%,6\%)$ by the certified endpoint levels. The slope certificate
+extends to the remaining range by machine time alone, about $270$ cells; beyond $20\%$ the question
 is about the artefactual cap rather than the economy, since a lifetime of feasible saving at
 higher rates exceeds any fixed cap and the formal model is the capped one.
 

@@ -48,7 +48,8 @@ not reproved. It is a project record, not a paper for submission.}}
 \noindent
 In a life-cycle economy with uninsurable earnings risk, a borrowing constraint, sixty-period lives
 and relative risk aversion three, at one rational calibration, there is exactly one stationary
-equilibrium interest rate in $[4\%,6\%]$. The route is single crossing in derivative form: excess
+equilibrium interest rate in $(-8\%,6\%]$, and it lies in $(4\%,6\%)$. The route is single crossing in
+derivative form: excess
 demand for capital is strictly increasing on the bracket because the firm's demand falls faster
 than household supply can, and a certified lower bound on the slope of supply, built from rigorous
 enclosures of the sixty consumption functions, sits at most a third of the way to the slope of
@@ -57,7 +58,8 @@ finite backward induction, the propensity floor, the cohort envelope, continuity
 interval Euler step --- and then explains how they are assembled: the derivative of consumption in
 the rate from the Euler equality, the interval recursion that bounds it on grid intervals, the
 frozen-transport argument that carries a bound from a rate to a cell of rates by continuation, and
-the two hundred cells that cover the bracket. Every step but the arithmetic is a theorem; the
+the three hundred and seventy cells that cover $[2.3\%,6\%]$; below $2.3\%$ Lean theorems take
+over. Every step but the arithmetic is a theorem; the
 arithmetic is exact rational arithmetic rounded outward, evaluated by a program rather than
 replayed in the kernel. The note closes with what that standing is and what would raise it.
 \end{abstract}
@@ -74,7 +76,8 @@ this note records is the result that reaches $\gamma=3$ anyway, and the construc
 
 The result is a statement about one economy at one calibration. Fix sixty-period lives, a
 seven-state earnings chain, $\beta=24/25$, $\gamma=3$, and a Cobb--Douglas firm. Then on the
-interest-rate bracket $[4\%,6\%]$ there is exactly one stationary equilibrium. The argument is single
+range $(-8\%,6\%]$ there is exactly one stationary equilibrium, and it lies in $(4\%,6\%)$. The
+argument is single
 crossing, but not in the form Theorem 1 supplies. Single crossing needs only that excess demand
 $E(r)=S(r)-D(r)$, supply minus demand for capital, be strictly increasing; and since demand falls
 steeply at the calibration, supply may fall too, as long as it falls more slowly. The construction
@@ -163,17 +166,15 @@ stationary equilibrium is a rate at which $S(r)=D(r)$.
 
 \begin{theorem}[Uniqueness on the bracket at $\gamma=3$]\label{thm:main}
 In the economy above, with $J=60$, $\beta=24/25$, $\gamma=3$, the seven-state chain, $\alpha=9/25$
-and $\delta=2/25$, there is exactly one stationary equilibrium interest rate in $[4\%,6\%]$.
-Specifically: $S$ is continuous on the bracket, $S(4\%)<D(4\%)$ and $S(6\%)>D(6\%)$, so an
-equilibrium exists in $(4\%,6\%)$; and $E=S-D$ is strictly increasing on $[4\%,6\%]$, so there is
-at most one.
+and $\delta=2/25$, there is exactly one stationary equilibrium interest rate in $(-8\%,6\%]$, and
+it lies in $(4\%,6\%)$. Specifically: $S$ is continuous, $S(4\%)<D(4\%)$ and $S(6\%)>D(6\%)$, so
+an equilibrium exists in $(4\%,6\%)$; $E=S-D$ is strictly increasing on $[2.3\%,6\%]$, so there is
+at most one there; and $S<D$ on $(-8\%,2.3\%]$ (Theorem~\ref{thm:outer}), so there is none there.
 \end{theorem}
 
-The theorem does not say that there is no equilibrium below $4\%$ or above $6\%$. The companion's
-existence theorem brackets the equilibrium of a closely related calibration in $[2.78\%,7.67\%]$
-by proof term with numerically checked hypotheses, and the computed equilibrium sits near $5\%$;
-extending the slope certificate to the ends of that bracket is machine time, not new argument, and
-Section~\ref{sec:standing} returns to it.
+The theorem is silent above $6\%$. Theorem~\ref{thm:outer} excludes $[8.7\%,20\%]$ by proof term,
+so $(6\%,8.7\%]$ is the only range below $20\%$ in which an equilibrium is not yet excluded;
+closing it is machine time, not new argument, and Section~\ref{sec:standing} returns to it.
 
 \section{The results the construction rests on}\label{sec:known}
 
@@ -266,9 +267,9 @@ These are the only inequalities the enclosure of Section~\ref{sec:encl} ever ass
 \section{Uniqueness as a bound on the slope of supply}\label{sec:slope}
 
 Single crossing asks that $E=S-D$ be strictly increasing on the bracket. Since
-$D'(r)\le-28.7$ on $[4\%,6\%]$, that holds as soon as supply does not fall faster than demand:
+$D'(r)\le-28.7$ on $[2.3\%,6\%]$, that holds as soon as supply does not fall faster than demand:
 \begin{equation}\label{eq:target}
-  S'(r)\ >\ D'(r)\quad\text{on }[4\%,6\%],\qquad\text{equivalently}\qquad -S'(r)\ <\ |D'(r)|.
+  S'(r)\ >\ D'(r)\quad\text{on }[2.3\%,6\%],\qquad\text{equivalently}\qquad -S'(r)\ <\ |D'(r)|.
 \end{equation}
 Two remarks fix what \eqref{eq:target} means and what it does not need.
 
@@ -596,31 +597,33 @@ transport does not spoil the margin.
 
 \section{Covering the bracket}\label{sec:bracket}
 
-The bracket $[4\%,6\%]$ is partitioned into two hundred cells of $0.01$ percentage points. For each
-cell the certificate runs the point enclosure at the midpoint (about twenty-four minutes on the fine
-grid), the derivative recursion at the midpoint, the transported enclosure and the cell recursion,
-and the verification \eqref{eq:verify}; a cell that failed would be split in two and both halves
-rerun, down to a minimum width of $0.001$ points. The run is resumable, with one line per finished
-cell in \texttt{numerics/rational/runs/bracket\_g3\_4to6.txt}, and took about forty hours of
-wall-clock time on seven cores, at eighty-four minutes per cell.
+The bracket $[2.3\%,6\%]$ is partitioned into $370$ cells of $0.01$ percentage points, run in six
+batches: $[4\%,6\%]$ first, then five extensions downward to $2.3\%$, where the Lean theorem of
+Section~\ref{sec:outer} takes over. For each cell the certificate runs the point enclosure at the
+midpoint (about twenty-four minutes on the fine grid), the derivative recursion at the midpoint, the
+transported enclosure and the cell recursion, and the verification \eqref{eq:verify}; a cell that
+failed would be split in two and both halves rerun, down to a minimum width of $0.001$ points. Each
+batch is resumable, with one line per finished cell in
+\texttt{numerics/rational/runs/bracket\_g3\_*.txt}; the whole took about $470$ processor-hours on
+seven cores, at $76$ minutes per cell.
 
 No cell needed splitting. Every cell certified at its first width, with the verification ratio
-$\max|U|/M$ between $0.744$ and $0.751$ on every one of them, and the certified bounds are:
+$\max|U|/M$ about three quarters on every one of them, and the certified bounds are:
 
 \begin{center}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
 sub-range & $\max B_d$ & $\min|D'|$ & worst $B_d/|D'|$ & cells\\
 \midrule
-$[4.0\%,4.5\%]$ & $7.13$ & $36.00$ & $0.198$ & $50$\\
-$[4.5\%,5.0\%]$ & $7.82$ & $33.28$ & $0.235$ & $50$\\
-$[5.0\%,5.5\%]$ & $8.50$ & $30.86$ & $0.275$ & $50$\\
-$[5.5\%,6.0\%]$ & $9.15$ & $28.70$ & $0.319$ & $50$\\
+$[2.3\%,3.0\%]$ & $5.10$ & $46.49$ & $0.110$ & $70$\\
+$[3.0\%,4.0\%]$ & $6.45$ & $39.06$ & $0.165$ & $100$\\
+$[4.0\%,5.0\%]$ & $7.82$ & $33.28$ & $0.235$ & $100$\\
+$[5.0\%,6.0\%]$ & $9.15$ & $28.70$ & $0.319$ & $100$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-$B_d$ rises smoothly from $6.47$ at the bottom of the bracket to $9.15$ at the top, while $|D'|$
+$B_d$ rises smoothly from $4.28$ at the bottom of the bracket to $9.15$ at the top, while $|D'|$
 falls, so the worst ratio, $0.319$, sits at the top cell $[5.99\%,6.00\%]$. On every cell
 $B_d<\min_{\text{cell}}|D'|$, with a margin of at least three. By Lemma~\ref{lem:mvt} applied cell
 by cell, for any two rates $r_1<r_2$ in the same cell,
@@ -658,14 +661,15 @@ $0.72$ and $0.93$. So $E(4\%)<0<E(6\%)$.
 
 \section{Proof of Theorem~\ref{thm:main}}\label{sec:proof}
 
-$S$ is continuous on $[4\%,6\%]$ (\lean{continuousOn\_olgSupply}); the hypotheses of that theorem
+$S$ is continuous on $[2.3\%,6\%]$ (\lean{continuousOn\_olgSupply}); the hypotheses of that theorem
 are the stage properties on a reachable family, and the enclosure's reach, $\rho_j\le44$, is such a
 family for any cap above it, with cap slack certified by the enclosure itself (the upper bound on
 saving never approaches the grid's top). $D$ is continuous. By Section~\ref{sec:level},
 $S(4\%)<D(4\%)$ and $S(6\%)>D(6\%)$, so by the intermediate value theorem
 (\lean{exists\_olgEquilibrium}) there is a rate in $(4\%,6\%)$ with $S=D$. By
-Section~\ref{sec:bracket}, $E=S-D$ is strictly increasing on $[4\%,6\%]$, so that rate is the only
-one in the bracket. \qed
+Section~\ref{sec:bracket}, $E=S-D$ is strictly increasing on $[2.3\%,6\%]$, so that rate is the
+only one in $[2.3\%,6\%]$. By Theorem~\ref{thm:outer} of Section~\ref{sec:outer}, $S<D$ at every
+rate in $(-8\%,2.3\%]$, so there is none there. \qed
 
 Read backwards, the proof uses: the certified endpoint levels (Section~\ref{sec:level}, arithmetic
 on the enclosures); the certified slope bound on every cell (Sections~\ref{sec:recursion}
@@ -724,9 +728,9 @@ $[8.7\%,20\%]$.
 
 Unlike Theorem~\ref{thm:main}, this one is a Lean theorem: its only axiom beyond classical Mathlib
 is the one \texttt{native\_decide} introduces for the two compiled verdicts. What it leaves
-uncovered below $20\%$ is $[2.3\%,4\%)$ and $(6\%,8.7\%]$, where neither bound separates supply
-from demand and only the slope certificate of Sections~\ref{sec:recursion}--\ref{sec:bracket} can;
-extending that certificate to those ranges is about $440$ further cells of the same run. Above
+uncovered below $20\%$ is $(6\%,8.7\%]$, where neither bound separates supply from demand and only
+the slope certificate of Sections~\ref{sec:recursion}--\ref{sec:bracket} can; extending that
+certificate to it is about $270$ further cells of the same run. Above
 $20\%$ the formal model's cap starts to bind for a household that saves everything feasible, and
 the capped economy stops being the one of interest.
 
@@ -760,8 +764,8 @@ certificate at $(4\%,4.6\%)$: a Lean checker over naturals, its verdict establis
 theorems behind them (\lean{enclCheck\_eq\_true}, \lean{olg7\_increment}). The derivative certificate
 has the same shape, with three additions: the interval recursion of Section~\ref{sec:recursion} as a
 checker, the level recursion of Section~\ref{sec:level}, and Lemma~\ref{lem:cont} as a theorem, the
-one genuinely new piece of mathematics. At eighty-four minutes per cell in Python, two hundred cells
-in compiled Lean is a weekend of machine time, not a new argument.
+one genuinely new piece of mathematics. At seventy-six minutes per cell in Python, three hundred and
+seventy cells in compiled Lean is a weekend of machine time, not a new argument.
 
 \subsection{What the theorem does not say}
 
@@ -770,7 +774,7 @@ neighbouring calibration except by rerunning the certificate, which is the price
 over a proof. It is one bracket, nearly: Theorem~\ref{thm:outer} excludes every rate in $(-8\%,2.3\%]$ and in
 $[8.7\%,20\%]$ by proof term, so what remains open below $20\%$ is $[2.3\%,4\%)$ and
 $(6\%,8.7\%]$, where the slope certificate has not yet been run; until it is, the honest statement
-is uniqueness on $[4\%,6\%]$ with no equilibrium outside $[2.3\%,8.7\%]$. And it is $\gamma=3$: the same run at $\gamma=5$, where the
+is exactly one equilibrium on $(-8\%,6\%]$ and none in $[8.7\%,20\%]$. And it is $\gamma=3$: the same run at $\gamma=5$, where the
 single-rate bound is $12.8$ against $39$ at $4\%$, is the same command with one argument changed and
 about the same machine time, but it has not been run.
 
@@ -791,11 +795,14 @@ which is at present a paper argument from the analytic implicit function theorem
 
 All files are under \texttt{WriteUps/WriteUpOLG/numerics/rational/} in the repository.
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt]
-\item The bracket run (two hundred cells, resumable, results appended to the file named):\\
+\item The bracket runs (resumable, results appended to the file named), with the environment\\
   \texttt{ENCL\_FINE=fine ENCL\_NOCACHE=1 ENCL\_MU=1 ENCL\_LAMS=2 ENCL\_PROCS=7}\\
-  \texttt{ENCL\_RESULTS=runs/bracket\_g3\_4to6.txt python3 derivcert.py 3 0.04 0.06 200 1 fixed}
-\item Its summary (leaves, splits, worst margin, coverage): \texttt{python3 runs/bracket\_summary.py
-  runs/bracket\_g3\_4to6.txt 0.04 0.06}.
+  \texttt{ENCL\_RESULTS=runs/bracket\_g3\_<name>.txt} and the arguments
+  \texttt{derivcert.py 3 r\_lo r\_hi n 1 fixed}: \texttt{0.04 0.06 200} (4to6), \texttt{0.037 0.04 30}
+  (37to40), \texttt{0.031 0.037 60} (31to37), \texttt{0.0275 0.031 35} (275to31),
+  \texttt{0.0233 0.0275 42} (233to275), \texttt{0.023 0.0233 3} (230to233).
+\item A batch's summary (leaves, splits, worst margin, coverage): \texttt{python3
+  runs/bracket\_summary.py runs/bracket\_g3\_4to6.txt 0.04 0.06}.
 \item A single rate, for the first table of Section~\ref{sec:recursion}:
   \texttt{ENCL\_FINE=fine python3 derivcert.py 3 0.04 0.04 0}.
 \item The endpoint levels: \texttt{ENCL\_FINE=fine python3 levelcert.py 3 1/25} and
