@@ -741,11 +741,16 @@ $(s, (w, \sigma)) \mapsto \varphi_\sigma(s, w)$, which requires the policy to be
 differentiable in $\sigma$ as well, as the perturbation approach presumes, gives contraction for
 every shock on a ball around the steady state once the shocks are small enough.
 
-\paragraph{New Keynesian models (global or local).} In the basic three-equation model the only
-states are the exogenous shocks, $s' = Rs + \epsilon$ with $R$ diagonal and entries $|\rho_i| < 1$
-(or the nonlinear analogue in logarithms), which contract for every shock in the max-norm with
-factor $\max_i|\rho_i|$, globally. Models with endogenous states, such as interest-rate smoothing,
-price dispersion, habits or capital, fall under Proposition~\ref{prop:local}: a determinate
+\paragraph{New Keynesian models (global or local).} In the basic New Keynesian model of
+\citet[Ch.~3]{Gali2015}, log-linearised, the only states are the exogenous technology and
+monetary shocks, autoregressive with coefficients $|\rho_i| < 1$, which contract for every shock
+in the max-norm with factor $\max_i|\rho_i|$, globally. The log-linear model is solved exactly, so
+the relevant case is the nonlinear one. With Rotemberg pricing the nonlinear model has no
+predetermined endogenous variable, so in a Markov equilibrium its states are still the exogenous
+shocks and the same global argument applies. With Calvo pricing the nonlinear model adds price
+dispersion as an endogenous state, whose own coefficient at the zero-inflation steady state is
+the Calvo parameter $\theta < 1$, so it falls under Proposition~\ref{prop:local}, as do models with
+further endogenous states such as interest-rate smoothing, habits or capital. A determinate
 equilibrium satisfies the conditions of \citet{BlanchardKahn1980}, under which the state transition
 of the linearised solution has all its eigenvalues inside the unit circle. With the same proviso
 on the dependence of the policy on the shock scale, these models contract for every shock near
@@ -818,6 +823,12 @@ Proposition~\ref{prop:local} & \lean{local\_contraction} \\
 Brock--Mirman: contraction & \lean{brockMirman\_contraction} \\
 Brock--Mirman: invariant rectangle & \lean{brockMirman\_mapsTo} \\
 \midrule
+\multicolumn{2}{@{}l}{\emph{\lean{Econometrics/NewKeynesian}}} \\
+NK, Rotemberg: no predetermined variable & \lean{RotembergNK.conds\_congr} \\
+NK, Rotemberg: state is the shock vector & \lean{RotembergNK.statePath\_eq} \\
+NK, Rotemberg: global contraction & \lean{RotembergNK.next\_contraction} \\
+NK, Calvo: dispersion coefficient $\theta$ & \lean{dispersionStep\_deriv\_at\_zeroInflation} \\
+\midrule
 \multicolumn{2}{@{}l}{\emph{\lean{Econometrics/ApproxPosterior}}} \\
 Proposition~\ref{prop:post} (i)--(iii) & \lean{evidence\_le\_exp\_mul}, \lean{postDens\_le\_exp\_mul} \\
 Proposition~\ref{prop:post} (iv) & \lean{integral\_abs\_postDens\_sub\_le} \\
@@ -829,7 +840,9 @@ Proposition~\ref{prop:post} (v) & \lean{abs\_integral\_postDens\_sub\_le} \\
 \noindent Not formalised in Appendix~\ref{app:prim}: the existence of a norm with $\|A\| < 1$
 when the spectral radius of $A$ is below one, which is cited; the spectral facts used for the real
 business cycle and New Keynesian models (the stable root of the saddle path, the
-Blanchard--Kahn conditions, and smooth dependence of the policy on the shock scale); and the
+Blanchard--Kahn conditions, and smooth dependence of the policy on the shock scale); the
+existence of a Markov equilibrium of the nonlinear New Keynesian model, which is assumed, as FRS
+assume a policy function exists; and the
 step that instantiates Theorem~\ref{thm:prim} on the Brock--Mirman rectangle with the weighted
 metric, of which the contraction and invariance are verified but the metric-space construction is
 not. Example~\ref{ex:compact} is verified only through its algebraic core

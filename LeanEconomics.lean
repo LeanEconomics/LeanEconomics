@@ -158,3 +158,4 @@ import LeanEconomics.Distribution.RandomMap
 import LeanEconomics.Econometrics.ApproxLikelihoodModel
 import LeanEconomics.Econometrics.ApproxPosterior
 import LeanEconomics.Econometrics.LocalContraction
+import LeanEconomics.Econometrics.NewKeynesian
