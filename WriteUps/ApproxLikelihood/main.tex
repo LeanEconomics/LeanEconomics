@@ -57,7 +57,7 @@ likelihood: $|\log L_j(y^T) - \log L(y^T)| \le (T\chi/\xi + K/(1-\alpha))\,\delt
 pathwise version of the paper's contraction condition. Linearity in the sample size $T$ holds,
 but now in the log, rather than the level, of the likelihood. The
 average log likelihood is therefore within $O(\delta)$ of its exact value uniformly in the sample
-size, so the effect of a fixed approximation error on point estimates does not grow with $T$;
+size, so the effect of a fixed approximation error $\delta$ on point estimates does not grow with $T$;
 relative to sampling uncertainty it matters once $\sqrt{T}\delta$ is not small. FRS's Bayesian
 corollaries hold with explicit, if conservative, constants.
 
@@ -126,7 +126,14 @@ FRS consider the state-space system
 \[
   S_t = \varphi(S_{t-1}, W_t;\gamma), \qquad Y_t = g(S_t, V_t;\gamma),
 \]
-where $\gamma$ is the vector of structural parameters, with compact supports for the state and
+in which $S_t$ is the vector of state variables, both endogenous (such as capital) and exogenous
+(such as productivity); $W_t$ are the structural shocks that drive the states; $Y_t$ are the
+observables; and $V_t$ are the shocks to the measurement equation, such as measurement error. The
+transition equation $\varphi$ is the equilibrium law of motion of the states, given by the model's
+policy functions, and the measurement equation $g$ maps the states and measurement shocks into the
+observables. Neither is known in closed form in general, and the researcher works with numerical
+approximations $\varphi_j$ and $g_j$. Here $\gamma$ is the vector of structural parameters; we
+assume, as FRS do, compact supports for the state and
 the i.i.d.\ shocks, and a unique invariant distribution
 $\mu^*$ of the state. The shock is partitioned as $W_t = (W_{1t}, W_{2t})$, where
 $(W_{2t}, V_t)$ is recovered from the data by inverting the system (FRS's Assumption~3). Here $T$ is
@@ -198,7 +205,9 @@ transition, whose sensitivity to $\delta$ can accumulate with $t$. The corrected
 makes both requirements explicit.
 
 AGH's counterexample uses a Gaussian measurement shock, which does not have the compact support
-FRS assume. The failure does not depend on this.
+FRS assume. We provide a counterexample with compact support, mainly as an illustration for the
+reader, but also to show that the failure of Proposition~2 in AGH's counterexample does not hinge
+on the noncompactness.
 
 \begin{example}[A counterexample with compact support]\label{ex:compact}
 Let $f$ be a smooth density on $[0,1]$ equal to a constant $c_0 > 0$ on $[\frac14,\frac34]$. Take
@@ -359,9 +368,11 @@ Assumptions~\ref{a:err}--\ref{a:coup} are high-level by design, as are the condi
 Proposition~2 once their Lemmas~5 and~6 are applied. Assumption~\ref{a:err} requires the computed
 model's per-period density error to be bounded uniformly along the sample,
 Assumption~\ref{a:lip} that the likelihood forget the initial state, and Assumption~\ref{a:coup}
-that the exact and computed stationary distributions be close. FRS derive the counterparts of the
-first two from conditions on the model in their Lemmas~5 and~6, but without constants uniform in
-$T$. Appendix~\ref{app:prim} carries out the corrected derivation: all three assumptions hold, with
+that the exact and computed stationary distributions be close. FRS showed that their high-level
+assumptions were satisfied by standard macroeconomic models in their Lemmas~5 and~6. Since we
+modified these high-level assumptions for our Corrected Proposition~2$'$, we provide updated
+results in Appendix~\ref{app:prim} showing that standard macroeconomic models satisfy our
+assumptions: all three hold, with
 $\varepsilon = \eta + c\delta/(1-\alpha)$, $K_T \le c\alpha/(\xi(1-\alpha))$ and
 $\rho = \delta/(1-\alpha)$, in models in which every observable is measured with error and the
 state transition contracts, in a metric of our choosing, for every realisation of the shocks. This
@@ -549,7 +560,8 @@ Conclusion & triangle inequality & triangle inequality \\
 
 This appendix is the counterpart, for Corrected Proposition~2$'$, of FRS's Lemmas~5 and~6 and of
 their use of Theorem~6 of \citet{SantosPeraltaAlva2005}: it derives
-Assumptions~\ref{a:err}--\ref{a:coup} from conditions on the model, with constants uniform in the
+Assumptions~\ref{a:err}--\ref{a:coup} from conditions on standard macroeconomic models, with
+constants uniform in the
 sample size. Doing so requires three restrictions that FRS do not impose: no $W_2$, contraction
 for every shock rather than in mean, and a unique invariant distribution for the computed chain.
 We work in the case $\dim V_t = \dim Y_t$, so
@@ -732,8 +744,9 @@ compact and invariant, and in the metric of Remark~\ref{rem:metric}, with $a = \
 any $\lambda > 1/(1-\rho_z)$, the transition contracts for every shock with factor
 $\max(\theta, \rho_z + 1/\lambda) < 1$. This holds for any size of shock, with no local argument.
 
-\paragraph{Real business cycle model (local).} With partial depreciation and CRRA utility the
-policy function has no closed form. At the deterministic steady state the Jacobian of the state
+\paragraph{Real business cycle model (local).} In the real business cycle model of
+\citet{KingPlosserRebelo1988}, with partial depreciation and CRRA utility, the policy function has
+no closed form. At the deterministic steady state the Jacobian of the state
 transition $(k, \zeta) \mapsto (k', \zeta')$ is triangular, with eigenvalues $\rho_z$ and the stable
 root $\nu_k \in (0,1)$ of the saddle path, so its spectral radius is below one. The policy
 depends on the scale $\sigma$ of the shocks; applying Proposition~\ref{prop:local} to
@@ -751,7 +764,7 @@ shocks and the same global argument applies. With Calvo pricing the nonlinear mo
 dispersion as an endogenous state, whose own coefficient at the zero-inflation steady state is
 the Calvo parameter $\theta < 1$, so it falls under Proposition~\ref{prop:local}, as do models with
 further endogenous states such as interest-rate smoothing, habits or capital. A determinate
-equilibrium satisfies the conditions of \citet{BlanchardKahn1980}, under which the state transition
+equilibrium satisfies the Blanchard--Kahn conditions \citep{BlanchardKahn1980}, under which the state transition
 of the linearised solution has all its eigenvalues inside the unit circle. With the same proviso
 on the dependence of the policy on the shock scale, these models contract for every shock near
 the steady state when the shocks are small. The same argument covers the real business cycle
