@@ -891,8 +891,19 @@ has all its eigenvalues inside the unit circle (\lean{lam\_stable}).
 \item \emph{Smooth dependence of the solution.} The implicit function theorem gives, for a
 nonlinear stochastic system $\mathbb{E}_t G(x_{t-1}, x_t, x_{t+1}, e_t) = 0$, a locally unique
 equilibrium, continuously differentiable in the disturbance process and with derivative
-equal to the linear rational-expectations solution (\lean{local\_determinacyS}). This is smoothness
-in the shock path, not in the scalar shock scale $\sigma$ used for the real business cycle model.
+equal to the linear rational-expectations solution (\lean{local\_determinacyS}). For the class
+$\mathbb{E}_t f(y_{t+1}, y_t, y_{t-1}, x_t, \sigma\epsilon_{t+1}) = 0$ with an invertible
+linearisation, the equilibrium is $C^k$ in the shock scale $\sigma$ and given by a Markov policy
+(\lean{exists\_smooth\_policy}), which is the smoothness in $\sigma$ the real business cycle model
+of Appendix~\ref{app:prim} uses.
+\item \emph{Markov equilibrium of the nonlinear New Keynesian model.} The exact Calvo model (the
+Euler equation, the recursions for the optimal reset price and the exact law of motion of price
+dispersion) under a Taylor rule satisfying the Taylor principle has, for small enough shocks, a
+locally unique Markov equilibrium in $(\Delta_{t-1}, s_t)$ that is $C^2$ in the shock amplitude
+(\lean{markov\_equilibrium}, \lean{markov\_equilibrium\_general}). On a general filtered probability
+space it is adapted and unique among bounded processes (\lean{seq\_existence\_ae\_adapted}), with a
+Markov representation for autoregressive shocks with any bounded innovation law
+(\lean{ar1\_markov\_representation}). These results assume no government purchases.
 \item \emph{Brock--Mirman.} The closed-form policy $k' = \theta\beta z k^\theta$ is the unique
 maximiser of the Bellman equation (\lean{stoch\_argmax\_unique}).
 \item \emph{Invariant distributions.} Krylov--Bogolyubov for Feller kernels on compact spaces
@@ -909,9 +920,11 @@ factor $\max(\theta, \rho_z + 1/\lambda) < 1$ once $\lambda > 1/(1-\rho_z)$; the
 transition, the densities and the uniqueness of the invariant distributions remain hypotheses, as
 in the general theorem.
 
-\noindent Not formalised in any of the repositories: smooth dependence of the policy on the shock
-scale $\sigma$; and the existence of a Markov equilibrium of the nonlinear New Keynesian model,
-which is assumed, as FRS assume a policy function exists. For Example~\ref{ex:compact}, the density $f$ is
+\noindent Not formalised in any of the repositories: the existence of a Markov equilibrium of the
+nonlinear New Keynesian model with Rotemberg pricing, used for the global argument in
+Appendix~\ref{app:prim} and assumed there, as FRS assume a policy function exists. The Calvo
+result above is local, for small shocks, which is the case Appendix~\ref{app:prim} uses for Calvo
+pricing. For Example~\ref{ex:compact}, the density $f$ is
 constructed as a normalised smooth bump (\lean{bumpDensity}): smooth, positive exactly on
 $(0,1)$, integrating to one and constant on $[\frac14, \frac34]$. FRS's assumptions are not stated
 as a formal list, so the claim that the example satisfies them rests on these verified
