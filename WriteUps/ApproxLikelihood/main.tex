@@ -851,15 +851,46 @@ Proposition~\ref{prop:post} (v) & \lean{abs\_integral\_postDens\_sub\_le} \\
 \end{tabular}
 \end{center}
 
-\noindent Not formalised in Appendix~\ref{app:prim}: the existence of a norm with $\|A\| < 1$
-when the spectral radius of $A$ is below one, which is cited; the spectral facts used for the real
-business cycle and New Keynesian models (the stable root of the saddle path, the
-Blanchard--Kahn conditions, and smooth dependence of the policy on the shock scale); the
-existence of a Markov equilibrium of the nonlinear New Keynesian model, which is assumed, as FRS
-assume a policy function exists; and the
-step that instantiates Theorem~\ref{thm:prim} on the Brock--Mirman rectangle with the weighted
-metric, of which the contraction and invariance are verified but the metric-space construction is
-not. Example~\ref{ex:compact} is verified only through its algebraic core
+\noindent Several facts that Appendix~\ref{app:prim} cites rather than proves are formalised in
+companion LeanEconomics repositories (\lean{DynamicProgramming}, which includes projects on
+\citet{StokeyLucasPrescott1989} and \citet{MeynTweedie2009}, \lean{MonetaryEconomics} and
+\lean{InternationalEconomics}):
+\begin{itemize}[leftmargin=1.5em,itemsep=0pt]
+\item \emph{Spectral radius and norms.} Gelfand's formula for real matrices and its consequence
+$\|A^k\| \le C\gamma^k$ for every $\gamma$ above the spectral radius
+(\lean{exists\_norm\_pow\_le}), and that the associated affine map is an eventual contraction
+(\lean{exists\_isContractionOn\_iterate\_affineOp}). The adapted norm cited from
+\citet{HornJohnson2013} is one step further, $\|x\|_* = \sup_k \gamma^{-k}\|A^k x\|$, and is not
+yet formalised.
+\item \emph{The stable root of the growth model.} For the deterministic one-sector growth model with
+general concave utility and technology, the real business cycle model without labour supply, the
+linearised Euler equation has one root in $(0,1)$ and one above $1/\beta$, and the derivative of
+the policy function at the steady state is the stable root (\lean{growth\_policy\_deriv}); also
+the local stability and stable manifold theorems of \citet[Theorems 6.5, 6.6]{StokeyLucasPrescott1989}
+(\lean{theorem\_6\_5}, \lean{theorem\_6\_6}).
+\item \emph{Blanchard--Kahn.} The general theorem for linear rational-expectations systems of any
+dimension: determinacy holds if and only if there is no unit root, the number of unstable roots
+equals the number of jump variables, and a genericity condition holds
+(\lean{determinate\_iff\_unstableCount}); and in a determinate equilibrium the state transition
+has all its eigenvalues inside the unit circle (\lean{lam\_stable}).
+\item \emph{Smooth dependence of the solution.} The implicit function theorem gives, for a
+nonlinear stochastic system $\mathbb{E}_t G(x_{t-1}, x_t, x_{t+1}, e_t) = 0$, a locally unique
+equilibrium, continuously differentiable in the disturbance process and with derivative
+equal to the linear rational-expectations solution (\lean{local\_determinacyS}). This is smoothness
+in the shock path, not in the scalar shock scale $\sigma$ used for the real business cycle model.
+\item \emph{Brock--Mirman.} The closed-form policy $k' = \theta\beta z k^\theta$ is the unique
+maximiser of the Bellman equation (\lean{stoch\_argmax\_unique}).
+\item \emph{Invariant distributions.} Krylov--Bogolyubov for Feller kernels on compact spaces
+(\lean{theorem\_12\_10}), independently of Lemma~\ref{lem:kb}; and uniqueness of the invariant
+distribution, assumed in Theorem~\ref{thm:coupling}, for the stochastic growth model
+(\lean{growth\_invariant\_unique}) and under Condition~M (\lean{theorem\_11\_12}).
+\end{itemize}
+
+\noindent Not formalised in any of the repositories: the adapted norm itself; smooth dependence of
+the policy on the shock scale $\sigma$; the existence of a Markov equilibrium of the nonlinear New
+Keynesian model, which is assumed, as FRS assume a policy function exists; and the step that
+instantiates Theorem~\ref{thm:prim} on the Brock--Mirman rectangle with the weighted metric, of
+which the contraction and invariance are verified but the metric-space construction is not. Example~\ref{ex:compact} is verified only through its algebraic core
 (\lean{log\_prod\_div\_prod\_const}, and Proposition~\ref{prop:gap}); the construction of the
 density $f$ is not formalised.
 
