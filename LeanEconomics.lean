@@ -161,3 +161,4 @@ import LeanEconomics.Econometrics.LocalContraction
 import LeanEconomics.Econometrics.NewKeynesian
 import LeanEconomics.Econometrics.AdaptedNorm
 import LeanEconomics.Econometrics.BrockMirmanLikelihood
+import LeanEconomics.Econometrics.CompactCounterexample

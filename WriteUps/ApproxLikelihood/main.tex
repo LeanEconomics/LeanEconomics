@@ -210,10 +210,11 @@ reader, but also to show that the failure of Proposition~2 in AGH's counterexamp
 on the noncompactness.
 
 \begin{example}[A counterexample with compact support]\label{ex:compact}
-Let $f$ be a smooth density on $[0,1]$ equal to a constant $c_0 > 0$ on $[\frac14,\frac34]$. Take
+Let $f$ be a smooth density on $[0,1]$ equal to a constant $c_0 > 0$ on $[\frac14,\frac34]$; a
+normalised smooth bump function is one, with $c_0 \ge 1$. Take
 the static model ($S_t$ and $W_t$ trivial) $y_t = g(v_t) = \gamma v_t$ with $v_t \sim f$ and
 $0 < \gamma < c_0$, approximated by $g_j(v) = (1+\delta)\gamma v$, so that
-$\|g_j - g\| \le \gamma\delta \le \delta$. FRS's assumptions hold. For data in
+$|g_j(v) - g(v)| \le \gamma\delta$ on the support. FRS's assumptions hold. For data in
 $[\frac14\gamma(1+\delta), \frac34\gamma]$ the exact and computed densities are $M = c_0/\gamma > 1$
 and $M/(1+\delta)$, so
 \[
@@ -812,7 +813,7 @@ Result & Lean name \\
 \midrule
 \multicolumn{2}{@{}l}{\emph{\lean{Econometrics/ApproxLikelihood}}} \\
 Proposition~\ref{prop:gap} & \lean{not\_exists\_linear\_bound\_prod\_sub} \\
-Log ratio linear in $T$ (Example~\ref{ex:compact}, Remark) & \lean{log\_prod\_div\_prod\_const} \\
+Log ratio linear in $T$ (Remark) & \lean{log\_prod\_div\_prod\_const} \\
 Lemma~\ref{lem:factor} & \lean{le\_exp\_div\_mul}, \lean{prod\_le\_exp\_card\_mul\_prod} \\
 Lemma~\ref{lem:move} & \lean{prod\_le\_exp\_sum\_mul\_prod} \\
 Corrected Proposition~2$'$, the two bounds & \lean{lik\_le\_exp\_mul\_lik}, \lean{\ldots\_rev} \\
@@ -842,6 +843,13 @@ Adapted norm (remark after Proposition~\ref{prop:local}) & \lean{exists\_adapted
 \midrule
 \multicolumn{2}{@{}l}{\emph{\lean{Econometrics/BrockMirmanLikelihood}}} \\
 Theorem~\ref{thm:prim} for Brock--Mirman & \lean{brockMirman\_abs\_log\_likelihood\_sub\_le} \\
+\midrule
+\multicolumn{2}{@{}l}{\emph{\lean{Econometrics/CompactCounterexample}}} \\
+Example~\ref{ex:compact}: the density $f$, $c_0 \ge 1$ & \lean{bumpDensity\_eq\_c0}, \lean{one\_le\_c0} \\
+Example~\ref{ex:compact}: density of $\gamma v$ & \lean{map\_scale\_withDensity} \\
+Example~\ref{ex:compact}: $L - L_j$ and $\log L - \log L_j$ & \lean{lik\_sub\_lik}, \lean{log\_lik\_sub\_log\_lik} \\
+Example~\ref{ex:compact}: no linear bound; $M < 1$ & \lean{not\_exists\_linear\_bound\_lik\_sub}, \\
+ & \lean{tendsto\_lik\_sub\_zero} \\
 \midrule
 \multicolumn{2}{@{}l}{\emph{\lean{Econometrics/NewKeynesian}}} \\
 NK, Rotemberg: no predetermined variable & \lean{RotembergNK.conds\_congr} \\
@@ -903,8 +911,10 @@ in the general theorem.
 
 \noindent Not formalised in any of the repositories: smooth dependence of the policy on the shock
 scale $\sigma$; and the existence of a Markov equilibrium of the nonlinear New Keynesian model,
-which is assumed, as FRS assume a policy function exists. Example~\ref{ex:compact} is verified only through its algebraic core
-(\lean{log\_prod\_div\_prod\_const}, and Proposition~\ref{prop:gap}); the construction of the
-density $f$ is not formalised.
+which is assumed, as FRS assume a policy function exists. For Example~\ref{ex:compact}, the density $f$ is
+constructed as a normalised smooth bump (\lean{bumpDensity}): smooth, positive exactly on
+$(0,1)$, integrating to one and constant on $[\frac14, \frac34]$. FRS's assumptions are not stated
+as a formal list, so the claim that the example satisfies them rests on these verified
+properties of $f$, $g$ and $g_j$.
 
 \end{document}
