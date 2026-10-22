@@ -837,6 +837,12 @@ Proposition~\ref{prop:local} & \lean{local\_contraction} \\
 Brock--Mirman: contraction & \lean{brockMirman\_contraction} \\
 Brock--Mirman: invariant rectangle & \lean{brockMirman\_mapsTo} \\
 \midrule
+\multicolumn{2}{@{}l}{\emph{\lean{Econometrics/AdaptedNorm}}} \\
+Adapted norm (remark after Proposition~\ref{prop:local}) & \lean{exists\_adapted\_norm} \\
+\midrule
+\multicolumn{2}{@{}l}{\emph{\lean{Econometrics/BrockMirmanLikelihood}}} \\
+Theorem~\ref{thm:prim} for Brock--Mirman & \lean{brockMirman\_abs\_log\_likelihood\_sub\_le} \\
+\midrule
 \multicolumn{2}{@{}l}{\emph{\lean{Econometrics/NewKeynesian}}} \\
 NK, Rotemberg: no predetermined variable & \lean{RotembergNK.conds\_congr} \\
 NK, Rotemberg: state is the shock vector & \lean{RotembergNK.statePath\_eq} \\
@@ -859,9 +865,10 @@ companion LeanEconomics repositories (\lean{DynamicProgramming}, which includes 
 \item \emph{Spectral radius and norms.} Gelfand's formula for real matrices and its consequence
 $\|A^k\| \le C\gamma^k$ for every $\gamma$ above the spectral radius
 (\lean{exists\_norm\_pow\_le}), and that the associated affine map is an eventual contraction
-(\lean{exists\_isContractionOn\_iterate\_affineOp}). The adapted norm cited from
-\citet{HornJohnson2013} is one step further, $\|x\|_* = \sup_k \gamma^{-k}\|A^k x\|$, and is not
-yet formalised.
+(\lean{exists\_isContractionOn\_iterate\_affineOp}). Building on the first, the adapted norm cited
+from \citet{HornJohnson2013}, $\|x\|_* = \sup_k \gamma^{-k}\|A^k x\|$, is formalised here
+(\lean{exists\_adapted\_norm}): it is equivalent to the sup norm, and in it $\|Ax\|_* \le
+\gamma\|x\|_*$ for every $\gamma$ above the spectral radius.
 \item \emph{The stable root of the growth model.} For the deterministic one-sector growth model with
 general concave utility and technology, the real business cycle model without labour supply, the
 linearised Euler equation has one root in $(0,1)$ and one above $1/\beta$, and the derivative of
@@ -886,11 +893,17 @@ distribution, assumed in Theorem~\ref{thm:coupling}, for the stochastic growth m
 (\lean{growth\_invariant\_unique}) and under Condition~M (\lean{theorem\_11\_12}).
 \end{itemize}
 
-\noindent Not formalised in any of the repositories: the adapted norm itself; smooth dependence of
-the policy on the shock scale $\sigma$; the existence of a Markov equilibrium of the nonlinear New
-Keynesian model, which is assumed, as FRS assume a policy function exists; and the step that
-instantiates Theorem~\ref{thm:prim} on the Brock--Mirman rectangle with the weighted metric, of
-which the contraction and invariance are verified but the metric-space construction is not. Example~\ref{ex:compact} is verified only through its algebraic core
+\noindent Theorem~\ref{thm:prim} is also instantiated for the Brock--Mirman model
+(\lean{brockMirman\_abs\_log\_likelihood\_sub\_le}): the state space is the compact invariant
+rectangle in $(\log k, \lambda\log z)$ with the sup metric, that is the weighted metric
+$\max(|\Delta\log k|, \lambda|\Delta\log z|)$, in which the transition contracts for every shock
+with factor $\max(\theta + 1/\lambda, \rho_z) < 1$ once $\lambda > 1/(1-\theta)$; the computed
+transition, the densities and the uniqueness of the invariant distributions remain hypotheses, as
+in the general theorem.
+
+\noindent Not formalised in any of the repositories: smooth dependence of the policy on the shock
+scale $\sigma$; and the existence of a Markov equilibrium of the nonlinear New Keynesian model,
+which is assumed, as FRS assume a policy function exists. Example~\ref{ex:compact} is verified only through its algebraic core
 (\lean{log\_prod\_div\_prod\_const}, and Proposition~\ref{prop:gap}); the construction of the
 density $f$ is not formalised.
 

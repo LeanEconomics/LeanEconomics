@@ -159,3 +159,5 @@ import LeanEconomics.Econometrics.ApproxLikelihoodModel
 import LeanEconomics.Econometrics.ApproxPosterior
 import LeanEconomics.Econometrics.LocalContraction
 import LeanEconomics.Econometrics.NewKeynesian
+import LeanEconomics.Econometrics.AdaptedNorm
+import LeanEconomics.Econometrics.BrockMirmanLikelihood
