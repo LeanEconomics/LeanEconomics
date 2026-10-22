@@ -903,7 +903,14 @@ locally unique Markov equilibrium in $(\Delta_{t-1}, s_t)$ that is $C^2$ in the 
 (\lean{markov\_equilibrium}, \lean{markov\_equilibrium\_general}). On a general filtered probability
 space it is adapted and unique among bounded processes (\lean{seq\_existence\_ae\_adapted}), with a
 Markov representation for autoregressive shocks with any bounded innovation law
-(\lean{ar1\_markov\_representation}). These results assume no government purchases.
+(\lean{ar1\_markov\_representation}). These results assume no government purchases. For the exact
+Rotemberg model, a Markov equilibrium that is a function of the exogenous state alone exists and
+is locally unique, for small enough shocks, if and only if the Taylor principle holds in the
+Rotemberg slope, on every state space and almost surely on filtered probability spaces, with a
+Markov representation for autoregressive shocks
+(\lean{NonlinearRotembergMarkov.markov\_equilibrium\_general},
+\lean{NonlinearRotembergAR1.ar1\_markov\_representation}); it is $C^\infty$ in the shock scale
+(\lean{NonlinearRotembergSmooth.markov\_equilibrium\_smooth}).
 \item \emph{Brock--Mirman.} The closed-form policy $k' = \theta\beta z k^\theta$ is the unique
 maximiser of the Bellman equation (\lean{stoch\_argmax\_unique}).
 \item \emph{Invariant distributions.} Krylov--Bogolyubov for Feller kernels on compact spaces
@@ -920,11 +927,11 @@ factor $\max(\theta, \rho_z + 1/\lambda) < 1$ once $\lambda > 1/(1-\rho_z)$; the
 transition, the densities and the uniqueness of the invariant distributions remain hypotheses, as
 in the general theorem.
 
-\noindent Not formalised in any of the repositories: the existence of a Markov equilibrium of the
-nonlinear New Keynesian model with Rotemberg pricing, used for the global argument in
-Appendix~\ref{app:prim} and assumed there, as FRS assume a policy function exists. The Calvo
-result above is local, for small shocks, which is the case Appendix~\ref{app:prim} uses for Calvo
-pricing. For Example~\ref{ex:compact}, the density $f$ is
+\noindent What remains unformalised is the existence of a Markov equilibrium of the nonlinear New
+Keynesian models for shocks that are not small: both the Calvo and the Rotemberg results above are
+local. For Rotemberg pricing, given a Markov equilibrium, the contraction of
+Appendix~\ref{app:prim} holds for every state, since the state is the vector of exogenous shocks.
+For Example~\ref{ex:compact}, the density $f$ is
 constructed as a normalised smooth bump (\lean{bumpDensity}): smooth, positive exactly on
 $(0,1)$, integrating to one and constant on $[\frac14, \frac34]$. FRS's assumptions are not stated
 as a formal list, so the claim that the example satisfies them rests on these verified
