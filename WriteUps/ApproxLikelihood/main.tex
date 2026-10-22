@@ -895,9 +895,9 @@ distribution, assumed in Theorem~\ref{thm:coupling}, for the stochastic growth m
 
 \noindent Theorem~\ref{thm:prim} is also instantiated for the Brock--Mirman model
 (\lean{brockMirman\_abs\_log\_likelihood\_sub\_le}): the state space is the compact invariant
-rectangle in $(\log k, \lambda\log z)$ with the sup metric, that is the weighted metric
-$\max(|\Delta\log k|, \lambda|\Delta\log z|)$, in which the transition contracts for every shock
-with factor $\max(\theta + 1/\lambda, \rho_z) < 1$ once $\lambda > 1/(1-\theta)$; the computed
+rectangle with the weighted metric of Remark~\ref{rem:metric},
+$|\Delta\log k| + \lambda|\Delta\log z|$, in which the transition contracts for every shock with
+factor $\max(\theta, \rho_z + 1/\lambda) < 1$ once $\lambda > 1/(1-\rho_z)$; the computed
 transition, the densities and the uniqueness of the invariant distributions remain hypotheses, as
 in the general theorem.
 
