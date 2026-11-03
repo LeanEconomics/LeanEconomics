@@ -162,3 +162,7 @@ import LeanEconomics.Econometrics.NewKeynesian
 import LeanEconomics.Econometrics.AdaptedNorm
 import LeanEconomics.Econometrics.BrockMirmanLikelihood
 import LeanEconomics.Econometrics.CompactCounterexample
+import LeanEconomics.FixedPoint.BrouwerRetraction
+import LeanEconomics.FixedPoint.BrouwerBall
+import LeanEconomics.FixedPoint.Brouwer
+import LeanEconomics.FixedPoint.SchauderTychonoff
