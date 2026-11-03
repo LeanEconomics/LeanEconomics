@@ -170,3 +170,5 @@ import LeanEconomics.KrusellSmith.Model
 import LeanEconomics.KrusellSmith.Household
 import LeanEconomics.KrusellSmith.Continuity
 import LeanEconomics.KrusellSmith.Policy
+import LeanEconomics.KrusellSmith.Distribution
+import LeanEconomics.KrusellSmith.Equilibrium
