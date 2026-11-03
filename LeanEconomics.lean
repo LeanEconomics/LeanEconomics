@@ -173,3 +173,4 @@ import LeanEconomics.KrusellSmith.Policy
 import LeanEconomics.KrusellSmith.Distribution
 import LeanEconomics.KrusellSmith.Equilibrium
 import LeanEconomics.KrusellSmith.Labour
+import LeanEconomics.KrusellSmith.Inada
