@@ -167,3 +167,4 @@ import LeanEconomics.FixedPoint.BrouwerBall
 import LeanEconomics.FixedPoint.Brouwer
 import LeanEconomics.FixedPoint.SchauderTychonoff
 import LeanEconomics.KrusellSmith.Model
+import LeanEconomics.KrusellSmith.Household
