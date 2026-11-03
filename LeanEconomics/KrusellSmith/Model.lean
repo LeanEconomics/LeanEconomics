@@ -23,7 +23,10 @@ unemployment rises in recessions. A household in state `e` supplies `efficiency 
 inelastically, saves in capital with `0 ≤ a' ≤ assetCap`, and discounts at `discount`. The gross
 return and the wage are given functions of the aggregate shock, aggregate capital and aggregate
 labour, continuous and bounded; with Cobb–Douglas production they are the marginal products,
-clamped to a compact range (removing the clamp is a later step).
+clamped to a compact range (removing the clamp is a later step). Consumption may be required to
+stay above a floor `consFloor` that labour income alone affords: the floor is `0` when utility is
+finite at zero consumption, and a positive level that never binds at the optimum when utility
+falls to `-∞` there (log and CRRA with `σ ≥ 1`, `LeanEconomics.KrusellSmith.KSInada`).
 
 **The tree of histories.** From a given initial shock `z₀`, a node is the list of shocks drawn
 since, newest first: the root is `[]` and the children of `h` are `z' :: h`. `shockAt z₀ h` is the
@@ -65,11 +68,6 @@ structure KSModel (Z E : Type*) [Fintype Z] [Fintype E] where
   discount : ℝ
   discount_pos : 0 < discount
   discount_lt_one : discount < 1
-  /-- Period utility of consumption. -/
-  utility : ℝ → ℝ
-  continuousOn_utility : ContinuousOn utility (Ici 0)
-  strictConcaveOn_utility : StrictConcaveOn ℝ (Ici 0) utility
-  monotoneOn_utility : MonotoneOn utility (Ici 0)
   /-- The gross return on capital, as a function of the aggregate shock, aggregate capital and
   aggregate labour. -/
   grossReturn : Z → ℝ → ℝ → ℝ
@@ -85,6 +83,17 @@ structure KSModel (Z E : Type*) [Fintype Z] [Fintype E] where
   /-- An upper bound on the wage. -/
   wageBound : ℝ
   wage_le : ∀ z K L, wage z K L ≤ wageBound
+  /-- A floor on consumption: `0` for utility finite at zero consumption; positive, and slack at
+  the optimum, for utility that falls to `-∞` there (`LeanEconomics.KrusellSmith.KSInada`). -/
+  consFloor : ℝ
+  consFloor_nonneg : 0 ≤ consFloor
+  /-- Labour income alone affords the floor. -/
+  consFloor_le_income : ∀ z K L e, consFloor ≤ wage z K L * efficiency e
+  /-- Period utility of consumption. -/
+  utility : ℝ → ℝ
+  continuousOn_utility : ContinuousOn utility (Ici consFloor)
+  strictConcaveOn_utility : StrictConcaveOn ℝ (Ici consFloor) utility
+  monotoneOn_utility : MonotoneOn utility (Ici consFloor)
 
 /-- The aggregate shock at node `h` of the tree of histories started at `z₀`: the newest shock
 drawn, or `z₀` at the root. -/

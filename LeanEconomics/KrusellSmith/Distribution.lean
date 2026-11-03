@@ -81,9 +81,17 @@ theorem continuous_nextA_joint (h : List Z) (e' : E) :
     Continuous fun p : (List Z → ℝ) × M.AState => M.nextA z₀ m₀ p.1 h e' p.2 := by
   have hlab : Continuous fun i : Idio E => (⟨i.idio, h⟩ : Label Z E) :=
     continuous_of_discreteTopology
+  have hp : Continuous fun p : (List Z → ℝ) × M.AState =>
+      M.policy z₀ m₀ p.1 (p.2.1, ⟨p.2.2.idio, h⟩) :=
+    Continuous.comp (g := fun q : (List Z → ℝ) × M.State => M.policy z₀ m₀ q.1 q.2)
+      (f := fun p : (List Z → ℝ) × M.AState => (p.1, (p.2.1, (⟨p.2.2.idio, h⟩ : Label Z E))))
+      (M.continuous_policy z₀ m₀)
+      (continuous_fst.prodMk ((continuous_fst.comp continuous_snd).prodMk
+        (hlab.comp (continuous_snd.comp continuous_snd))))
+  have hc : Continuous M.clampAssets := by unfold clampAssets; exact continuous_projIcc
   refine Continuous.prodMk ?_ continuous_const
-  exact continuous_projIcc.comp ((M.continuous_policy z₀ m₀).comp (continuous_fst.prodMk
-    ((continuous_fst.comp continuous_snd).prodMk (hlab.comp (continuous_snd.comp continuous_snd)))))
+  exact Continuous.comp (g := M.clampAssets)
+    (f := fun p : (List Z → ℝ) × M.AState => M.policy z₀ m₀ p.1 (p.2.1, ⟨p.2.2.idio, h⟩)) hc hp
 
 theorem continuous_nextA (K : List Z → ℝ) (h : List Z) (e' : E) :
     Continuous (M.nextA z₀ m₀ K h e') :=

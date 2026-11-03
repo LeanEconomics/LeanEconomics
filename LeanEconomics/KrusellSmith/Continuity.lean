@@ -190,13 +190,13 @@ noncomputable def nodeCash (e : E) (h : List Z) (x : ↥(Icc (0 : ℝ) M.assetCa
 
 /-- The feasible savings at node `h`, as a function of assets and of capital at that node. -/
 def nodeFeasible (e : E) (h : List Z) (x : ↥(Icc (0 : ℝ) M.assetCap) × ℝ) : Set ℝ :=
-  Icc 0 (min M.assetCap (M.nodeCash z₀ m₀ e h x))
+  Icc 0 (min M.assetCap (M.nodeCash z₀ m₀ e h x - M.consFloor))
 
 /-- The household's objective at node `h` with continuation value `v`, as a function of assets
 and of capital at that node. -/
 noncomputable def nodeObjective (v : M.State →ᵇ ℝ) (e : E) (h : List Z)
     (x : ↥(Icc (0 : ℝ) M.assetCap) × ℝ) (a' : ℝ) : ℝ :=
-  M.utility (max 0 (min M.maxCash (M.nodeCash z₀ m₀ e h x - a')))
+  M.utility (max M.consFloor (min (max M.consFloor M.maxCash) (M.nodeCash z₀ m₀ e h x - a')))
     + M.discount * ∑ ze : Z × E, M.aggProb (shockAt z₀ h) ze.1
         * M.idioProb (shockAt z₀ h) ze.1 e ze.2 * v (M.clampAssets a', ⟨ze.2, ze.1 :: h⟩)
 
@@ -215,31 +215,32 @@ theorem continuous_nodeCash (e : E) (h : List Z) : Continuous (M.nodeCash z₀ m
     (M.continuous_wage _).comp (continuous_snd.prodMk continuous_const)
   exact (hR.mul (continuous_subtype_val.comp continuous_fst)).add (hw.mul continuous_const)
 
-theorem nodeCash_nonneg (e : E) (h : List Z) (x : ↥(Icc (0 : ℝ) M.assetCap) × ℝ) :
-    0 ≤ M.nodeCash z₀ m₀ e h x :=
-  add_nonneg (mul_nonneg (M.grossReturn_nonneg _ _ _) x.1.2.1)
-    (mul_nonneg (M.wage_nonneg _ _ _) (M.efficiency_nonneg _))
+theorem consFloor_le_nodeCash (e : E) (h : List Z) (x : ↥(Icc (0 : ℝ) M.assetCap) × ℝ) :
+    M.consFloor ≤ M.nodeCash z₀ m₀ e h x :=
+  (M.consFloor_le_income _ _ _ _).trans
+    (le_add_of_nonneg_left (mul_nonneg (M.grossReturn_nonneg _ _ _) x.1.2.1))
 
 theorem continuous_nodeObjective (v : M.State →ᵇ ℝ) (e : E) (h : List Z) :
     Continuous ↿(M.nodeObjective z₀ m₀ v e h) := by
   have hc : Continuous fun q : (↥(Icc (0 : ℝ) M.assetCap) × ℝ) × ℝ =>
-      max 0 (min M.maxCash (M.nodeCash z₀ m₀ e h q.1 - q.2)) :=
+      max M.consFloor (min (max M.consFloor M.maxCash) (M.nodeCash z₀ m₀ e h q.1 - q.2)) :=
     continuous_const.max (continuous_const.min
       (((M.continuous_nodeCash z₀ m₀ e h).comp continuous_fst).sub continuous_snd))
   have hu : Continuous fun q : (↥(Icc (0 : ℝ) M.assetCap) × ℝ) × ℝ =>
-      M.utility (max 0 (min M.maxCash (M.nodeCash z₀ m₀ e h q.1 - q.2))) :=
+      M.utility (max M.consFloor
+        (min (max M.consFloor M.maxCash) (M.nodeCash z₀ m₀ e h q.1 - q.2))) :=
     (M.continuousOn_utility.mono Icc_subset_Ici_self).comp_continuous hc fun q =>
-      ⟨le_max_left _ _, max_le_max le_rfl (min_le_left _ _)⟩
+      ⟨le_max_left _ _, max_le (le_max_left _ _) (min_le_left _ _)⟩
   refine hu.add (continuous_const.mul (continuous_finsetSum _ fun ze _ => ?_))
   exact continuous_const.mul (v.continuous.comp
     ((continuous_projIcc.comp continuous_snd).prodMk continuous_const))
 
 theorem continuous_nodeMax (v : M.State →ᵇ ℝ) (e : E) (h : List Z) :
     Continuous (maxValue (M.nodeObjective z₀ m₀ v e h) (M.nodeFeasible z₀ m₀ e h)) := by
-  have hg : Continuous fun x => min M.assetCap (M.nodeCash z₀ m₀ e h x) :=
-    continuous_const.min (M.continuous_nodeCash z₀ m₀ e h)
-  have hg0 : ∀ x, (0 : ℝ) ≤ min M.assetCap (M.nodeCash z₀ m₀ e h x) := fun x =>
-    le_min M.assetCap_pos.le (M.nodeCash_nonneg z₀ m₀ e h x)
+  have hg : Continuous fun x => min M.assetCap (M.nodeCash z₀ m₀ e h x - M.consFloor) :=
+    continuous_const.min ((M.continuous_nodeCash z₀ m₀ e h).sub continuous_const)
+  have hg0 : ∀ x, (0 : ℝ) ≤ min M.assetCap (M.nodeCash z₀ m₀ e h x - M.consFloor) := fun x =>
+    le_min M.assetCap_pos.le (sub_nonneg.2 (M.consFloor_le_nodeCash z₀ m₀ e h x))
   exact continuous_maxValue (M.continuous_nodeObjective z₀ m₀ v e h)
     (fun x => nonempty_Icc.2 (hg0 x)) (fun _ => isCompact_Icc)
     (upperHemicontinuous_Icc continuous_const hg) (lowerHemicontinuous_Icc continuous_const hg hg0)
@@ -275,7 +276,7 @@ theorem continuousAt_weighted_bellman (K₀ : List Z → ℝ) :
   -- a bound on the unweighted operator that does not depend on the path
   set Rb := M.exists_bound_utility.choose with hRbdef
   have hRb := M.exists_bound_utility.choose_spec
-  have hRb0 : 0 ≤ Rb := (norm_nonneg _).trans (hRb 0 ⟨le_rfl, le_max_left _ _⟩)
+  have hRb0 : 0 ≤ Rb := (norm_nonneg _).trans (hRb M.consFloor ⟨le_rfl, le_max_left _ _⟩)
   set C := Rb + M.discount * ‖V₀‖ with hC
   have hC0 : 0 ≤ C := add_nonneg hRb0 (mul_nonneg M.discount_pos.le (norm_nonneg _))
   have hbound : ∀ K s, |(M.household z₀ m₀ K).bellman V₀ s| ≤ C := by

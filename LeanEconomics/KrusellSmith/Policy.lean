@@ -93,15 +93,17 @@ theorem concaveOn_bellman (K : List Z → ℝ) (v : M.State →ᵇ ℝ)
         rw [← add_mul, hθφ, one_mul]
       linarith [mul_le_mul_of_nonneg_left haxI.2 hθ, mul_le_mul_of_nonneg_left hayI.2 hφ]
     · rw [hcmix]
-      nlinarith [mul_le_mul_of_nonneg_left (hax.2.trans (min_le_right _ _)) hθ,
+      have hfl : θ * M.consFloor + φ * M.consFloor = M.consFloor := by
+        rw [← add_mul, hθφ, one_mul]
+      linarith [mul_le_mul_of_nonneg_left (hax.2.trans (min_le_right _ _)) hθ,
         mul_le_mul_of_nonneg_left (hay.2.trans (min_le_right _ _)) hφ]
   have hle := D.le_bellmanFn v hfeas
   rw [M.objective_eq z₀ m₀ K v hfeas] at hle
   -- utility is concave
-  have hc0x : 0 ≤ M.cash z₀ m₀ K (M.clampAssets x, l) - ax :=
-    sub_nonneg.2 (hax.2.trans (min_le_right _ _))
-  have hc0y : 0 ≤ M.cash z₀ m₀ K (M.clampAssets y, l) - ay :=
-    sub_nonneg.2 (hay.2.trans (min_le_right _ _))
+  have hc0x : M.consFloor ≤ M.cash z₀ m₀ K (M.clampAssets x, l) - ax :=
+    le_sub_comm.1 (hax.2.trans (min_le_right _ _))
+  have hc0y : M.consFloor ≤ M.cash z₀ m₀ K (M.clampAssets y, l) - ay :=
+    le_sub_comm.1 (hay.2.trans (min_le_right _ _))
   have hu := M.strictConcaveOn_utility.concaveOn.2 (mem_Ici.2 hc0x) (mem_Ici.2 hc0y) hθ hφ hθφ
   simp only [smul_eq_mul] at hu
   have hcons : M.cash z₀ m₀ K (M.clampAssets (θ * x + φ * y), l) - (θ * ax + φ * ay)
@@ -173,8 +175,8 @@ theorem optimal_saving_unique (K : List Z → ℝ) {s : M.State} {a₀ a₁ : �
     exact h
   have h₀I := M.mem_Icc_of_mem_feasible z₀ m₀ K h₀
   have h₁I := M.mem_Icc_of_mem_feasible z₀ m₀ K h₁
-  have hc₀ : 0 ≤ M.cash z₀ m₀ K s - a₀ := sub_nonneg.2 (h₀.2.trans (min_le_right _ _))
-  have hc₁ : 0 ≤ M.cash z₀ m₀ K s - a₁ := sub_nonneg.2 (h₁.2.trans (min_le_right _ _))
+  have hc₀ : M.consFloor ≤ M.cash z₀ m₀ K s - a₀ := le_sub_comm.1 (h₀.2.trans (min_le_right _ _))
+  have hc₁ : M.consFloor ≤ M.cash z₀ m₀ K s - a₁ := le_sub_comm.1 (h₁.2.trans (min_le_right _ _))
   have hcne : M.cash z₀ m₀ K s - a₀ ≠ M.cash z₀ m₀ K s - a₁ := fun h => hne (by linarith)
   have hu := M.strictConcaveOn_utility.2 (mem_Ici.2 hc₀) (mem_Ici.2 hc₁) hcne hhalf hhalf hsum
   simp only [smul_eq_mul] at hu
@@ -296,18 +298,21 @@ theorem continuous_policy :
   set Γ : (List Z → ℝ) × M.State → Set ℝ := fun p => (M.household z₀ m₀ p.1).feasible p.2
     with hΓ
   have hcash := M.continuous_cash_joint z₀ m₀
-  have hg : Continuous fun p : (List Z → ℝ) × M.State => min M.assetCap (M.cash z₀ m₀ p.1 p.2) :=
-    continuous_const.min hcash
-  have hg0 : ∀ p : (List Z → ℝ) × M.State, (0 : ℝ) ≤ min M.assetCap (M.cash z₀ m₀ p.1 p.2) :=
-    fun p => le_min M.assetCap_pos.le (M.cash_nonneg z₀ m₀ p.1 p.2)
+  have hg : Continuous fun p : (List Z → ℝ) × M.State =>
+      min M.assetCap (M.cash z₀ m₀ p.1 p.2 - M.consFloor) :=
+    continuous_const.min (hcash.sub continuous_const)
+  have hg0 : ∀ p : (List Z → ℝ) × M.State,
+      (0 : ℝ) ≤ min M.assetCap (M.cash z₀ m₀ p.1 p.2 - M.consFloor) :=
+    fun p => le_min M.assetCap_pos.le (sub_nonneg.2 (M.consFloor_le_cash z₀ m₀ p.1 p.2))
   have hfc : Continuous ↿f := by
     have hc : Continuous fun q : ((List Z → ℝ) × M.State) × ℝ =>
-        max 0 (min M.maxCash (M.cash z₀ m₀ q.1.1 q.1.2 - q.2)) :=
+        max M.consFloor (min (max M.consFloor M.maxCash) (M.cash z₀ m₀ q.1.1 q.1.2 - q.2)) :=
       continuous_const.max (continuous_const.min ((hcash.comp continuous_fst).sub continuous_snd))
     have hu : Continuous fun q : ((List Z → ℝ) × M.State) × ℝ =>
-        M.utility (max 0 (min M.maxCash (M.cash z₀ m₀ q.1.1 q.1.2 - q.2))) :=
+        M.utility (max M.consFloor
+          (min (max M.consFloor M.maxCash) (M.cash z₀ m₀ q.1.1 q.1.2 - q.2))) :=
       (M.continuousOn_utility.mono Icc_subset_Ici_self).comp_continuous hc fun q =>
-        ⟨le_max_left _ _, max_le_max le_rfl (min_le_left _ _)⟩
+        ⟨le_max_left _ _, max_le (le_max_left _ _) (min_le_left _ _)⟩
     have hV := M.continuous_valueFunction_joint z₀ m₀
     have hexp : Continuous fun q : ((List Z → ℝ) × M.State) × ℝ =>
         ∑ ze : Z × E, M.shockProb z₀ ze (q.1.2, q.2)

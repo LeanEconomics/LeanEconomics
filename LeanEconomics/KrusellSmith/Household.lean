@@ -18,11 +18,11 @@ program, an instance of `LeanEconomics.StochasticDynamicProgram`:
 * the **state** is the asset holding `a ∈ [0, assetCap]` together with a discrete **label**
   carrying the idiosyncratic state `e` and the node `h`;
 * the **action** is next period's asset holding `a'`, feasible in
-  `[0, min(assetCap, R_h a + w_h e)]`;
+  `[0, min(assetCap, R_h a + w_h e − c̲)]`, where `c̲` is the consumption floor `consFloor`;
 * the **shock** is the pair `(z', e')`, with probability `aggProb z_h z' * idioProb z_h z' e e'`,
   and it moves the label to `(e', z' :: h)`;
 * the **reward** is utility of consumption `R_h a + w_h e − a'`. The framework asks for a reward
-  bounded and continuous at every action, so consumption is clamped to `[0, c̄]` with `c̄` the
+  bounded and continuous at every action, so consumption is clamped to `[c̲, c̄]` with `c̄` the
   largest cash on hand anywhere; on feasible actions the clamp does nothing
   (`reward_eq_of_mem_feasible`).
 
@@ -80,8 +80,9 @@ noncomputable def wageAt (h : List Z) : ℝ :=
 noncomputable def cash (s : M.State) : ℝ :=
   M.returnAt z₀ m₀ K s.2.node * s.1 + M.wageAt z₀ m₀ K s.2.node * M.efficiency s.2.idio
 
-/-- The largest feasible saving: cash on hand, capped at `assetCap`. -/
-noncomputable def maxSaving (s : M.State) : ℝ := min M.assetCap (M.cash z₀ m₀ K s)
+/-- The largest feasible saving: cash on hand less the consumption floor, capped at
+`assetCap`. -/
+noncomputable def maxSaving (s : M.State) : ℝ := min M.assetCap (M.cash z₀ m₀ K s - M.consFloor)
 
 theorem cash_nonneg (s : M.State) : 0 ≤ M.cash z₀ m₀ K s :=
   add_nonneg (mul_nonneg (M.grossReturn_nonneg _ _ _) s.1.2.1)
@@ -105,8 +106,12 @@ theorem cash_le_maxCash (s : M.State) : M.cash z₀ m₀ K s ≤ M.maxCash := by
     mul_le_mul hw heff he (hw0.trans hw)
   linarith
 
+theorem consFloor_le_cash (s : M.State) : M.consFloor ≤ M.cash z₀ m₀ K s :=
+  (M.consFloor_le_income _ _ _ _).trans
+    (le_add_of_nonneg_left (mul_nonneg (M.grossReturn_nonneg _ _ _) s.1.2.1))
+
 theorem maxSaving_nonneg (s : M.State) : 0 ≤ M.maxSaving z₀ m₀ K s :=
-  le_min M.assetCap_pos.le (M.cash_nonneg z₀ m₀ K s)
+  le_min M.assetCap_pos.le (sub_nonneg.2 (M.consFloor_le_cash z₀ m₀ K s))
 
 theorem continuous_cash : Continuous (M.cash z₀ m₀ K) := by
   have hR : Continuous fun s : M.State => M.returnAt z₀ m₀ K s.2.node :=
@@ -119,19 +124,20 @@ theorem continuous_cash : Continuous (M.cash z₀ m₀ K) := by
   exact (hR.mul (continuous_subtype_val.comp continuous_fst)).add hw
 
 theorem continuous_maxSaving : Continuous (M.maxSaving z₀ m₀ K) :=
-  continuous_const.min (M.continuous_cash z₀ m₀ K)
+  continuous_const.min ((M.continuous_cash z₀ m₀ K).sub continuous_const)
 
-/-- Consumption, clamped to `[0, max 0 maxCash]`: the argument of utility in the reward. -/
+/-- Consumption, clamped to `[consFloor, max consFloor maxCash]`: the argument of utility in the
+reward. -/
 noncomputable def clampedConsumption (p : M.State × ℝ) : ℝ :=
-  max 0 (min M.maxCash (M.cash z₀ m₀ K p.1 - p.2))
+  max M.consFloor (min (max M.consFloor M.maxCash) (M.cash z₀ m₀ K p.1 - p.2))
 
 theorem continuous_clampedConsumption : Continuous (M.clampedConsumption z₀ m₀ K) :=
   continuous_const.max (continuous_const.min
     (((M.continuous_cash z₀ m₀ K).comp continuous_fst).sub continuous_snd))
 
 theorem clampedConsumption_mem (p : M.State × ℝ) :
-    M.clampedConsumption z₀ m₀ K p ∈ Icc 0 (max 0 M.maxCash) :=
-  ⟨le_max_left _ _, max_le_max le_rfl (min_le_left _ _)⟩
+    M.clampedConsumption z₀ m₀ K p ∈ Icc M.consFloor (max M.consFloor M.maxCash) :=
+  ⟨le_max_left _ _, max_le (le_max_left _ _) (min_le_left _ _)⟩
 
 theorem continuous_rewardFn :
     Continuous fun p : M.State × ℝ => M.utility (M.clampedConsumption z₀ m₀ K p) :=
@@ -139,7 +145,7 @@ theorem continuous_rewardFn :
     (M.continuous_clampedConsumption z₀ m₀ K) (M.clampedConsumption_mem z₀ m₀ K)
 
 theorem exists_bound_utility :
-    ∃ C, ∀ c ∈ Icc (0 : ℝ) (max 0 M.maxCash), ‖M.utility c‖ ≤ C :=
+    ∃ C, ∀ c ∈ Icc M.consFloor (max M.consFloor M.maxCash), ‖M.utility c‖ ≤ C :=
   isCompact_Icc.exists_bound_of_continuousOn (M.continuousOn_utility.mono Icc_subset_Ici_self)
 
 /-- The household's **reward**: utility of clamped consumption, bounded and continuous. -/
@@ -193,15 +199,15 @@ noncomputable def household : StochasticDynamicProgram M.State ℝ (Z × E) wher
   discount := ⟨M.discount, M.discount_pos.le⟩
   discount_lt_one := M.discount_lt_one
 
-/-- On feasible choices consumption is in `[0, maxCash]`, so the clamp does nothing and the
+/-- On feasible choices consumption is in `[consFloor, maxCash]`, so the clamp does nothing and the
 reward is utility of consumption. -/
 theorem reward_eq_of_mem_feasible {s : M.State} {a : ℝ}
     (ha : a ∈ (M.household z₀ m₀ K).feasible s) :
     (M.household z₀ m₀ K).reward (s, a) = M.utility (M.cash z₀ m₀ K s - a) := by
   change M.utility (M.clampedConsumption z₀ m₀ K (s, a)) = _
-  have h1 : 0 ≤ M.cash z₀ m₀ K s - a := sub_nonneg.2 (ha.2.trans (min_le_right _ _))
-  have h2 : M.cash z₀ m₀ K s - a ≤ M.maxCash :=
-    (sub_le_self _ ha.1).trans (M.cash_le_maxCash z₀ m₀ K s)
+  have h1 : M.consFloor ≤ M.cash z₀ m₀ K s - a := le_sub_comm.1 (ha.2.trans (min_le_right _ _))
+  have h2 : M.cash z₀ m₀ K s - a ≤ max M.consFloor M.maxCash :=
+    ((sub_le_self _ ha.1).trans (M.cash_le_maxCash z₀ m₀ K s)).trans (le_max_right _ _)
   simp only [clampedConsumption, min_eq_right h2, max_eq_right h1]
 
 /-- On feasible choices next period's assets are the choice itself. -/
