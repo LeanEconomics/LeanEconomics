@@ -60,7 +60,7 @@ noncomputable def specRad (A : Matrix X X ℝ) : ℝ := (spectralRadius ℂ (com
 theorem spectralRadius_complexify_ne_top [Nonempty X] (A : Matrix X X ℝ) :
     spectralRadius ℂ (complexify A) ≠ ⊤ := by
   classical
-  exact ne_top_of_le_ne_top ENNReal.coe_ne_top (spectrum.spectralRadius_le_nnnorm (complexify A))
+  exact ne_top_of_le_ne_top ENNReal.coe_ne_top (spectralRadius_le_nnnorm (complexify A))
 
 theorem specRad_nonneg (A : Matrix X X ℝ) : 0 ≤ specRad A := ENNReal.toReal_nonneg
 

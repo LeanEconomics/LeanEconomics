@@ -57,13 +57,13 @@ def truncRegions (K : ℕ) (hslack : P.SlackUpTo K) : P.StageRegions where
   maps := fun k a ha z => by
     by_cases hk : k + 1 ≤ K
     · have hk' : k ≤ K := by omega
-      simp only [hk, if_true] at ha
-      simp only [hk', if_true]
+      simp only [hk, ite_true] at ha
+      simp only [hk', ite_true]
       exact P.stagePolicy_mem_region _ _
     · simp [hk] at ha
   slack := fun k a ha z => by
     by_cases hk : k ≤ K
-    · simp only [hk, if_true] at ha
+    · simp only [hk, ite_true] at ha
       exact hslack k hk a ha z
     · simp [hk] at ha
 

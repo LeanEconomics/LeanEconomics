@@ -53,7 +53,7 @@ theorem monotoneOn_of_local {f : ℝ → ℝ} {lo hi ε : ℝ} (hε : 0 < ε)
       intro x hx y hy hxy hle
       by_cases hshort : y - x ≤ ε
       · exact h x hx y hy hxy hshort
-      · push_neg at hshort
+      · push Not at hshort
         set m : ℝ := y - ε with hm
         have hxm : x ≤ m := by rw [hm]; linarith
         have hmy : m ≤ y := by rw [hm]; linarith

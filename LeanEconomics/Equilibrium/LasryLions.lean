@@ -199,7 +199,7 @@ abbrev Path (X : Type*) (T : ℕ) := Fin (T + 1) → X
 /-- The date-`t` marginal of a distribution over paths. -/
 noncomputable def marginal (η : ProbabilityMeasure (Path X T)) (t : Fin (T + 1)) :
     ProbabilityMeasure X :=
-  η.map (measurable_pi_apply t).aemeasurable
+  η.map fun p => p t
 
 /-- The cost of a path against the marginals `m`: the date-by-date costs added up. -/
 def pathCost (F : Fin (T + 1) → X → ProbabilityMeasure X → ℝ)

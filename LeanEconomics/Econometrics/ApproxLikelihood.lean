@@ -88,7 +88,7 @@ theorem le_exp_div_mul {p q ξ ε : ℝ} (hξ : 0 < ξ) (hp : ξ ≤ p) (h : |q 
 theorem prod_le_exp_sum_mul_prod {ι : Type*} (s : Finset ι) {p q c : ι → ℝ}
     (hq : ∀ t ∈ s, 0 ≤ q t) (h : ∀ t ∈ s, q t ≤ exp (c t) * p t) :
     ∏ t ∈ s, q t ≤ exp (∑ t ∈ s, c t) * ∏ t ∈ s, p t := by
-  calc ∏ t ∈ s, q t ≤ ∏ t ∈ s, (exp (c t) * p t) := prod_le_prod hq h
+  calc ∏ t ∈ s, q t ≤ ∏ t ∈ s, (exp (c t) * p t) := prod_le_prod₀ hq h
     _ = exp (∑ t ∈ s, c t) * ∏ t ∈ s, p t := by rw [prod_mul_distrib, exp_sum]
 
 /-- **The corrected step (14).** If every factor is bounded below by `ξ > 0` and the per-factor
@@ -344,7 +344,7 @@ theorem pow_le_lik [IsProbabilityMeasure Q] [IsProbabilityMeasure P] (hξ : 0 < 
   have hcond : ∀ s ω, ξ ^ Fintype.card ι ≤ condLik p s ω := by
     intro s ω
     rw [← card_univ, ← prod_const]
-    exact prod_le_prod (fun _ _ ↦ hξ.le) (fun t _ ↦ hp t s ω)
+    exact prod_le_prod₀ (fun _ _ ↦ hξ.le) (fun t _ ↦ hp t s ω)
   have hinit : ∀ s, ξ ^ Fintype.card ι ≤ initLik p Q s := by
     intro s
     have := integral_mono (integrable_const (ξ ^ Fintype.card ι)) (hintQ s) (hcond s)

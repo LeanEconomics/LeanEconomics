@@ -136,8 +136,8 @@ theorem exists_coupling [CompactSpace S] [Nonempty S] (hα0 : 0 ≤ α) (hα1 : 
     measurable_fst.comp measurable_subtype_coe
   have hm2 : Measurable fun x : band S (δ / (1 - α)) ↦ x.1.2 :=
     measurable_snd.comp measurable_subtype_coe
-  refine ⟨cpl, hcpl, huniq _ (Measure.isProbabilityMeasure_map hm1.aemeasurable) ?_,
-    huniqj _ (Measure.isProbabilityMeasure_map hm2.aemeasurable) ?_⟩
+  refine ⟨cpl, hcpl, huniq _ inferInstance ?_,
+    huniqj _ inferInstance ?_⟩
   · rw [push_map_marginal ν cpl J.map J.measurable_map _ hm1 φ hφm (fun _ _ ↦ rfl)]
     exact congrArg (Measure.map fun x : band S (δ / (1 - α)) ↦ x.1.1) hinv
   · rw [push_map_marginal ν cpl J.map J.measurable_map _ hm2 φj hφjm (fun _ _ ↦ rfl)]
@@ -242,7 +242,7 @@ theorem condLik_mem_Icc {p : Fin T → S → (ℕ → W) → ℝ} (hξ : 0 < ξ)
     0 ≤ condLik p s ω ∧ condLik p s ω ≤ M ^ T := by
   refine ⟨prod_nonneg fun t _ ↦ (hξ.trans_le (hlo t s ω)).le, ?_⟩
   calc condLik p s ω ≤ ∏ _t : Fin T, M :=
-        prod_le_prod (fun t _ ↦ (hξ.trans_le (hlo t s ω)).le) (fun t _ ↦ hhi t s ω)
+        prod_le_prod₀ (fun t _ ↦ (hξ.trans_le (hlo t s ω)).le) (fun t _ ↦ hhi t s ω)
     _ = M ^ T := by simp
 
 omit [MetricSpace S] [CompactSpace S] [Nonempty S] [BorelSpace S] in

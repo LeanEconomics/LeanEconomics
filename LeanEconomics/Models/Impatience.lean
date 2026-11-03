@@ -332,7 +332,7 @@ theorem exists_policy_assetCap_of_patient (hβR : 1 < (P.discount : ℝ) * (1 + 
     (hpos : ∀ (z : Z), ∀ x ∈ Icc assetFloor assetCap, 0 < P.consumptionFn z x) :
     ∃ z : Z, P.policy (assetCap, z) = assetCap := by
   by_contra hcon
-  push_neg at hcon
+  push Not at hcon
   exact absurd (P.discount_mul_le_one_of_cap_slack hderiv hanti hdupos hpos
     fun z => lt_of_le_of_ne (P.policy_mem_region (assetCap, z)).2 (hcon z)) (by linarith)
 

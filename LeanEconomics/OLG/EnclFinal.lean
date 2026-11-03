@@ -219,7 +219,7 @@ theorem cohortSlope_le_slopeUp {P : IncomeFluctuation (Fin 7) 0 2000} {R : ℕ �
   | zero => intro _; simp [slopeUp]
   | succ k ih =>
     intro hk
-    rw [cohortSlope_succ, slopeUp_cast, if_neg (Nat.succ_ne_zero k), Nat.add_sub_cancel, ← hM.rate]
+    rw [cohortSlope_succ, slopeUp_cast, ite_eq_right (Nat.succ_ne_zero k), Nat.add_sub_cancel, ← hM.rate]
     have hR : (0 : ℝ) < 1 + P.interest := P.interest_gt_neg_one
     have h1 : 1 - P.stageMPC 3 (k + 1) ≤ 1 - (kap : ℝ) := by linarith [hκ (k + 1) hk]
     have h2 : 0 ≤ 1 - P.stageMPC 3 (k + 1) := by
@@ -348,7 +348,7 @@ theorem failV_sound (arr1 arr2 : Array Stage) (hg : gridOK () = true)
   by_cases hk : k + 1 ≤ 59
   · simp only [encRegions, hk, ite_true] at ha
     unfold failV
-    rw [if_pos (show 1 ≤ k + 1 ∧ k + 1 ≤ 59 from ⟨by omega, hk⟩)]
+    rw [ite_eq_left (show 1 ≤ k + 1 ∧ k + 1 ≤ 59 from ⟨by omega, hk⟩)]
     set j := J - 1 - (k + 1) with hj
     have hr1 : reachOf R1 arr1 j < CAP := hreach j (by omega)
     have hrj : reachOf R1 arr1 j ≤ reachR arr1 arr2 j := le_max_left _ _
@@ -407,7 +407,7 @@ theorem failV_sound (arr1 arr2 : Array Stage) (hg : gridOK () = true)
             have := le_maxRange (fun i => if grid[i]! ≤ reachR arr1 arr2 j then
               at2 arr2[k+1]!.hi z (i + 1) - at2 arr1[k+1]!.lo z i
                 - grid[i]! * (drOf R1 R2).1 / (drOf R1 R2).2 else 0) (NA - 1) i (by omega)
-            simp only [if_pos hgr] at this
+            simp only [ite_eq_left hgr] at this
             exact this
   · simp [encRegions, hk] at ha
 
@@ -422,7 +422,7 @@ theorem slopeUp_nonneg : ∀ k, 0 ≤ ((slopeUp R2 (kapLoOf R2) k : ℚ) : ℝ) 
   induction k with
   | zero => simp [slopeUp]
   | succ k ih =>
-    rw [slopeUp_cast, if_neg (Nat.succ_ne_zero k), Nat.add_sub_cancel]
+    rw [slopeUp_cast, ite_eq_right (Nat.succ_ne_zero k), Nat.add_sub_cancel]
     have h1 : (0 : ℝ) ≤ 1 - (kapLoOf R2 : ℝ) := by linarith [kapLo_le_one]
     have h2 : (0 : ℝ) ≤ rate R2 := by unfold rate; positivity
     have := mul_nonneg (mul_nonneg ih h1) h2
@@ -467,7 +467,7 @@ theorem accumulated_cast (arr1 arr2 : Array Stage) :
   congr 1
   refine Finset.sum_congr rfl fun z _ => ?_
   unfold nuR failV
-  rw [if_pos (show 1 ≤ k + 1 ∧ k + 1 ≤ 59 from ⟨by omega, by omega⟩),
+  rw [ite_eq_left (show 1 ≤ k + 1 ∧ k + 1 ≤ 59 from ⟨by omega, by omega⟩),
     show J - 1 - (k + 1) = J - 2 - k by omega]
   unfold val
   push_cast

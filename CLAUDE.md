@@ -17,7 +17,8 @@ floating-point implementations of the algorithms.
 Verified working as of 2026-09-14:
 
 - `elan 4.2.4`, Lean toolchain pinned by `lean-toolchain`
-- Mathlib `v4.34.0-rc2`, declared in `lakefile.toml`
+- Mathlib `v4.34.0`, declared in `lakefile.toml` (bumped from `v4.34.0-rc2` on 2026-11-04 to share
+  the one Mathlib checkout used by the sibling projects)
 - `lake exe cache get` has run (8747 oleans decompressed); `lake build` passes
 
 Layout:
@@ -34,7 +35,11 @@ LeanEconomics/            <- repo root, contains lakefile.toml
 
 ### Two environment gotchas
 
-1. **The repo sits inside Dropbox.** `.lake/` carries the extended attribute
+1. **The repo sits inside Dropbox.** Since 2026-11-04 `.lake` is a symlink to
+   `~/.cache/lean-builds/LeanEconomics`, whose `packages` links to the shared Mathlib in
+   `~/.cache/lean-builds/EconomicGrowth-SolowSwan/packages`, as in the sibling projects. Recreate
+   both links on a fresh machine rather than letting lake fetch a private Mathlib. Before that,
+   `.lake/` was a real directory carrying the extended attribute
    `com.dropbox.ignored=1` so Dropbox does not sync several GB of churning build output.
    The attribute is bound to that specific directory inode, not to the name. If `.lake` is
    ever deleted and recreated (e.g. `lake clean`), the flag is lost and must be reapplied:

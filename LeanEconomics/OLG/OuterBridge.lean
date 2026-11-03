@@ -648,7 +648,7 @@ theorem cohortCeil_le_fc {cap : ℝ} {P : IncomeFluctuation (Fin 7) 0 cap} {m1 m
         unfold vI; field_simp
       rw [hbD]
       by_cases hb0 : 0 ≤ b
-      · have hGe : G = gHi[k]! := by rw [hG', if_pos hb0]
+      · have hGe : G = gHi[k]! := by rw [hG', ite_eq_left hb0]
         rw [hGe]
         have hbn : (0 : ℝ) ≤ (b : ℝ) / (D * D) := by
           have : (0 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb0
@@ -657,7 +657,7 @@ theorem cohortCeil_le_fc {cap : ℝ} {P : IncomeFluctuation (Fin 7) 0 cap} {m1 m
               - P.stageMPC 3 (k + 1) * P.riskHumanWealth 3 (k + 1) z)
             ≤ P.cohortSlope 3 k * ((b : ℝ) / (D * D)) := mul_le_mul_of_nonneg_left hbr hGpos.le
           _ ≤ vI gHi[k]! * ((b : ℝ) / (D * D)) := mul_le_mul_of_nonneg_right hGhi hbn
-      · have hGe : G = gLo[k]! := by rw [hG', if_neg hb0]
+      · have hGe : G = gLo[k]! := by rw [hG', ite_eq_right hb0]
         rw [hGe]
         have hbn : (b : ℝ) / (D * D) ≤ 0 := by
           have : (b : ℝ) < 0 := by exact_mod_cast (not_le.mp hb0)
@@ -986,7 +986,7 @@ theorem cohortFloorAt_ge_lam {cap : ℝ} {P : IncomeFluctuation (Fin 7) 0 cap} {
     have hHz := hH (k + 1) hk1 z
     have hHnn : 0 ≤ (hHi[k+1]!)[(z : ℕ)]! := by
       have := hHz; have h2 := P.stageHumanWealth_nonneg (k + 1) z
-      by_contra hneg; push_neg at hneg
+      by_contra hneg; push Not at hneg
       have : vI (hHi[k+1]!)[(z : ℕ)]! < 0 := by
         rw [vI]; exact div_neg_of_neg_of_pos (by exact_mod_cast hneg) hD
       linarith

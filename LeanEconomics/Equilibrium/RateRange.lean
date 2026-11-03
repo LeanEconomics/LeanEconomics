@@ -205,7 +205,7 @@ theorem integral_marginal_le_of_patient
         rw [le_div_iff₀ hβR0]; linarith [hE]
       linarith [hεpos.le]
     · -- no room: the household is at the cap, and tomorrow consumes at least `minIncome + r cap`
-      push_neg at hroom
+      push Not at hroom
       have hAcap : A = assetCap := by
         have hle := (P.policy_mem_region ((s.1 : ℝ), s.2)).2
         have hms : P.maxSaving ((s.1 : ℝ), s.2) = min assetCap (P.resources ((s.1 : ℝ), s.2)) :=

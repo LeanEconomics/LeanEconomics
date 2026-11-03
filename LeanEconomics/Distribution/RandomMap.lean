@@ -57,8 +57,9 @@ instance : IsProbabilityMeasure R.shock := R.isProbabilityMeasure_shock
 noncomputable def push (μ : Measure X) : Measure X := (μ.prod R.shock).map (uncurry R.map)
 
 instance isProbabilityMeasure_push (μ : Measure X) [IsProbabilityMeasure μ] :
-    IsProbabilityMeasure (R.push μ) :=
-  Measure.isProbabilityMeasure_map R.measurable_map.aemeasurable
+    IsProbabilityMeasure (R.push μ) := by
+  unfold push
+  infer_instance
 
 /-- An **invariant** (stationary) probability measure of the chain. -/
 def IsInvariant (μ : Measure X) : Prop := R.push μ = μ
