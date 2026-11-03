@@ -169,3 +169,4 @@ import LeanEconomics.FixedPoint.SchauderTychonoff
 import LeanEconomics.KrusellSmith.Model
 import LeanEconomics.KrusellSmith.Household
 import LeanEconomics.KrusellSmith.Continuity
+import LeanEconomics.KrusellSmith.Policy
