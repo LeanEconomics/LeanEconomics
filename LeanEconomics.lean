@@ -166,3 +166,4 @@ import LeanEconomics.FixedPoint.BrouwerRetraction
 import LeanEconomics.FixedPoint.BrouwerBall
 import LeanEconomics.FixedPoint.Brouwer
 import LeanEconomics.FixedPoint.SchauderTychonoff
+import LeanEconomics.KrusellSmith.Model
