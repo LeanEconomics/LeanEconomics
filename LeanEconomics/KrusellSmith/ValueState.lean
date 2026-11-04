@@ -82,6 +82,19 @@ theorem rootValue_shift (z : Z) (μ : Measure M.AState) [IsProbabilityMeasure μ
   rw [M.pricePath_shift z μ K h, M.valueFunction_shift z _ h, compContinuous_apply]
   rfl
 
+/-- **One step down the tree depends only on the shock at the node and the saving there.** -/
+theorem pushNode_congr {z₁ z₂ : Z} {K₁ K₂ : List Z → ℝ × ℝ} {h₁ h₂ : List Z}
+    (hz : shockAt z₁ h₁ = shockAt z₂ h₂)
+    (hA : ∀ e' x, M.nextA z₁ K₁ h₁ e' x = M.nextA z₂ K₂ h₂ e' x) (z' : Z) (μ : Measure M.AState) :
+    M.pushNode z₁ K₁ h₁ z' μ = M.pushNode z₂ K₂ h₂ z' μ := by
+  have hd : M.dens z₁ h₁ z' = M.dens z₂ h₂ z' := by
+    funext e' x
+    simp only [dens, nextProb, hz]
+  have hn : M.nextA z₁ K₁ h₁ = M.nextA z₂ K₂ h₂ := by
+    funext e' x
+    exact hA e' x
+  simp only [pushNode, hd, hn]
+
 /-! ### The extended state -/
 
 /-- **An extended state** `(z, μ, v)`: an aggregate shock, a distribution of households, and a
@@ -166,6 +179,114 @@ minimal state of `Recursive.lean`. -/
 theorem value_eq_rootValue_eqPath (hU : M.UniqueSequentialEquilibrium) (ξ : M.ExtState) :
     ξ.value = M.rootValue ξ.shock (ξ.dist : Measure M.AState) (M.eqPath ξ.shock ξ.dist) := by
   rw [← ξ.rootValue_path, hU.eq_eqPath ξ.path_spec]
+
+/-! ### The period equilibrium conditions (milestone V2)
+
+At an extended state `ξ = (z, μ, v)` the conditions of Cao (2020, Definition 4) hold with the
+next states `ξ.next z'`:
+
+* **prices** depend on `(z, μ)` alone: capital is mean assets of `μ` and labour is the
+  efficiency-weighted mass of `μ` (`returnAt_nil`, `wageAt_nil`, `cash_eq`);
+* **Bellman**: `v` is the value of saving optimally against the next states' values
+  (`value_eq`, `objective_le_value`), attained by `ξ.policy`;
+* **distributions**: the next distribution is `μ` pushed forward by the policy (`next_dist_eq`,
+  `nextA_nil`, `integral_next`);
+* **labour**: idiosyncratic masses move one step by `idioProb` (`initMass_next`).
+-/
+
+/-- Cash on hand at the extended state. -/
+noncomputable def cash (ξ : M.ExtState) (x : M.AState) : ℝ :=
+  M.cash ξ.shock ξ.prices (M.placeAt [] x)
+
+/-- The largest feasible saving at the extended state. -/
+noncomputable def maxSaving (ξ : M.ExtState) (x : M.AState) : ℝ :=
+  M.maxSaving ξ.shock ξ.prices (M.placeAt [] x)
+
+/-- The probability of the aggregate shock `z'` and the idiosyncratic state `e'` next period. -/
+noncomputable def shockProb (ξ : M.ExtState) (ze : Z × E) (x : M.AState) : ℝ :=
+  M.aggProb ξ.shock ze.1 * M.idioProb ξ.shock ze.1 x.2.idio ze.2
+
+/-- **The household's objective at the extended state**: utility today plus the discounted
+expected value at the next extended states. -/
+noncomputable def objective (ξ : M.ExtState) (x : M.AState) (a : ℝ) : ℝ :=
+  M.utility (ξ.cash x - a)
+    + M.discount * ∑ ze : Z × E, ξ.shockProb ze x * (ξ.next ze.1).value (M.clampAssets a, ⟨ze.2⟩)
+
+/-- Mean assets of the distribution: capital at the extended state. -/
+noncomputable def capital (ξ : M.ExtState) : ℝ := ∫ x, M.assets x ∂(ξ.dist : Measure M.AState)
+
+/-- Efficiency-weighted mass of the distribution: labour at the extended state. -/
+noncomputable def labour (ξ : M.ExtState) : ℝ :=
+  ∑ e, M.initMass (ξ.dist : Measure M.AState) e * M.efficiency e
+
+theorem returnAt_nil (ξ : M.ExtState) :
+    M.returnAt ξ.shock ξ.prices [] = M.grossReturn ξ.shock ξ.capital ξ.labour := by
+  simp only [returnAt, prices, pricePath, shockAt_nil, ξ.path_nil]
+  rfl
+
+theorem wageAt_nil (ξ : M.ExtState) :
+    M.wageAt ξ.shock ξ.prices [] = M.wage ξ.shock ξ.capital ξ.labour := by
+  simp only [wageAt, prices, pricePath, shockAt_nil, ξ.path_nil]
+  rfl
+
+/-- **Cash on hand depends on `(z, μ)` alone.** -/
+theorem cash_eq (ξ : M.ExtState) (x : M.AState) :
+    ξ.cash x = M.grossReturn ξ.shock ξ.capital ξ.labour * x.1
+      + M.wage ξ.shock ξ.capital ξ.labour * M.efficiency x.2.idio := by
+  rw [← ξ.returnAt_nil, ← ξ.wageAt_nil]
+  rfl
+
+theorem policy_mem (ξ : M.ExtState) (x : M.AState) : ξ.policy x ∈ Icc 0 (ξ.maxSaving x) :=
+  M.policy_mem ξ.shock ξ.prices (M.placeAt [] x)
+
+/-- The household's objective along the chosen path, at the root, is the objective at the
+extended state. -/
+theorem objective_household (ξ : M.ExtState) (x : M.AState) {a : ℝ}
+    (ha : a ∈ Icc 0 (ξ.maxSaving x)) :
+    (M.household ξ.shock ξ.prices).objective (M.household ξ.shock ξ.prices).valueFunction
+        (M.placeAt [] x) a
+      = ξ.objective x a := by
+  rw [M.objective_eq ξ.shock ξ.prices _ ha]
+  rfl
+
+/-- **Bellman, attained**: the value is the objective at the policy. -/
+theorem value_eq (ξ : M.ExtState) (x : M.AState) : ξ.value x = ξ.objective x (ξ.policy x) := by
+  rw [← ξ.objective_household x (ξ.policy_mem x), ← ξ.rootValue_path]
+  have h := M.policy_optimal ξ.shock ξ.prices (M.placeAt [] x)
+  rw [(M.household ξ.shock ξ.prices).bellman_valueFunction] at h
+  exact h
+
+/-- **Bellman, optimality**: no feasible saving does better than the value. -/
+theorem objective_le_value (ξ : M.ExtState) (x : M.AState) {a : ℝ}
+    (ha : a ∈ Icc 0 (ξ.maxSaving x)) : ξ.objective x a ≤ ξ.value x := by
+  rw [← ξ.objective_household x ha, ← ξ.rootValue_path]
+  have h := (M.household ξ.shock ξ.prices).le_bellmanFn
+    (M.household ξ.shock ξ.prices).valueFunction ha
+  change _ ≤ (M.household ξ.shock ξ.prices).bellman _ _ at h
+  rw [(M.household ξ.shock ξ.prices).bellman_valueFunction] at h
+  exact h
+
+/-- **The next distribution is the push-forward of the current one** by the policy and the
+idiosyncratic transition. -/
+theorem next_dist_eq (ξ : M.ExtState) (z' : Z) :
+    ((ξ.next z').dist : Measure M.AState)
+      = M.pushNode ξ.shock ξ.prices [] z' (ξ.dist : Measure M.AState) := rfl
+
+theorem nextA_nil (ξ : M.ExtState) (e' : E) (x : M.AState) :
+    M.nextA ξ.shock ξ.prices [] e' x = (M.clampAssets (ξ.policy x), ⟨e'⟩) := rfl
+
+/-- The next distribution, in integrals. -/
+theorem integral_next (ξ : M.ExtState) (z' : Z) (f : M.AState →ᵇ ℝ) :
+    ∫ x, f x ∂((ξ.next z').dist : Measure M.AState)
+      = ∫ x, ∑ e', M.idioProb ξ.shock z' x.2.idio e' * f (M.clampAssets (ξ.policy x), ⟨e'⟩)
+          ∂(ξ.dist : Measure M.AState) :=
+  M.integral_pushNode ξ.shock ξ.prices [] z' (ξ.dist : Measure M.AState) f
+
+/-- **Labour consistency**: the idiosyncratic masses move one step by `idioProb`. -/
+theorem initMass_next (ξ : M.ExtState) (z' : Z) (e' : E) :
+    M.initMass ((ξ.next z').dist : Measure M.AState) e'
+      = ∑ e, M.initMass (ξ.dist : Measure M.AState) e * M.idioProb ξ.shock z' e e' :=
+  M.real_nodeDist_idio ξ.shock (ξ.dist : Measure M.AState) ξ.prices [z'] e'
 
 end ExtState
 

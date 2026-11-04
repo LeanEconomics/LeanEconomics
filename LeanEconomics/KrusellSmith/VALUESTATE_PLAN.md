@@ -34,7 +34,11 @@ can fail to be a sufficient state, so dropping `v` is not available without uniq
   `ExtState` (shock, dist, value, witness), `ExtState.path` (chosen witness), `prices`, `policy`,
   `path_nil` (capital = mean assets of `dist`), `extend`, `nextDist`, `next` (in `ExtState` by the
   continuation theorem), `value_eq_rootValue_eqPath` (collapse under uniqueness).
-* Next: V2.
+* **V2 done** (`ValueState.lean`): `ExtState.cash`, `maxSaving`, `shockProb`, `objective` (with
+  next states' values); `cash_eq` (prices from `capital`, `labour` of `μ` only); `value_eq`
+  (Bellman attained at `policy`), `objective_le_value`; `next_dist_eq` (push-forward at the root),
+  `nextA_nil`, `integral_next`; `initMass_next` (labour); `KSModel.pushNode_congr` (for V3).
+* Next: V3 (gluing).
 
 ## Milestones
 
