@@ -187,3 +187,4 @@ import LeanEconomics.KrusellSmith.CRRAContraction
 import LeanEconomics.KrusellSmith.ValueState
 import LeanEconomics.KrusellSmith.ValueStateGlue
 import LeanEconomics.KrusellSmith.ValueStateExistence
+import LeanEconomics.KrusellSmith.Aggregates
