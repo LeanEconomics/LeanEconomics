@@ -102,4 +102,10 @@ which needs weak feedback.
   `policy_mono_assets`, `assetMono_expectedNext`, `expectedNext_le`, **`nodeDist_dominates`**
   (dominance in the initial distribution plus higher saving at every state propagates to every
   node), **`meanCapital_le`**. One lemma covers both MR3 comparisons.
-* Next: MR3 (greatest equilibrium, splice, consistency).
+* **MR3 done** (`KrusellSmith/GreatestEquilibrium.lean`): `SavingMonotone` (hypothesis H),
+  `eqMap` (monotone on the complete lattice `List Z → Icc 0 assetCap`), `greatest` (`OrderHom.gfp`),
+  `greatest_spec`, `le_greatest`, `le_greatest_of_post`, `splice`, **`greatest_shift`**
+  (consistency by the splice / post-fixed-point argument), **`SavingMonotone.consistentSelection`**,
+  **`SavingMonotone.isRecursive`**: under (H), a recursive equilibrium on the minimal state exists,
+  with no uniqueness assumption.
+* Next: MR4 (research: (H) for a complementarity class; the Cobb–Douglas obstruction lemma).
