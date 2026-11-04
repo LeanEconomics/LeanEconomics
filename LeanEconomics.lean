@@ -166,6 +166,9 @@ import LeanEconomics.FixedPoint.BrouwerRetraction
 import LeanEconomics.FixedPoint.BrouwerBall
 import LeanEconomics.FixedPoint.Brouwer
 import LeanEconomics.FixedPoint.SchauderTychonoff
+import LeanEconomics.FixedPoint.Schauder
+import LeanEconomics.FixedPoint.Kakutani
+import LeanEconomics.FixedPoint.FanGlicksberg
 import LeanEconomics.KrusellSmith.Model
 import LeanEconomics.KrusellSmith.Household
 import LeanEconomics.KrusellSmith.Continuity
