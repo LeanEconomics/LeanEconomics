@@ -38,7 +38,12 @@ can fail to be a sufficient state, so dropping `v` is not available without uniq
   next states' values); `cash_eq` (prices from `capital`, `labour` of `μ` only); `value_eq`
   (Bellman attained at `policy`), `objective_le_value`; `next_dist_eq` (push-forward at the root),
   `nextA_nil`, `integral_next`; `initMass_next` (labour); `KSModel.pushNode_congr` (for V3).
-* Next: V3 (gluing).
+* **V3 done** (`ValueStateGlue.lean`, plus `StochasticDynamicProgram.norm_valueFunction_le`):
+  `tree`, `gluedPath`, `gluedPrices`; `initMass_tree`, `labour_tree`, `cash_glued`; `gluedValue`
+  (bounded by `utilityBound / (1 − β)`); `bellman_gluedValue`, `valueFunction_glued`,
+  `policy_glued`, `nodeDist_glued`; **`isSequentialEquilibrium_glued`**, `nodeValue_glued`,
+  `rootValue_glued`.
+* Next: V4 (packaged theorems, payoff equivalence, CRRA / log corollaries).
 
 ## Milestones
 

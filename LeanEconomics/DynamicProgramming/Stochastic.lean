@@ -200,6 +200,19 @@ theorem bellman_valueFunction : D.bellman D.valueFunction = D.valueFunction :=
 theorem eq_valueFunction {v : S →ᵇ ℝ} (hv : D.bellman v = v) : v = D.valueFunction :=
   D.blackwell.eq_valueFunction D.discount_lt_one hv
 
+/-- **The value function is bounded by the reward bound over `1 - β`.** -/
+theorem norm_valueFunction_le : ‖D.valueFunction‖ ≤ ‖D.reward‖ / (1 - D.discount) := by
+  have hβ1 : (D.discount : ℝ) < 1 := by exact_mod_cast D.discount_lt_one
+  have h0 : 0 ≤ ‖D.reward‖ + D.discount * ‖D.valueFunction‖ :=
+    add_nonneg (norm_nonneg _) (mul_nonneg D.discount.coe_nonneg (norm_nonneg _))
+  have h : ‖D.valueFunction‖ ≤ ‖D.reward‖ + D.discount * ‖D.valueFunction‖ := by
+    conv_lhs => rw [← D.bellman_valueFunction]
+    refine (BoundedContinuousFunction.norm_le h0).2 fun s => ?_
+    rw [Real.norm_eq_abs]
+    exact D.abs_bellmanFn_le D.valueFunction s
+  rw [le_div_iff₀ (sub_pos.2 hβ1)]
+  linarith
+
 theorem tendsto_iterate_valueFunction (v : S →ᵇ ℝ) :
     Tendsto (fun n => D.bellman^[n] v) atTop (𝓝 D.valueFunction) :=
   D.blackwell.tendsto_iterate_valueFunction D.discount_lt_one v
