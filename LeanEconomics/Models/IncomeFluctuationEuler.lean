@@ -622,44 +622,8 @@ theorem concaveOn_of_egm_corner {z : Z} {g C h : ℝ → ℝ}
       P.income z + (1 + P.interest) * a = g a + h a)
     (hle : ∀ a ∈ Icc assetFloor assetCap, h a ≤ C (g a))
     (heq : ∀ a ∈ Icc assetFloor assetCap, assetFloor < g a → h a = C (g a)) :
-    ConcaveOn ℝ (Icc assetFloor assetCap) h := by
-  refine ⟨convex_Icc _ _, fun a ha b hb θ φ hθ hφ hθφ => ?_⟩
-  simp only [smul_eq_mul]
-  have hm : θ * a + φ * b ∈ Icc assetFloor assetCap := by
-    simpa only [smul_eq_mul] using convex_Icc assetFloor assetCap ha hb hθ hφ hθφ
-  have hA₁ := hg a ha
-  have hA₂ := hg b hb
-  have hAθ := hg _ hm
-  have hAm : θ * g a + φ * g b ∈ Icc assetFloor assetCap := by
-    simpa only [smul_eq_mul] using convex_Icc assetFloor assetCap hA₁ hA₂ hθ hφ hθφ
-  have h1 := hbud a ha
-  have h2 := hbud b hb
-  have h3 := hbud _ hm
-  have hcomb : P.income z + (1 + P.interest) * (θ * a + φ * b)
-      = (θ * g a + φ * g b) + (θ * h a + φ * h b) := by
-    linear_combination θ * h1 + φ * h2 - P.income z * hθφ
-  have hAle : g (θ * a + φ * b) ≤ θ * g a + φ * g b := by
-    rcases eq_or_lt_of_le hAθ.1 with hcorner | hinterior
-    · rw [← hcorner]
-      have hsum : θ * assetFloor + φ * assetFloor = assetFloor := by
-        rw [← add_mul, hθφ, one_mul]
-      linarith [mul_nonneg hθ (sub_nonneg.mpr hA₁.1), mul_nonneg hφ (sub_nonneg.mpr hA₂.1)]
-    · have hCc : θ * h a + φ * h b ≤ C (θ * g a + φ * g b) := by
-        have hca := hle a ha
-        have hcb := hle b hb
-        have hmid := hC.2 hA₁ hA₂ hθ hφ hθφ
-        simp only [smul_eq_mul] at hmid
-        nlinarith [mul_le_mul_of_nonneg_left hca hθ, mul_le_mul_of_nonneg_left hcb hφ]
-      have hstep : g (θ * a + φ * b) + C (g (θ * a + φ * b))
-          ≤ (θ * g a + φ * g b) + C (θ * g a + φ * g b) := by
-        rw [← heq _ hm hinterior, ← h3, hcomb]; linarith
-      by_contra hcon
-      exact absurd (hM hAm hAθ (not_le.mp hcon)) (not_lt.mpr hstep)
-  have hval : h (θ * a + φ * b)
-      = (θ * g a + φ * g b) + (θ * h a + φ * h b) - g (θ * a + φ * b) := by
-    rw [← hcomb, h3]; ring
-  rw [hval]
-  linarith
+    ConcaveOn ℝ (Icc assetFloor assetCap) h :=
+  concaveOn_of_egm_affine hC hM hg hbud hle heq
 
 /-! ### Carroll and Kimball's induction step, with the Euler equation discharged -/
 

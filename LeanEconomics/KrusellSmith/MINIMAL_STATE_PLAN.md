@@ -173,3 +173,27 @@ and infinite state spaces and derive both (a refactor of finished work; only if 
   `cont_increasingDifferences`, `WageIndependent`, `ReturnMonotone`,
   `ValueIncreasingDifferences`, **`savingMonotone_of`**. Remaining: prove
   `ValueIncreasingDifferences` (MR4b–c).
+
+### MR4b plan: Carroll–Kimball on the tree (2026-11-05)
+
+Target: for CRRA (log first) and the KS household along a price path, every Bellman iterate's
+consumption function is concave in assets at every label, given the asset cap and the
+consumption floor slack. Same induction as `Models/IncomeFluctuationIterate.lean`
+(`concaveOn_consumptionFnOf_iterates_of_crra`), with the power mean over the children
+`(z', e')` weighted by `shockProb`, and cash `R_h a + w_h e` affine in assets.
+
+* **b1 done**: `Analysis/EGM.lean`, `concaveOn_of_egm_affine(_interior)` — the
+  endogenous-gridpoint transfer for any affine budget; `IncomeFluctuation.concaveOn_of_egm` and
+  `concaveOn_of_egm_corner` are now one-line corollaries (shared proof, no duplicate).
+* **b2** (`KrusellSmith/AgainstContinuation.lean`): the household against an arbitrary
+  continuation `v : M.State →ᵇ ℝ` — `policyOf v`, `consumptionOf v`, uniqueness for concave
+  slices, monotonicity in assets (the `Monotone.lean` swap arguments with `v` in place of the
+  value function), iterate bounds `‖Tⁿ 0‖`.
+* **b3**: Euler inequalities against `v = T w` (`Euler.lean` generalised from the fixed point),
+  and the envelope equality `∂(T w)/∂a = R u'(c)` (needed again in MR4c).
+* **b4**: `egmMap` on the tree (`powerMean` of children's consumptions, exponent `-γ`,
+  `concaveOn_powerMean_comp`, `monotoneOn_powerMean_comp` used as they stand), and the induction
+  step: concave children ⇒ concave parent, via `concaveOn_of_egm_affine`.
+* **b5**: the iterate induction from `v₀ = 0` (no future: save nothing, consume cash, affine in assets), cap
+  and floor slackness along the iteration (hypotheses, later discharged by calibration), and the
+  limit `tendsto_policyOf` if the fixed point is wanted (MR4c needs only the iterates).

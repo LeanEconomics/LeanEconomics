@@ -5,6 +5,7 @@ Authors: Robert Kirkby
 -/
 import LeanEconomics.Models.IncomeFluctuationConsumption
 import LeanEconomics.Analysis.PowerMean
+import LeanEconomics.Analysis.EGM
 
 /-!
 # Concavity of the consumption function as a closed class
@@ -418,39 +419,8 @@ theorem concaveOn_of_egm {z : Z} {g C h : ℝ → ℝ}
     (hbud : ∀ a ∈ Icc assetFloor assetCap,
       P.income z + (1 + P.interest) * a = g a + C (g a))
     (hh : ∀ a ∈ Icc assetFloor assetCap, h a = C (g a)) :
-    ConcaveOn ℝ (Icc assetFloor assetCap) h := by
-  refine ⟨convex_Icc _ _, fun a ha b hb θ φ hθ hφ hθφ => ?_⟩
-  simp only [smul_eq_mul]
-  have hm : θ * a + φ * b ∈ Icc assetFloor assetCap := by
-    simpa only [smul_eq_mul] using convex_Icc assetFloor assetCap ha hb hθ hφ hθφ
-  have hA₁ := hg a ha
-  have hA₂ := hg b hb
-  have hAθ := hg _ hm
-  have hAm : θ * g a + φ * g b ∈ Icc assetFloor assetCap := by
-    simpa only [smul_eq_mul] using convex_Icc assetFloor assetCap hA₁ hA₂ hθ hφ hθφ
-  have h1 := hbud a ha
-  have h2 := hbud b hb
-  have h3 := hbud _ hm
-  -- the budget at the midpoint, split two ways
-  have hcomb : P.income z + (1 + P.interest) * (θ * a + φ * b)
-      = (θ * g a + φ * g b) + (θ * C (g a) + φ * C (g b)) := by
-    linear_combination θ * h1 + φ * h2 - P.income z * hθφ
-  -- concavity of `C` puts the midpoint's saving below the average
-  have hCc : θ * C (g a) + φ * C (g b) ≤ C (θ * g a + φ * g b) := by
-    simpa only [smul_eq_mul] using hC.2 hA₁ hA₂ hθ hφ hθφ
-  have hle : g (θ * a + φ * b) + C (g (θ * a + φ * b))
-      ≤ (θ * g a + φ * g b) + C (θ * g a + φ * g b) := by
-    rw [← h3, hcomb]; linarith
-  have hAle : g (θ * a + φ * b) ≤ θ * g a + φ * g b := by
-    by_contra hcon
-    exact absurd (hM hAm hAθ (not_le.mp hcon)) (not_lt.mpr hle)
-  -- and the budget converts that into the concavity of the consumption function
-  rw [hh a ha, hh b hb, hh _ hm]
-  have hval : C (g (θ * a + φ * b))
-      = (θ * g a + φ * g b) + (θ * C (g a) + φ * C (g b)) - g (θ * a + φ * b) := by
-    rw [← hcomb, h3]; ring
-  rw [hval]
-  linarith
+    ConcaveOn ℝ (Icc assetFloor assetCap) h :=
+  concaveOn_of_egm_affine_interior hC hM hg hbud hh
 
 /-! ### Carroll and Kimball for CRRA, from the first-order condition
 
