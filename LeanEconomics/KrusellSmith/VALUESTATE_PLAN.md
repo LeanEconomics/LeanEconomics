@@ -43,7 +43,11 @@ can fail to be a sufficient state, so dropping `v` is not available without uniq
   (bounded by `utilityBound / (1 − β)`); `bellman_gluedValue`, `valueFunction_glued`,
   `policy_glued`, `nodeDist_glued`; **`isSequentialEquilibrium_glued`**, `nodeValue_glued`,
   `rootValue_glued`.
-* Next: V4 (packaged theorems, payoff equivalence, CRRA / log corollaries).
+* **V4 done** (`ValueStateExistence.lean`): `recursiveEquilibrium_valueState` (Cao Prop. 3),
+  `generates_sequentialEquilibrium` (Miao Thm 2), `payoffEquivalent` (Miao Thm 3),
+  `ExtState.gluedPath_eq_eqPath` and `tree_dist_eq_nodeProb` (collapse under uniqueness),
+  `KSInada.generates_sequentialEquilibrium` (log / CRRA, optimal among all positive-consumption
+  savings). Axioms: propext, Classical.choice, Quot.sound. **Programme complete.**
 
 ## Milestones
 
