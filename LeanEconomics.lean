@@ -179,3 +179,4 @@ import LeanEconomics.KrusellSmith.ClosedGraph
 import LeanEconomics.KrusellSmith.Continuation
 import LeanEconomics.KrusellSmith.Recursive
 import LeanEconomics.KrusellSmith.Euler
+import LeanEconomics.KrusellSmith.Monotone
