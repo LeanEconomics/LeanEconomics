@@ -185,10 +185,11 @@ consumption floor slack. Same induction as `Models/IncomeFluctuationIterate.lean
 * **b1 done**: `Analysis/EGM.lean`, `concaveOn_of_egm_affine(_interior)` — the
   endogenous-gridpoint transfer for any affine budget; `IncomeFluctuation.concaveOn_of_egm` and
   `concaveOn_of_egm_corner` are now one-line corollaries (shared proof, no duplicate).
-* **b2** (`KrusellSmith/AgainstContinuation.lean`): the household against an arbitrary
-  continuation `v : M.State →ᵇ ℝ` — `policyOf v`, `consumptionOf v`, uniqueness for concave
-  slices, monotonicity in assets (the `Monotone.lean` swap arguments with `v` in place of the
-  value function), iterate bounds `‖Tⁿ 0‖`.
+* **b2 done** (`KrusellSmith/AgainstContinuation.lean`): `ConcaveSlices` (preserved by the
+  Bellman operator and every iterate from `0`), `contOf`, `concaveOn_contOf`, `policyOf`,
+  `consumptionOf`, `bellman_eq_contOf`, `le_bellman_contOf`, **`eq_policyOf_of_objective`**
+  (uniqueness under concave slices), **`policyOf_mono`**, **`consumptionOf_mono`**.
+  Iterate norm bounds deferred to b5 (only needed for slackness calibrations).
 * **b3**: Euler inequalities against `v = T w` (`Euler.lean` generalised from the fixed point),
   and the envelope equality `∂(T w)/∂a = R u'(c)` (needed again in MR4c).
 * **b4**: `egmMap` on the tree (`powerMean` of children's consumptions, exponent `-γ`,
