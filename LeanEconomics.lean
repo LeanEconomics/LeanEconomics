@@ -200,6 +200,7 @@ import LeanEconomics.KrusellSmith.SelfJustified
 import LeanEconomics.KrusellSmith.StationaryEquilibrium
 import LeanEconomics.KrusellSmith.Spotless
 import LeanEconomics.KrusellSmith.SpotlessEquilibrium
+import LeanEconomics.KrusellSmith.ConsistentSelection
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

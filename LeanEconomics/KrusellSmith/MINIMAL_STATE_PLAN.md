@@ -92,4 +92,10 @@ which needs weak feedback.
 
 ## Status
 
-* Planned 2026-11-05; nothing coded.
+* Planned 2026-11-05.
+* **MR1 done** (`KrusellSmith/ConsistentSelection.lean`): structure `ConsistentSelection`
+  (`sel`, `sel_spec`, `sel_shift` one step down); `shiftPath_sel_and_nodeProb` (consistency at
+  every node, by induction with `nodeDist_shift`, `pricePath_shift`); `lawOfMotion`,
+  `recursivePolicy`, `policy_eq_recursivePolicy`, **`isRecursive`**;
+  `UniqueSequentialEquilibrium.consistentSelection` (uniqueness gives one).
+* Next: MR2 (stochastic order, push-forward monotonicity).
