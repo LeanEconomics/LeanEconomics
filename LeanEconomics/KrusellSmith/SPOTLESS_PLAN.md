@@ -77,4 +77,8 @@ set by measurable selection; not attempted).
   witnesses `fₖ` converges in the compact `J*^Z`; the closed neighbourhoods
   `{dist ξ' (f ξ'.shock) ≤ 1/(n+1)}` eventually carry every `γₖ` (`isClosed_measure_eq_one`) and
   shrink to the graph. `justifiedBelief_spotless`.
-* Next: SP3 (assembly).
+* **SP3 done** (`KrusellSmith/SpotlessEquilibrium.lean`): `spotlessExpectations`
+  (closed graph, nonempty), `ConditionallySpotlessEquilibrium` (extends S6's
+  `StationaryRecursiveEquilibrium` with `conditionallySpotless`: a.e. `T ξ = E η`,
+  `η (spotlessExpectations ξ) = 1`), **`exists_conditionallySpotlessEquilibrium`** for every
+  `KSModel`. **Refinement complete** (a.e. form; full spotlessness not claimed).
