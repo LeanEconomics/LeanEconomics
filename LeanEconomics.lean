@@ -176,3 +176,4 @@ import LeanEconomics.KrusellSmith.Labour
 import LeanEconomics.KrusellSmith.Inada
 import LeanEconomics.KrusellSmith.CobbDouglas
 import LeanEconomics.KrusellSmith.ClosedGraph
+import LeanEconomics.KrusellSmith.Continuation
