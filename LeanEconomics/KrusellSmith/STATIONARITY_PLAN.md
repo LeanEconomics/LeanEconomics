@@ -88,7 +88,14 @@ Proof plan (DGMM pp. 750–751):
   `mean_mem` (Hahn–Banach in the product; continuous functionals are finite coordinate
   combinations by `LinearMap.mem_span_iff_continuous`, so they commute with the mean). No
   separable `C(J)` needed.
-* Next: S4.
+* **S4 done** (`MarkovEquilibrium/Ergodic.lean`): **`exists_ergodic`** (DGMM Corollary 1.1): as
+  `exists_stationary`, plus every `A` with `T s A = 1` a.e. on `A` has `μ A ∈ {0, 1}`. Krein–Milman
+  on the compact `embed '' fixedPoints G` (no convexity needed); an extreme fixed point `ν` cannot
+  be split: conditioning on `A × P(J)` and `Aᶜ × P(J)` gives fixed points (`cond_mem`, via
+  `setLIntegral_invariant`, `compl_invariant`) mixing to `ν`. S3 refactored: `condLaw`,
+  `transition`, `setLIntegral_transition`, `bind_transition`, `ae_transition_mem`.
+  **Part I (abstract DGMM) complete.**
+* Next: S5 (Krusell–Smith state space).
 
 ## Milestones
 

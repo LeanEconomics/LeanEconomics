@@ -101,54 +101,95 @@ theorem mean_mem {C : Set (ProbabilityMeasure J)} (hC : IsClosed C)
     exact (hφC _ ⟨ρ, hρ, rfl⟩).le
   linarith [hmean ▸ hge]
 
+/-! ### The transition of a measure on `J × P(J)` -/
+
+instance [Nonempty J] : Nonempty (ProbabilityMeasure J) :=
+  ⟨⟨Measure.dirac (Classical.arbitrary J), inferInstance⟩⟩
+
+variable [Nonempty J]
+
+/-- The conditional law of the second coordinate given the first (disintegration). -/
+noncomputable def condLaw (ν : ProbabilityMeasure (J × ProbabilityMeasure J)) (s : J) :
+    ProbabilityMeasure (ProbabilityMeasure J) :=
+  ⟨(ν : Measure (J × ProbabilityMeasure J)).condKernel s, inferInstance⟩
+
+/-- The transition `T s = E (P s)` of a measure `ν = m₁ ν ⊗ P` on `J × P(J)`. -/
+noncomputable def transition (ν : ProbabilityMeasure (J × ProbabilityMeasure J)) (s : J) :
+    ProbabilityMeasure J :=
+  mean (condLaw ν s)
+
+theorem measurable_condLaw (ν : ProbabilityMeasure (J × ProbabilityMeasure J)) :
+    Measurable (condLaw ν) :=
+  ((ν : Measure (J × ProbabilityMeasure J)).condKernel).measurable.subtype_mk
+
+theorem measurable_transition (ν : ProbabilityMeasure (J × ProbabilityMeasure J)) :
+    Measurable (transition ν) :=
+  continuous_mean.measurable.comp (measurable_condLaw ν)
+
+theorem disintegrate_condKernel (ν : ProbabilityMeasure (J × ProbabilityMeasure J)) :
+    (marginalFst ν : Measure J) ⊗ₘ (ν : Measure (J × ProbabilityMeasure J)).condKernel
+      = (ν : Measure (J × ProbabilityMeasure J)) :=
+  (ν : Measure (J × ProbabilityMeasure J)).disintegrate _
+
+/-- `∫_{A × P(J)} σ B dν(s, σ) = ∫_A T s B dμ`. -/
+theorem setLIntegral_transition (ν : ProbabilityMeasure (J × ProbabilityMeasure J)) {A B : Set J}
+    (hA : MeasurableSet A) (hB : MeasurableSet B) :
+    ∫⁻ p in Prod.fst ⁻¹' A, (p.2 : Measure J) B ∂(ν : Measure (J × ProbabilityMeasure J))
+      = ∫⁻ s in A, (transition ν s : Measure J) B ∂(marginalFst ν : Measure J) := by
+  have hBm : Measurable fun σ : ProbabilityMeasure J => (σ : Measure J) B :=
+    (Measure.measurable_coe hB).comp measurable_subtype_coe
+  conv_lhs => rw [← disintegrate_condKernel ν, ← prod_univ]
+  rw [Measure.setLIntegral_compProd (f := fun p : J × ProbabilityMeasure J => (p.2 : Measure J) B)
+    (hBm.comp measurable_snd) hA MeasurableSet.univ]
+  refine lintegral_congr fun s => ?_
+  rw [Measure.restrict_univ]
+  exact (mean_apply (condLaw ν s) hB).symm
+
+/-- **Invariance**: if `m₁ ν = E (m₂ ν)`, the first marginal is invariant under the transition. -/
+theorem bind_transition {ν : ProbabilityMeasure (J × ProbabilityMeasure J)}
+    (hνfix : marginalFst ν = mean (marginalSnd ν)) :
+    (marginalFst ν : Measure J).bind (fun s => (transition ν s : Measure J)) = marginalFst ν := by
+  ext A hA
+  have hTm : Measurable fun s => (transition ν s : Measure J) :=
+    measurable_subtype_coe.comp (measurable_transition ν)
+  rw [Measure.bind_apply hA hTm.aemeasurable]
+  have hAm : Measurable fun σ : ProbabilityMeasure J => (σ : Measure J) A :=
+    (Measure.measurable_coe hA).comp measurable_subtype_coe
+  have h := setLIntegral_transition ν MeasurableSet.univ hA
+  rw [preimage_univ, Measure.restrict_univ, Measure.restrict_univ] at h
+  rw [← h]
+  conv_rhs => rw [hνfix, mean_apply _ hA]
+  change _ = ∫⁻ σ, (σ : Measure J) A ∂((ν : Measure (J × ProbabilityMeasure J)).map Prod.snd)
+  rw [lintegral_map hAm measurable_snd]
+
+/-- **Selection**: if `ν` is supported on the graph of a closed-graph, convex-valued `G`, the
+transition lies in `G` almost everywhere. -/
+theorem ae_transition_mem {G : J → Set (ProbabilityMeasure J)} (hGr : IsClosed (graphSet G))
+    (hconv : ∀ s, ∀ ρ ∈ G s, ∀ σ ∈ G s, ∀ (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1), mix t ht ρ σ ∈ G s)
+    {ν : ProbabilityMeasure (J × ProbabilityMeasure J)} (hνG : (ν : Measure _) (graphSet G) = 1) :
+    ∀ᵐ s ∂(marginalFst ν : Measure J), transition ν s ∈ G s := by
+  set κ := (ν : Measure (J × ProbabilityMeasure J)).condKernel
+  have hsec : ∀ s, (Prod.mk s ⁻¹' graphSet G) = G s := fun s => rfl
+  have h0 : ∫⁻ s, κ s (Prod.mk s ⁻¹' (graphSet G)ᶜ) ∂(marginalFst ν : Measure J) = 0 := by
+    rw [← Measure.compProd_apply hGr.measurableSet.compl, disintegrate_condKernel ν]
+    exact (prob_compl_eq_zero_iff hGr.measurableSet).2 hνG
+  rw [lintegral_eq_zero_iff (κ.measurable_kernel_prodMk_left hGr.measurableSet.compl)] at h0
+  filter_upwards [h0] with s hs
+  have hGs : IsClosed (G s) := hGr.preimage (Continuous.prodMk_right s)
+  refine mean_mem hGs (hconv s) (condLaw ν s) ?_
+  change κ s (G s) = 1
+  rw [← prob_compl_eq_zero_iff hGs.measurableSet, ← hsec, ← preimage_compl]
+  exact hs
+
 /-- **DGMM Theorem 1.1**: an invariant measure `μ` and a measurable transition `T` selected from
 `G` almost everywhere. -/
-theorem exists_stationary [Nonempty J] {G : J → Set (ProbabilityMeasure J)}
+theorem exists_stationary {G : J → Set (ProbabilityMeasure J)}
     (hGr : IsClosed (graphSet G)) (hne : ∀ s, (G s).Nonempty)
     (hconv : ∀ s, ∀ ρ ∈ G s, ∀ σ ∈ G s, ∀ (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1), mix t ht ρ σ ∈ G s) :
     ∃ (μ : ProbabilityMeasure J) (T : J → ProbabilityMeasure J), Measurable T ∧
       (μ : Measure J).bind (fun s => (T s : Measure J)) = μ ∧ ∀ᵐ s ∂(μ : Measure J), T s ∈ G s := by
   obtain ⟨ν, hνG, hνfix⟩ := exists_mean_fixedPoint hGr hne
-  set ρ : Measure (J × ProbabilityMeasure J) := (ν : Measure (J × ProbabilityMeasure J))
-  have : Nonempty (ProbabilityMeasure J) :=
-    ⟨⟨Measure.dirac (Classical.arbitrary J), inferInstance⟩⟩
-  set κ := ρ.condKernel
-  have hdis : ρ.fst ⊗ₘ κ = ρ := ρ.disintegrate κ
-  have hfst : ρ.fst = (marginalFst ν : Measure J) := rfl
-  set P : J → ProbabilityMeasure (ProbabilityMeasure J) := fun s => ⟨κ s, inferInstance⟩
-  have hP : Measurable P := κ.measurable.subtype_mk
-  refine ⟨marginalFst ν, fun s => mean (P s), continuous_mean.measurable.comp hP, ?_, ?_⟩
-  · -- invariance
-    ext A hA
-    have hTm : Measurable fun s => ((mean (P s) : ProbabilityMeasure J) : Measure J) :=
-      measurable_subtype_coe.comp (continuous_mean.measurable.comp hP)
-    rw [Measure.bind_apply hA hTm.aemeasurable]
-    have hAm : Measurable fun σ : ProbabilityMeasure J => (σ : Measure J) A :=
-      (Measure.measurable_coe hA).comp measurable_subtype_coe
-    calc ∫⁻ s, (mean (P s) : Measure J) A ∂(marginalFst ν : Measure J)
-        = ∫⁻ s, ∫⁻ σ, (σ : Measure J) A ∂(κ s) ∂ρ.fst := by
-          rw [hfst]
-          exact lintegral_congr fun s => mean_apply (P s) hA
-      _ = ∫⁻ p, (p.2 : Measure J) A ∂ρ := by
-          exact (Measure.lintegral_compProd (hAm.comp measurable_snd)).symm.trans
-            (by rw [hdis]; rfl)
-      _ = ∫⁻ σ, (σ : Measure J) A ∂(marginalSnd ν : Measure (ProbabilityMeasure J)) := by
-          change _ = ∫⁻ σ, (σ : Measure J) A ∂(ρ.map Prod.snd)
-          rw [lintegral_map hAm measurable_snd]
-      _ = (marginalFst ν : Measure J) A := by
-          rw [hνfix, mean_apply _ hA]
-  · -- selection
-    have hsec : ∀ s, (Prod.mk s ⁻¹' graphSet G) = G s := fun s => rfl
-    have h0 : ∫⁻ s, κ s (Prod.mk s ⁻¹' (graphSet G)ᶜ) ∂ρ.fst = 0 := by
-      rw [← Measure.compProd_apply hGr.measurableSet.compl, hdis]
-      exact (prob_compl_eq_zero_iff hGr.measurableSet).2 hνG
-    rw [lintegral_eq_zero_iff (κ.measurable_kernel_prodMk_left hGr.measurableSet.compl)] at h0
-    rw [← hfst]
-    filter_upwards [h0] with s hs
-    have hGs : IsClosed (G s) := hGr.preimage (Continuous.prodMk_right s)
-    refine mean_mem hGs (hconv s) (P s) ?_
-    change κ s (G s) = 1
-    rw [← prob_compl_eq_zero_iff hGs.measurableSet, ← hsec, ← preimage_compl]
-    exact hs
+  exact ⟨marginalFst ν, transition ν, measurable_transition ν, bind_transition hνfix,
+    ae_transition_mem hGr hconv hνG⟩
 
 end LeanEconomics.MarkovEquilibrium
