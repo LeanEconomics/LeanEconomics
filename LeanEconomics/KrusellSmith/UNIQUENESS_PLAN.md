@@ -31,7 +31,20 @@ node depend on the path only through `K_n`.
   `du_consumption_sub_le`.
 * **M2 done in its first form** (`policy_mono`, `policy_sub_le`): saving is nondecreasing in assets
   with slope at most the gross return, so `θ = R̄`.
-* Next: M3 (distributions), M4 (assembly).
+* **M3 done** (`Propagation.lean`): `gapPath R̄ P` bounds the distribution gap against
+  asset-Lipschitz test functions (`integral_nodeDist_sub_le`), hence mean capital
+  (`meanCapital_sub_le`).
+* **M4 done** (`Contraction.lean`). Under `ContractionHyp` (`u'` Lipschitz and strongly decreasing
+  on the consumption range, consumption bounded below by `c̲ > consFloor`, prices `ℓ`-Lipschitz in
+  capital, `β R̄ < λ ≤ 1`, `λ R̄ < 1`): weighted marginal-utility gaps `≤ A η`
+  (`weighted_du_gap`, induction on the horizon then a limit), policy gaps
+  (`weighted_policy_gap`), distribution gaps (`weighted_gapPath`), and the equilibrium map is a
+  `κ`-contraction (`weighted_equilibriumMap_gap`), with
+  `κ = λ (ℓ C + A/m) / (1 − λ R̄)`, `A = (β ℓ D/λ + Mdu ℓ C)/(1 − β R̄/λ)`, `D = u'(c̲)`,
+  `C = assetCap + Σ efficiency`. **If `κ < 1`, sequential equilibrium is unique**
+  (`uniqueSequentialEquilibrium`) and the recursive equilibrium on the minimal state exists
+  (`ContractionHyp.isRecursive`). Axioms: propext, Classical.choice, Quot.sound.
+* Next: M5 (discharge `ContractionHyp` for CRRA + clamped Cobb–Douglas; evaluate `κ` numerically).
 
 ## Milestones
 
