@@ -44,7 +44,20 @@ node depend on the path only through `K_n`.
   `C = assetCap + Σ efficiency`. **If `κ < 1`, sequential equilibrium is unique**
   (`uniqueSequentialEquilibrium`) and the recursive equilibrium on the minimal state exists
   (`ContractionHyp.isRecursive`). Axioms: propext, Classical.choice, Quot.sound.
-* Next: M5 (discharge `ContractionHyp` for CRRA + clamped Cobb–Douglas; evaluate `κ` numerically).
+* **M5 done** (`CRRAContraction.lean`, `WriteUps/KrusellSmithUniqueness/kappaCRRACobbDouglas.m`).
+  `crraContractionHyp` discharges `ContractionHyp` for CRRA (any `γ > 0`) with clamped
+  Cobb–Douglas prices, all constants explicit: consumption floor `c̲ = min((βS+1)^{-1/γ}, y̲/4)`
+  (`KSInada.min_radius_le_consumption`, the Inada argument with an explicit radius), `Mdu = γ
+  (c̲/2)^{-γ-1}`, `m = γ topCons^{-γ-1}`, `ℓ = cdLip`. Theorems
+  `crra_existsUnique_sequentialEquilibrium` and `crra_isRecursive` (κ < 1).
+  **Numbers** (annual, β = 0.96, δ = 0.1, efficiencies {0.25, 1}): `β R̄² < 1` forces
+  `capLo ≥ 5.61`, above complete-markets capital 4.29; at α = 0.36, κ ≈ 3·10¹⁵ (γ = 1),
+  6·10¹⁵ (γ = 2), 4·10²³ (γ = 5). Holding the capital box fixed, κ < 1 needs α ≈ 10⁻¹³.
+  The bound is qualitative. Main sources of slack: `Mdu/m = (2 topCons/c̲)^{γ+1}` (the condition
+  number of `u'` over the whole cash range), the crude floor `c̲` (via `valueBound/y̲`), the saving
+  slope `θ = R̄`, and `βR̄² < 1` pushing the capital clamp above the steady state.
+* Possible tightening: consumption bounds from the actual policy (minimal MPC, Carroll–Shanker)
+  for `θ` and for the `u'` range; a sharper floor; a distribution metric weighted by `u'`.
 
 ## Milestones
 

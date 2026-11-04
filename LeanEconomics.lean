@@ -183,3 +183,4 @@ import LeanEconomics.KrusellSmith.Monotone
 import LeanEconomics.KrusellSmith.Sensitivity
 import LeanEconomics.KrusellSmith.Propagation
 import LeanEconomics.KrusellSmith.Contraction
+import LeanEconomics.KrusellSmith.CRRAContraction

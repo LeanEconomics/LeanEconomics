@@ -335,10 +335,14 @@ omit hc hcy in
 theorem floorLevel_pos : 0 < P.floorLevel :=
   lt_min P.inadaRadius_pos (by linarith [P.incomeFloor_pos])
 
-/-- **Optimal consumption is at least `floorLevel`**, along every path of capital and for every
-imposed floor `c ≤ incomeFloor`. -/
-theorem floorLevel_le_consumption (s : (P.toModel c hc hcy).State) :
-    P.floorLevel ≤ (P.toModel c hc hcy).cash z₀ K s
+/-- **Optimal consumption is at least `min r (incomeFloor / 4)`** for any radius `r` below which
+marginal utility beats `β · slopeConst + 1`, along every path of capital and for every imposed
+floor `c ≤ incomeFloor`. -/
+theorem min_radius_le_consumption {r : ℝ}
+    (hr : ∀ c₁ c₂, c₁ ∈ Ioi 0 → c₁ < c₂ → c₂ ≤ r →
+      (P.discount * P.slopeConst + 1) * (c₂ - c₁) ≤ P.utility c₂ - P.utility c₁)
+    (s : (P.toModel c hc hcy).State) :
+    min r (P.incomeFloor / 4) ≤ (P.toModel c hc hcy).cash z₀ K s
       - (P.toModel c hc hcy).policy z₀ K s := by
   revert s
   set M := P.toModel c hc hcy with hM
@@ -349,10 +353,10 @@ theorem floorLevel_le_consumption (s : (P.toModel c hc hcy).State) :
   have hβ : 0 ≤ P.discount := P.discount_pos.le
   by_contra hlt
   rw [not_le] at hlt
-  set fl := P.floorLevel with hfl
+  set fl := min r (P.incomeFloor / 4) with hfl
   set p := M.policy z₀ K s with hpdef
   set cash := M.cash z₀ K s with hcash
-  have hfδ : fl ≤ P.inadaRadius := min_le_left _ _
+  have hfδ : fl ≤ r := min_le_left _ _
   have hf4 : fl ≤ P.incomeFloor / 4 := min_le_right _ _
   have hpm := M.policy_mem z₀ K s
   have hcons : c ≤ cash - p := le_sub_comm.1 (hpm.2.trans (min_le_right _ _))
@@ -376,10 +380,17 @@ theorem floorLevel_le_consumption (s : (P.toModel c hc hcy).State) :
   change P.utility fl + P.discount * P.cont hc hcy z₀ K s (p - h)
     ≤ P.utility (cash - p) + P.discount * P.cont hc hcy z₀ K s p at hdev
   have hscaled := mul_le_mul_of_nonneg_left hslope hβ
-  have hmarg := P.inadaRadius_spec (mem_Ioi.2 (hc.trans_le hcons)) (by linarith) hfδ
+  have hmarg := hr _ _ (mem_Ioi.2 (hc.trans_le hcons)) (by linarith) hfδ
   have he : fl - (cash - p) = h := by rw [hh]
   rw [he] at hmarg
   nlinarith [P.slopeConst_nonneg]
+
+/-- **Optimal consumption is at least `floorLevel`**, along every path of capital and for every
+imposed floor `c ≤ incomeFloor`. -/
+theorem floorLevel_le_consumption (s : (P.toModel c hc hcy).State) :
+    P.floorLevel ≤ (P.toModel c hc hcy).cash z₀ K s
+      - (P.toModel c hc hcy).policy z₀ K s :=
+  P.min_radius_le_consumption hc hcy z₀ K (fun _ _ h₁ h₁₂ h₂ => P.inadaRadius_spec h₁ h₁₂ h₂) s
 
 /-- **Optimality among all savings with positive consumption.** When the imposed floor is below
 `floorLevel`, no saving with positive consumption beats the household's value. -/
