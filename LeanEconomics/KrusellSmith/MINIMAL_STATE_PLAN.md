@@ -190,8 +190,10 @@ consumption floor slack. Same induction as `Models/IncomeFluctuationIterate.lean
   `consumptionOf`, `bellman_eq_contOf`, `le_bellman_contOf`, **`eq_policyOf_of_objective`**
   (uniqueness under concave slices), **`policyOf_mono`**, **`consumptionOf_mono`**.
   Iterate norm bounds deferred to b5 (only needed for slackness calibrations).
-* **b3**: Euler inequalities against `v = T w` (`Euler.lean` generalised from the fixed point),
-  and the envelope equality `∂(T w)/∂a = R u'(c)` (needed again in MR4c).
+* **b3 done** (`KrusellSmith/EulerOf.lean`): `SlackOf`, value sandwiches `bellman_sub_ge`,
+  `bellman_sub_le` for one Bellman step, `eulerRhsOf`, **`eulerOf_ge`**, **`eulerOf_le`** (the
+  household with continuation `T w₀`, children consuming against `w₀`). The envelope equality
+  `∂(T w)/∂a = R u'(c)` is moved to MR4c, its only user (b4 needs only the Euler inequalities).
 * **b4**: `egmMap` on the tree (`powerMean` of children's consumptions, exponent `-γ`,
   `concaveOn_powerMean_comp`, `monotoneOn_powerMean_comp` used as they stand), and the induction
   step: concave children ⇒ concave parent, via `concaveOn_of_egm_affine`.
