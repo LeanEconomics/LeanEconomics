@@ -201,6 +201,7 @@ import LeanEconomics.KrusellSmith.StationaryEquilibrium
 import LeanEconomics.KrusellSmith.Spotless
 import LeanEconomics.KrusellSmith.SpotlessEquilibrium
 import LeanEconomics.KrusellSmith.ConsistentSelection
+import LeanEconomics.KrusellSmith.StochasticOrder
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

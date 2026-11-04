@@ -98,4 +98,8 @@ which needs weak feedback.
   every node, by induction with `nodeDist_shift`, `pricePath_shift`); `lawOfMotion`,
   `recursivePolicy`, `policy_eq_recursivePolicy`, **`isRecursive`**;
   `UniqueSequentialEquilibrium.consistentSelection` (uniqueness gives one).
-* Next: MR2 (stochastic order, push-forward monotonicity).
+* **MR2 done** (`KrusellSmith/StochasticOrder.lean`): `AssetMono`, `AssetDominates`,
+  `policy_mono_assets`, `assetMono_expectedNext`, `expectedNext_le`, **`nodeDist_dominates`**
+  (dominance in the initial distribution plus higher saving at every state propagates to every
+  node), **`meanCapital_le`**. One lemma covers both MR3 comparisons.
+* Next: MR3 (greatest equilibrium, splice, consistency).
