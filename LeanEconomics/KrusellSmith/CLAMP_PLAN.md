@@ -53,7 +53,13 @@ order `capLo^{α + (1−α)/γ}`, so (B) holds for all small `capLo`, with an ex
   `integral_consumptionAt_eq` (along an equilibrium: `R_h K_h + w_h L_h − K_{z'::h}`),
   `integral_consumptionAt_cons` (child consumption as the parent's expectation). The names
   `nodeCash` etc. were taken (`Continuity.lean`).
-* Next: C2.
+* **C2 done** (`CRRAEuler.lean`): `convexOn_rpow_neg` (`c ↦ c^{-γ}` convex on `(0, ∞)`, via
+  monotone derivative); `consumption_le_child` (below the cap:
+  `c ≤ (β π R')^{-1/γ} Σ_{e'} idioProb(z, z, e, e') c'(a', e')` at the same-shock child, from
+  `euler_ge`, one child, Jensen, rpow inversion; needs `R' > 0`); `consumption_le` (every
+  household, adding `(a'/assetCap)(R · assetCap + w ē)`). Generic in `M` with `u' = c^{-γ}` above
+  the floor and `Slack`.
+* Next: C3.
 
 ## Milestones
 
