@@ -316,17 +316,21 @@ theorem logEconomy_exists_equilibrium (V : KSEnvironment Z E) (T : CobbDouglas Z
       (logEconomy V T).floored.IsSequentialEquilibrium z₀ μ₀ K ∧
       (∀ s : (logEconomy V T).floored.State,
         (logEconomy V T).floorLevel
-          ≤ (logEconomy V T).floored.cash z₀ ((logEconomy V T).floored.initMass μ₀) K s
+          ≤ (logEconomy V T).floored.cash z₀ ((logEconomy V T).floored.pricePath z₀
+                ((logEconomy V T).floored.initMass μ₀) K) s
             - (logEconomy V T).floored.policy z₀
-                ((logEconomy V T).floored.initMass μ₀) K s) ∧
+                ((logEconomy V T).floored.pricePath z₀
+                ((logEconomy V T).floored.initMass μ₀) K) s) ∧
       ∀ h, (logEconomy V T).floored.labour z₀ ((logEconomy V T).floored.initMass μ₀) h
           ∈ Icc T.labLo T.labHi ∧
         (K h ∈ Icc T.capLo T.capHi →
-          (logEconomy V T).floored.returnAt z₀ ((logEconomy V T).floored.initMass μ₀) K h
+          (logEconomy V T).floored.returnAt z₀ ((logEconomy V T).floored.pricePath z₀
+                ((logEconomy V T).floored.initMass μ₀) K) h
             = 1 - T.depreciation + T.share * T.tfp (shockAt z₀ h) * K h ^ (T.share - 1)
                 * (logEconomy V T).floored.labour z₀
                     ((logEconomy V T).floored.initMass μ₀) h ^ (1 - T.share) ∧
-          (logEconomy V T).floored.wageAt z₀ ((logEconomy V T).floored.initMass μ₀) K h
+          (logEconomy V T).floored.wageAt z₀ ((logEconomy V T).floored.pricePath z₀
+                ((logEconomy V T).floored.initMass μ₀) K) h
             = (1 - T.share) * T.tfp (shockAt z₀ h) * K h ^ T.share
                 * (logEconomy V T).floored.labour z₀
                     ((logEconomy V T).floored.initMass μ₀) h ^ (-T.share)) := by

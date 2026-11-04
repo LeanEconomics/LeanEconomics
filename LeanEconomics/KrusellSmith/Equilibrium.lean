@@ -44,31 +44,40 @@ noncomputable def initMass (e : E) : ℝ := μ₀.real {x | x.2.idio = e}
 /-- Aggregate capital at the root: mean assets under the initial distribution. -/
 noncomputable def initCapital : ℝ := ∫ x, M.assets x ∂μ₀
 
+/-- The path of price inputs a capital path implies: capital `K h` and the exogenous aggregate
+labour of the tree started from the masses `m₀`, at every node. -/
+noncomputable def pricePath (m₀ : E → ℝ) (K : List Z → ℝ) : List Z → ℝ × ℝ :=
+  fun h => (K h, M.labour z₀ m₀ h)
+
+theorem continuous_pricePath (m₀ : E → ℝ) : Continuous (M.pricePath z₀ m₀) :=
+  continuous_pi fun h => (continuous_apply h).prodMk continuous_const
+
 /-- **Sequential equilibrium**: at every node, aggregate capital is the mean assets of the
 households there, when every household saves optimally against the prices the path implies. -/
 def IsSequentialEquilibrium (K : List Z → ℝ) : Prop :=
-  ∀ h, K h = M.meanCapital z₀ (M.initMass μ₀) μ₀ K h
+  ∀ h, K h = M.meanCapital z₀ μ₀ (M.pricePath z₀ (M.initMass μ₀) K) h
 
 /-- The equilibrium map: a path of capital to the path of mean assets it induces. -/
 noncomputable def equilibriumMap (K : List Z → ℝ) : List Z → ℝ :=
-  fun h => M.meanCapital z₀ (M.initMass μ₀) μ₀ K h
+  fun h => M.meanCapital z₀ μ₀ (M.pricePath z₀ (M.initMass μ₀) K) h
 
 theorem continuous_equilibriumMap [IsProbabilityMeasure μ₀] :
     Continuous (M.equilibriumMap z₀ μ₀) :=
-  continuous_pi fun h => continuous_iff_continuousAt.2 fun K =>
-    M.continuousAt_meanCapital z₀ (M.initMass μ₀) μ₀ K h
+  continuous_pi fun h => continuous_iff_continuousAt.2 fun _ =>
+    (M.continuousAt_meanCapital z₀ μ₀ _ h).comp
+      (M.continuous_pricePath z₀ (M.initMass μ₀)).continuousAt
 
 theorem mapsTo_equilibriumMap [IsProbabilityMeasure μ₀] :
     MapsTo (M.equilibriumMap z₀ μ₀) (M.capitalPaths (M.initCapital μ₀))
-      (M.capitalPaths (M.initCapital μ₀)) := fun K _ =>
-  ⟨rfl, fun h => M.meanCapital_mem z₀ (M.initMass μ₀) μ₀ K h⟩
+      (M.capitalPaths (M.initCapital μ₀)) := fun _ _ =>
+  ⟨rfl, fun h => M.meanCapital_mem z₀ μ₀ _ h⟩
 
 /-- **Existence of sequential equilibrium in a Krusell–Smith economy**, from every initial
 aggregate shock and every initial probability distribution of households. -/
 theorem exists_sequentialEquilibrium [IsProbabilityMeasure μ₀] :
     ∃ K ∈ M.capitalPaths (M.initCapital μ₀), M.IsSequentialEquilibrium z₀ μ₀ K := by
   have hK₀ : M.initCapital μ₀ ∈ Icc 0 M.assetCap :=
-    M.meanCapital_mem z₀ (M.initMass μ₀) μ₀ (fun _ => 0) []
+    M.meanCapital_mem z₀ μ₀ (fun _ => (0, 0)) []
   obtain ⟨K, hK, hfix⟩ := FixedPoint.schauderTychonoff (M.isCompact_capitalPaths _)
     (M.convex_capitalPaths _) (M.capitalPaths_nonempty hK₀)
     (M.continuous_equilibriumMap z₀ μ₀).continuousOn (M.mapsTo_equilibriumMap z₀ μ₀)
