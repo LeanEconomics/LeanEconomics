@@ -108,4 +108,54 @@ which needs weak feedback.
   (consistency by the splice / post-fixed-point argument), **`SavingMonotone.consistentSelection`**,
   **`SavingMonotone.isRecursive`**: under (H), a recursive equilibrium on the minimal state exists,
   with no uniqueness assumption.
-* Next: MR4 (research: (H) for a complementarity class; the Cobb–Douglas obstruction lemma).
+* **MR4 analysed 2026-11-05** (see "MR4 refined" below); nothing coded.
+
+## MR4 refined (analysis, 2026-11-05)
+
+**A second obstruction: the asset cap.** Even with a constant wage and log utility, (H) fails
+for a household that will be at the cap next period. Three-period check (log, cap `k̄ > w`):
+if the cap binds at date 1, the date-0 Euler equation gives
+`a₁ = β x₀/(1+β) + (k̄ − w)/((1+β) R₁)`, **decreasing** in the date-1 return `R₁`. A higher
+return only raises the consumption of someone who cannot save more, and with RRA = 1 that lowers
+the marginal value of saving. This needs `β R₁` large (the cap must bind next period from below
+it), so it is ruled out when the cap is slack along optimal paths. The same lesson as
+Carroll–Kimball (`not_concaveOn_consumptionFn_of_cap_binds`, memory: cap removed by calibration).
+
+**Revised target (H) holds when**: (i) the wage does not depend on capital; (ii) the return is
+nondecreasing in capital; (iii) relative risk aversion ≤ 1 (log included); (iv) consumption is
+concave in cash at every node (Carroll–Kimball on the tree); (v) the asset cap never binds;
+(vi) consumption is positive.
+
+**Decomposition.** At node `h`, the household's objective depends on its state only through cash
+`R_h a + w e` and the idiosyncratic state, and on the path only through `R_h` and the
+continuation value at the children, which depends only on prices in the subtree. So (H) splits:
+* **(H1) saving rises with cash** at a fixed continuation (Topkis: `u(x − a')` has increasing
+  differences in `(x, a')` for concave `u`). General; no new hypotheses. Raising `K_h` raises
+  cash under (i), (ii).
+* **(H2) saving rises with the continuation's marginal value**: if the continuation `v'` has
+  increasing differences over `v` in next assets, saving is higher at every cash (Topkis).
+* **(H3) propagation (Light's step on the tree)**: higher returns at the node and a continuation
+  with increasing differences give a node value with increasing differences. Light's proof
+  (`Models/IncomeFluctuationRateStep.lean`, `contIncreasingDifferences_withRate`) uses (iii),
+  (iv), (v), the envelope equality and the rescaling `cash(a, R₁) = cash(t a, R₂)`, all node by
+  node, so it should port; the infinite tree needs horizon induction then a limit, as in
+  `Contraction.lean` (`weighted_du_gap`).
+
+**Assets to port** (LeanEconomics `Models/`, ~11k lines, constant-rate income-fluctuation
+problem): Carroll–Kimball (`IncomeFluctuationCarrollKimball`, `concaveOn_consumptionFnOf_*`),
+envelope equality (`hasDerivAt_bellman`), Light (`IncomeFluctuationRateMonotone`,
+`IncomeFluctuationRateStep`), cap slackness (`crra_policyOf_lt_assetCap`), CES witnesses.
+
+**MR4 milestones.**
+* **MR4a** (`SavingMonotoneReduction.lean`): (H1), (H2), and `SavingMonotone` from
+  "constant wage + return nondecreasing in capital + increasing differences of continuations
+  along higher return paths" (`ContIncreasingDifferencesTree`). Self-contained, moderate.
+* **MR4b**: Carroll–Kimball concavity on the tree (node-varying returns).
+* **MR4c**: the envelope equality on the tree and Light's propagation step, giving
+  `ContIncreasingDifferencesTree` under (iii)–(vi); the cap-slack calibration.
+* **MR4d**: a concrete complementarity economy (log or CES γ < 1, return rising in capital,
+  constant wage) satisfying all hypotheses, hence a recursive equilibrium on the minimal state
+  without uniqueness, in an economy where uniqueness is not known.
+
+MR4b–c are a multi-session port; MR4a is useful on its own (it isolates exactly what must be
+proved about the household problem).
