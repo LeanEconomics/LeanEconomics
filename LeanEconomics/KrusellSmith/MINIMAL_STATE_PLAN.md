@@ -157,5 +157,19 @@ envelope equality (`hasDerivAt_bellman`), Light (`IncomeFluctuationRateMonotone`
   constant wage) satisfying all hypotheses, hence a recursive equilibrium on the minimal state
   without uniqueness, in an economy where uniqueness is not known.
 
-MR4b–c are a multi-session port; MR4a is useful on its own (it isolates exactly what must be
-proved about the household problem).
+**Reuse, not port** (2026-11-05). The `Models/IncomeFluctuation*` theorems cannot be applied
+directly: `IncomeFluctuation` has one constant interest rate and a finite state type, while the
+KS household faces node-varying returns on an infinite tree, and we compare return *paths*. What
+is referenced directly is the generic analysis: `mul_marginal_le_of_scale`
+(`Analysis/RelativeRiskAversion.lean`), `concave_increment_le`, the power-mean lemmas, and
+probably `concaveOn_of_egm(_corner)` (check they do not depend on `IncomeFluctuation` section
+variables). Only the dynamic-programming bookkeeping on the tree is redone (Bellman iteration,
+envelope equality, the child-to-parent induction for concavity and increasing differences): a
+few files, not 11k lines. Alternative: generalise `IncomeFluctuation` to state-dependent returns
+and infinite state spaces and derive both (a refactor of finished work; only if wanted).
+
+* **MR4a done** (`KrusellSmith/SavingMonotoneReduction.lean`): `policy_le_policy` (more cash +
+  continuation with increasing differences ⇒ more saving; swap argument + uniqueness),
+  `cont_increasingDifferences`, `WageIndependent`, `ReturnMonotone`,
+  `ValueIncreasingDifferences`, **`savingMonotone_of`**. Remaining: prove
+  `ValueIncreasingDifferences` (MR4b–c).
