@@ -202,3 +202,4 @@ import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
 import LeanEconomics.MarkovEquilibrium.Ergodic
+import LeanEconomics.MarkovEquilibrium.Barycentre

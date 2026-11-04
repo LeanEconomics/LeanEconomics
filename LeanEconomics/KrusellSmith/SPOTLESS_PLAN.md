@@ -67,4 +67,9 @@ set by measurable selection; not attempted).
 
 ## Status
 
-* Planned 2026-11-05; nothing coded.
+* Planned 2026-11-05.
+* **SP1 done** (`MarkovEquilibrium/Barycentre.lean`): `baryHull`, `mean_dirac`,
+  `baryHull_nonempty`, `mix_mem_baryHull`, `baryHull_subset` (`mean_mem`),
+  `prod_dirac_graphSet`, **`isClosed_graph_baryHull`** (via `ProbabilityMeasure.continuous_prod`
+  and `continuous_diracProba`), **`exists_ergodic_baryHull`** (DGMM Prop 1.3, abstract).
+* Next: SP2 (spotless beliefs on `J*`, closed).
