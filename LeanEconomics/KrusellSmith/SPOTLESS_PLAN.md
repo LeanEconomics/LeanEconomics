@@ -72,4 +72,9 @@ set by measurable selection; not attempted).
   `baryHull_nonempty`, `mix_mem_baryHull`, `baryHull_subset` (`mean_mem`),
   `prod_dirac_graphSet`, **`isClosed_graph_baryHull`** (via `ProbabilityMeasure.continuous_prod`
   and `continuous_diracProba`), **`exists_ergodic_baryHull`** (DGMM Prop 1.3, abstract).
-* Next: SP2 (spotless beliefs on `J*`, closed).
+* **SP2 done** (`KrusellSmith/Spotless.lean`): `shockGraph`, `spotless`, **`isClosed_spotless`**
+  — by the compactness alternative, not the variance characterisation: a subsequence of the
+  witnesses `fₖ` converges in the compact `J*^Z`; the closed neighbourhoods
+  `{dist ξ' (f ξ'.shock) ≤ 1/(n+1)}` eventually carry every `γₖ` (`isClosed_measure_eq_one`) and
+  shrink to the graph. `justifiedBelief_spotless`.
+* Next: SP3 (assembly).
