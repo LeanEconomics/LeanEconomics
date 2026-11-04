@@ -68,7 +68,13 @@ Proof plan (DGMM pp. 750–751):
   0016ead, `Extensions/SetValuedFixedPoints`), namespace `LeanEconomics.FixedPoint`.
   `fanGlicksberg`: nonempty compact convex `K` in a locally convex Hausdorff space, `F` with
   nonempty convex values in `K` and closed graph on `K` ⇒ fixed point.
-* Next: S1.
+* **S1 done** (`MarkovEquilibrium/Measures.lean`): `embed : P(J) → ((J →ᵇ ℝ≥0) → ℝ)`,
+  `isEmbedding_embed`, `mix`, `embed_mix`, `convex_range_embed`, `isCompact_range_embed`;
+  **`borel_eq` / `borelSpace`** (Giry σ-algebra = Borel σ-algebra of the weak topology, not in
+  Mathlib: portmanteau lower semicontinuity one way, second countability + Lindelöf the other),
+  so `P(P(J))` is compact; `mean` (via `Measure.bind`), `lintegral_mean`, `continuous_mean`;
+  `marginalFst/Snd` and continuity.
+* Next: S2.
 
 ## Milestones
 
