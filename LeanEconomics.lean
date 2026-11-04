@@ -174,3 +174,4 @@ import LeanEconomics.KrusellSmith.Distribution
 import LeanEconomics.KrusellSmith.Equilibrium
 import LeanEconomics.KrusellSmith.Labour
 import LeanEconomics.KrusellSmith.Inada
+import LeanEconomics.KrusellSmith.CobbDouglas
