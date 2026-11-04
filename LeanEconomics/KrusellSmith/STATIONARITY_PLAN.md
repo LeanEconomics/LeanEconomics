@@ -95,7 +95,18 @@ Proof plan (DGMM pp. 750–751):
   `setLIntegral_invariant`, `compl_invariant`) mixing to `ν`. S3 refactored: `condLaw`,
   `transition`, `setLIntegral_transition`, `bind_transition`, `ae_transition_mem`.
   **Part I (abstract DGMM) complete.**
-* Next: S5 (Krusell–Smith state space).
+* **S5 done** (`KrusellSmith/StationaryState.lean`, `Expectations.lean`, `SelfJustified.lean`):
+  `KSState` (shock, distribution, value, policy; value/policy in the sup norm; induced topology,
+  metrizable, Borel). Sup-norm risk resolved: `continuous_bcf_of_joint` (joint continuity on a
+  compact space ⇒ continuity into the sup norm) with `continuous_valueFunction_joint`,
+  `continuous_policy`. `equilibriumStates` (`J*`), **`isCompact_equilibriumStates`**,
+  `nodeState_mem`. `expectations` (Cao's `G̃`): (1) shock/distribution law stated by test
+  functions of the distribution, next distribution `nextDist` = push-forward by the policy
+  (`continuous_nextDist`); (2) feasibility; (3)/(4) Bellman against `∫ contValue dγ`, with
+  `min b maxSaving` to keep optimality closed. **`mix_mem_expectations`**,
+  **`isClosed_graph_expectations`** (via `continuous_integral_of_joint`),
+  **`expectations_nonempty`** (`justifiedBelief`: `Σ π(z,z') δ_{nodeState [z']}`).
+* Next: S6 (apply `exists_ergodic` to `J*` and `expectations`).
 
 ## Milestones
 
