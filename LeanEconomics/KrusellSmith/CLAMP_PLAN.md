@@ -59,7 +59,13 @@ order `capLo^{α + (1−α)/γ}`, so (B) holds for all small `capLo`, with an ex
   `euler_ge`, one child, Jensen, rpow inversion; needs `R' > 0`); `consumption_le` (every
   household, adding `(a'/assetCap)(R · assetCap + w ē)`). Generic in `M` with `u' = c^{-γ}` above
   the floor and `Slack`.
-* Next: C3.
+* **C3 done** (`CapitalBound.lean`): `aggregate_le` (integrated bound:
+  `R_h K_h + w_h L_h − K_c ≤ (βπR_c)^{-1/γ}(R_c K_c + w_c L_c) + K_c (R_h + w_h ē/cap)`), and
+  `capital_ge`: generic in the price functions — if capital starts at least `k` and condition
+  `hB` holds (for `K_h ≥ k > K_c ≥ 0`, `L, L' ∈ [Llo, Lhi]`:
+  `(βπR(z,K_c,L'))^{-1/γ}(R(z,K_c,L') k + w(z,K_c,L') L') < w(z,K_h,L)(L − kē/cap) − k`), capital
+  is at least `k` at every node. Needs `π ≤ aggProb z z`, `grossReturn > 0`, `Slack`.
+* Next: C4 (Cobb–Douglas satisfies `hB` for small `k`; unclamped theorems).
 
 ## Milestones
 
