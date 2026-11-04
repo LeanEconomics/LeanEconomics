@@ -81,7 +81,14 @@ Proof plan (DGMM pp. 750–751):
   conditions shrinking to the graph); `Phi`, `convex_Phi` (`map_mix`, `mean_mix`),
   `isClosed_graphOn_Phi` (continuous image of the compact supporting measures);
   **`exists_mean_fixedPoint`**: `ν (Gr G) = 1 ∧ m₁ ν = E (m₂ ν)`. Convexity of `G s` not yet used.
-* Next: S3.
+* **S3 done** (`MarkovEquilibrium/Stationary.lean`): **`exists_stationary`** (DGMM Theorem 1.1):
+  `μ`, measurable `T : J → P(J)`, `μ.bind T = μ`, `T s ∈ G s` a.e. Disintegration by
+  `Measure.condKernel` (`isCompletelyMetrizableSpace` makes `P(J)` standard Borel); `T s = E (P s)`.
+  Step 5 simplified: exact disintegration gives `P s (G s) = 1` a.e., then the barycentre lemma
+  `mean_mem` (Hahn–Banach in the product; continuous functionals are finite coordinate
+  combinations by `LinearMap.mem_span_iff_continuous`, so they commute with the mean). No
+  separable `C(J)` needed.
+* Next: S4.
 
 ## Milestones
 
