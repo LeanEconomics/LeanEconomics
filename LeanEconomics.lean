@@ -197,6 +197,7 @@ import LeanEconomics.KrusellSmith.CobbDouglasCapital
 import LeanEconomics.KrusellSmith.StationaryState
 import LeanEconomics.KrusellSmith.Expectations
 import LeanEconomics.KrusellSmith.SelfJustified
+import LeanEconomics.KrusellSmith.StationaryEquilibrium
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

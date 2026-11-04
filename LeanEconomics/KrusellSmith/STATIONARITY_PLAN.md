@@ -106,7 +106,13 @@ Proof plan (DGMM pp. 750–751):
   `min b maxSaving` to keep optimality closed. **`mix_mem_expectations`**,
   **`isClosed_graph_expectations`** (via `continuous_integral_of_joint`),
   **`expectations_nonempty`** (`justifiedBelief`: `Σ π(z,z') δ_{nodeState [z']}`).
-* Next: S6 (apply `exists_ergodic` to `J*` and `expectations`).
+* **S6 done** (`KrusellSmith/StationaryEquilibrium.lean`):
+  **`exists_stationaryRecursiveEquilibrium`**: every `KSModel` (nonempty `Z`, `E`) has a
+  `StationaryRecursiveEquilibrium` — measurable transition `T` on `J*`, invariant ergodic `γ`,
+  `T ξ ∈ expectations ξ` for `γ`-a.e. `ξ` (Cao 2020 Thm 4 without the conditionally-spotless
+  refinement; DGMM Cor 1.1). **Programme complete.**
+* Possible follow-ups (not started): Cao's conditionally spotless refinement; removing the asset
+  cap; unclamped CRRA/Cobb–Douglas prices on all of `J*` (C4 covers paths from mean ≥ `capLo`).
 
 ## Milestones
 
