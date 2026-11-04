@@ -74,7 +74,14 @@ Proof plan (DGMM pp. 750–751):
   Mathlib: portmanteau lower semicontinuity one way, second countability + Lindelöf the other),
   so `P(P(J))` is compact; `mean` (via `Measure.bind`), `lintegral_mean`, `continuous_mean`;
   `marginalFst/Snd` and continuity.
-* Next: S2.
+* **S2 done** (`MarkovEquilibrium/MeanFixedPoint.lean`): `exists_supported` (every `μ` is the
+  first marginal of a measure supported on the closed graph; no density argument: push `μ` along
+  measurable selections exact up to `ε`, from the first ball of a dense sequence containing the
+  state, and take a weak limit point, using that closed thickenings `thickGraph` are weakly closed
+  conditions shrinking to the graph); `Phi`, `convex_Phi` (`map_mix`, `mean_mix`),
+  `isClosed_graphOn_Phi` (continuous image of the compact supporting measures);
+  **`exists_mean_fixedPoint`**: `ν (Gr G) = 1 ∧ m₁ ν = E (m₂ ν)`. Convexity of `G s` not yet used.
+* Next: S3.
 
 ## Milestones
 
