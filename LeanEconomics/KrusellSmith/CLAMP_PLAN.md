@@ -72,7 +72,13 @@ order `capLo^{α + (1−α)/γ}`, so (B) holds for all small `capLo`, with an ex
   `crra_capital_mem` (every SE from mean ≥ capLo stays in `[capLo, capHi]`, if
   `assetCap ≤ capHi`, `π ≤ aggProb z z`, labour clamp = efficiency range);
   `crra_unclamped_prices`, `crra_exists_unclamped_equilibrium`. **Clamp never binds.**
-* Next: C5 (MATLAB `k₀` at KS calibrations).
+* **C5 done** (`WriteUps/KrusellSmithUniqueness/capLoCRRACobbDouglas.m`, output `.txt`).
+  KS quarterly (β = 0.99, δ = 0.025, α = 0.36, z ∈ [0.99, 1.01], π = 0.875, assetCap = 10 K_cm):
+  `k₀ / K_cm` ≈ 3·10⁻⁷ (γ = 1), 3·10⁻¹⁰ (γ = 2), 3·10⁻¹⁹ (γ = 5) at unemployed efficiency 0.15;
+  annual similar. The Euler constraint binds everywhere; `π` barely matters. So the only
+  restriction left, mean initial assets `≥ capLo`, excludes essentially nothing: any initial
+  distribution with mean assets above ~10⁻⁵ (log) of steady-state capital qualifies.
+  **Clamp-removal programme complete.**
 
 ## Milestones
 
