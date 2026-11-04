@@ -65,7 +65,14 @@ order `capLo^{α + (1−α)/γ}`, so (B) holds for all small `capLo`, with an ex
   `hB` holds (for `K_h ≥ k > K_c ≥ 0`, `L, L' ∈ [Llo, Lhi]`:
   `(βπR(z,K_c,L'))^{-1/γ}(R(z,K_c,L') k + w(z,K_c,L') L') < w(z,K_h,L)(L − kē/cap) − k`), capital
   is at least `k` at every node. Needs `π ≤ aggProb z z`, `grossReturn > 0`, `Slack`.
-* Next: C4 (Cobb–Douglas satisfies `hB` for small `k`; unclamped theorems).
+* **C4 done** (`CobbDouglasCapital.lean`): constants `wageConst` D, `eulerConst` C₁,
+  `outputConst` C₂ (independent of `capLo`); `LowerClampOK` / `CapLoOK`
+  (`k ≤ 1`, `kē ≤ cap·L̲/2`, `k^{1−α} < D/2`, `C₁(1+C₂)k^{(1−α)/γ} < D/2`); `priceCondition`
+  (Cobb–Douglas satisfies `hB` at `k = capLo`); `exists_capLo` (explicit threshold `k₀`);
+  `crra_capital_mem` (every SE from mean ≥ capLo stays in `[capLo, capHi]`, if
+  `assetCap ≤ capHi`, `π ≤ aggProb z z`, labour clamp = efficiency range);
+  `crra_unclamped_prices`, `crra_exists_unclamped_equilibrium`. **Clamp never binds.**
+* Next: C5 (MATLAB `k₀` at KS calibrations).
 
 ## Milestones
 
