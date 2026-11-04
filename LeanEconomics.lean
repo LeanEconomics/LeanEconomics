@@ -181,3 +181,4 @@ import LeanEconomics.KrusellSmith.Recursive
 import LeanEconomics.KrusellSmith.Euler
 import LeanEconomics.KrusellSmith.Monotone
 import LeanEconomics.KrusellSmith.Sensitivity
+import LeanEconomics.KrusellSmith.Propagation
