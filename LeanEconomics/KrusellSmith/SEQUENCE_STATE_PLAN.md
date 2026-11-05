@@ -129,8 +129,6 @@ is imposed by the fixed-point equation itself.
   `tail^k ω'` read capital on the subtree of `ω'` through `seqPrices` (their trees contain
   it), so after the swap their saving changes and so does `μ ω'` itself. History dependence
   is exactly the past's expectation of which continuation from `(z, μ)` is played (DGMM's
-  expanded state). The correct weak statement is (a)'s local uniqueness. A genuine version of
-  (b) would need two histories with no common ancestor, which do not exist (any two infinite
-  histories share no ancestor only if they never coincide, but their pasts are still
-  constrained); not pursued.
+  expanded state). This holds whether or not `ω, ω'` share ancestors: each history's own
+  ancestors constrain its subtree. The correct weak statement is (a)'s local uniqueness.
 * **TS5 (c) OPEN** (research): fading memory / stability; not started.
