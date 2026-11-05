@@ -202,6 +202,9 @@ consumption floor slack. Same induction as `Models/IncomeFluctuationIterate.lean
   **`concaveOn_consumptionOf_bellman`**: concave children ⇒ concave parent one Bellman step
   later (CRRA `u' = c^{-γ}` above the floor, positive returns, floor and cap slack). Power-mean
   lemmas and `concaveOn_of_egm_affine` used as they stand.
-* **b5**: the iterate induction from `v₀ = 0` (no future: save nothing, consume cash, affine in assets), cap
-  and floor slackness along the iteration (hypotheses, later discharged by calibration), and the
-  limit `tendsto_policyOf` if the fixed point is wanted (MR4c needs only the iterates).
+* **b5 done** (`KrusellSmith/CarrollKimballIterate.lean`): `utility_lt_utility` (strictly
+  concave + nondecreasing ⇒ strictly increasing), `policyOf_zero` (no future: save nothing),
+  `concaveOn_consumptionOf_zero` (consumption = cash, affine), and
+  **`concaveOn_consumptionOf_iterate`**: for CRRA, positive returns, floor and cap slack along the
+  iteration (explicit hypotheses), consumption against every `Tⁿ 0` is concave in assets at
+  every label. **MR4b complete.** The fixed point is not needed (Light's step uses iterates).
