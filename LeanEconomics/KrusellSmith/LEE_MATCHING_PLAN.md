@@ -63,4 +63,14 @@ for the matched-expectations-path (MEP) method.
   hypothesis), `LawContraction.uniformContraction` (induced metric); **`dist_le_of_agree`**
   (fading memory), **`dist_run_le`** (burn-in from any start in `S`), **`eq_of_contraction`**
   (uniqueness), **`existsUnique_seqStateEquilibrium`** (`S = univ`). No instance of the
-  contraction is exhibited yet (that is LS4). Standard axioms only. Next LS3.
+  contraction is exhibited yet (that is LS4). Standard axioms only.
+* **LS3 DONE** 2026-11-05 (`SequenceStateMatching.lean`): `exists_uniform_of_embedding`
+  (continuous injection on compact `P` → uniform control of continuous `G` on `P × Y`, via
+  `ContinuousMap.curry` + Heine–Cantor on `range ι`); `recursiveValue`,
+  `continuous_recursiveValue`, `seqValue_eq_recursiveValue`; `integral_assets_cons` (matching key:
+  branch capital = mean saving); exact matching `matching_exact_seqPolicy/_seqValue/_prepend`;
+  within-spell capital matching `eq_of_capital_eq_of_orbit`, `matching_capital_seqPolicy`
+  (Lee Thm 1); approximate matching **`matching_seqPolicy`, `matching_seqValue`** (∀ ε ∃ T₀,
+  agreement over `T + 1 ≥ T₀ + 1` shocks ⇒ policy/value within ε at every household state;
+  needs `ι` continuous + injective, contraction on `univ`). Standard axioms only. Next LS4
+  (research: contraction from primitives).
