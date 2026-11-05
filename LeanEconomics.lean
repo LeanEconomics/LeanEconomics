@@ -216,6 +216,7 @@ import LeanEconomics.KrusellSmith.SequenceStateMap
 import LeanEconomics.KrusellSmith.SequenceStateEquilibrium
 import LeanEconomics.KrusellSmith.SequenceStateRecursive
 import LeanEconomics.KrusellSmith.SequenceStateMarkov
+import LeanEconomics.KrusellSmith.Synchronization
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
