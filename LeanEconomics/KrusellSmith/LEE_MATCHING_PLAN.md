@@ -106,4 +106,11 @@ for the matched-expectations-path (MEP) method.
   shock: **`distLE_of_agree`**, **`distLE_run`**, **`seqPolicy_gap_of_agree`**,
   `seqCapital_gap_of_agree` (explicit matching bounds), **`eq_of_lawRate_lt_one`** (uniqueness).
   Standard axioms only. Open: history-dependent marginals; minimal-MPC slope for `R̄ ≥ 1`;
-  checking `lawRate < 1` numerically for the CRRA + clamped Cobb–Douglas instance.
+  ~~numeric check~~ superseded by the analytic small-share theorem below.
+* **Small capital shares DONE** 2026-11-06 (`SmallShare.lean`, analytic, no numerics): for CRRA
+  (any `γ > 0`) and clamped Cobb–Douglas with depreciation `δ > 0`, all other parameters fixed,
+  `exists_smallShare`: ∃ `α₀ > 0` such that for every share `α ∈ (0, α₀)`, with `λ = 1`,
+  `κ < 1` and `lawRate < 1`; `smallShare_contraction`: unique sequential equilibrium + a
+  `ContractionHyp` with both. Proof: every constant is an explicit continuous expression in `α`
+  at `α = 0` (`smallR`, …, `smallRate`, identified by `rfl`), where `ℓ = 0`, `κ = 0`,
+  `r = 1 − δ`. Standard axioms only.
