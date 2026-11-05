@@ -85,4 +85,10 @@ is imposed by the fixed-point equation itself.
 
 ## Status
 
-* Planned 2026-11-05; nothing coded.
+* Planned 2026-11-05.
+* **TS1 DONE** 2026-11-05 (`InfiniteHistory.lean`): `History Z := ℕ → Z`, `History.cons`/`tail`,
+  `cons_head_tail`, `cons_inj`, `prepend` (finite list onto a history; `g ++ ω` above is
+  `prepend g ω`), `prepend_append`, `prepend_zero` (newest shock is `shockAt (ω 0) g`);
+  `embedAssign`, `isEmbedding_embedAssign` (`IsEmbedding.piMap`), `isCompact_range_embedAssign`,
+  `mixAssign`, `embedAssign_mix`, `convex_range_embedAssign`, ambient locally convex + T2.
+  Standard axioms only. Next TS2.

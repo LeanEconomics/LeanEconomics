@@ -211,6 +211,7 @@ import LeanEconomics.KrusellSmith.CarrollKimballTree
 import LeanEconomics.KrusellSmith.CarrollKimballIterate
 import LeanEconomics.KrusellSmith.LightTree
 import LeanEconomics.KrusellSmith.ComplementarityWitness
+import LeanEconomics.KrusellSmith.InfiniteHistory
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
