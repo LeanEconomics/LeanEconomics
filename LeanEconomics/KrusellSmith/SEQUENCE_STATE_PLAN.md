@@ -98,4 +98,13 @@ is imposed by the fixed-point equation itself.
   `seqStep` (Γ), `coe_seqStep_cons(_eq_nodeDist)`, `continuous_seqPrices`, `continuous_pushRoot`
   (via `tendsto_iff_forall_integral_tendsto` + `continuousAt_integral_nodeDist_joint`),
   **`continuous_seqStep`**. The feared restating was unnecessary: the joint lemma takes any price
-  path. Standard axioms only. Next TS3.
+  path. Standard axioms only.
+* **TS3 DONE** 2026-11-05 (`SequenceStateEquilibrium.lean`): `IsSeqStateEquilibrium μ :=
+  seqStep μ = μ`; **`exists_seqStateEquilibrium`** (every `KSModel`, `[Nonempty E]`; Schauder–
+  Tychonoff via `IsEmbedding.toHomeomorph` onto the range of `embedAssign`);
+  `IsSeqStateEquilibrium.nodeDist_eq` (tree from `μ ω` reproduces `μ (prepend g ω)`, by
+  `pushNode_shift`), `seqCapital`, `pricePath_eq` (labour = exogenous recursion via
+  `initMass_nodeDist`), **`isSequentialEquilibrium`** (in `capitalPaths`, sequential eqm from
+  `(ω 0, μ ω)` at every `ω`), `labour_eq` (labour = mean efficiency);
+  **`logEconomy_exists_seqStateEquilibrium`** (log utility + clamped Cobb–Douglas). Standard
+  axioms only. Next TS4.

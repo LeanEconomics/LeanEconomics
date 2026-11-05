@@ -213,6 +213,7 @@ import LeanEconomics.KrusellSmith.LightTree
 import LeanEconomics.KrusellSmith.ComplementarityWitness
 import LeanEconomics.KrusellSmith.InfiniteHistory
 import LeanEconomics.KrusellSmith.SequenceStateMap
+import LeanEconomics.KrusellSmith.SequenceStateEquilibrium
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
