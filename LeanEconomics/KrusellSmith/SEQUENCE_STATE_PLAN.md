@@ -116,4 +116,21 @@ is imposed by the fixed-point equation itself.
   HistoryRecursiveEquilibrium`** (dist, capital, labour, value, saving; capital/labour means;
   feasibility, Bellman, optimality, law of motion `ω ↦ cons z' ω`), `capital_cons` (capital is
   mean saving, independent of `z'`), `toRecursive`, **`exists_historyRecursiveEquilibrium`**,
-  **`logEconomy_exists_historyRecursiveEquilibrium`**. Standard axioms only. Next TS5.
+  **`logEconomy_exists_historyRecursiveEquilibrium`**. Standard axioms only.
+* **TS5 (a) DONE** 2026-11-05 (`SequenceStateMarkov.lean`), in a stronger *local* form:
+  `UniqueFrom z ν` (unique sequential eqm from one state); if `ω 0 = ω' 0`, `μ ω = μ ω'` and
+  `UniqueFrom (ω 0) (μ ω)`, then `markov_seqPrices`, `markov_cons` (same distribution after
+  every shock), `markov_seqPolicy`, `markov_seqValue`. Only uniqueness at visited states is
+  needed. Global: under `UniqueSequentialEquilibrium`, `seqCapital_eq_eqPath`, `eq_nodeProb`,
+  `eq_lawOfMotion`, `seqPolicy_eq_recursivePolicy` (the eqm is `Recursive.lean`'s Markov eqm
+  on the distributions it visits). Standard axioms only.
+* **TS5 (b) REFUTED as planned, not formalised.** The swap of the future subtrees of `ω, ω'`
+  (same shock, same distribution) is *not* a fixed point in general: the ancestors
+  `tail^k ω'` read capital on the subtree of `ω'` through `seqPrices` (their trees contain
+  it), so after the swap their saving changes and so does `μ ω'` itself. History dependence
+  is exactly the past's expectation of which continuation from `(z, μ)` is played (DGMM's
+  expanded state). The correct weak statement is (a)'s local uniqueness. A genuine version of
+  (b) would need two histories with no common ancestor, which do not exist (any two infinite
+  histories share no ancestor only if they never coincide, but their pasts are still
+  constrained); not pursued.
+* **TS5 (c) OPEN** (research): fading memory / stability; not started.
