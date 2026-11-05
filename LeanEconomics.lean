@@ -207,6 +207,7 @@ import LeanEconomics.KrusellSmith.GreatestEquilibrium
 import LeanEconomics.KrusellSmith.SavingMonotoneReduction
 import LeanEconomics.KrusellSmith.AgainstContinuation
 import LeanEconomics.KrusellSmith.EulerOf
+import LeanEconomics.KrusellSmith.CarrollKimballTree
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

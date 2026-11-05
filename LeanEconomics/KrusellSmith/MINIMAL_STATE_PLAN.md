@@ -194,9 +194,14 @@ consumption floor slack. Same induction as `Models/IncomeFluctuationIterate.lean
   `bellman_sub_le` for one Bellman step, `eulerRhsOf`, **`eulerOf_ge`**, **`eulerOf_le`** (the
   household with continuation `T w₀`, children consuming against `w₀`). The envelope equality
   `∂(T w)/∂a = R u'(c)` is moved to MR4c, its only user (b4 needs only the Euler inequalities).
-* **b4**: `egmMap` on the tree (`powerMean` of children's consumptions, exponent `-γ`,
-  `concaveOn_powerMean_comp`, `monotoneOn_powerMean_comp` used as they stand), and the induction
-  step: concave children ⇒ concave parent, via `concaveOn_of_egm_affine`.
+* **b4 done** (`KrusellSmith/CarrollKimballTree.lean`): `retSum`, `egmWeight` (probability ×
+  child return, normalised — the returns differ across children, unlike the constant-rate
+  model), `egmC = (β S)^{-1/γ} · powerMean(weights, -γ, children's consumption)`,
+  `eulerRhsOf_eq`, `rpow_eulerRhsOf_eq_egmC`, `consumptionOf_le_egmC` (Euler ≥, cap slack),
+  `consumptionOf_eq_egmC` (Euler =, above the borrowing limit), and
+  **`concaveOn_consumptionOf_bellman`**: concave children ⇒ concave parent one Bellman step
+  later (CRRA `u' = c^{-γ}` above the floor, positive returns, floor and cap slack). Power-mean
+  lemmas and `concaveOn_of_egm_affine` used as they stand.
 * **b5**: the iterate induction from `v₀ = 0` (no future: save nothing, consume cash, affine in assets), cap
   and floor slackness along the iteration (hypotheses, later discharged by calibration), and the
   limit `tendsto_policyOf` if the fixed point is wanted (MR4c needs only the iterates).
