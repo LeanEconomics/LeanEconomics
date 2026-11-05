@@ -223,3 +223,22 @@ nondecreasing in capital, CRRA γ ≤ 1), given positive returns and slackness o
 floor and asset cap along the Bellman iterates. **Remaining (MR4d):** a concrete economy
 discharging the slackness hypotheses (calibration, as `crra_policyOf_lt_assetCap` and
 `KSInada.floorLevel_le_consumption` do elsewhere).
+
+### MR4d done (2026-11-05) — monotone route complete
+
+`KrusellSmith/ComplementarityWitness.lean`:
+* Floor slack along iterates (`KSInada`, any marginal-Inada utility): `abs_bellman_le`,
+  `abs_iterate_le` (iterates bounded by `valueBound`), `contOf_sub_le`,
+  `floorLevel_le_consumptionOf` (the `floorLevel` argument against any bounded continuation with
+  concave slices), `slackOf_iterate`.
+* Cap slack from the budget constraint: `KSModel.policyOf_lt_assetCap` when
+  `maxCash − floor < cap`.
+* `compEconomy`: log utility, constant wage `w̄`, gross return `compReturn` rising from `Rlo` to
+  `Rhi` in aggregate capital; **`compEconomy_exists_consistentSelection`** given
+  `0 < Rlo ≤ Rhi`, `Rhi · cap + w̄ Σ e < cap`; **`example_exists_consistentSelection`** for a
+  concrete two-shock, two-state economy (return rising from 1/2 to 3/4).
+
+**Caveats.** Gross returns are below one in the witness (the cap is slack by the budget
+constraint); returns above one need a cap calibration through the continuation's oscillation.
+Nothing here shows sequential equilibrium is non-unique in these economies — the theorem holds
+whether or not it is; the point is that it needs no uniqueness.
