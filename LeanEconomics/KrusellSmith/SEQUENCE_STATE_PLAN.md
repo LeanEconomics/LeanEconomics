@@ -107,4 +107,13 @@ is imposed by the fixed-point equation itself.
   `initMass_nodeDist`), **`isSequentialEquilibrium`** (in `capitalPaths`, sequential eqm from
   `(ω 0, μ ω)` at every `ω`), `labour_eq` (labour = mean efficiency);
   **`logEconomy_exists_seqStateEquilibrium`** (log utility + clamped Cobb–Douglas). Standard
-  axioms only. Next TS4.
+  axioms only.
+* **TS4 DONE** 2026-11-05 (`SequenceStateRecursive.lean`): household on histories for every
+  assignment — `seqValue`, `seqPolicy`, `seqCash` (`seqCash_eq`: prices via `(ω 0, μ ω)`),
+  `valueFunction_node`/`policy_node` (node `g` of tree at `ω` = root at `prepend g ω`),
+  `seqValue_eq` (Bellman on histories), `objective_le_seqValue` (optimality), `seqPolicy_le`;
+  `IsSeqStateEquilibrium.integral_cons` (law of motion). **`structure
+  HistoryRecursiveEquilibrium`** (dist, capital, labour, value, saving; capital/labour means;
+  feasibility, Bellman, optimality, law of motion `ω ↦ cons z' ω`), `capital_cons` (capital is
+  mean saving, independent of `z'`), `toRecursive`, **`exists_historyRecursiveEquilibrium`**,
+  **`logEconomy_exists_historyRecursiveEquilibrium`**. Standard axioms only. Next TS5.
