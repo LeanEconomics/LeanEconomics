@@ -55,4 +55,12 @@ for the matched-expectations-path (MEP) method.
   (start washes out), **`Consistent.eq`** (uniqueness), **`exists_consistent`** (complete `X`,
   closed nonempty `U`, backward limit via `cauchySeq_of_le_geometric`);
   **`injOn_orbit_of_strictMono` / `_strictAnti`** (Lee Thm 1, the `t* = ∞` case; the finite-`t*`
-  case is the same argument on a finite orbit, not stated). Standard axioms only. Next LS2.
+  case is the same argument on a finite orbit, not stated). Standard axioms only.
+* **LS2 DONE** 2026-11-05 (`SequenceStateSynchronization.lean`): metric left open — any injective
+  `ι : P(AState) → X` into a metric space (Lévy–Prokhorov would need a metric on `AState`,
+  whose `Idio E` factor has only the discrete topology; not set up). `lawMap`,
+  `IsSeqStateEquilibrium.consistent` (under uniqueness), `LawContraction ι S c D` (Lee Def 7,
+  hypothesis), `LawContraction.uniformContraction` (induced metric); **`dist_le_of_agree`**
+  (fading memory), **`dist_run_le`** (burn-in from any start in `S`), **`eq_of_contraction`**
+  (uniqueness), **`existsUnique_seqStateEquilibrium`** (`S = univ`). No instance of the
+  contraction is exhibited yet (that is LS4). Standard axioms only. Next LS3.
