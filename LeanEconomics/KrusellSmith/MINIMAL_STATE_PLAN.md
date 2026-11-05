@@ -208,3 +208,18 @@ consumption floor slack. Same induction as `Models/IncomeFluctuationIterate.lean
   **`concaveOn_consumptionOf_iterate`**: for CRRA, positive returns, floor and cap slack along the
   iteration (explicit hypotheses), consumption against every `Tⁿ 0` is concave in assets at
   every label. **MR4b complete.** The fixed point is not needed (Light's step uses iterates).
+
+### MR4c done (2026-11-05)
+
+`KrusellSmith/LightTree.lean`: `hasDerivAt_bellman_tree` (envelope via
+`ConcaveOn.hasDerivAt_of_lowerBound`), `policyOf_le_policyOf` (Topkis against continuations),
+`IncDiff`, `incDiff_bellman` (Light's step with node-varying returns: rescale to equal cash,
+then `mul_marginal_le_of_scale`), `incDiff_iterate`, `incDiff_valueFunction` (limit),
+**`valueIncreasingDifferences_of`**, **`exists_consistentSelection_of_complementarity`**.
+
+**Status of the monotone route:** a recursive equilibrium on the minimal state `(z, μ)` exists,
+without uniqueness, for complementarity economies (wage independent of capital, return
+nondecreasing in capital, CRRA γ ≤ 1), given positive returns and slackness of the consumption
+floor and asset cap along the Bellman iterates. **Remaining (MR4d):** a concrete economy
+discharging the slackness hypotheses (calibration, as `crra_policyOf_lt_assetCap` and
+`KSInada.floorLevel_le_consumption` do elsewhere).
