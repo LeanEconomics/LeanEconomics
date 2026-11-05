@@ -91,4 +91,11 @@ is imposed by the fixed-point equation itself.
   `prepend g ω`), `prepend_append`, `prepend_zero` (newest shock is `shockAt (ω 0) g`);
   `embedAssign`, `isEmbedding_embedAssign` (`IsEmbedding.piMap`), `isCompact_range_embedAssign`,
   `mixAssign`, `embedAssign_mix`, `convex_range_embedAssign`, ambient locally convex + T2.
-  Standard axioms only. Next TS2.
+  Standard axioms only.
+* **TS2 DONE** 2026-11-05 (`SequenceStateMap.lean`): `seqPrices μ ω` (capital = mean assets,
+  labour = Σ initMass·efficiency of `μ (prepend g ω)`), `seqPrices_prepend` (shift),
+  `seqPrices_snd` (= `labour _ _ []`), `pushRoot` (one node as a `ProbabilityMeasure`),
+  `seqStep` (Γ), `coe_seqStep_cons(_eq_nodeDist)`, `continuous_seqPrices`, `continuous_pushRoot`
+  (via `tendsto_iff_forall_integral_tendsto` + `continuousAt_integral_nodeDist_joint`),
+  **`continuous_seqStep`**. The feared restating was unnecessary: the joint lemma takes any price
+  path. Standard axioms only. Next TS3.
