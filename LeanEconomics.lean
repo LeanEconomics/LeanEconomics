@@ -219,6 +219,7 @@ import LeanEconomics.KrusellSmith.SequenceStateMarkov
 import LeanEconomics.KrusellSmith.Synchronization
 import LeanEconomics.KrusellSmith.SequenceStateSynchronization
 import LeanEconomics.KrusellSmith.SequenceStateMatching
+import LeanEconomics.KrusellSmith.LawContraction
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

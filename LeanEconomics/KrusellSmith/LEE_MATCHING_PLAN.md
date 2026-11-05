@@ -74,3 +74,36 @@ for the matched-expectations-path (MEP) method.
   agreement over `T + 1 ≥ T₀ + 1` shocks ⇒ policy/value within ε at every household state;
   needs `ι` continuous + injective, contraction on `univ`). Standard axioms only. Next LS4
   (research: contraction from primitives).
+
+## LS4 route (2026-11-06)
+
+* **Metric**: the asset-Lipschitz dual distance. `DistLE d ν ν'`: every bounded continuous `f`
+  that is `L`-Lipschitz in assets (any behaviour across idiosyncratic states) integrates to within
+  `L d`. It forces equal idiosyncratic marginals (indicators are `0`-Lipschitz), hence the same
+  labour path, so only capital feeds back into prices — exactly Track A's setting. Equal
+  marginals give `DistLE (2 assetCap)`; `DistLE 0` gives equality (Stone–Weierstrass:
+  asset-Lipschitz functions are a point-separating subalgebra, AState is Polish).
+* **Root distance in the tree**: `gapFrom θ d₀ P` (`d₀` at the root, `θ G + P` down), the
+  two-root version of `integral_nodeDist_sub_le`.
+* **Capital paths** (Track A, `κ < 1`): `λ^{|h|} |K_h − K'_h| ≤ d / (1 − κ)` for the equilibrium
+  paths from `ν, ν'` (one step `η ↦ d + κ η`, iterated from `assetCap`).
+* **Law of motion**: `DistLE (r d)` for tomorrow, `r = R̄ + G / (1 − κ)`, `G = ℓ C + A / m` (the
+  root policy gain). `r < 1` needs `R̄ < 1` (saving slope bound `θ = R̄`; automatic in the
+  `κ < 1` class, where `α` is tiny and `R ≈ 1 − δ`) and weak price feedback.
+* **Sequence state**: if equilibrium marginals depend only on today's shock (KS's design of the
+  employment process), fading memory `DistLE (r^T 2 assetCap)`, burn-in from any start with
+  the right marginal, **uniqueness**, and an **explicit matching bound** on saving,
+  `G r^T 2 assetCap / (1 − κ)`, and on capital paths.
+* Not done: marginals that depend on history (labour then differs: needs prices Lipschitz in
+  labour and Dobrushin mixing of the employment chain); the minimal-MPC slope bound that would
+  allow `R̄ ≥ 1`.
+* **LS4 DONE** 2026-11-06 (`LawContraction.lean`): `DistLE` (asset-Lipschitz dual distance),
+  `DistLE.initMass_eq`, `distLE_of_initMass_eq` (`2 assetCap`), `DistLE.eq_of_zero`
+  (Stone–Weierstrass via `assetLipSubalgebra`, Polish AState); `gapFrom`,
+  `integral_nodeDist_sub_le_of_distLE`; `ContractionHyp.eqPath_gap` (`d / (1 − κ)`),
+  `recursivePolicy_gap` (`G d / (1 − κ)`), **`distLE_lawOfMotion`** (rate
+  `lawRate = R̄ + G / (1 − κ)`); on the sequence state, with marginals depending only on today's
+  shock: **`distLE_of_agree`**, **`distLE_run`**, **`seqPolicy_gap_of_agree`**,
+  `seqCapital_gap_of_agree` (explicit matching bounds), **`eq_of_lawRate_lt_one`** (uniqueness).
+  Standard axioms only. Open: history-dependent marginals; minimal-MPC slope for `R̄ ≥ 1`;
+  checking `lawRate < 1` numerically for the CRRA + clamped Cobb–Douglas instance.
