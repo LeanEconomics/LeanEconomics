@@ -358,7 +358,7 @@ theorem eqPath_gap (hκ : H.κ < 1) (hd : DistLE d (ν : Measure M.AState) ν') 
           (fun h : List Z => c / H.lam ^ h.length) h :=
           mul_le_mul_of_nonneg_left hi (pow_nonneg H.lam_pos.le _)
       _ ≤ d + H.lam * c / (1 - H.lam * M.returnBound) := H.weighted_gapFrom hc hd0 h
-      _ = d + H.κ * b := by simp only [c, κ, policyGain]; ring
+      _ = d + H.κ * b := by simp only [c, ContractionBase.κ, policyGain]; ring
   -- iterate from the bound `assetCap`
   have hb : ∀ h, |K h - K' h| ≤ M.assetCap := by
     intro h

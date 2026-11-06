@@ -297,11 +297,11 @@ noncomputable def crraSmoothUtility : (crraModel V T hγ).SmoothUtility where
     (Real.continuousAt_rpow_const c (-γ)
       (Or.inl ((crraFloorLevel_half_pos V T hγ).trans hc).ne')).continuousWithinAt
 
-/-- **The hypotheses of the contraction argument hold for the CRRA model**, for any weight `λ`
-with `β R̄ < λ ≤ 1` and `λ R̄ < 1`. -/
-noncomputable def crraContractionHyp [Nonempty Z] (lam : ℝ) (hlam0 : 0 < lam) (hlam1 : lam ≤ 1)
-    (hdisc : V.discount * T.returnBound < lam) (hret : lam * T.returnBound < 1) :
-    (crraModel V T hγ).ContractionHyp where
+/-- **The base hypotheses of the contraction argument hold for the CRRA model**, for any weight
+`λ` with `β R̄ < λ ≤ 1`. -/
+noncomputable def crraContractionBase [Nonempty Z] (lam : ℝ) (hlam0 : 0 < lam) (hlam1 : lam ≤ 1)
+    (hdisc : V.discount * T.returnBound < lam) :
+    (crraModel V T hγ).ContractionBase where
   U := crraSmoothUtility V T hγ
   cLo := crraFloorLevel V T hγ
   floor_lt_cLo := half_lt_self (crraFloorLevel_pos V T hγ)
@@ -339,7 +339,13 @@ noncomputable def crraContractionHyp [Nonempty Z] (lam : ℝ) (hlam0 : 0 < lam) 
   lam_pos := hlam0
   lam_le_one := hlam1
   disc_lt := hdisc
-  lam_return_lt := hret
+
+/-- **The hypotheses of the contraction argument hold for the CRRA model**, for any weight `λ`
+with `β R̄ < λ ≤ 1` and `λ R̄ < 1`. -/
+noncomputable def crraContractionHyp [Nonempty Z] (lam : ℝ) (hlam0 : 0 < lam) (hlam1 : lam ≤ 1)
+    (hdisc : V.discount * T.returnBound < lam) (hret : lam * T.returnBound < 1) :
+    (crraModel V T hγ).ContractionHyp :=
+  { crraContractionBase V T hγ lam hlam0 hlam1 hdisc with lam_return_lt := hret }
 
 variable [Nonempty Z] {lam : ℝ} (hlam0 : 0 < lam) (hlam1 : lam ≤ 1)
   (hdisc : V.discount * T.returnBound < lam) (hret : lam * T.returnBound < 1)

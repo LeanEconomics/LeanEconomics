@@ -222,6 +222,9 @@ import LeanEconomics.KrusellSmith.SequenceStateMatching
 import LeanEconomics.KrusellSmith.LawContraction
 import LeanEconomics.KrusellSmith.SmallShare
 import LeanEconomics.KrusellSmith.EmploymentMarginals
+import LeanEconomics.KrusellSmith.MinimalMPC
+import LeanEconomics.KrusellSmith.SlopeContraction
+import LeanEconomics.KrusellSmith.MinMPCSmallShare
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

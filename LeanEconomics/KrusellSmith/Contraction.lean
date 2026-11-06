@@ -52,8 +52,9 @@ theorem returnBound_nonneg [Nonempty Z] (M : KSModel Z E) : 0 ≤ M.returnBound 
   (M.grossReturn_nonneg (Classical.arbitrary Z) 0 0).trans
     (M.grossReturn_le (Classical.arbitrary Z) 0 0)
 
-/-- **The hypotheses of the contraction argument.** -/
-structure ContractionHyp (M : KSModel Z E) where
+/-- **The hypotheses of the marginal-utility and policy-gap bounds**: everything in the
+contraction argument except the condition `λ R̄ < 1` on the saving slope. -/
+structure ContractionBase (M : KSModel Z E) where
   U : M.SmoothUtility
   cLo : ℝ
   floor_lt_cLo : M.consFloor < cLo
@@ -72,11 +73,15 @@ structure ContractionHyp (M : KSModel Z E) where
   lam_pos : 0 < lam
   lam_le_one : lam ≤ 1
   disc_lt : M.discount * M.returnBound < lam
+
+/-- **The hypotheses of the contraction argument**: the base hypotheses and `λ R̄ < 1`, where
+`R̄` bounds the slope of saving in assets (`policy_sub_le`). -/
+structure ContractionHyp (M : KSModel Z E) extends M.ContractionBase where
   lam_return_lt : lam * M.returnBound < 1
 
-namespace ContractionHyp
+namespace ContractionBase
 
-variable (H : M.ContractionHyp)
+variable (H : M.ContractionBase)
 include H
 
 /-- The bound on marginal utility. -/
@@ -361,6 +366,17 @@ theorem weighted_policy_gap (hη0 : 0 ≤ η)
     _ ≤ H.ℓ * M.cashScale * η + H.A * η / H.m := add_le_add h1 h2
     _ = (H.ℓ * M.cashScale + H.A / H.m) * η := by ring
 
+end ContractionBase
+
+namespace ContractionHyp
+
+variable (H : M.ContractionHyp)
+include H
+
+variable (z₀ : Z) (m₀ : E → ℝ) (K K' : List Z → ℝ)
+
+variable [Nonempty Z] {η : ℝ}
+
 /-! ### Distribution gaps, weighted by depth -/
 
 omit [Nonempty Z] in
@@ -415,7 +431,7 @@ theorem weighted_equilibriumMap_gap (μ₀ : Measure M.AState) [IsProbabilityMea
         mul_le_mul_of_nonneg_left hm (pow_nonneg H.lam_pos.le _)
     _ ≤ H.lam * c / (1 - H.lam * M.returnBound) := H.weighted_gapPath hc h
     _ = H.κ * η := by
-        simp only [c, κ]
+        simp only [c, ContractionBase.κ]
         ring
 
 omit [Nonempty Z] in

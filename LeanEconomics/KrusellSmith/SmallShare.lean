@@ -137,11 +137,12 @@ variable (V : KSEnvironment Z E) (T : CobbDouglas Z) {γ : ℝ} (hγ : 0 < γ)
   (hδ : 0 < T.depreciation)
 include hγ hδ
 
-/-- **At share zero**: `κ = 0` and `r = 1 − δ`, and all the formulas are continuous there. -/
-theorem smallShare_limits :
-    smallκ V T γ 0 = 0 ∧ smallRate V T γ 0 = 1 - T.depreciation ∧
-      smallR T 0 = 1 - T.depreciation ∧ ContinuousAt (smallR T) 0 ∧
-      ContinuousAt (smallκ V T γ) 0 ∧ ContinuousAt (smallRate V T γ) 0 := by
+omit hδ in
+/-- **At share zero** the policy gain vanishes, `G = 0`, the return bound is `1 − δ`, and both are
+continuous there. -/
+theorem smallGain_limits :
+    smallGain V T γ 0 = 0 ∧ smallR T 0 = 1 - T.depreciation ∧ ContinuousAt (smallR T) 0 ∧
+      ContinuousAt (smallGain V T γ) 0 := by
   have hcap := T.capLo_pos
   have hcapHi : 0 < T.capHi := hcap.trans_le T.capLo_le
   have hlab := T.labLo_pos
@@ -168,7 +169,6 @@ theorem smallShare_limits :
   have hq0 : V.discount * smallR T 0 / 1 < 1 := by
     rw [hR0, div_one]
     nlinarith
-  have hκ0 : smallκ V T γ 0 = 0 := by simp [smallκ, hLip0]
   have hG0 : smallGain V T γ 0 = 0 := by simp [smallGain, hLip0]
   -- continuity
   have cid : ContinuousAt (fun α : ℝ => α) 0 := continuousAt_id
@@ -227,13 +227,23 @@ theorem smallShare_limits :
   have cGain : ContinuousAt (smallGain V T γ) 0 := by
     unfold smallGain
     exact (cLip.mul continuousAt_const).add cAm
+  exact ⟨hG0, hR0, cR, cGain⟩
+
+/-- **At share zero**: `κ = 0` and `r = 1 − δ`, and all the formulas are continuous there. -/
+theorem smallShare_limits :
+    smallκ V T γ 0 = 0 ∧ smallRate V T γ 0 = 1 - T.depreciation ∧
+      smallR T 0 = 1 - T.depreciation ∧ ContinuousAt (smallR T) 0 ∧
+      ContinuousAt (smallκ V T γ) 0 ∧ ContinuousAt (smallRate V T γ) 0 := by
+  obtain ⟨hG0, hR0, cR, cGain⟩ := smallGain_limits V T hγ
+  have hLip0 : smallLip T 0 = 0 := by simp [smallLip]
+  have hκ0 : smallκ V T γ 0 = 0 := by simp [smallκ, hLip0]
   have hδne : 1 - 1 * smallR T 0 ≠ 0 := by
     have : 1 - 1 * smallR T 0 = T.depreciation := by rw [hR0]; ring
     rw [this]
     exact hδ.ne'
   have cκ : ContinuousAt (smallκ V T γ) 0 := by
-    unfold smallκ
-    exact (continuousAt_const.mul ((cLip.mul continuousAt_const).add cAm)).div
+    change ContinuousAt (fun α => 1 * smallGain V T γ α / (1 - 1 * smallR T α)) 0
+    exact (continuousAt_const.mul cGain).div
       (continuousAt_const.sub (continuousAt_const.mul cR)) hδne
   have cRate : ContinuousAt (smallRate V T γ) 0 := by
     unfold smallRate

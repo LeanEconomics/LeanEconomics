@@ -114,3 +114,21 @@ for the matched-expectations-path (MEP) method.
   `ContractionHyp` with both. Proof: every constant is an explicit continuous expression in `α`
   at `α = 0` (`smallR`, …, `smallRate`, identified by `rfl`), where `ℓ = 0`, `κ = 0`,
   `r = 1 − δ`. Standard axioms only.
+* **Employment marginals + exactly one equilibrium DONE** 2026-11-06 (`EmploymentMarginals.lean`,
+  09265a3): `EmploymentDesign` (KS's marginals `m z` carried into each other, transitions
+  `≥ ε > 0`); `sum_abs_mul_le` (Doeblin contraction in `ℓ¹`);
+  **`IsSeqStateEquilibrium.initMass_eq_design`** (every sequence-state equilibrium has marginal
+  `m (ω 0)`), discharging LS4's marginal hypothesis;
+  **`smallShare_existsUnique_seqStateEquilibrium`** (CRRA + clamped CD, `δ > 0`, small share:
+  exactly one sequence-state equilibrium).
+* **Minimal-MPC slope DONE** 2026-11-06 (`MinimalMPC.lean`, `SlopeContraction.lean`,
+  `MinMPCSmallShare.lean`; `Contraction.lean` split into `ContractionBase` + `λR̄ < 1`):
+  `abs_policy_sub_le_minMPC` (CRRA, returns in `[R̲, R̄]`, `(βR̄)^{1/γ} < R̲`, floor slack along
+  iterates: saving slope `θ = R̄ (βR̄)^{1/γ}/R̲`; EGM power-mean step `mpcBound_bellman`,
+  iterates `mpcBound_iterate`, limit via Berge on the continuation
+  `continuousAt_argmax_selection`); `SlopeContraction` (Track A uniqueness `κ_θ = λG/(1−λθ)` and
+  the LS4 law contraction `r_θ = θ + G/(1−κ_θ)`, only `λθ < 1` needed); CRRA instance
+  `crraSavingSlope` (iterate floor slack `slackOf_iterate_radius`, `CobbDouglas.returnLo`);
+  **`minMPC_smallShare`**, **`minMPC_smallShare_existsUnique_seqStateEquilibrium`** for
+  `0 ≤ δ < 1` with `(β(1−δ))^{1/γ} < 1−δ`, and
+  **`zeroDepreciation_smallShare_existsUnique_seqStateEquilibrium`** (`δ = 0`, no condition).
