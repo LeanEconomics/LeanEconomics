@@ -226,6 +226,8 @@ import LeanEconomics.KrusellSmith.MinimalMPC
 import LeanEconomics.KrusellSmith.SlopeContraction
 import LeanEconomics.KrusellSmith.MinMPCSmallShare
 import LeanEconomics.KrusellSmith.DoeblinUniqueness
+import LeanEconomics.KrusellSmith.HistoryMarginals
+import LeanEconomics.KrusellSmith.HistoryMarginalsCD
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

@@ -132,3 +132,17 @@ for the matched-expectations-path (MEP) method.
   **`minMPC_smallShare`**, **`minMPC_smallShare_existsUnique_seqStateEquilibrium`** for
   `0 ≤ δ < 1` with `(β(1−δ))^{1/γ} < 1−δ`, and
   **`zeroDepreciation_smallShare_existsUnique_seqStateEquilibrium`** (`δ = 0`, no condition).
+* **No KS design needed for uniqueness** 2026-11-06 (`DoeblinUniqueness.lean`, f5111da):
+  `initMass_eq_of_minor` (two equilibria have equal marginals at every history when transitions
+  are `≥ ε > 0`); `minor_smallShare_existsUnique_seqStateEquilibrium` (+ minimal-MPC and
+  zero-depreciation versions).
+* **History-dependent marginals DONE** 2026-11-06 (`HistoryMarginals.lean`,
+  `HistoryMarginalsCD.lean`): price-gap Track A (`weighted_du_gap_price`,
+  `weighted_policy_gap_price`, `A₁`, `G₁`); two-part distance `Dist2 da dm` (Lipschitz-in-assets
+  `L`, oscillation `B` ⇒ `L da + B dm`); Doeblin mixing `osc_expectedNext`; `dist2_nodeDist`
+  (`(θ da + ā dm + P, c dm)`); `seqEq_priceGap`; `dist2_lawOfMotion`; `norm_step` (rate
+  `r* = max r_θ ((1+c)/2)` in `da + ω dm`); **`dist2_of_agree`** and
+  **`seqPolicy_gap_of_agree'`** for every sequence-state equilibrium, no marginal hypothesis;
+  CD labour Lipschitz `labLip`; **`minMPC_smallShare_matching`**, **`smallShare_matching`**:
+  small shares ⇒ `∃ r < 1, C₀`, saving gap `≤ C₀ r^n` at histories agreeing over `n + 1` shocks,
+  in every sequence-state equilibrium. Labour changes the weight `ω`, not the rate.
