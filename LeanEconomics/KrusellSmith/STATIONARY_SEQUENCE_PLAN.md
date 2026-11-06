@@ -108,3 +108,14 @@ SS4 largest (coupling + separation on `Z × P(AState)`); SS5 small.
   employment transitions bounded below ⇒ unique, continuous sequence-state equilibrium whose
   aggregate-state law is invariant and ergodic for the equilibrium kernel. Standard axioms only.
   Next SS4 (uniqueness of the stationary distribution).
+* **SS4 + SS5 DONE** 2026-11-07 (`StationaryUnique.lean`): `qStep`/`qIter` (equilibrium
+  expectations), `eIter` (expectations along the sequence-state equilibrium), `IsEqInvariant`,
+  `integral_qStep`/`integral_qIter` (invariance via `lintegral_bind`), `integral_fst`,
+  `marginal_stationary`; `DistLip` test functions; **`abs_qIter_sub_eIter_le`** (burn-in against
+  the equilibrium, `C r*ᵀ (da + ω dm)`); **`integral_eq_of_isInvariant`** (no aggregate mixing
+  needed beyond a unique stationary distribution of `π`); `distLipSubalgebra`,
+  `distLipSubalgebra_separatesPoints`; **`eq_of_isInvariant`** (unique invariant distribution);
+  headline **`minMPC_smallShare_unique_stationary`**: CRRA + clamped CD, small share, both chains
+  bounded below ⇒ unique continuous sequence-state equilibrium whose aggregate-state law is the
+  unique, ergodic invariant distribution of the equilibrium Markov process. Standard axioms only.
+  **Programme complete** (SS0–SS5).
