@@ -101,3 +101,10 @@ SS4 largest (coupling + separation on `Z × P(AState)`); SS5 small.
   `ShockVal Z × P(AState)`), `measurable_eqKernel`; **`isInvariant_stateLaw`** (under uniqueness,
   `stateLaw` is invariant for the equilibrium Markov process); **`ergodic_stateLaw`** (ergodic when
   the shock law is). Standard axioms only. Next SS3 (continuity of `μ` for small shares).
+* **SS3 DONE** 2026-11-07 (`SequenceStateContinuity.lean`): `continuous_integral_of_assetLip`
+  (fading memory ⇒ integrals of asset-Lipschitz tests continuous in the product topology);
+  **`continuous_seqState`** (Stone–Weierstrass density of `assetLipSubalgebra` + uniform limits),
+  `measurable_seqState`; **`minMPC_smallShare_stationary`**: CRRA + clamped CD, small share,
+  employment transitions bounded below ⇒ unique, continuous sequence-state equilibrium whose
+  aggregate-state law is invariant and ergodic for the equilibrium kernel. Standard axioms only.
+  Next SS4 (uniqueness of the stationary distribution).
