@@ -228,6 +228,7 @@ import LeanEconomics.KrusellSmith.MinMPCSmallShare
 import LeanEconomics.KrusellSmith.DoeblinUniqueness
 import LeanEconomics.KrusellSmith.HistoryMarginals
 import LeanEconomics.KrusellSmith.HistoryMarginalsCD
+import LeanEconomics.KrusellSmith.ShockHistory
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

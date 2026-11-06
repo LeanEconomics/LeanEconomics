@@ -889,6 +889,39 @@ theorem dist2_of_agree [Nonempty E] :
         _ = S.histRate ε ^ (T + 1) * S.histWeight ℓL ε := by ring
 
 include hminor hℓL hRL hwL hε hκ hμ in
+/-- **Burn-in with history-dependent marginals**: start from any distribution `ν`, `T` periods
+back, and run the law of motion along the realized shocks; the result is within some `(da, dm)`
+of the equilibrium distribution with `da + ω dm ≤ r* ^ T ω`. No condition on `ν`'s marginal. -/
+theorem dist2_run [Nonempty E] :
+    ∀ (T : ℕ) (ω : History Z) (ν : ProbabilityMeasure M.AState),
+      ∃ da dm : ℝ, 0 ≤ da ∧ 0 ≤ dm ∧
+        da + S.histWeight ℓL ε * dm ≤ S.histRate ε ^ T * S.histWeight ℓL ε ∧
+        Dist2 da dm (μ ω : Measure M.AState)
+          ((run M.lawMap T ω ν : ProbabilityMeasure M.AState) : Measure M.AState) := by
+  intro T
+  induction T with
+  | zero =>
+    intro ω ν
+    exact ⟨0, 1, le_rfl, zero_le_one, by rw [pow_zero]; linarith, dist2_zero_one _ _⟩
+  | succ T ih =>
+    intro ω ν
+    obtain ⟨da, dm, hda, hdm, hN, hD⟩ := ih (History.tail ω) ν
+    rw [S.eq_lawOfMotion_tail hκ hμ ω]
+    have hD' := S.dist2_lawOfMotion hminor hℓL hRL hwL hε hκ hda hdm hD (z := ω 1) (ω 0)
+    have hc0 := mix_nonneg hminor (ω 0)
+    refine ⟨_, _, ?_, mul_nonneg hc0 hdm, ?_, hD'⟩
+    · exact add_nonneg (add_nonneg (mul_nonneg S.θ_nonneg hda)
+        (mul_nonneg M.assetCap_pos.le hdm)) (mul_nonneg S.B.G₁_nonneg (div_nonneg
+          (add_nonneg (mul_nonneg S.B.ℓ_nonneg hda) (mul_nonneg (S.labourGap_nonneg hℓL) hdm))
+          (sub_pos.2 hκ).le))
+    · have hstep := S.norm_step hminor hℓL hε hκ hda hdm (ω 0)
+      have hr0 : 0 ≤ S.histRate ε := (S.rate_nonneg hκ).trans (le_max_left _ _)
+      calc _ ≤ S.histRate ε * (da + S.histWeight ℓL ε * dm) := hstep
+        _ ≤ S.histRate ε * (S.histRate ε ^ T * S.histWeight ℓL ε) :=
+            mul_le_mul_of_nonneg_left hN hr0
+        _ = S.histRate ε ^ (T + 1) * S.histWeight ℓL ε := by ring
+
+include hminor hℓL hRL hwL hε hκ hμ in
 /-- **Matched expectations with history-dependent marginals**: at histories agreeing over their
 last `T + 1` shocks, saving differs by at most `G₁ (ℓ ω + K_d) r* ^ T / (1 − κ_θ)`, at every
 household state, in every sequence-state equilibrium. -/
