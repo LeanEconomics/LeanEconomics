@@ -95,3 +95,9 @@ SS4 largest (coupling + separation on `Z × P(AState)`); SS5 small.
   by `ext_of_singleton`, measurable cylinders generate the product σ-algebra);
   **`ergodic_of_invariant`**; `stationary_unique_of_minor` (`π ≥ ε > 0`). Standard axioms only.
   Next SS2 (factor theorem).
+* **SS2 DONE** 2026-11-07 (`StationarySequence.lean`): `stateOf`, `stateLaw P μ`;
+  **`stateLaw_tomorrow`** (any measurable sequence-state equilibrium, no uniqueness: tomorrow's
+  aggregate state has today's law); `eqKernel` (equilibrium law of motion on
+  `ShockVal Z × P(AState)`), `measurable_eqKernel`; **`isInvariant_stateLaw`** (under uniqueness,
+  `stateLaw` is invariant for the equilibrium Markov process); **`ergodic_stateLaw`** (ergodic when
+  the shock law is). Standard axioms only. Next SS3 (continuity of `μ` for small shares).
