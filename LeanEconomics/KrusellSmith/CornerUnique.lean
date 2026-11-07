@@ -145,17 +145,19 @@ theorem eq_μw {μ : History Bool → ProbabilityMeasure model.AState}
 households of `CornerWitness.lean`, sequential equilibrium is unique from every initial state;
 the sequence-state equilibrium exists, is unique, and is the corner one; `(z, K)` is a sufficient
 state and a recursive equilibrium on `(z, K)` represents it; and its law of motion on `(z, K)` has
-a unique stationary distribution on the capital sets. -/
+a unique stationary distribution on the capital sets, which is ergodic. -/
 theorem cornerUnique :
     model.UniqueSequentialEquilibrium ∧ model.IsSeqStateEquilibrium μw ∧
       (∀ μ, model.IsSeqStateEquilibrium μ → μ = μw) ∧ KSufficient μw ∧
       (∃ R : model.AggStateRecursiveEquilibrium, R.Represents μw) ∧
       IsAggInvariant μw statLaw ∧ statLaw (Kgraph μw) = 1 ∧
+      (∀ B, MeasurableSet B → (∀ᵐ s ∂statLaw, s ∈ B → aggKernel μw s B = 1) →
+        statLaw B = 0 ∨ statLaw B = 1) ∧
       ∀ (Λ : Measure (ShockVal Bool × ℝ)) [IsProbabilityMeasure Λ],
         IsAggInvariant μw Λ → Λ (Kgraph μw) = 1 → Λ = statLaw :=
   ⟨uniqueSequentialEquilibrium_witness, cornerWitness.1, fun _ hμ => eq_μw hμ,
     cornerWitness.2.1, cornerWitness.2.2, cornerStationary.1, cornerStationary.2.1,
-    cornerStationary.2.2⟩
+    fun _ hB h => ergodic_statLaw hB h, cornerStationary.2.2⟩
 
 end CornerWitness
 

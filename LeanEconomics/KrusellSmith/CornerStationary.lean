@@ -183,6 +183,74 @@ theorem eq_statLaw (Λ : Measure (ShockVal Bool × ℝ)) [IsProbabilityMeasure �
   rw [← hΛ, bind_witness Λ hK hB, statLaw_apply hB]
   simp only [hmass]
 
+/-- One step from an atom: to `(w, capOf z')` with probability `1/2` each. -/
+theorem aggKernel_atom (z z' : Bool) {B : Set (ShockVal Bool × ℝ)} (hB : MeasurableSet B) :
+    aggKernel μw ((⟨z'⟩ : ShockVal Bool), capOf z) B
+      = ∑ w : Bool, 2⁻¹ * B.indicator 1 ((⟨w⟩ : ShockVal Bool), capOf z') := by
+  rw [aggKernel_apply _ hB]
+  have hl : ∀ w, lawKm μw z' (capOf z) w = capOf z' := fun w =>
+    lawKm_witness (capOf_mem_Kset z z') w
+  simp only [hl, show ∀ y y' : Bool, model.aggProb y y' = 1 / 2 from fun _ _ => rfl, ofReal_half]
+
+/-- **The stationary law is ergodic**: a set the `(z, K)` process does not leave has probability
+`0` or `1`. -/
+theorem ergodic_statLaw {B : Set (ShockVal Bool × ℝ)} (hB : MeasurableSet B)
+    (hinv : ∀ᵐ s ∂statLaw, s ∈ B → aggKernel μw s B = 1) :
+    statLaw B = 0 ∨ statLaw B = 1 := by
+  -- the invariance holds at every atom, each of mass at least `1/4`
+  have hatom : ∀ z z' : Bool, ((⟨z'⟩ : ShockVal Bool), capOf z) ∈ B →
+      aggKernel μw ((⟨z'⟩ : ShockVal Bool), capOf z) B = 1 := by
+    intro z z' hmem
+    by_contra hne
+    set p : ShockVal Bool × ℝ := ((⟨z'⟩ : ShockVal Bool), capOf z)
+    have h0 := ae_iff.1 hinv
+    have hsub : ({p} : Set (ShockVal Bool × ℝ)) ⊆ {s | ¬ (s ∈ B → aggKernel μw s B = 1)} := by
+      intro s hs
+      rw [mem_singleton_iff] at hs
+      subst hs
+      exact fun h => hne (h hmem)
+    have hle := measure_mono (μ := statLaw) hsub
+    rw [h0] at hle
+    have hpos : (2⁻¹ * 2⁻¹ : ℝ≥0∞) ≤ statLaw {p} := by
+      rw [statLaw_apply (measurableSet_singleton p)]
+      have h1 : (2⁻¹ : ℝ≥0∞) * ({p} : Set (ShockVal Bool × ℝ)).indicator 1 p
+          ≤ ∑ w' : Bool, 2⁻¹ * ({p} : Set (ShockVal Bool × ℝ)).indicator 1
+            ((⟨w'⟩ : ShockVal Bool), capOf z) :=
+        Finset.single_le_sum (f := fun w' : Bool => (2⁻¹ : ℝ≥0∞)
+          * ({p} : Set (ShockVal Bool × ℝ)).indicator 1 ((⟨w'⟩ : ShockVal Bool), capOf z))
+          (fun _ _ => zero_le) (Finset.mem_univ z')
+      have h2 := Finset.single_le_sum (f := fun w : Bool => (2⁻¹ : ℝ≥0∞)
+          * ∑ w' : Bool, 2⁻¹ * ({p} : Set (ShockVal Bool × ℝ)).indicator 1
+            ((⟨w'⟩ : ShockVal Bool), capOf w)) (fun _ _ => zero_le) (Finset.mem_univ z)
+      rw [Set.indicator_of_mem (mem_singleton p), Pi.one_apply, mul_one] at h1
+      exact (mul_le_mul_right h1 _).trans h2
+    have : (2⁻¹ * 2⁻¹ : ℝ≥0∞) ≤ 0 := hpos.trans hle
+    simp at this
+  -- membership spreads to both successors
+  have hsucc : ∀ z z' : Bool, ((⟨z'⟩ : ShockVal Bool), capOf z) ∈ B →
+      ∀ w : Bool, ((⟨w⟩ : ShockVal Bool), capOf z') ∈ B := by
+    intro z z' hmem w
+    have hk := hatom z z' hmem
+    rw [aggKernel_atom z z' hB, Fintype.sum_bool] at hk
+    by_contra hw
+    by_cases h1 : ((⟨true⟩ : ShockVal Bool), capOf z') ∈ B <;>
+      by_cases h2 : ((⟨false⟩ : ShockVal Bool), capOf z') ∈ B <;>
+      cases w <;> simp_all [Set.indicator]
+  by_cases hex : ∃ z z' : Bool, ((⟨z'⟩ : ShockVal Bool), capOf z) ∈ B
+  · obtain ⟨z, z', hmem⟩ := hex
+    have hall : ∀ w v : Bool, ((⟨v⟩ : ShockVal Bool), capOf w) ∈ B := by
+      intro w v
+      exact hsucc z' w (hsucc z z' hmem w) v
+    right
+    rw [statLaw_apply hB]
+    simp only [fun w v => Set.indicator_of_mem (hall w v) (1 : ShockVal Bool × ℝ → ℝ≥0∞),
+      Pi.one_apply, mul_one, Fintype.sum_bool, half_add_half]
+  · left
+    push Not at hex
+    rw [statLaw_apply hB]
+    simp only [fun w v => Set.indicator_of_notMem (hex w v) (1 : ShockVal Bool × ℝ → ℝ≥0∞),
+      mul_zero, Finset.sum_const_zero]
+
 /-- **The stationary distribution of the corner economy on `(z, K)`**: invariant for the
 `(z, K)` law of motion, living on the capital sets, and unique there. -/
 theorem cornerStationary :
