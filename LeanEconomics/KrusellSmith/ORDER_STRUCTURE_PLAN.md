@@ -82,3 +82,9 @@ only that this sufficient condition is unavailable. OS5 is needed for the user's
   `SepOnHistories`, `comparable_of_firstDiff`, **`comparable_of_sameShock`**,
   **`kInjective_of_chain`**, **`kSufficient_of_chain`**. Standard axioms only. Next OS2 ((Mon) from
   primitives in the complementarity class).
+* **OS2 DONE** 2026-11-07 (`OrderMonotone.lean`): **`eqPath_mono`** (Tarski comparative statics:
+  under `SavingMonotone` + uniqueness, `ν ≼ ν'` ⇒ equilibrium capital path from `ν` ≤ from `ν'`;
+  labour equal because dominance forces equal marginals), **`lawOfMotion_dominates`**,
+  **`monOnHistories_of_savingMonotone`** ((Mon) for every sequence-state equilibrium),
+  **`kSufficient_of_savingMonotone`** (with (Sep)). Standard axioms only. Remaining hypothesis:
+  (Sep). Next OS3 (reduce (Sep) to extreme histories).

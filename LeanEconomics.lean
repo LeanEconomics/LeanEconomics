@@ -238,6 +238,7 @@ import LeanEconomics.KrusellSmith.AggregateStateStationary
 import LeanEconomics.KrusellSmith.AggregateStateIff
 import LeanEconomics.KrusellSmith.AggregateStateRepAgent
 import LeanEconomics.KrusellSmith.OrderStructure
+import LeanEconomics.KrusellSmith.OrderMonotone
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
