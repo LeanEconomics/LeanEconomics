@@ -1,0 +1,66 @@
+\section{Recursive equilibrium}\label{sec:recursive}
+
+\subsection{Uniqueness gives the minimal state}
+
+\begin{theorem}\label{thm:minimal}
+If sequential equilibrium is unique from every $(z,\mu)$, then there is a recursive equilibrium on
+the minimal state $(z,\mu)$: the distribution next period is a function of today's shock, today's
+distribution and tomorrow's shock, weakly continuous in the distribution, and saving is a continuous
+function of today's state.
+\end{theorem}
+\formal{KSModel.isRecursive, continuous\_lawOfMotion}
+
+\noindent
+The continuation of a sequential equilibrium below a node is a sequential equilibrium from that
+node's state, and the graph of the equilibrium correspondence is closed; with uniqueness the
+equilibrium path is a continuous function of $(z,\mu)$ by the closed-graph theorem on a compact
+space, and the law of motion is read off it. This is \citet[Proposition 2]{cao2020}.
+
+\subsection{Enlarged states, in every economy}
+
+\begin{theorem}\label{thm:valuestate}
+In every economy there is a recursive equilibrium whose state is $(z,\mu,v)$, with $v$ the profile
+of household values, and every such equilibrium generates a sequential equilibrium with the same
+payoffs.
+\end{theorem}
+\formal{recursiveEquilibrium\_valueState, generates\_sequentialEquilibrium, payoffEquivalent}
+
+\begin{theorem}\label{thm:history}
+In every economy there is a recursive equilibrium whose aggregate state is the infinite history of
+aggregate shocks: an assignment $\mu^*$ of a distribution to each history, consistent with optimal
+saving at every history, with the history evolving exogenously. This holds in particular with
+logarithmic utility and Cobb--Douglas prices.
+\end{theorem}
+\formal{exists\_seqStateEquilibrium, exists\_historyRecursiveEquilibrium,
+logEconomy\_exists\_seqStateEquilibrium}
+
+\noindent
+The fixed point is taken in the space of assignments of distributions to infinite histories; no
+initial distribution is needed. We call it the \emph{sequence-state equilibrium}. Under uniqueness
+of sequential equilibrium it is Markov in $(z,\mu)$.
+
+\begin{theorem}\label{thm:dgmm}
+In every economy there is a stationary recursive equilibrium with an ergodic invariant distribution,
+on the expectations-augmented state of \citet{dgmm1994}; it can be chosen conditionally spotless in
+the sense of \citet[Definition 6]{cao2020}.
+\end{theorem}
+\formal{exists\_stationaryRecursiveEquilibrium, exists\_conditionallySpotlessEquilibrium}
+
+\noindent
+The proof formalises DGMM's Theorem 1.1 and Corollary 1.1 in the abstract (Kakutani--Fan--Glicksberg
+for a correspondence of measures, disintegration, Krein--Milman for the ergodic choice) and applies it
+to the compact set of equilibrium states.
+
+\subsection{The minimal state without uniqueness}
+
+\begin{theorem}\label{thm:monotone}
+If saving rises with the path of aggregate capital, the greatest sequential equilibrium is a
+consistent selection, and a recursive equilibrium on $(z,\mu)$ exists without uniqueness. Saving
+rises with capital in complementarity economies (a constant wage, a return nondecreasing in capital,
+relative risk aversion at most one), and an explicit such economy is given.
+\end{theorem}
+\formal{SavingMonotone.isRecursive, savingMonotone\_of, example\_exists\_consistentSelection}
+
+\noindent
+The condition fails for Cobb--Douglas prices, where higher capital lowers the cash on hand of
+wealthy households.

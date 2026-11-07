@@ -1,0 +1,34 @@
+\section{Stationarity directly from the sequential equilibrium}\label{sec:stationarity}
+
+The usual route to a stationary equilibrium passes through a recursive state space, often enlarged
+and randomised \citep{dgmm1994}. A sequence-state equilibrium offers a direct one: it is a function
+of the infinite history of shocks, and the history evolves exogenously, so if the history is drawn
+from a law left invariant by the shock process, the aggregate state $(z,\mu^*)$ has the same law
+every period. The equilibrium is a factor of the stationary shock process.
+
+\begin{theorem}\label{thm:factor}
+The shock-history process has an invariant ergodic law, unique when the aggregate chain is bounded
+below. For every sequence-state equilibrium measurable in the history --- with no uniqueness ---
+tomorrow's aggregate state has today's law. Under uniqueness of sequential equilibrium that law is
+an invariant distribution of the equilibrium Markov process on $(z,\mu)$, ergodic when the shock law
+is.
+\end{theorem}
+\formal{exists\_invariant\_ergodic, stationary\_unique\_of\_minor, stateLaw\_tomorrow,
+isInvariant\_stateLaw}
+
+\begin{theorem}\label{thm:stationary}
+For CRRA utility, Cobb--Douglas prices with $0\le\delta<1$ and $(\beta(1-\delta))^{1/\gamma}<1-\delta$,
+both shock chains bounded below and a small enough capital share: the sequence-state equilibrium is
+unique and continuous in the history; the law of its aggregate state under the stationary shock law
+is an invariant and ergodic distribution of the equilibrium Markov process; and every invariant
+distribution of that process equals it.
+\end{theorem}
+\formal{continuous\_seqState, minMPC\_smallShare\_unique\_stationary}
+
+\noindent
+Continuity comes from fading memory (Theorem~\ref{thm:matching}) and Stone--Weierstrass density of
+asset-Lipschitz test functions. Uniqueness of the invariant distribution is a coupling: the $T$-step
+expectation of a test function from any state is within $C(r^*)^T$ of a function of today's shock
+alone, invariant distributions have the same shock marginal, and the test functions separate
+measures on the Polish aggregate state space. The theorem proves uniqueness of the invariant
+distribution, not convergence in law from every starting point.

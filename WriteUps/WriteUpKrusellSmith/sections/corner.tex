@@ -1,0 +1,64 @@
+\section{An explicit economy with heterogeneous households}\label{sec:corner}
+
+\subsection{Corner economies}
+
+Let the employed save up to the cap and the unemployed spend everything. Under the employment
+design of \citet{krusellsmith1998} --- the employment rate at shock $z$ is $m(z)$, consistent under
+the transitions --- the cross-section after yesterday's shock $y$ and today's $z$ puts mass on two
+asset levels, $\abar$ for those employed last period and $0$ for the others, jointly with the current
+employment state. Capital is $\abar\, m(y)$. Below the root of a history's tree, capital and labour
+depend only on the shocks along the node and today's shock, so yesterday's shock enters prices only
+through today's capital: $(z,K)$-sufficiency holds with no injectivity.
+
+The corner policy is optimal when three conditions hold along the price path: labour income covers
+the floor plus the corner saving; for the employed, $u'(c)\le\beta\E[R'u'(c')]$ at the cap; for the
+unemployed, $u'(c)\ge\beta\E[R'u'(c')]$ at zero, where $c'$ is consumption next period under the
+corner policy itself. The proof is a verification argument: the value of following the corner policy
+is today's utility plus a term independent of assets; against it the objective is concave, the
+tangent lines today and tomorrow bound the gain from leaving the corner by
+$(g-a)\,(u'(c)-\beta\E R'u'(c'))$, which has the right sign; so the policy's value solves the Bellman
+equation and is the value function. With prices bounded in $[R_{lo},R_{hi}]\times[w_{lo},w_{hi}]$ and
+marginal utility decreasing, the conditions hold along every price path once they hold at their
+worst cases.
+\formal{policy\_eq\_cornerPolicy, policyValue\_eq\_valueFunction, cornerConditions\_of\_bounds}
+
+\subsection{The economy}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Aggregate shocks & two, i.i.d.\ with probability $1/2$ \\
+Employment & efficiency $2$ (employed), $1/4$ (unemployed) \\
+Employment rates & $4/5$ (bad), $17/20$ (good); job finding $49/50$ \\
+Job loss & $49/200,\ 73/400,\ 197/850,\ 147/850$ by (yesterday, today) \\
+Preferences & logarithmic, $\beta=24/25$; asset cap $\abar=1/16$ \\
+Technology & Cobb--Douglas, $\alpha=1/10$, TFP $1/4$, $\delta=1/10$ \\
+Boxes & $K^{1/10}\in[11/15,\,3/4]$, $L^{1/10}\in[21/20,\,16/15]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The box endpoints are tenth powers of rationals, so the powers $1/10$ and $9/10$ in the prices are
+exact and every inequality is checked in exact rational arithmetic. Gross returns lie in about
+$[1.42,1.63]$ and wages in about $[0.155,0.161]$. Capital is $1/20$ after a bad shock and $17/320$
+after a good one, labour $33/20$ or $139/80$: both inside the boxes at every node of the equilibrium
+price tree, so prices are the true Cobb--Douglas marginal products.
+
+\begin{theorem}\label{thm:corner}
+In this economy: sequential equilibrium is unique from every initial state; the sequence-state
+equilibrium exists, is unique, and is the corner one; $(z,K)$-sufficiency holds and a recursive
+equilibrium on $(z,K)$ represents it; and its law of motion on $(z,K)$ has a unique stationary
+distribution on the capital sets --- weight $1/4$ on each pair of today's shock and capital from
+yesterday's shock --- which is ergodic.
+\end{theorem}
+\formal{cornerUnique, cornerWitness, cornerStationary, ergodic\_statLaw, seqPrices\_mem\_box}
+
+\noindent
+Uniqueness comes cheaply because the corner conditions hold along every price path: the household's
+policy is the corner one whatever it expects, so the distribution path does not depend on prices.
+Three features limit the example. Assets sit at corners rather than at interior precautionary
+levels. The gross return exceeds $1/\beta$, which is what makes the cap bind for the employed. And
+with capital share $1/2$ and labour inside its box the corner economy cannot exist: the employed's
+net income over the unemployed's spending is bounded by roughly $(1-\alpha)/\alpha$, too small for
+both corner conditions.

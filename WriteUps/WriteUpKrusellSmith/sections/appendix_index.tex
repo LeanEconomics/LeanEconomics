@@ -1,0 +1,41 @@
+\section{Index of formal statements}\label{app:index}
+
+All names are in the namespace \lean{LeanEconomics.KrusellSmith} (most in \lean{KSModel}); files
+are in \texttt{LeanEconomics/KrusellSmith/} unless noted.
+
+{\footnotesize
+\begin{longtable}{>{\raggedright}p{0.27\textwidth}>{\raggedright}p{0.38\textwidth}>{\raggedright\arraybackslash}p{0.25\textwidth}}
+\toprule
+Result & Formal name & File \\
+\midrule
+\endhead
+Existence (Thm~\ref{thm:existence}) & \lean{exists\_sequentialEquilibrium} & \texttt{Equilibrium} \\
+Labour consistency & \lean{exists\_sequentialEquilibrium\_labour} & \texttt{Labour} \\
+Log, CRRA (Thm~\ref{thm:existenceInada}) & \lean{KSInada.exists\_sequentialEquilibrium} & \texttt{Inada} \\
+Cobb--Douglas (Thm~\ref{thm:existenceCD}) & \lean{logEconomy\_exists\_equilibrium} & \texttt{CobbDouglas} \\
+Clamp never binds & \lean{crra\_exists\_unclamped\_equilibrium} & \texttt{CobbDouglasCapital} \\
+Minimal state under uniqueness (Thm~\ref{thm:minimal}) & \lean{KSModel.isRecursive} & \texttt{Recursive} \\
+Value-function state (Thm~\ref{thm:valuestate}) & \lean{recursiveEquilibrium\_valueState} & \texttt{ValueStateExistence} \\
+History state (Thm~\ref{thm:history}) & \lean{exists\_seqStateEquilibrium} & \texttt{SequenceState\allowbreak Equilibrium} \\
+DGMM stationary (Thm~\ref{thm:dgmm}) & \lean{exists\_stationaryRecursiveEquilibrium} & \texttt{StationaryEquilibrium} \\
+Conditionally spotless & \lean{exists\_conditionallySpotlessEquilibrium} & \texttt{SpotlessEquilibrium} \\
+Monotone route (Thm~\ref{thm:monotone}) & \lean{SavingMonotone.isRecursive} & \texttt{GreatestEquilibrium} \\
+Uniqueness, CRRA (Thm~\ref{thm:smallshare}) & \lean{crra\_existsUnique\_sequentialEquilibrium} & \texttt{CRRAContraction} \\
+Small capital shares & \lean{minMPC\_smallShare} & \texttt{MinMPCSmallShare} \\
+Unique sequence state (Thm~\ref{thm:sequnique}) & \lean{minor\_minMPC\_smallShare\_existsUnique\_seqStateEquilibrium} & \texttt{DoeblinUniqueness} \\
+Matching (Thm~\ref{thm:matching}) & \lean{minMPC\_smallShare\_matching} & \texttt{HistoryMarginalsCD} \\
+Factor theorem (Thm~\ref{thm:factor}) & \lean{stateLaw\_tomorrow}, \lean{isInvariant\_stateLaw} & \texttt{StationarySequence} \\
+Unique stationary (Thm~\ref{thm:stationary}) & \lean{minMPC\_smallShare\_unique\_stationary} & \texttt{StationaryUnique} \\
+$(z,K)$ iff (Thm~\ref{thm:iff}) & \lean{kSufficient\_iff\_exists\_represents} & \texttt{AggregateStateIff} \\
+$(z,K)$, small shares & \lean{minMPC\_smallShare\_aggregateState} & \texttt{AggregateStateIff} \\
+Representative agent (Thm~\ref{thm:repagent}) & \lean{minMPC\_smallShare\_repAgent} & \texttt{AggregateStateRepAgent} \\
+Order route (Thm~\ref{thm:order}) & \lean{kSufficient\_of\_extremes} & \texttt{OrderExtremes} \\
+Corner verification & \lean{policy\_eq\_cornerPolicy} & \texttt{CornerVerification} \\
+Policy evaluation & \lean{policyValue\_eq\_valueFunction} & \texttt{DynamicProgramming/\allowbreak PolicyEvaluation} \\
+Corner conditions from bounds & \lean{cornerConditions\_of\_bounds} & \texttt{CornerPrimitives} \\
+Corner economy (Thm~\ref{thm:corner}) & \lean{CornerWitness.cornerUnique} & \texttt{CornerUnique} \\
+True marginal products & \lean{CornerWitness.seqPrices\_mem\_box} & \texttt{CornerWitness} \\
+Stationary law, ergodic & \lean{CornerWitness.cornerStationary}, \lean{CornerWitness.ergodic\_statLaw} & \texttt{CornerStationary} \\
+\bottomrule
+\end{longtable}
+}

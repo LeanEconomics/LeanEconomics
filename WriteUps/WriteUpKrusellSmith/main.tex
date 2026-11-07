@@ -1,0 +1,88 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1.1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% A formal name, as it appears in the Lean development.
+\newcommand{\leanunderscore}{\char`\_\hskip 0pt plus 0.4pt\relax}
+\newcommand{\lean}[1]{\begingroup\ttfamily\let\_\leanunderscore #1\endgroup}
+% The Lean name attached to a stated result.
+\newcommand{\formal}[1]{\par\noindent\begingroup\footnotesize\raggedright\emph{Formal statement:} \lean{#1}.\par\endgroup}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\abar}{\bar a}
+
+\onehalfspacing
+\tolerance=600 \emergencystretch=1.5em
+
+\title{Krusell--Smith Economies in Lean:\\ Existence, Uniqueness, Stationarity and the Aggregate State}
+\author{LeanEconomics Org [mostly Claude]\thanks{The Lean development described here is at
+\url{https://github.com/LeanEconomics/LeanEconomics}, directory \texttt{LeanEconomics/KrusellSmith}.
+It was written mostly by Claude (Anthropic), an AI coding model, working under the direction of
+Robert Kirkby (Victoria University of Wellington); every result reported was checked by the Lean
+kernel, and every headline theorem depends only on Lean's standard axioms. Companion to the
+write-ups on Aiyagari (1994) and on overlapping generations in the same repository.}}
+\date{November 2026\\[0.5em]\small Draft, in progress}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This is the record of a programme to formalise heterogeneous-agent economies with aggregate risk in
+the style of \citet{krusellsmith1998} in Lean~4, and of what it proves. Sequential equilibrium
+exists from every initial state, for logarithmic and CRRA utility and for Cobb--Douglas prices.
+Recursive equilibrium exists when the aggregate state is enlarged by the value function or by the
+infinite history of aggregate shocks, and a stationary recursive equilibrium with an ergodic
+distribution exists in the sense of \citet{dgmm1994}. When the capital share is small, sequential
+equilibrium is unique, so a recursive equilibrium exists on the minimal state $(z,\mu)$; the law of
+motion contracts, which turns the matched-expectations idea of \citet{lee2026} into explicit error
+bounds; and the equilibrium is stationary directly from the sequential equilibrium, with a unique
+and ergodic invariant distribution. We then ask when aggregate shock and aggregate capital $(z,K)$
+suffice as the state. We characterise the answer exactly --- a recursive equilibrium on $(z,K)$
+exists if and only if two histories with the same $(z,K)$ have the same future capital and labour
+--- and give an explicit economy with heterogeneous households and Cobb--Douglas prices in which
+it holds: sequential equilibrium is unique, $(z,K)$ is a sufficient state, and the recursive
+equilibrium on $(z,K)$ has a unique, ergodic stationary distribution. Whether $(z,K)$ is sufficient
+at the interior, persistent calibrations of Krusell and Smith remains open.
+\end{abstract}
+
+\tableofcontents
+
+\input{sections/intro}
+\input{sections/model}
+\input{sections/existence}
+\input{sections/recursive}
+\input{sections/uniqueness}
+\input{sections/stationarity}
+\input{sections/aggregate}
+\input{sections/corner}
+\input{sections/open}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+\input{sections/appendix_index}
+
+\end{document}

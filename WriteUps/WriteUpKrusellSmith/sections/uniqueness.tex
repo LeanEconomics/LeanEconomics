@@ -1,0 +1,50 @@
+\section{Uniqueness for small capital shares, and matching}\label{sec:uniqueness}
+
+\subsection{A contraction in marginal utility}
+
+Uniqueness is proved by showing that the equilibrium map --- capital path to the mean-saving path it
+induces --- is a contraction in a depth-weighted sup norm. The household side is measured in
+marginal utility, not in policies: the gap in $u'(c)$ between two price paths propagates with factor
+$\beta\bar R$ per period, and the policy gap follows by strong concavity on the range of
+consumption. With $\ell$ the Lipschitz constant of prices in capital, the contraction factor is
+$\kappa=\lambda(\ell C+A/m)/(1-\lambda\theta)$, explicit in the primitives, where $\theta$ is a bound
+on the slope of saving in assets.
+
+\begin{theorem}\label{thm:smallshare}
+For CRRA utility ($\gamma>0$) and Cobb--Douglas prices with the clamp, there is $\alpha_0>0$ such
+that for every capital share $\alpha<\alpha_0$ sequential equilibrium is unique from every state, so
+the recursive equilibrium on $(z,\mu)$ of Theorem~\ref{thm:minimal} exists. This holds for
+$0\le\delta<1$ whenever $(\beta(1-\delta))^{1/\gamma}<1-\delta$, using the slope bound
+$\theta=\bar R(\beta\bar R)^{1/\gamma}/\underline R$ obtained from the minimal marginal propensity to
+consume; in particular for $\delta=0$ unconditionally.
+\end{theorem}
+\formal{crra\_existsUnique\_sequentialEquilibrium, smallShare\_contraction, minMPC\_smallShare}
+
+\noindent
+The proof is analytic: $\kappa$ and the rate of the law of motion are explicit functions of $\alpha$,
+continuous at $\alpha=0$ where they reduce to $0$ and to the slope bound. The theorem is
+qualitative. At the Krusell--Smith calibration the crude constants give $\kappa$ of order $10^{15}$
+at $\alpha=0.36$, and $\kappa<1$ only for capital shares of order $10^{-13}$ (a separate numerical
+evaluation, not part of the formal development).
+
+\begin{theorem}\label{thm:sequnique}
+Under the same conditions, if employment transitions are bounded below, there is exactly one
+sequence-state equilibrium.
+\end{theorem}
+\formal{minMPC\_smallShare\_existsUnique\_seqStateEquilibrium,
+minor\_minMPC\_smallShare\_existsUnique\_seqStateEquilibrium}
+
+\subsection{Fading memory and matched expectations}
+
+\citet{lee2026} argues that matching on aggregate capital along a simulated path is accurate because
+the economy forgets its past. In the small-share class this is a theorem. Measure distance between
+cross-sections by a two-part distance: Lipschitz test functions in assets, and the employment
+marginals.
+
+\begin{theorem}\label{thm:matching}
+For small capital shares, with both shock chains bounded below, the equilibrium law of motion
+contracts at a rate $r^*<1$ in the two-part distance, even when employment marginals depend on the
+history; in every sequence-state equilibrium, two histories agreeing over their last $n$ shocks have
+savings within $C_0(r^*)^n$, with $C_0$ explicit.
+\end{theorem}
+\formal{dist2\_run, minMPC\_smallShare\_matching, smallShare\_matching}

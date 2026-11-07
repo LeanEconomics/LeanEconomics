@@ -1,0 +1,66 @@
+\section{When is $(z,K)$ a sufficient state?}\label{sec:aggregate}
+
+Households need only prices, and prices depend on the path of capital and labour. So the right
+question is not whether $(z,K)$ determines the distribution, but whether it determines that path.
+
+\begin{definition}
+A sequence-state equilibrium $\mu^*$ satisfies \emph{$(z,K)$-sufficiency} if any two histories with
+the same current shock and the same capital have the same capital and labour at every node of their
+future trees.
+\end{definition}
+
+\noindent
+A \emph{recursive equilibrium on $(z,K)$} consists of capital sets $\mathcal K_z$, a law of motion
+$K'=\Psi(z,K,z')$ keeping capital in the sets, labour $L(z,K)$, and value and saving functions of
+$(z,K,a,e)$ satisfying the Bellman equation with continuation at $(z',\Psi(z,K,z'))$, together with
+consistency of aggregation: each $(z,K)$ carries a nonempty set of distributions with mean $K$ and
+labour $L(z,K)$, mapped by the saving policy and the employment transitions into the set at
+$(z',\Psi(z,K,z'))$. It \emph{represents} $\mu^*$ if at every history the capital lies in
+$\mathcal K_z$, the distribution lies in the set at $(z,K)$, and households save by the $(z,K)$
+policy.
+
+\begin{theorem}\label{thm:iff}
+For every sequence-state equilibrium, $(z,K)$-sufficiency holds if and only if some recursive
+equilibrium on $(z,K)$ represents it. For small capital shares (as in Theorem~\ref{thm:stationary}):
+when $(z,K)$-sufficiency holds, the capital sets are compact, the law of motion $\Psi$ is continuous
+on them, and the law of $(z,K)$ is the unique invariant distribution of the $(z,K)$ process on the
+capital sets, and it is ergodic.
+\end{theorem}
+\formal{kSufficient\_iff\_exists\_represents, minMPC\_smallShare\_aggregateState, stationary\_aggLaw}
+
+\noindent
+Continuity needs no injectivity: capital is a quotient map from the compact set of histories with a
+given shock. Uniqueness of the stationary law needs no Lipschitz test functions and no measurable
+selection of distributions: bounded continuous test functions are uniformly continuous on the
+compact capital sets, and capital forgets old shocks.
+
+\begin{theorem}\label{thm:repagent}
+With a single idiosyncratic state, every household holds aggregate capital in the small-share
+equilibrium, so capital determines the distribution and $(z,K)$-sufficiency holds: the stochastic
+growth model of \citet{brockmirman1972} is recovered as a recursive equilibrium on $(z,K)$ with a
+unique stationary distribution.
+\end{theorem}
+\formal{minMPC\_smallShare\_repAgent}
+
+\paragraph{An order route.} If the cross-sections the equilibrium visits at each shock form a chain
+for first-order stochastic dominance in assets, then capital determines the cross-section, because
+two comparable cross-sections with the same mean are equal. The chain property follows from two
+conditions: the law of motion preserves dominance, and after ordered shocks the next cross-sections
+are ordered whatever the pasts. The first holds, by Tarski comparative statics, when saving rises
+with the capital path (Theorem~\ref{thm:monotone}); the second reduces to finitely many comparisons
+between extreme histories.
+
+\begin{theorem}\label{thm:order}
+Dominance with equal means is equality. If saving rises with the capital path, sequential
+equilibrium is unique, the equilibrium is continuous in the history, a better newest shock raises
+the cross-section, and the extreme comparisons hold, then $(z,K)$-sufficiency holds.
+\end{theorem}
+\formal{eq\_of\_dominates\_of\_mean\_eq, kInjective\_of\_chain, kSufficient\_of\_savingMonotone,
+kSufficient\_of\_extremes}
+
+\noindent
+The extreme comparisons say that one period of a better shock outweighs a permanent boom against a
+permanent bust. They force capital to encode the whole shock history, which needs the economy to
+forget at least half of a capital deviation each period with two shocks. They cannot hold at the
+persistence of Krusell and Smith's calibration, which says nothing about $(z,K)$-sufficiency there,
+only that this sufficient condition is unavailable.

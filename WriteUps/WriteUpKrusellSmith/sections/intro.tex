@@ -1,0 +1,53 @@
+\section{Introduction}\label{sec:intro}
+
+\citet{krusellsmith1998} solve a heterogeneous-agent economy with aggregate risk by supposing that
+households forecast prices from the aggregate shock and the mean of the wealth distribution, and
+find that this forecast is almost exact. Behind the method lie questions the method does not
+answer. Does an equilibrium exist? Is it recursive in some state, and in which? Is the economy
+stationary? And when is the aggregate state $(z,K)$ --- shock and capital --- actually enough?
+
+This note records what a Lean formalisation of the model proves about these questions. The
+results are:
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item \textbf{Existence} (Section~\ref{sec:existence}). From every aggregate shock and initial
+  distribution there is a sequential equilibrium, by Schauder--Tychonoff on paths of capital over
+  the tree of shock histories; with logarithmic and CRRA utility; with Cobb--Douglas prices, the
+  capital clamp provably slack under an explicit condition.
+\item \textbf{Recursive equilibrium} (Section~\ref{sec:recursive}). With the value function, or
+  the infinite history of aggregate shocks, added to the state, a recursive equilibrium exists in
+  every economy; a stationary recursive equilibrium with an ergodic distribution exists in the
+  sense of \citet{dgmm1994}, conditionally spotless in the sense of \citet{cao2020}. Uniqueness of
+  sequential equilibrium implies a recursive equilibrium on the minimal state $(z,\mu)$.
+\item \textbf{Uniqueness for small capital shares} (Section~\ref{sec:uniqueness}). For CRRA utility
+  and Cobb--Douglas prices there is a capital share below which sequential equilibrium is unique,
+  checked from primitives by a contraction in marginal utility. The law of motion then contracts in
+  the distribution, which bounds the error of matching on capital \citep{lee2026}.
+\item \textbf{Stationarity from the sequential equilibrium} (Section~\ref{sec:stationarity}). The
+  equilibrium is a function of the infinite history of shocks, so it inherits stationarity from
+  the shocks: the aggregate state of the unique small-share equilibrium has a unique, ergodic
+  invariant distribution, with no recursive state space and no randomisation.
+\item \textbf{The aggregate state $(z,K)$} (Section~\ref{sec:aggregate}). A recursive equilibrium on
+  $(z,K)$ representing the equilibrium exists if and only if histories with the same $(z,K)$ have
+  the same future capital and labour; then it is continuous and its stationary law is unique.
+  Without idiosyncratic heterogeneity this always holds.
+\item \textbf{An explicit heterogeneous economy} (Section~\ref{sec:corner}). Log utility,
+  Cobb--Douglas prices, employed households saving to a cap and unemployed households spending
+  everything: sequential equilibrium is unique from every initial state, $(z,K)$ is sufficient, and
+  the recursive equilibrium on $(z,K)$ has a unique, ergodic stationary distribution.
+\end{enumerate}
+
+\noindent
+Section~\ref{sec:open} lists what is open. Appendix~\ref{app:index} indexes the formal statements.
+
+The prior literature is close in places. \citet{miao2006} proves existence of sequential equilibrium
+by Schauder--Tychonoff and a recursive equilibrium with payoffs in the state; \citet{cao2020} proves
+existence for the Krusell--Smith specification, a generalised recursive equilibrium, the value
+function as extended state and, under uniqueness, the minimal-state recursive equilibrium, and
+leaves the minimal-state question without uniqueness open; \citet{kublerschmedders2002} give
+finite-agent examples where the wealth distribution is not a sufficient state. Both
+\citet{miao2006} and \citet{kublerschmedders2002} treat uniqueness as a condition that cannot in
+general be verified from primitives; Section~\ref{sec:uniqueness} verifies it from primitives, though
+only for small capital shares. \citet{prohl2025} claims existence and uniqueness of a minimal-state recursive equilibrium by
+monotone-operator methods; we found gaps in the proofs as written (the interiority argument in the
+existence step, and convexity of the admissible set) and do not rely on it.

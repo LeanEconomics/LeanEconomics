@@ -1,0 +1,39 @@
+\section{Existence of sequential equilibrium}\label{sec:existence}
+
+\begin{theorem}\label{thm:existence}
+In every Krusell--Smith economy, from every aggregate shock $z_0$ and every initial distribution
+$\mu_0$, a sequential equilibrium exists, with aggregate labour equal to the mean efficiency at
+every node.
+\end{theorem}
+\formal{exists\_sequentialEquilibrium, exists\_sequentialEquilibrium\_labour}
+
+\noindent
+The unknown is a path of capital on the tree of shock histories, with values in $[0,\abar]$. These
+paths form a compact convex subset of a locally convex space in the product topology. The household
+value function is continuous in the path: a depth-weighted sup norm makes the Bellman operator a
+contraction with a modulus uniform in the path, and the weights make the tree's distant nodes
+negligible. Strict concavity gives a unique policy, continuous in the path by Berge's theorem; the
+distributions on the tree are then weakly continuous in the path by induction on depth, and so is
+mean capital. Schauder--Tychonoff gives a fixed point.
+
+\begin{theorem}\label{thm:existenceInada}
+The same holds with utility defined only on $(0,\infty)$ and marginal utility tending to infinity at
+zero --- logarithmic and CRRA utility --- provided labour income is bounded below by a positive
+floor; optimal consumption never reaches the consumption floor used in the construction.
+\end{theorem}
+\formal{KSInada.exists\_sequentialEquilibrium}
+
+\begin{theorem}\label{thm:existenceCD}
+With logarithmic utility and Cobb--Douglas prices, a sequential equilibrium exists, and prices are
+the true marginal products wherever capital lies in the clamping box. With CRRA utility, an explicit
+lower end $\underline K$ of the capital box (depending on $\beta$, $\gamma$, the persistence of the
+aggregate chain and the technology) keeps every equilibrium's capital above $\underline K$: the
+clamp never binds.
+\end{theorem}
+\formal{logEconomy\_exists\_equilibrium, crra\_exists\_unclamped\_equilibrium}
+
+\noindent
+The lower bound adapts \citet[Lemma 9]{cao2020}: a per-household Euler inequality, aggregated with
+Jensen's inequality for the convex function $c\mapsto c^{-\gamma}$, bounds consumption today by
+expected consumption at the child nodes, and an induction on the tree pushes capital above
+$\underline K$.
