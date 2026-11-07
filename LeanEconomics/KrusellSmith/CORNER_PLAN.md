@@ -99,3 +99,8 @@ satisfiable.
   equilibrium + `KSufficient` + represented on `(z, K)`; `capAt_witness` (capital 3/5 or 13/20,
   inside the box). Exact arithmetic (`norm_num`), standard axioms only. **Corner programme
   complete.** Caveats: labour clamp degenerate (prices ignore labour); uniqueness not claimed.
+* **Stationary law DONE** 2026-11-07 (`CornerStationary.lean`): `continuous_μc`; `lawKm_witness`
+  (on the capital sets next capital is the employed share of today's shock); `bind_witness` (one
+  step depends only on the shock marginal); `statLaw` (weight 1/4 on `(z', share z)`);
+  **`cornerStationary`**: invariant, on the capital sets, unique there. With `cornerWitness`, a
+  stationary recursive equilibrium on `(z, K)`. Ergodicity not stated separately.
