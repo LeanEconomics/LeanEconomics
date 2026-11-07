@@ -213,28 +213,54 @@ theorem idio_eq (z z' e e' : Bool) : model.idioProb z z' e e' = pIdio z z' e e' 
 
 theorem cap_eq : model.assetCap = 1 / 4 := rfl
 
+/-- (Feas) for the witness. -/
+theorem feas_w (e : Bool) :
+    model.consFloor + (KSModel.cornerSave model saver e : ℝ) < wlo * model.efficiency e := by
+  have := floor_le
+  rw [cornerSave_eq, eff_eq]
+  cases e <;> norm_num [wlo] at this ⊢ <;> linarith
+
+/-- (Emp) for the witness. -/
+theorem emp_w (z e : Bool) (he : saver e) :
+    (crraSmoothUtility env tech one_pos).du (wlo * model.efficiency e
+        - KSModel.cornerSave model saver e)
+      ≤ model.discount * ∑ ze : Bool × Bool, model.aggProb z ze.1 * model.idioProb z ze.1 e ze.2
+        * Rlo * (crraSmoothUtility env tech one_pos).du (Rhi * model.assetCap
+          + whi * model.efficiency ze.2 - KSModel.cornerSave model saver ze.2) := by
+  change e = true at he
+  subst he
+  simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
+    Fintype.sum_prod_type, Fintype.sum_bool]
+  cases z <;> norm_num [pIdio, peu, Rlo, Rhi, wlo, whi]
+
+/-- (Unemp) for the witness. -/
+theorem unemp_w (z e : Bool) (he : ¬ saver e) :
+    model.discount * ∑ ze : Bool × Bool, model.aggProb z ze.1 * model.idioProb z ze.1 e ze.2
+        * Rhi * (crraSmoothUtility env tech one_pos).du (wlo * model.efficiency ze.2
+          - KSModel.cornerSave model saver ze.2)
+      ≤ (crraSmoothUtility env tech one_pos).du (Rhi * model.assetCap
+        + whi * model.efficiency e) := by
+  have he' : e = false := by
+    change ¬ e = true at he
+    simpa using he
+  subst he'
+  simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
+    Fintype.sum_prod_type, Fintype.sum_bool]
+  cases z <;> norm_num [pIdio, peu, Rlo, Rhi, wlo, whi]
+
+theorem Rlo_nonneg : 0 ≤ Rlo := by norm_num [Rlo]
+
 theorem cornerConditions :
-    KSModel.CornerConditions design saver (crraSmoothUtility env tech one_pos) := by
-  refine KSModel.cornerConditions_of_bounds (Rlo := Rlo) (Rhi := Rhi) (wlo := wlo) (whi := whi)
-    (by norm_num [Rlo]) return_bounds wage_bounds ?_ design ?_ ?_
-  · intro e
-    have := floor_le
-    rw [cornerSave_eq, eff_eq]
-    cases e <;> norm_num [wlo] at this ⊢ <;> linarith
-  · intro z e he
-    change e = true at he
-    subst he
-    simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
-      Fintype.sum_prod_type, Fintype.sum_bool]
-    cases z <;> norm_num [pIdio, peu, Rlo, Rhi, wlo, whi]
-  · intro z e he
-    have he' : e = false := by
-      change ¬ e = true at he
-      simpa using he
-    subst he'
-    simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
-      Fintype.sum_prod_type, Fintype.sum_bool]
-    cases z <;> norm_num [pIdio, peu, Rlo, Rhi, wlo, whi]
+    KSModel.CornerConditions design saver (crraSmoothUtility env tech one_pos) :=
+  KSModel.cornerConditions_of_bounds Rlo_nonneg return_bounds wage_bounds feas_w design emp_w
+    unemp_w
+
+/-- **The household saves by the corner policy along every price path.** -/
+theorem policy_witness (z₀ : Bool) (P : List Bool → ℝ × ℝ) (s : model.State) :
+    model.policy z₀ P s = KSModel.cornerPolicy model saver s :=
+  KSModel.policy_eq_cornerPolicy (KSModel.cornerFeas_of_bounds wage_bounds feas_w z₀ P)
+    (KSModel.cornerEmp_of_bounds Rlo_nonneg return_bounds wage_bounds feas_w emp_w z₀ P)
+    (KSModel.cornerUnemp_of_bounds Rlo_nonneg return_bounds wage_bounds feas_w unemp_w z₀ P) s
 
 /-- Capital after yesterday's shock `y`: the cap times the employed share. -/
 noncomputable def capOf (y : Bool) : ℝ := if y then 13 / 80 else 3 / 20

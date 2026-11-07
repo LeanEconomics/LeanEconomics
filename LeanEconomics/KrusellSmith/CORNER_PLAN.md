@@ -111,3 +111,10 @@ satisfiable.
   `L ∈ [(19/15)^4, (13/10)^4]` (exact quarter powers). Capital `3/20`/`13/80`, labour
   `13/5`/`111/40`, **inside both boxes at every node** (`seqPrices_mem_box`): prices are the true
   marginal products. `cornerWitness` and `cornerStationary` hold for this economy.
+* **Uniqueness DONE** 2026-11-07 (`CornerUnique.lean`; witness conditions split into `feas_w`,
+  `emp_w`, `unemp_w`, `policy_witness`): the corner conditions hold along every price path, so
+  **`uniqueSequentialEquilibrium_of_policy`** (unique sequential equilibrium from every initial
+  state) and **`eq_μc_of_policy`** (the corner candidate is the only sequence-state equilibrium,
+  via `initMass_eq_design` + `pushNode_of_marginal`). Headline **`cornerUnique`**: unique
+  sequential equilibrium, unique sequence-state equilibrium, `KSufficient`, `(z, K)`
+  representation, unique stationary law on `(z, K)`.

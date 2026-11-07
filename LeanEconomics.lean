@@ -247,6 +247,7 @@ import LeanEconomics.KrusellSmith.CornerEquilibrium
 import LeanEconomics.KrusellSmith.CornerPrimitives
 import LeanEconomics.KrusellSmith.CornerWitness
 import LeanEconomics.KrusellSmith.CornerStationary
+import LeanEconomics.KrusellSmith.CornerUnique
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
