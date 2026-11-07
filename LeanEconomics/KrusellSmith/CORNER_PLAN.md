@@ -85,3 +85,8 @@ satisfiable.
   `(g − a)(u'(c) − β E R' u'(c'))`), **`cornerValue_eq_valueFunction`**,
   **`policy_eq_cornerPolicy`**. Standard axioms only. Next C3 (`μc` is a sequence-state
   equilibrium).
+* **C3 DONE** 2026-11-07 (`CornerEquilibrium.lean`): `CornerConditions` (the three conditions
+  along `seqPrices μc ω` at every history), `pushNode_cornerDist` (one step from `cornerDist y z`
+  is `cornerDist z z'`, by design consistency), **`isSeqStateEquilibrium_μc`**,
+  **`exists_represents_μc`** (represented by a recursive equilibrium on `(z, K)`). Standard
+  axioms only. Remaining: C4 (CRRA + clamped CD, conditions from primitives, witness).
