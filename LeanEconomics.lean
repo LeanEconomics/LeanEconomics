@@ -242,6 +242,7 @@ import LeanEconomics.KrusellSmith.OrderStructure
 import LeanEconomics.KrusellSmith.OrderMonotone
 import LeanEconomics.KrusellSmith.OrderExtremes
 import LeanEconomics.KrusellSmith.CornerEconomy
+import LeanEconomics.KrusellSmith.CornerVerification
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

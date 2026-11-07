@@ -77,3 +77,11 @@ satisfiable.
   `cornerPolicy`, `cornerValue`, `cornerValue_eq`, `expectation_congr_assets`,
   **`cornerValue_sub_reward`**. Standard axioms only. Next C2 (verification under (Emp), (Unemp),
   (Feas)).
+* **C2 DONE** 2026-11-07 (`CornerVerification.lean`): `CornerFeas` (strict: floor + corner saving
+  below labour income), `cornerNext`, `cornerRHS`, `CornerEmp`, `CornerUnemp` (stated along any
+  price path `P`, against the corner policy's own next-period consumption); `floor_lt_cornerCons`,
+  `cornerPolicy_mem_feasible`, `utility_le_tangent`, `cornerValue_split`,
+  **`objective_le_corner`** (tangent lines: gain from leaving the corner is
+  `(g − a)(u'(c) − β E R' u'(c'))`), **`cornerValue_eq_valueFunction`**,
+  **`policy_eq_cornerPolicy`**. Standard axioms only. Next C3 (`μc` is a sequence-state
+  equilibrium).
