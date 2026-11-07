@@ -118,3 +118,10 @@ satisfiable.
   via `initMass_eq_design` + `pushNode_of_marginal`). Headline **`cornerUnique`**: unique
   sequential equilibrium, unique sequence-state equilibrium, `KSufficient`, `(z, K)`
   representation, unique stationary law on `(z, K)`.
+* **Ergodicity + less extreme witness DONE** 2026-11-07: `ergodic_statLaw` (four atoms, invariant
+  sets contain all or none; in `cornerUnique`). Witness re-parametrised: capital share `1/10`,
+  TFP `1/4`, depreciation `1/10`, `β = 24/25`, `ā = 1/16`, efficiencies `2`, `1/4`, employed shares
+  `4/5`, `17/20`, job finding `49/50`; boxes `K ∈ [(11/15)^10, (3/4)^10]`,
+  `L ∈ [(21/20)^10, (16/15)^10]` (exact tenth powers); capital `1/20`/`17/320`, labour
+  `33/20`/`139/80`, inside both boxes. Gross returns `≈ [1.42, 1.63]` (βR > 1 is what makes the cap
+  bind for the employed).
