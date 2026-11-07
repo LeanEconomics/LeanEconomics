@@ -125,3 +125,9 @@ satisfiable.
   `L ∈ [(21/20)^10, (16/15)^10]` (exact tenth powers); capital `1/20`/`17/320`, labour
   `33/20`/`139/80`, inside both boxes. Gross returns `≈ [1.42, 1.63]` (βR > 1 is what makes the cap
   bind for the employed).
+* **Persistent aggregate shocks** 2026-11-08: the witness now has Krusell–Smith persistence
+  (`piAgg`: each aggregate state lasts with probability `7/8`); the corner conditions still hold
+  (`norm_num`, worst-case price bounds unchanged). `statLaw` puts `1/2 · π(z, z')` on
+  `(z', capOf z)` (`7/16` where the shock persisted, `1/16` otherwise); uniqueness solves the
+  invariance of the shock marginal for `π` (`hrec`, via `toReal`), ergodicity uses `q_ne_zero` /
+  `q_lt_one`. `cornerUnique` unchanged in statement.

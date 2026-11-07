@@ -12,7 +12,8 @@ import LeanEconomics.KrusellSmith.CRRAContraction
 Milestone C4b of `CORNER_PLAN.md`: an explicit Krusell–Smith economy with heterogeneous households
 in which `(z, K)` is a sufficient state.
 
-* Two aggregate states (`Bool`, `true` good) with i.i.d. probabilities `1/2`, two employment states
+* Two aggregate states (`Bool`, `true` good), **persistent** as in Krusell–Smith: each lasts with
+  probability `7/8` (expected spell of eight quarters). Two employment states
   (`true` employed, efficiency `2`; `false` unemployed, efficiency `1/4`), cap `ā = 1/16`,
   `β = 24/25`, **log utility** (`γ = 1`).
 * Cobb–Douglas with capital share `1/10`, depreciation `1/10`, TFP `1/4`, capital box
@@ -48,11 +49,14 @@ noncomputable def peu : Bool → Bool → ℝ
 noncomputable def pIdio (z z' : Bool) (e e' : Bool) : ℝ :=
   if e then (if e' then 1 - peu z z' else peu z z') else (if e' then 49 / 50 else 1 / 50)
 
+/-- Aggregate transitions: each state lasts with probability `7/8`. -/
+noncomputable def piAgg (z z' : Bool) : ℝ := if z = z' then 7 / 8 else 1 / 8
+
 /-- The environment. -/
 noncomputable def env : KSEnvironment Bool Bool where
-  aggProb _ _ := 1 / 2
-  aggProb_nonneg _ _ := by norm_num
-  aggProb_sum _ := by norm_num [Fintype.sum_bool]
+  aggProb := piAgg
+  aggProb_nonneg z z' := by cases z <;> cases z' <;> norm_num [piAgg]
+  aggProb_sum z := by cases z <;> norm_num [piAgg, Fintype.sum_bool]
   idioProb := pIdio
   idioProb_nonneg z z' e e' := by
     cases z <;> cases z' <;> cases e <;> cases e' <;> norm_num [pIdio, peu]
@@ -207,7 +211,7 @@ theorem eff_eq (e : Bool) : model.efficiency e = if e then 2 else 1 / 4 := rfl
 
 theorem disc_eq : model.discount = 24 / 25 := rfl
 
-theorem agg_eq (z z' : Bool) : model.aggProb z z' = 1 / 2 := rfl
+theorem agg_eq (z z' : Bool) : model.aggProb z z' = piAgg z z' := rfl
 
 theorem idio_eq (z z' e e' : Bool) : model.idioProb z z' e e' = pIdio z z' e e' := rfl
 
@@ -231,7 +235,7 @@ theorem emp_w (z e : Bool) (he : saver e) :
   subst he
   simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
     Fintype.sum_prod_type, Fintype.sum_bool]
-  cases z <;> norm_num [pIdio, peu, Rlo, Rhi, wlo, whi]
+  cases z <;> norm_num [piAgg, pIdio, peu, Rlo, Rhi, wlo, whi]
 
 /-- (Unemp) for the witness. -/
 theorem unemp_w (z e : Bool) (he : ¬ saver e) :
@@ -246,7 +250,7 @@ theorem unemp_w (z e : Bool) (he : ¬ saver e) :
   subst he'
   simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
     Fintype.sum_prod_type, Fintype.sum_bool]
-  cases z <;> norm_num [pIdio, peu, Rlo, Rhi, wlo, whi]
+  cases z <;> norm_num [piAgg, pIdio, peu, Rlo, Rhi, wlo, whi]
 
 theorem Rlo_nonneg : 0 ≤ Rlo := by norm_num [Rlo]
 
