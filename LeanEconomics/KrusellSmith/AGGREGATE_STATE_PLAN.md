@@ -101,3 +101,12 @@ AK6 small–medium.
   **`toAggStateRecursive`**: a sequence-state equilibrium with `KSufficient` is a recursive
   equilibrium on `(z, K)` representing it. Standard axioms only. Next AK3 (stationarity on
   `(z, K)`).
+* **AK3 DONE** 2026-11-07 (`AggregateStateStationary.lean`): `lawKm` (measurable, via
+  `ContinuousOn.measurable_piecewise`), `aggKernel`, `Kgraph`, `capMap`, `aggLaw`;
+  `aggKernel_capMap` (one step of `(z, K)` = image of one step of `(z, ν)` on the ergodic set);
+  **`isInvariant_aggLaw`**, **`ergodic_aggLaw`**, `aggLaw_Kgraph`; `kStep`/`kIter`, `eIterK`,
+  `kIter_eq_eIterK`, `IsAggInvariant`, `integral_kIter`, `marginal_stationary`;
+  `abs_capAt_sub_le`, `abs_eIterK_sub_le`; **`eq_of_isAggInvariant`** (uniqueness among invariant
+  laws on `Kgraph`, small-share contraction; proof by uniform continuity of bounded continuous
+  test functions on the compact capital sets — no Lipschitz tests, no measurable selection);
+  headline **`stationary_aggLaw`**. Standard axioms only. Next AK4 (necessity + iff headline).
