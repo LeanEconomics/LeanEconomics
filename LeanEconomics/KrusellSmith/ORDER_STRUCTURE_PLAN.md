@@ -72,6 +72,52 @@ of `A_y` and `A_{y'}` overlap (a bust after a long boom vs a boom after a long b
 fails there and the chain argument cannot apply — which says nothing about `KSufficient` itself,
 only that this sufficient condition is unavailable. OS5 is needed for the user's preferred CD case.
 
+## OS4 analysis (2026-11-07, before coding)
+
+**What (ExtremeSep) says about capital.** Means are ordered under dominance, so (ExtremeSep) with
+Lemma A forces: for `y < y'`, *every* capital level reached one period after `y` is below every
+level reached after `y'`. So `Kset z'` splits into blocks ordered by yesterday's shock, and
+recursively by every earlier shock: **capital encodes the whole shock history**, like a base-`|Z|`
+expansion (Cantor coding). Heuristically this needs the law of motion of capital to contract by a
+factor `θ ≲ 1/|Z|` (each shock's image must fit disjointly), i.e. the economy forgets at least
+half its capital deviation per period with two shocks. That is the opposite regime from KS's
+approximate aggregation (high persistence); the order route cannot reach KS calibrations, and the
+user's question there stays open.
+
+**What (ShockMon) needs.** Compare `cons y τ` and `cons y' τ` (same past). Their cross-sections
+have the same assets (capital is predetermined) and, if idiosyncratic transitions do not depend
+on aggregate shocks, the same employment marginal: **the same cross-section**. Households then
+differ only in today's prices and in the expected future. A better `y'` must raise every
+household's saving, which needs:
+* i.i.d. aggregate shocks (otherwise a persistent good shock raises expected future income and
+  *lowers* saving through the income effect);
+* the shock to hit the current wage (or return) upward, with saving increasing in cash on hand at
+  a fixed continuation (true: assets enter only through cash);
+* the induced higher capital path to raise saving further (`SavingMonotone`, complementarity).
+
+New machinery needed: comparative statics of the household problem **across roots** (`z₀ = y` vs
+`y'`; with i.i.d. shocks the subtrees have the same law), and of the equilibrium path in the root
+shock (a variant of `eqPath_mono`).
+
+**What (ExtremeSep) needs beyond that.** Coupling quantiles of the boom cross-section (richer) and
+the bust cross-section (poorer): the wage gain `w(y') − w(y)` must outweigh the wealth gap times
+the saving slope, for every quantile and employment state. That needs a **lower** bound on the
+saving response to cash. At the borrowing constraint the response is zero, so the bound must come
+from a structure where the constraint binds identically in both (or nowhere).
+
+**Candidate economies.**
+* (a) **Corner economy**: parameters where employed households always save the cap and
+  unemployed save zero (Euler inequalities at the corners, `EulerOf.lean`). Cross-sections are
+  two-point in assets, nondegenerate across employment; under the KS design capital is
+  `ā × (yesterday's employment rate)`, so if employment rates differ across shocks, capital
+  reveals yesterday's shock and the cross-section — `KInjective` directly, a genuinely
+  heterogeneous (if degenerate in assets) example, outside the order route.
+* (b) **Fast-forgetting complementarity economy**: i.i.d. aggregate shocks to the wage, return
+  rising slightly in capital, aggregate-independent employment transitions, strong impatience
+  (small saving slope). The order route applies if the corner issue in (ExtremeSep) can be
+  handled; needs the cross-root comparative statics above. Substantial and may fail at the
+  constraint.
+
 ## Status
 
 * Planned 2026-11-07.
