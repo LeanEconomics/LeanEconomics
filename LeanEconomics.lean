@@ -232,6 +232,7 @@ import LeanEconomics.KrusellSmith.ShockHistory
 import LeanEconomics.KrusellSmith.StationarySequence
 import LeanEconomics.KrusellSmith.SequenceStateContinuity
 import LeanEconomics.KrusellSmith.StationaryUnique
+import LeanEconomics.KrusellSmith.AggregateState
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

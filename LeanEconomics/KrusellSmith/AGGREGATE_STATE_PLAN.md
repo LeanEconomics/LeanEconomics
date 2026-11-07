@@ -83,4 +83,13 @@ AK6 small–medium.
 
 ## Status
 
-* Planned 2026-11-07. Nothing coded.
+* Planned 2026-11-07.
+* **AK0 + AK1 DONE** 2026-11-07 (`AggregateState.lean`): `ShockPath.ofHistory`/`prepend`,
+  `continuous_seqPrices_history`; `ergSet`, **`isCompact_ergSet`**, **`stateLaw_ergSet`**
+  (`Λ* A = 1`), `stateOf_cons_mem_ergSet`, **`lawOfMotion_mem_ergSet`** (under uniqueness);
+  `capAt`, **`KSufficient`** (stated on the whole price tree `seqPrices`), `KInjective`,
+  **`KInjective.kSufficient`** (under uniqueness); `Kset`, `isCompact_Kset`; `aggTree`,
+  **`aggTree_eq`**, `lawK`, `labourK`, `lawK_mem`, `aggTree_shift`, `stateAlong`,
+  **`aggTree_eq_stateAlong`** (`lawK`, `labourK` generate the whole tree);
+  **`continuousOn_aggTree`** / `continuousOn_lawK` / `continuousOn_labourK` (capital is a quotient
+  map from the compact set of histories with shock `z`). Standard axioms only. Next AK2.
