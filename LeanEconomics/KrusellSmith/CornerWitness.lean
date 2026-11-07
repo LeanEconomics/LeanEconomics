@@ -13,18 +13,20 @@ Milestone C4b of `CORNER_PLAN.md`: an explicit Krusell–Smith economy with hete
 in which `(z, K)` is a sufficient state.
 
 * Two aggregate states (`Bool`, `true` good) with i.i.d. probabilities `1/2`, two employment states
-  (`true` employed, efficiency `44`; `false` unemployed, efficiency `2`), cap `ā = 1`, `β = 9/10`,
-  **log utility** (`γ = 1`).
-* Clamped Cobb–Douglas with share `1/2`, no depreciation, TFP `1`, capital box `[1/4, 1]`, labour
-  clamped at `1`: gross returns in `[3/2, 2]`, wages in `[1/4, 1/2]`.
+  (`true` employed, efficiency `4`; `false` unemployed, efficiency `1/2`), cap `ā = 1/4`,
+  `β = 1/2`, **log utility** (`γ = 1`).
+* Cobb–Douglas with capital share `1/4`, full depreciation, TFP `1`, capital box
+  `[(37/60)^4, (13/20)^4]` and labour box `[(19/15)^4, (13/10)^4]` (fourth powers, so the powers
+  `1/4`, `3/4` are exact).
 * KS employment design: employed shares `3/5` (bad) and `13/20` (good), with job-loss
   probabilities `16/25, 167/300, 193/325, 168/325` and job-finding probability `24/25`.
 
 **`cornerWitness`**: households who were employed hold `ā`, the others nothing; this is a
 sequence-state equilibrium, `(z, K)` is sufficient, and a recursive equilibrium on `(z, K)`
-represents it. Capital is `3/5` after a bad shock and `13/20` after a good one
-(`capAt_witness`) — inside the capital box, so prices respond to capital. Labour is clamped, so
-prices do not respond to labour.
+represents it. Capital is `3/20` after a bad shock and `13/80` after a good one
+(`capAt_witness`); labour is `13/5` or `111/40`. Both lie inside the clamping boxes at every node
+of the equilibrium price tree (`seqPrices_mem_box`), so **prices are the true Cobb–Douglas marginal
+products** of capital and labour.
 -/
 
 open MeasureTheory Set
@@ -56,15 +58,15 @@ noncomputable def env : KSEnvironment Bool Bool where
     cases z <;> cases z' <;> cases e <;> cases e' <;> norm_num [pIdio, peu]
   idioProb_sum z z' e := by
     cases z <;> cases z' <;> cases e <;> norm_num [pIdio, peu, Fintype.sum_bool]
-  efficiency e := if e then 44 else 2
-  effLo := 2
-  effHi := 44
+  efficiency e := if e then 4 else 1 / 2
+  effLo := 1 / 2
+  effHi := 4
   effLo_pos := by norm_num
   effLo_le e := by cases e <;> norm_num
   le_effHi e := by cases e <;> norm_num
-  assetCap := 1
+  assetCap := 1 / 4
   assetCap_pos := by norm_num
-  discount := 9 / 10
+  discount := 1 / 2
   discount_pos := by norm_num
   discount_lt_one := by norm_num
 
@@ -76,20 +78,20 @@ noncomputable def tech : CobbDouglas Bool where
   tfpLo_pos := by norm_num
   tfpLo_le _ := le_rfl
   tfp_le _ := le_rfl
-  share := 1 / 2
+  share := 1 / 4
   share_pos := by norm_num
   share_lt_one := by norm_num
-  depreciation := 0
-  depreciation_nonneg := le_rfl
-  depreciation_le_one := by norm_num
-  capLo := 1 / 4
-  capHi := 1
+  depreciation := 1
+  depreciation_nonneg := by norm_num
+  depreciation_le_one := le_rfl
+  capLo := (37 / 60) ^ 4
+  capHi := (13 / 20) ^ 4
   capLo_pos := by norm_num
   capLo_le := by norm_num
-  labLo := 1
-  labHi := 1
+  labLo := (19 / 15) ^ 4
+  labHi := (13 / 10) ^ 4
   labLo_pos := by norm_num
-  labLo_le := le_rfl
+  labLo_le := by norm_num
 
 /-- The model: log utility (`γ = 1`). -/
 noncomputable abbrev model : KSModel Bool Bool := crraModel env tech one_pos
@@ -117,52 +119,75 @@ noncomputable def design : EmploymentDesign model.idioProb where
     change (1 / 25 : ℝ) ≤ pIdio z z' e e'
     cases z <;> cases z' <;> cases e <;> cases e' <;> norm_num [pIdio, peu]
 
-theorem quarter_rpow_half : (1 / 4 : ℝ) ^ (1 / 2 : ℝ) = 1 / 2 := by
-  rw [show (1 / 4 : ℝ) = (1 / 2) ^ (2 : ℕ) by norm_num, ← Real.rpow_natCast,
-    ← Real.rpow_mul (by norm_num)]
+theorem pow4_rpow (x : ℝ) (hx : 0 ≤ x) (r : ℝ) : (x ^ (4 : ℕ)) ^ r = x ^ (4 * r) := by
+  rw [← Real.rpow_natCast, ← Real.rpow_mul hx]
   norm_num
 
-theorem quarter_rpow_half_sub_one : (1 / 4 : ℝ) ^ ((1 / 2 : ℝ) - 1) = 2 := by
-  rw [show (1 / 4 : ℝ) = (1 / 2) ^ (2 : ℕ) by norm_num, ← Real.rpow_natCast,
-    ← Real.rpow_mul (by norm_num)]
+/-- Exact powers at the box corners. -/
+theorem rpow_neg_three_quarters (x : ℝ) (hx : 0 < x) :
+    (x ^ (4 : ℕ)) ^ ((1 / 4 : ℝ) - 1) = (x ^ 3)⁻¹ := by
+  rw [pow4_rpow x hx.le, show (4 : ℝ) * ((1 / 4 : ℝ) - 1) = -((3 : ℕ) : ℝ) by norm_num,
+    Real.rpow_neg hx.le, Real.rpow_natCast]
+
+theorem rpow_three_quarters (x : ℝ) (hx : 0 < x) : (x ^ (4 : ℕ)) ^ (1 - (1 / 4 : ℝ)) = x ^ 3 := by
+  rw [pow4_rpow x hx.le, show (4 : ℝ) * (1 - (1 / 4 : ℝ)) = ((3 : ℕ) : ℝ) by norm_num,
+    Real.rpow_natCast]
+
+theorem rpow_quarter (x : ℝ) (hx : 0 < x) : (x ^ (4 : ℕ)) ^ (1 / 4 : ℝ) = x := by
+  rw [pow4_rpow x hx.le, show (4 : ℝ) * (1 / 4 : ℝ) = 1 by norm_num, Real.rpow_one]
+
+theorem rpow_neg_quarter (x : ℝ) (hx : 0 < x) : (x ^ (4 : ℕ)) ^ (-(1 / 4 : ℝ)) = x⁻¹ := by
+  rw [pow4_rpow x hx.le, show (4 : ℝ) * -(1 / 4 : ℝ) = -1 by norm_num, Real.rpow_neg_one]
+
+/-- The lowest gross return. -/
+noncomputable def Rlo : ℝ := 1 / 4 * (20 / 13) ^ 3 * (19 / 15) ^ 3
+
+/-- The highest gross return. -/
+noncomputable def Rhi : ℝ := 1 / 4 * (60 / 37) ^ 3 * (13 / 10) ^ 3
+
+/-- The lowest wage. -/
+noncomputable def wlo : ℝ := 3 / 4 * (37 / 60) * (10 / 13)
+
+/-- The highest wage. -/
+noncomputable def whi : ℝ := 3 / 4 * (13 / 20) * (15 / 19)
+
+theorem wageLo_eq : tech.wageLo = wlo := by
+  change (1 - 1 / 4) * 1 * ((37 / 60 : ℝ) ^ 4) ^ (1 / 4 : ℝ) * ((13 / 10 : ℝ) ^ 4) ^ (-(1 / 4 : ℝ))
+    = wlo
+  rw [rpow_quarter _ (by norm_num), rpow_neg_quarter _ (by norm_num), wlo]
   norm_num
 
 /-- **Price bounds.** -/
 theorem return_bounds (z : Bool) (K L : ℝ) :
-    3 / 2 ≤ model.grossReturn z K L ∧ model.grossReturn z K L ≤ 2 := by
-  have hlo : tech.returnLo = 3 / 2 := by
-    change 1 - 0 + 1 / 2 * 1 * (1 : ℝ) ^ ((1 / 2 : ℝ) - 1) * (1 : ℝ) ^ (1 - (1 / 2 : ℝ)) = 3 / 2
-    rw [Real.one_rpow, Real.one_rpow]
+    Rlo ≤ model.grossReturn z K L ∧ model.grossReturn z K L ≤ Rhi := by
+  have hlo : tech.returnLo = Rlo := by
+    change 1 - 1 + 1 / 4 * 1 * ((13 / 20 : ℝ) ^ 4) ^ ((1 / 4 : ℝ) - 1)
+      * ((19 / 15 : ℝ) ^ 4) ^ (1 - (1 / 4 : ℝ)) = Rlo
+    rw [rpow_neg_three_quarters _ (by norm_num), rpow_three_quarters _ (by norm_num), Rlo]
     norm_num
-  have hhi : tech.returnBound = 2 := by
-    change 1 - 0 + 1 / 2 * 1 * (1 / 4 : ℝ) ^ ((1 / 2 : ℝ) - 1) * (1 : ℝ) ^ (1 - (1 / 2 : ℝ)) = 2
-    rw [quarter_rpow_half_sub_one, Real.one_rpow]
+  have hhi : tech.returnBound = Rhi := by
+    change 1 - 1 + 1 / 4 * 1 * ((37 / 60 : ℝ) ^ 4) ^ ((1 / 4 : ℝ) - 1)
+      * ((13 / 10 : ℝ) ^ 4) ^ (1 - (1 / 4 : ℝ)) = Rhi
+    rw [rpow_neg_three_quarters _ (by norm_num), rpow_three_quarters _ (by norm_num), Rhi]
     norm_num
   exact ⟨hlo ▸ tech.returnLo_le_grossReturn z K L, hhi ▸ tech.grossReturn_le z K L⟩
 
 theorem wage_bounds (z : Bool) (K L : ℝ) :
-    1 / 4 ≤ model.wage z K L ∧ model.wage z K L ≤ 1 / 2 := by
-  have hlo : tech.wageLo = 1 / 4 := by
-    change (1 - 1 / 2) * 1 * (1 / 4 : ℝ) ^ (1 / 2 : ℝ) * (1 : ℝ) ^ (-(1 / 2 : ℝ)) = 1 / 4
-    rw [quarter_rpow_half, Real.one_rpow]
+    wlo ≤ model.wage z K L ∧ model.wage z K L ≤ whi := by
+  have hhi : tech.wageBound = whi := by
+    change (1 - 1 / 4) * 1 * ((13 / 20 : ℝ) ^ 4) ^ (1 / 4 : ℝ)
+      * ((19 / 15 : ℝ) ^ 4) ^ (-(1 / 4 : ℝ)) = whi
+    rw [rpow_quarter _ (by norm_num), rpow_neg_quarter _ (by norm_num), whi]
     norm_num
-  have hhi : tech.wageBound = 1 / 2 := by
-    change (1 - 1 / 2) * 1 * (1 : ℝ) ^ (1 / 2 : ℝ) * (1 : ℝ) ^ (-(1 / 2 : ℝ)) = 1 / 2
-    rw [Real.one_rpow, Real.one_rpow]
-    norm_num
-  exact ⟨hlo ▸ tech.wageLo_le_wage z K L, hhi ▸ tech.wage_le z K L⟩
+  exact ⟨wageLo_eq ▸ tech.wageLo_le_wage z K L, hhi ▸ tech.wage_le z K L⟩
 
-/-- The consumption floor is positive and at most `1/16`. -/
-theorem floor_le : model.consFloor ≤ 1 / 16 := by
+/-- The consumption floor is at most `wlo / 16`. -/
+theorem floor_le : model.consFloor ≤ wlo / 16 := by
   have h1 : crraFloorLevel env tech one_pos ≤ (crraEconomy env tech one_pos).incomeFloor / 4 :=
     min_le_right _ _
-  have h2 : (crraEconomy env tech one_pos).incomeFloor = tech.wageLo * 2 := rfl
-  have h3 : tech.wageLo = 1 / 4 := by
-    change (1 - 1 / 2) * 1 * (1 / 4 : ℝ) ^ (1 / 2 : ℝ) * (1 : ℝ) ^ (-(1 / 2 : ℝ)) = 1 / 4
-    rw [quarter_rpow_half, Real.one_rpow]
-    norm_num
-  change crraFloorLevel env tech one_pos / 2 ≤ 1 / 16
-  rw [h2, h3] at h1
+  have h2 : (crraEconomy env tech one_pos).incomeFloor = tech.wageLo * (1 / 2) := rfl
+  change crraFloorLevel env tech one_pos / 2 ≤ wlo / 16
+  rw [h2, wageLo_eq] at h1
   linarith
 
 /-- Log marginal utility. -/
@@ -170,37 +195,38 @@ theorem du_eq (c : ℝ) : (crraSmoothUtility env tech one_pos).du c = c⁻¹ :=
   Real.rpow_neg_one c
 
 theorem cornerSave_eq (e : Bool) :
-    (KSModel.cornerSave model saver e : ℝ) = if e then 1 else 0 := by
+    (KSModel.cornerSave model saver e : ℝ) = if e then 1 / 4 else 0 := by
   rw [KSModel.cornerSave_val]
   cases e
   · simp [saver]
   · simp [saver]
-    rfl
+    change (1 / 4 : ℝ) = 4⁻¹
+    norm_num
 
-theorem eff_eq (e : Bool) : model.efficiency e = if e then 44 else 2 := rfl
+theorem eff_eq (e : Bool) : model.efficiency e = if e then 4 else 1 / 2 := rfl
 
-theorem disc_eq : model.discount = 9 / 10 := rfl
+theorem disc_eq : model.discount = 1 / 2 := rfl
 
 theorem agg_eq (z z' : Bool) : model.aggProb z z' = 1 / 2 := rfl
 
 theorem idio_eq (z z' e e' : Bool) : model.idioProb z z' e e' = pIdio z z' e e' := rfl
 
-theorem cap_eq : model.assetCap = 1 := rfl
+theorem cap_eq : model.assetCap = 1 / 4 := rfl
 
 theorem cornerConditions :
     KSModel.CornerConditions design saver (crraSmoothUtility env tech one_pos) := by
-  refine KSModel.cornerConditions_of_bounds (Rlo := 3 / 2) (Rhi := 2) (wlo := 1 / 4) (whi := 1 / 2)
-    (by norm_num) return_bounds wage_bounds ?_ design ?_ ?_
+  refine KSModel.cornerConditions_of_bounds (Rlo := Rlo) (Rhi := Rhi) (wlo := wlo) (whi := whi)
+    (by norm_num [Rlo]) return_bounds wage_bounds ?_ design ?_ ?_
   · intro e
     have := floor_le
     rw [cornerSave_eq, eff_eq]
-    cases e <;> norm_num <;> linarith
+    cases e <;> norm_num [wlo] at this ⊢ <;> linarith
   · intro z e he
     change e = true at he
     subst he
     simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
       Fintype.sum_prod_type, Fintype.sum_bool]
-    cases z <;> norm_num [pIdio, peu]
+    cases z <;> norm_num [pIdio, peu, Rlo, Rhi, wlo, whi]
   · intro z e he
     have he' : e = false := by
       change ¬ e = true at he
@@ -208,21 +234,56 @@ theorem cornerConditions :
     subst he'
     simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
       Fintype.sum_prod_type, Fintype.sum_bool]
-    cases z <;> norm_num [pIdio, peu]
+    cases z <;> norm_num [pIdio, peu, Rlo, Rhi, wlo, whi]
 
-/-- **Capital in the corner equilibrium**: `3/5` after a bad shock, `13/20` after a good one —
-inside the capital box `[1/4, 1]`. -/
+/-- Capital after yesterday's shock `y`: the cap times the employed share. -/
+noncomputable def capOf (y : Bool) : ℝ := if y then 13 / 80 else 3 / 20
+
+theorem saverMass_eq (y : Bool) : KSModel.saverMass design saver y = share y := by
+  change ∑ e, (if saver e then (if e then share y else 1 - share y) else 0) = share y
+  simp [saver]
+
+/-- **Capital in the corner equilibrium**: `3/20` after a bad shock, `13/80` after a good one. -/
 theorem capAt_witness (ω : History Bool) :
-    KSModel.capAt (KSModel.μc design saver) ω = if ω 1 then 13 / 20 else 3 / 5 := by
-  rw [KSModel.capAt_μc]
-  change (1 : ℝ) * ∑ e, (if saver e then (if e then share (ω 1) else 1 - share (ω 1)) else 0) = _
-  simp only [Fintype.sum_bool, saver, share]
-  cases ω 1 <;> norm_num
+    KSModel.capAt (KSModel.μc design saver) ω = capOf (ω 1) := by
+  rw [KSModel.capAt_μc, saverMass_eq, cap_eq]
+  cases ω 1 <;> norm_num [share, capOf]
+
+theorem capOf_mem_box (y : Bool) : capOf y ∈ Icc tech.capLo tech.capHi := by
+  change capOf y ∈ Icc ((37 / 60 : ℝ) ^ 4) ((13 / 20) ^ 4)
+  cases y <;> norm_num [capOf]
+
+theorem labourD_mem_box (z : Bool) : KSModel.labourD design z ∈ Icc tech.labLo tech.labHi := by
+  change ∑ e : Bool, (if e = true then share z else 1 - share z)
+      * (if e = true then (4 : ℝ) else 1 / 2)
+    ∈ Icc ((19 / 15 : ℝ) ^ 4) ((13 / 10) ^ 4)
+  cases z <;> norm_num [share, Fintype.sum_bool]
+
+/-- **Prices are the true Cobb–Douglas marginal products**: at every node of the equilibrium price
+tree, capital and labour lie inside the clamping boxes. -/
+theorem seqPrices_mem_box (ω : History Bool) (g : List Bool) :
+    (model.seqPrices (KSModel.μc design saver) ω g).1 ∈ Icc tech.capLo tech.capHi ∧
+      (model.seqPrices (KSModel.μc design saver) ω g).2 ∈ Icc tech.labLo tech.labHi := by
+  rw [KSModel.seqPrices_μc]
+  cases g with
+  | nil =>
+    refine ⟨?_, labourD_mem_box _⟩
+    change KSModel.capAt (KSModel.μc design saver) ω ∈ _
+    rw [capAt_witness]
+    exact capOf_mem_box _
+  | cons z g =>
+    refine ⟨?_, labourD_mem_box _⟩
+    change model.assetCap * KSModel.saverMass design saver (shockAt (ω 0) g) ∈ _
+    have h : ∀ y, model.assetCap * share y = capOf y := by
+      intro y
+      cases y <;> norm_num [cap_eq, share, capOf]
+    rw [saverMass_eq, h]
+    exact capOf_mem_box _
 
 /-- **A Krusell–Smith equilibrium with heterogeneous households in which `(z, K)` is a
 sufficient state**: the corner candidate is a sequence-state equilibrium of the log-utility,
-clamped Cobb–Douglas economy above, it satisfies `KSufficient`, and a recursive equilibrium on
-`(z, K)` represents it. -/
+Cobb–Douglas economy above (prices are true marginal products along it, `seqPrices_mem_box`), it
+satisfies `KSufficient`, and a recursive equilibrium on `(z, K)` represents it. -/
 theorem cornerWitness :
     model.IsSeqStateEquilibrium (KSModel.μc design saver) ∧
       KSModel.KSufficient (KSModel.μc design saver) ∧

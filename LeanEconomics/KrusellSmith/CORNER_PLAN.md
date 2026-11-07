@@ -104,3 +104,10 @@ satisfiable.
   step depends only on the shock marginal); `statLaw` (weight 1/4 on `(z', share z)`);
   **`cornerStationary`**: invariant, on the capital sets, unique there. With `cornerWitness`, a
   stationary recursive equilibrium on `(z, K)`. Ergodicity not stated separately.
+* **True Cobb–Douglas witness DONE** 2026-11-07 (`CornerWitness.lean` re-parametrised): with
+  α = 1/2 and a real labour box the corner conditions are infeasible (employed net income over
+  unemployed spending is bounded by about `(1−α)/α`), so capital share `1/4`, δ = 1, TFP 1,
+  `β = 1/2`, `ā = 1/4`, efficiencies `4`, `1/2`, boxes `K ∈ [(37/60)^4, (13/20)^4]`,
+  `L ∈ [(19/15)^4, (13/10)^4]` (exact quarter powers). Capital `3/20`/`13/80`, labour
+  `13/5`/`111/40`, **inside both boxes at every node** (`seqPrices_mem_box`): prices are the true
+  marginal products. `cornerWitness` and `cornerStationary` hold for this economy.

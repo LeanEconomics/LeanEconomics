@@ -12,11 +12,11 @@ import LeanEconomics.KrusellSmith.AggregateStateStationary
 For the explicit corner economy of `CornerWitness.lean`, the recursive equilibrium on `(z, K)` has
 a unique stationary distribution on the capital sets. No contraction is needed:
 
-* `lawKm_witness`: on the capital sets, **next capital is the employed share of today's shock**,
-  `share z`, whatever today's capital;
+* `lawKm_witness`: on the capital sets, **next capital is the cap times the employed share of
+  today's shock**, `capOf z`, whatever today's capital;
 * `bind_witness`: hence for any law `Λ` on the capital sets, one step of the `(z, K)` kernel depends
   on `Λ` only through its shock marginal;
-* `statLaw`: weight `1/4` on each `(z', share z)` — today's shock `z'` and capital from yesterday's
+* `statLaw`: weight `1/4` on each `(z', capOf z)` — today's shock `z'` and capital from yesterday's
   shock `z`, both i.i.d. `1/2`;
 * **`cornerStationary`**: `statLaw` is invariant, lives on the capital sets, and is the only
   invariant law there (an invariant law's shock marginal is `(1/2, 1/2)` because shocks are
@@ -60,13 +60,13 @@ theorem kSufficient_μw : KSufficient μw := kSufficient_μc design saver
 
 /-- **Next capital is the employed share of today's shock**, on the capital sets. -/
 theorem lawKm_witness {z : Bool} {k : ℝ} (hk : k ∈ Kset μw z) (z' : Bool) :
-    lawKm μw z k z' = share z := by
+    lawKm μw z k z' = capOf z := by
   rw [lawKm_of_mem hk]
   obtain ⟨ω, rfl, rfl⟩ := hk
   rw [lawK_eq kSufficient_μw, capAt_witness]
   rfl
 
-theorem share_mem_Kset (z z' : Bool) : share z ∈ Kset μw z' :=
+theorem capOf_mem_Kset (z z' : Bool) : capOf z ∈ Kset μw z' :=
   ⟨History.cons z' (History.cons z fun _ => z), rfl, by rw [capAt_witness]; rfl⟩
 
 theorem ofReal_half : ENNReal.ofReal (1 / 2) = 2⁻¹ := by
@@ -86,19 +86,19 @@ theorem bind_witness (Λ : Measure (ShockVal Bool × ℝ)) [IsProbabilityMeasure
     (hK : Λ (Kgraph μw) = 1) {B : Set (ShockVal Bool × ℝ)} (hB : MeasurableSet B) :
     (Λ.bind (aggKernel μw)) B
       = ∑ z : Bool, mass Λ z
-        * ∑ z' : Bool, 2⁻¹ * B.indicator 1 ((⟨z'⟩ : ShockVal Bool), share z) := by
+        * ∑ z' : Bool, 2⁻¹ * B.indicator 1 ((⟨z'⟩ : ShockVal Bool), capOf z) := by
   have hκ := measurable_aggKernel kSufficient_μw continuous_μw
   rw [Measure.bind_apply hB hκ.aemeasurable]
   have hae : ∀ᵐ s ∂Λ, s ∈ Kgraph μw :=
     (prob_compl_eq_zero_iff (measurableSet_Kgraph continuous_μw)).2 hK
   have hpt : ∀ᵐ s ∂Λ, aggKernel μw s B
       = ∑ z : Bool, (Prod.fst ⁻¹' {(⟨z⟩ : ShockVal Bool)}).indicator 1 s
-        * ∑ z' : Bool, 2⁻¹ * B.indicator 1 ((⟨z'⟩ : ShockVal Bool), share z) := by
+        * ∑ z' : Bool, 2⁻¹ * B.indicator 1 ((⟨z'⟩ : ShockVal Bool), capOf z) := by
     filter_upwards [hae] with s hs
     obtain ⟨⟨b⟩, k⟩ := s
     change k ∈ Kset μw b at hs
     rw [aggKernel_apply _ hB]
-    have hl : ∀ z', lawKm μw b k z' = share b := fun z' => lawKm_witness hs z'
+    have hl : ∀ z', lawKm μw b k z' = capOf b := fun z' => lawKm_witness hs z'
     simp only [hl, show ∀ z z' : Bool, model.aggProb z z' = 1 / 2 from fun _ _ => rfl, ofReal_half]
     rw [Fintype.sum_bool (fun z : Bool => _ * _)]
     cases b <;> simp [Set.indicator, mem_preimage, mem_singleton_iff]
@@ -110,13 +110,13 @@ theorem bind_witness (Λ : Measure (ShockVal Bool × ℝ)) [IsProbabilityMeasure
   rfl
 
 /-- **The stationary law on `(z, K)`**: today's shock and yesterday's shock i.i.d. `1/2`, capital
-the employed share of yesterday's shock. -/
+the cap times the employed share of yesterday's shock. -/
 noncomputable def statLaw : Measure (ShockVal Bool × ℝ) :=
-  ∑ z : Bool, ∑ z' : Bool, (2⁻¹ * 2⁻¹ : ℝ≥0∞) • Measure.dirac ((⟨z'⟩ : ShockVal Bool), share z)
+  ∑ z : Bool, ∑ z' : Bool, (2⁻¹ * 2⁻¹ : ℝ≥0∞) • Measure.dirac ((⟨z'⟩ : ShockVal Bool), capOf z)
 
 theorem statLaw_apply {B : Set (ShockVal Bool × ℝ)} (hB : MeasurableSet B) :
     statLaw B
-      = ∑ z : Bool, 2⁻¹ * ∑ z' : Bool, 2⁻¹ * B.indicator 1 ((⟨z'⟩ : ShockVal Bool), share z) := by
+      = ∑ z : Bool, 2⁻¹ * ∑ z' : Bool, 2⁻¹ * B.indicator 1 ((⟨z'⟩ : ShockVal Bool), capOf z) := by
   simp only [statLaw, Measure.coe_finsetSum, Finset.sum_apply, Measure.smul_apply,
     Measure.dirac_apply' _ hB, smul_eq_mul, Finset.mul_sum, mul_assoc]
 
@@ -136,9 +136,9 @@ instance : IsProbabilityMeasure statLaw := by
 theorem statLaw_Kgraph : statLaw (Kgraph μw) = 1 := by
   rw [statLaw_apply (measurableSet_Kgraph continuous_μw)]
   have h : ∀ z z' : Bool, (Kgraph μw).indicator (1 : ShockVal Bool × ℝ → ℝ≥0∞)
-      ((⟨z'⟩ : ShockVal Bool), share z) = 1 := fun z z' =>
-    Set.indicator_of_mem (show ((⟨z'⟩ : ShockVal Bool), share z) ∈ Kgraph μw from
-      share_mem_Kset z z') _
+      ((⟨z'⟩ : ShockVal Bool), capOf z) = 1 := fun z z' =>
+    Set.indicator_of_mem (show ((⟨z'⟩ : ShockVal Bool), capOf z) ∈ Kgraph μw from
+      capOf_mem_Kset z z') _
   simp only [h, mul_one, Fintype.sum_bool, half_add_half]
 
 theorem mass_statLaw (z : Bool) : mass statLaw z = 2⁻¹ := by
