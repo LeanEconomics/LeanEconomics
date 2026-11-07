@@ -74,4 +74,11 @@ only that this sufficient condition is unavailable. OS5 is needed for the user's
 
 ## Status
 
-* Planned 2026-11-07. Nothing coded.
+* Planned 2026-11-07.
+* **OS0 + OS1 DONE** 2026-11-07 (`OrderStructure.lean`): `AssetDominates.initMass_eq` (equal
+  employment marginals); **`eq_of_dominates_of_mean_eq`** (proof shorter than planned: for an
+  `L`-asset-Lipschitz `f`, both `f + L a` and `L a − f` are asset-monotone, so dominance + equal
+  means give equal integrals, then `eq_of_forall_assetLip`); `Comparable`, `MonOnHistories`,
+  `SepOnHistories`, `comparable_of_firstDiff`, **`comparable_of_sameShock`**,
+  **`kInjective_of_chain`**, **`kSufficient_of_chain`**. Standard axioms only. Next OS2 ((Mon) from
+  primitives in the complementarity class).
