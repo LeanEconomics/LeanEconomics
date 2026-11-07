@@ -64,3 +64,38 @@ permanent bust. They force capital to encode the whole shock history, which need
 forget at least half of a capital deviation each period with two shocks. They cannot hold at the
 persistence of Krusell and Smith's calibration, which says nothing about $(z,K)$-sufficiency there,
 only that this sufficient condition is unavailable.
+
+\paragraph{Approximate aggregation.} When $(z,K)$ is not exactly sufficient, how wrong is it?
+Sufficiency is equivalent to the one-step forecast being exact: if histories with the same $(z,K)$
+always have the same next capital, the whole future price tree agrees by induction (labour is pinned
+by the shock). So the one-step forecast error is the quantity to bound. Two cross-sections with the
+same mean assets integrate a function whose slopes in assets lie in $[\theta_{lo},\theta_{hi}]$ to
+within $\tfrac12(\theta_{hi}-\theta_{lo})\,d$, where $d$ is their Wasserstein distance in assets
+(within employment states): subtract the mid-slope times assets, which the equal means cancel.
+Applied to saving, and adding the effect of the two cross-sections facing different future prices,
+next capital differs by at most
+\[
+  \varepsilon\, d,\qquad \varepsilon=\frac{\theta-\theta_{lo}}{2}+\frac{G}{1-\kappa},
+\]
+with $\theta$ the saving slope of Theorem~\ref{thm:smallshare}, $\theta_{lo}$ any lower slope
+($\theta_{lo}=0$ always, since saving is monotone), and $G/(1-\kappa)$ the price feedback. The common
+slope of saving drops out: what matters is its nonlinearity across the cross-section, not how much
+households save.
+
+\begin{theorem}\label{thm:approx}
+$(z,K)$ is sufficient if and only if the one-step forecast of capital from $(z,K)$ is exact. In the
+small-share class with Krusell and Smith's employment design, every sequence-state equilibrium has
+a law of motion $\ell(z,K)$ with $|K_{t+1}-\ell(z_t,K_t)|\le\varepsilon\cdot 2\abar$ at every history;
+two histories with the same $(z,K)$ that agree over their last $T+1$ shocks have next capital within
+$\varepsilon\, r^T\, 2\abar$.
+\end{theorem}
+\formal{kSufficient\_of\_forecast\_exact, abs\_integral\_sub\_le\_of\_band, SlopeContraction.capital\_gap,
+SlopeContraction.approxAggregation, minMPC\_smallShare\_approxAggregation,
+SlopeContraction.forecast\_gap\_of\_agree}
+
+\noindent
+The bound vanishes for affine saving with prices that do not respond to capital, and it names the
+mechanism usually offered for Krusell and Smith's finding: saving is nearly linear in wealth over
+most of the cross-section, and capital moves prices little. It does not make the error small at
+their calibration: saving is flat at the borrowing constraint, so $\theta-\theta_{lo}$ is not small,
+and the bound uses the whole asset range rather than the cross-sections the equilibrium visits.

@@ -75,6 +75,28 @@ the state, no sunspots, Cobb–Douglas prices.
   `fibreDiam` is the `Dist2` diameter of the `K`-fibres in `A`. Analytic, but only as small as the
   fibres, which we can bound only by `diam A`.
 
+## AK6 detailed plan (2026-11-08)
+
+Approximate aggregation as an analytic bound, in `ApproxAggregation.lean`.
+
+* **AA0** `kSufficient_of_forecast_exact`: `(z, K)` is sufficient iff the one-step forecast of
+  capital from `(z, K)` is exact (induction down the price tree; labour from marginals pinned by
+  the shock).
+* **AA1** (generic) **nonlinearity × distance**: if a test function's slopes in assets lie in
+  `[θlo, θhi]` and two cross-sections have the same mean assets and are within `d` in `DistLE`,
+  their integrals differ by at most `(θhi − θlo)/2 · d` (subtract the mid-slope times assets).
+* **AA2** (`SlopeContraction`) next capital from two cross-sections with the same mean differs by
+  at most `((θ − θlo)/2 + G/(1 − κ)) d`: nonlinearity of saving plus price feedback; the common
+  slope cancels. `θlo = 0` always (saving is monotone in assets).
+* **AA3** sequence state: histories with the same `(z, K)` have next capital within
+  `ε · d`, `d = 2 ā` in general and `r^T 2 ā` when they agree over `T + 1` shocks.
+* **AA4** an approximate law of motion `ℓ(z, K)` (a representative per fibre) with uniform
+  one-step error `ε 2ā`; small-share headline.
+
+Honest limit: `θ − θlo` is not small in the small-share class (θlo = 0 at the constraint), so the
+bound explains approximate aggregation by near-linearity of saving on visited states but does not
+prove it at Krusell–Smith parameters.
+
 ## Sizes (rough)
 
 AK0 small; AK1 small–medium (closed graph, list continuations); AK2 medium (factoring the history
@@ -128,3 +150,11 @@ AK6 small–medium.
   on `(z, K)`, unique ergodic stationary law (the stochastic growth model). Standard axioms only.
   Shows the condition is not vacuous. **Still open**: any economy with idiosyncratic
   heterogeneity (separation (b) or a failure example (c)).
+* **AK6 DONE** 2026-11-08 (`ApproxAggregation.lean`): **`kSufficient_of_forecast_exact`** (exact
+  one-step forecast ⇒ sufficient), **`abs_integral_sub_le_of_band`** (nonlinearity × distance,
+  equal means cancel the mid-slope), `SavingSlopeLower`, `savingSlopeLower_zero`,
+  **`SlopeContraction.capital_gap`** (`((θ − θlo)/2 + G/(1 − κ)) d`), `capAt_cons`,
+  `forecast_gap`, `forecast_gap_uniform`, `forecast_gap_of_agree` (`r^T` sharpening),
+  **`SlopeContraction.approxAggregation`** (approximate law `ℓ(z, K)`, error `ε 2ā`), headline
+  **`minMPC_smallShare_approxAggregation`**. Written up (Thm `thm:approx`). Not small at KS
+  parameters (θlo = 0 at the constraint; whole asset range).
