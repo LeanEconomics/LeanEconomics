@@ -88,3 +88,12 @@ only that this sufficient condition is unavailable. OS5 is needed for the user's
   **`monOnHistories_of_savingMonotone`** ((Mon) for every sequence-state equilibrium),
   **`kSufficient_of_savingMonotone`** (with (Sep)). Standard axioms only. Remaining hypothesis:
   (Sep). Next OS3 (reduce (Sep) to extreme histories).
+* **OS3 DONE** 2026-11-07 (`OrderExtremes.lean`): `ShockMonOnHistories` (a better newest shock
+  with the same past dominates after a common next shock — stated on histories, so no
+  cross-marginal order is needed: all comparisons are at the same current shock);
+  `dominates_of_singleDiff`, **`dominates_of_le`** (Lemma A: pointwise better history with the
+  same shock dominates — one lag at a time, then the limit via continuity of `μ`); `zMax`, `zMin`,
+  `ExtremeSep`; **`sepOnHistories_of_extremes`**; **`kSufficient_of_extremes`**
+  (`SavingMonotone` + uniqueness + continuity + (ShockMon) + (ExtremeSep) ⇒ `KSufficient`).
+  Standard axioms only. Remaining hypotheses on the equilibrium: (ShockMon), (ExtremeSep). Next
+  OS4 (an economy satisfying them, with uniqueness, in the complementarity class).
