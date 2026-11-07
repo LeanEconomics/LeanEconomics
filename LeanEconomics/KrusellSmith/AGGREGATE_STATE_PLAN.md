@@ -120,3 +120,11 @@ AK6 small–medium.
   compact capital sets, continuous `lawK`, and the law of `(z, K)` is the unique ergodic invariant
   law on the capital sets. Standard axioms only. **AK0–AK4 complete**; AK5 (when `KSufficient`
   holds) is research, AK6 optional.
+* **AK5, representative-agent case DONE** 2026-11-07 (`AggregateStateRepAgent.lean`):
+  `lawOfMotion_dirac`, `run_dirac` (point masses go to point masses with `[Unique E]`);
+  `integral_abs_sub_capAt` (burn-in from a point mass, `dist2_run`: mean absolute deviation of
+  assets from `K` is 0), `ae_assets_eq_capAt`, **`kInjective_of_unique`**, `kSufficient_of_unique`;
+  headline **`minMPC_smallShare_repAgent`**: one idiosyncratic state ⇒ `KSufficient`, represented
+  on `(z, K)`, unique ergodic stationary law (the stochastic growth model). Standard axioms only.
+  Shows the condition is not vacuous. **Still open**: any economy with idiosyncratic
+  heterogeneity (separation (b) or a failure example (c)).
