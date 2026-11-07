@@ -67,4 +67,13 @@ satisfiable.
 
 ## Status
 
-* Planned 2026-11-07. Nothing coded.
+* Planned 2026-11-07.
+* **C0 + C1 DONE** 2026-11-07. Generic `DynamicProgramming/PolicyEvaluation.lean`: `policyOp`,
+  `blackwell_policyOp`, `policyValue`, `policyValue_eq`, **`policyValue_eq_valueFunction`**
+  (verification), `bellman_eq_objective_policy`. `KrusellSmith/CornerEconomy.lean`: `cornerSave`,
+  `cornerWeight`, `cornerPt`, `cornerMeasure`/`cornerDist` (finite sum of point masses), `μc`;
+  `integral_cornerDist`, `capital_cornerDist` (`ā · saverMass y`), `initMass_cornerDist`
+  (`D.m z`); `labourD`, `cornerTree`, `capAt_μc`, **`seqPrices_μc`**, **`kSufficient_μc`**;
+  `cornerPolicy`, `cornerValue`, `cornerValue_eq`, `expectation_congr_assets`,
+  **`cornerValue_sub_reward`**. Standard axioms only. Next C2 (verification under (Emp), (Unemp),
+  (Feas)).

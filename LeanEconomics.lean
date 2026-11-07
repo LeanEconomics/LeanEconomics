@@ -7,6 +7,7 @@ import LeanEconomics.DynamicProgramming.OrderedFixedPoints
 import LeanEconomics.DynamicProgramming.Bellman
 import LeanEconomics.DynamicProgramming.Optimality
 import LeanEconomics.DynamicProgramming.Stochastic
+import LeanEconomics.DynamicProgramming.PolicyEvaluation
 import LeanEconomics.DynamicProgramming.Weighted
 import LeanEconomics.DynamicProgramming.Extended
 import LeanEconomics.DynamicProgramming.ExtendedStochastic
@@ -240,6 +241,7 @@ import LeanEconomics.KrusellSmith.AggregateStateRepAgent
 import LeanEconomics.KrusellSmith.OrderStructure
 import LeanEconomics.KrusellSmith.OrderMonotone
 import LeanEconomics.KrusellSmith.OrderExtremes
+import LeanEconomics.KrusellSmith.CornerEconomy
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
