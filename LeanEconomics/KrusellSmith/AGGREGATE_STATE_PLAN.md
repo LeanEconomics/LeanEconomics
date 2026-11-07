@@ -93,3 +93,11 @@ AK6 small–medium.
   **`aggTree_eq_stateAlong`** (`lawK`, `labourK` generate the whole tree);
   **`continuousOn_aggTree`** / `continuousOn_lawK` / `continuousOn_labourK` (capital is a quotient
   map from the compact set of histories with shock `z`). Standard axioms only. Next AK2.
+* **AK2 DONE** 2026-11-07 (`AggregateStateRecursive.lean`): `AggStateRecursiveEquilibrium`
+  (capital sets, `lawK`, `labourK`, value and saving on `(z, K, a, e)`, Bellman + optimality,
+  consistency via distribution sets `dist z K` with mean `K`, labour `labourK z K`, closed under
+  the law of motion); `integral_saving` (mean saving = `lawK`); `valueK`, `savingK`,
+  `seqValue_eq_valueK`, `seqPolicy_eq_savingK`, `seqCash_eq_cashK`, `seqValue_cons_eq`;
+  **`toAggStateRecursive`**: a sequence-state equilibrium with `KSufficient` is a recursive
+  equilibrium on `(z, K)` representing it. Standard axioms only. Next AK3 (stationarity on
+  `(z, K)`).
