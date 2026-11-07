@@ -244,6 +244,8 @@ import LeanEconomics.KrusellSmith.OrderExtremes
 import LeanEconomics.KrusellSmith.CornerEconomy
 import LeanEconomics.KrusellSmith.CornerVerification
 import LeanEconomics.KrusellSmith.CornerEquilibrium
+import LeanEconomics.KrusellSmith.CornerPrimitives
+import LeanEconomics.KrusellSmith.CornerWitness
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

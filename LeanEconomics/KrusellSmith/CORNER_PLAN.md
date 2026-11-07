@@ -90,3 +90,12 @@ satisfiable.
   is `cornerDist z z'`, by design consistency), **`isSeqStateEquilibrium_μc`**,
   **`exists_represents_μc`** (represented by a recursive equilibrium on `(z, K)`). Standard
   axioms only. Remaining: C4 (CRRA + clamped CD, conditions from primitives, witness).
+* **C4 DONE** 2026-11-07. `CornerPrimitives.lean`: price bounds `R ∈ [Rlo, Rhi]`, `w ∈ [wlo, whi]`
+  + uniform worst-case inequalities ⇒ the corner conditions along every price path
+  (`cornerFeas/Emp/Unemp_of_bounds`, **`cornerConditions_of_bounds`**). `CornerWitness.lean`:
+  `Bool × Bool` economy, log utility, clamped CD (share 1/2, δ = 0, TFP 1, capital box [1/4, 1],
+  labour clamped at 1 ⇒ `R ∈ [3/2, 2]`, `w ∈ [1/4, 1/2]`), efficiencies 44/2, `ā = 1`, `β = 9/10`,
+  employed shares 3/5 / 13/20 with consistent transitions; **`cornerWitness`**: sequence-state
+  equilibrium + `KSufficient` + represented on `(z, K)`; `capAt_witness` (capital 3/5 or 13/20,
+  inside the box). Exact arithmetic (`norm_num`), standard axioms only. **Corner programme
+  complete.** Caveats: labour clamp degenerate (prices ignore labour); uniqueness not claimed.
