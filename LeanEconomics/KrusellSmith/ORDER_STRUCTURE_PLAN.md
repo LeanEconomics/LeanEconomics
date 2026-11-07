@@ -118,6 +118,49 @@ from a structure where the constraint binds identically in both (or nowhere).
   handled; needs the cross-root comparative statics above. Substantial and may fail at the
   constraint.
 
+## OS4(b): interior heterogeneity with a linear technology (plan 2026-11-08)
+
+**Design.** Keep the order route (OS0–OS2: (Mon) + (Sep) ⇒ chain ⇒ `KInjective` ⇒ `KSufficient`)
+but choose the economy so that its two hard hypotheses are free and the content sits in (Sep)
+and interiority:
+
+* **Linear technology** `Y = A(z) K + B(z) L`: prices are exact marginal products and depend on the
+  shock only (`R` constant, `w(z)`). Then the household problem does not depend on the capital
+  path at all, so `SavingMonotone` holds with equality and sequential equilibrium is unique (the
+  distribution path does not depend on prices). A return rising in `K` would need a small-feedback
+  uniqueness theorem we do not have; Cobb–Douglas fails `SavingMonotone`.
+* **i.i.d. aggregate shocks and i.i.d. employment** (`aggProb z z' = π z'`,
+  `idioProb z z' e e' = m e'`): the continuation value at the root does not depend on today's
+  shock or employment (re-root with `valueFunction_shift`), so saving is one nondecreasing function
+  of cash on hand.
+* **Ordered cash** `R ā + w(y) e_hi ≤ w(y') e_lo` for `y < y'`: every household saves less after a
+  worse shock than every household after a better one. So (Sep) holds directly, for any two
+  cross-sections; (ShockMon), (ExtremeSep) and Lemma A are not needed.
+* **Interior saving** from crude Euler bounds (tangent lines, value increments bounded by plans
+  that copy the neighbour's saving): saving is positive at cash `x` when
+  `1/x < β E[R/(w'e')]`, and below the cap when `1/(x−ā) > β E[R/((R−1)ā + w'e')]`. Both hold
+  for every low-efficiency household after a good shock for suitable parameters (window exists
+  only with `βR < 1` and moderate `β`; e.g. `e ∈ {1, 1/2}`, `w ∈ {1, 1/4}`, `R = 6/5`, `β = 1/2`,
+  `ā = 5/24`).
+
+**Milestones.**
+* **OI0** (generic) `PricesExogenous`: households, policies and the distribution path do not
+  depend on the capital path; `savingMonotone_of_exogenous`,
+  `uniqueSequentialEquilibrium_of_exogenous`.
+* **OI1** (generic) `IIDShocks`: the root continuation is the same function of next assets for
+  every root shock and employment state.
+* **OI2** (generic) two-root Topkis: less cash and the same continuation give less saving.
+* **OI3** (generic) `OrderedCash` ⇒ (Sep) for every sequence-state equilibrium ⇒ `KSufficient`.
+* **OI4** (generic, log utility) interior-saving bounds at the root.
+* **OI5** witness: linear-technology economy; every sequence-state equilibrium has `(z, K)`
+  sufficient and a positive mass of households saving strictly inside `(0, ā)` after every good
+  shock.
+
+**Honest limits.** Prices do not feed back from capital (linear technology), shocks are i.i.d., and
+the household is impatient (`β = 1/2`, long periods: the crude interiority bounds have tiny
+windows for `β ≥ 0.8`). Strict monotonicity of interior saving (hence an infinitely supported
+cross-section) is not claimed.
+
 ## Status
 
 * Planned 2026-11-07.
@@ -143,3 +186,14 @@ from a structure where the constraint binds identically in both (or nowhere).
   (`SavingMonotone` + uniqueness + continuity + (ShockMon) + (ExtremeSep) ⇒ `KSufficient`).
   Standard axioms only. Remaining hypotheses on the equilibrium: (ShockMon), (ExtremeSep). Next
   OS4 (an economy satisfying them, with uniqueness, in the complementarity class).
+* **OS4(b) OI0–OI5 DONE** 2026-11-08 via the linear-technology design.
+  * `ExogenousPrices.lean` (OI0–OI3): `policy_congr`, `savingMonotone_of_exogenous`,
+    `uniqueSequentialEquilibrium_of_exogenous`, `cont_root_eq`, `policy_le_policy_of_cont`,
+    `sepOnHistories_of_orderedCash`, **`kSufficient_of_orderedCash`**.
+  * `InteriorSaving.lean` (OI4): `value_sub_ge`, `value_sub_le`, `policy_pos_of`,
+    `policy_lt_cap_of`.
+  * `InteriorWitness.lean` (OI5): `e ∈ {1, 3/4}`, `w ∈ {1, 1/3}`, `R = 6/5`, `β = 1/2`,
+    `ā = 25/72`, floor `1/100`, `δ = 1/3000`; **`interiorWitness`** / **`exists_interiorWitness`**:
+    `(z, K)` sufficient in every sequence-state equilibrium, and after every good shock the
+    low-efficiency half saves strictly inside `(0, ā)`.
+  * Standard axioms only. Written up in WriteUpKrusellSmith §9.

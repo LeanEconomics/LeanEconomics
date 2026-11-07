@@ -27,7 +27,7 @@ worst cases.
 \begin{center}
 \begin{tabular}{ll}
 \toprule
-Aggregate shocks & two, i.i.d.\ with probability $1/2$ \\
+Aggregate shocks & two, persistent: each lasts with probability $7/8$ \\
 Employment & efficiency $2$ (employed), $1/4$ (unemployed) \\
 Employment rates & $4/5$ (bad), $17/20$ (good); job finding $49/50$ \\
 Job loss & $49/200,\ 73/400,\ 197/850,\ 147/850$ by (yesterday, today) \\
@@ -49,16 +49,19 @@ price tree, so prices are the true Cobb--Douglas marginal products.
 In this economy: sequential equilibrium is unique from every initial state; the sequence-state
 equilibrium exists, is unique, and is the corner one; $(z,K)$-sufficiency holds and a recursive
 equilibrium on $(z,K)$ represents it; and its law of motion on $(z,K)$ has a unique stationary
-distribution on the capital sets --- weight $1/4$ on each pair of today's shock and capital from
-yesterday's shock --- which is ergodic.
+distribution on the capital sets --- weight $\tfrac12\pi(y,z)$ on today's shock $z$ with capital
+from yesterday's shock $y$, so $7/16$ where the shock persisted and $1/16$ where it switched ---
+which is ergodic.
 \end{theorem}
 \formal{cornerUnique, cornerWitness, cornerStationary, ergodic\_statLaw, seqPrices\_mem\_box}
 
 \noindent
 Uniqueness comes cheaply because the corner conditions hold along every price path: the household's
 policy is the corner one whatever it expects, so the distribution path does not depend on prices.
-Three features limit the example. Assets sit at corners rather than at interior precautionary
-levels. The gross return exceeds $1/\beta$, which is what makes the cap bind for the employed. And
+The aggregate shocks have the persistence of Krusell and Smith's calibration (expected spells of
+eight periods); the corner conditions are checked at worst-case prices, so persistence costs
+nothing. Three features limit the example. Assets sit at corners rather than at interior
+precautionary levels (Section~\ref{sec:interior} removes this one, at other costs). The gross return exceeds $1/\beta$, which is what makes the cap bind for the employed. And
 with capital share $1/2$ and labour inside its box the corner economy cannot exist: the employed's
 net income over the unemployed's spending is bounded by roughly $(1-\alpha)/\alpha$, too small for
 both corner conditions.
