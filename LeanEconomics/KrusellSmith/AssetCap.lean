@@ -90,7 +90,7 @@ theorem continuous_capEmb : Continuous (capEmb c hc hle (M := M)) :=
   ((continuous_subtype_val.comp continuous_fst).subtype_mk _).prodMk continuous_snd
 
 /-- The embedding, as a continuous map. -/
-def capMap : C((M.withCap c hc).State, M.State) := ⟨capEmb c hc hle, continuous_capEmb c hc hle⟩
+def capEmbMap : C((M.withCap c hc).State, M.State) := ⟨capEmb c hc hle, continuous_capEmb c hc hle⟩
 
 /-- The embedding of household positions. -/
 def capEmbA (x : (M.withCap c hc).AState) : M.AState :=
@@ -114,7 +114,7 @@ function is the large-cap objective. -/
 theorem objective_capEmb (z₀ : Z) (K : List Z → ℝ × ℝ) (V : M.State →ᵇ ℝ)
     {s : (M.withCap c hc).State} {a : ℝ}
     (ha : a ∈ ((M.withCap c hc).household z₀ K).feasible s) :
-    ((M.withCap c hc).household z₀ K).objective (V.compContinuous (capMap c hc hle)) s a
+    ((M.withCap c hc).household z₀ K).objective (V.compContinuous (capEmbMap c hc hle)) s a
       = (M.household z₀ K).objective V (capEmb c hc hle s) a := by
   have ha' := mem_feasible_capEmb (hle := hle) ha
   simp only [StochasticDynamicProgram.objective, StochasticDynamicProgram.expectation,
@@ -133,7 +133,7 @@ include hslack
 saving from below `ā₀` stays below `ā₀`. -/
 theorem valueFunction_capEmb :
     ((M.withCap c hc).household z₀ K).valueFunction
-      = (M.household z₀ K).valueFunction.compContinuous (capMap c hc hle) := by
+      = (M.household z₀ K).valueFunction.compContinuous (capEmbMap c hc hle) := by
   set V := (M.household z₀ K).valueFunction
   symm
   refine ((M.withCap c hc).household z₀ K).eq_valueFunction ?_
