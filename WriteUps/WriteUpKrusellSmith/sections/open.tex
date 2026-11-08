@@ -24,11 +24,17 @@
   equilibrium without either needs a quantitative modulus of the equilibrium price path in the
   history.
 \item \textbf{The minimal state without uniqueness, for Cobb--Douglas.} The greatest-equilibrium
-  route needs saving to rise with the capital path. With Cobb--Douglas prices higher capital raises
-  the cash of the asset-poor and lowers that of the asset-rich (the sign of $Ke-La$), so an order
-  ranking households by that sign, or by cash on hand, would be needed; whether Tarski's argument
-  survives with such an order is the first open step. This is the question \citet{cao2020} leaves
-  open.
+  route needs saving to rise with the capital path, and with Cobb--Douglas prices it cannot in any
+  order. A rise in capital moves a household's cash at the rate
+  $\alpha(1-\alpha)A K^{\alpha-2}L^{-\alpha}(Ke-La)$, up for the asset-poor and down for the
+  asset-rich, and the change integrates to zero over the cross-section (Euler's theorem): capital
+  only redistributes cash.\footnote{\lean{CobbDouglasRedistribution.cash\_deriv},
+  \lean{CobbDouglasRedistribution.integral\_redistribution\_eq\_zero}.} So a one-node perturbation of
+  capital raises some households' saving and lowers others'; and when saving is affine in cash the
+  redistribution washes out, leaving future-price effects that both lower saving --- the
+  equilibrium map reverses order. An order-reversing map brackets the equilibria between the least
+  and greatest fixed points of its square, but gives no consistent selection. This is the question
+  \citet{cao2020} leaves open.
 \item \textbf{Uniqueness at realistic capital shares.} Theorem~\ref{thm:smallshare} is qualitative;
   sharper bounds on the consumption floor and on curvature would be needed for a quantitative
   threshold.

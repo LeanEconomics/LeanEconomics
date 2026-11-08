@@ -79,3 +79,20 @@ Routes:
 
 Honest assessment: R1 is the only route that could give the result; it is open research and may
 fail. Nothing coded.
+
+### R1 attempted 2026-11-08 — negative
+
+* `CobbDouglasRedistribution.lean`: **`cash_deriv`**, `∂(R a + w e)/∂K = α(1−α) A K^{α−2} L^{−α}
+  (K e − L a)`; **`integral_redistribution_eq_zero`**, the change integrates to zero over any
+  cross-section with mean assets `K` and mean efficiency `L` (Euler's theorem).
+* Consequences (argued, not formalised): (i) a one-node rise in capital raises the saving of
+  households with `a/e < K/L` and lowers the others' (future prices unchanged, saving increasing in
+  cash), so **no order containing one-node perturbations of capital makes every household's saving
+  monotone** — R1 as stated cannot work; (ii) with saving affine in cash at a common slope the
+  redistribution has no aggregate effect, and the remaining future-price effects (lower returns,
+  higher wages) both lower saving, so the aggregate equilibrium map is **order-reversing**.
+* What an order-reversing map gives: Tarski on `f ∘ f` yields least/greatest fixed points
+  `K_lo ≤ K_hi` of `f²` with `f K_lo = K_hi`, `f K_hi = K_lo`, bracketing every equilibrium;
+  uniqueness iff they coincide. No consistent selection in general.
+* Remaining idea: an order-reversing map with a *contracting* `f²` on the bracket, or selection by
+  continuation (R2). Item 6 stays open.
