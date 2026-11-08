@@ -121,3 +121,31 @@ is concave at the top (Krasnosel'skii: `φ hi ≤ g (t hi)` with `φ > t`) and `
   proportionally-plus. Plausible for log utility (saving rates nearly constant in wealth); the
   lower-bound condition `lo ≥ t₀ hi` should follow from the capital lower bound `capital_ge`
   (Cobb–Douglas, `b = 0`).
+
+### B2 started 2026-11-08
+
+* **The original map cannot work**: `eqFn` prices node `h` at the path's own `K h`, households hold
+  mean `Ā h`; aggregate cash moves with `K h` at `∝ L (K h − Ā h)`
+  (`CobbDouglasRedistribution.integral_cash_change`). Where the path overshoots, raising `K h`
+  raises cash and saving, against the expectations effect; with little weight on the future
+  (small `β`) it wins. So `EqMapAntitone` fails in general, even with a representative agent.
+* **The expectations map** (`ExpectationsMap.lean`): households expect `K` for the future, today's
+  prices clear at actual `Ā h` (`expDist`: the price path at node `h` is `K` with entry `h` replaced
+  by `(Ā h, L h)`). **`expMap_eq_iff`**: its fixed points are exactly the sequential equilibria.
+  The bracket theorem is now generic in the map (`uniqueSequentialEquilibrium_of_antitoneMap`);
+  **`uniqueSequentialEquilibrium_of_expMap`**: `ExpMapAntitone` + concave square ⇒ uniqueness ⇒
+  minimal state. Standard axioms.
+* **What `ExpMapAntitone` needs** (`K ≤ K'` ⇒ realised `Ā ≥ Ā'`), by induction down the tree:
+  (a) *expectations*: at a node with the same distribution, higher expected future capital (lower
+  future returns, higher future wages) lowers every household's saving — a comparative static of
+  the household problem in the future price path, with the current price fixed; for log utility
+  the return effect on financial wealth cancels and the wage/human-wealth effect lowers saving,
+  but the borrowing constraint and precautionary terms need care;
+  (b) *propagation*: a lower realised distribution must give lower saving next period at the same
+  expectations. With prices at actual `Ā`, aggregate cash `F(Ā, L) + (1 − δ) Ā` is increasing in
+  `Ā`, but the distribution matters beyond its mean (redistribution again, now between two
+  distributions with different means), so (b) needs dominance of the distributions, which (a) does
+  not give household by household.
+* Next concrete target: (a) for log utility as a household-level theorem (saving antitone in the
+  future capital path at fixed current cash), then (b) in the representative-agent case, where the
+  distribution is its mean.

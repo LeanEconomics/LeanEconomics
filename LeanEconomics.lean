@@ -256,6 +256,7 @@ import LeanEconomics.KrusellSmith.AssetCap
 import LeanEconomics.KrusellSmith.Borrowing
 import LeanEconomics.KrusellSmith.CobbDouglasRedistribution
 import LeanEconomics.KrusellSmith.AntitoneEquilibrium
+import LeanEconomics.KrusellSmith.ExpectationsMap
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

@@ -163,14 +163,14 @@ noncomputable def eqFn (z : Z) (μ : ProbabilityMeasure M.AState) (K : M.CapPath
 /-- **The equilibrium map reverses order** (milestone B2, open). -/
 def EqMapAntitone : Prop := ∀ (z : Z) (μ : ProbabilityMeasure M.AState), Antitone (M.eqFn z μ)
 
-variable {M}
+variable {M} {Φ : Z → ProbabilityMeasure M.AState → M.CapPath → M.CapPath}
 
 /-- The top and bottom of the bracket, as real paths. -/
-noncomputable def bracketHi (hA : M.EqMapAntitone) (z : Z) (μ : ProbabilityMeasure M.AState) :
+noncomputable def bracketHi (hA : ∀ z μ, Antitone (Φ z μ)) (z : Z) (μ : ProbabilityMeasure M.AState) :
     List Z → ℝ :=
   fun h => (OrderHom.gfp (AntitoneBracket.sq (hA z μ)) h : ℝ)
 
-noncomputable def bracketLo (hA : M.EqMapAntitone) (z : Z) (μ : ProbabilityMeasure M.AState) :
+noncomputable def bracketLo (hA : ∀ z μ, Antitone (Φ z μ)) (z : Z) (μ : ProbabilityMeasure M.AState) :
     List Z → ℝ :=
   fun h => (OrderHom.lfp (AntitoneBracket.sq (hA z μ)) h : ℝ)
 
@@ -179,14 +179,14 @@ noncomputable def toCap (K : List Z → ℝ) : M.CapPath :=
   fun h => projIcc 0 M.assetCap M.assetCap_pos.le (K h)
 
 /-- The square of the equilibrium map, on real paths. -/
-noncomputable def sqReal (hA : M.EqMapAntitone) (z : Z) (μ : ProbabilityMeasure M.AState)
+noncomputable def sqReal (hA : ∀ z μ, Antitone (Φ z μ)) (z : Z) (μ : ProbabilityMeasure M.AState)
     (K : List Z → ℝ) : List Z → ℝ :=
   fun h => (AntitoneBracket.sq (hA z μ) (toCap K) h : ℝ)
 
 variable (M) in
 /-- **The square is concave at the top of the bracket, whose bottom is a positive fraction of its
 top** (milestone B3, open). -/
-def SqConcaveAtTop (hA : M.EqMapAntitone) : Prop :=
+def SqConcaveAtTop (hA : ∀ z μ, Antitone (Φ z μ)) : Prop :=
   ∀ (z : Z) (μ : ProbabilityMeasure M.AState),
     (∃ t₀ : ℝ, 0 < t₀ ∧ t₀ • bracketHi hA z μ ≤ bracketLo hA z μ) ∧
     ∀ t ∈ Ioo (0 : ℝ) 1, ∃ φ : ℝ, t < φ ∧
@@ -196,7 +196,7 @@ theorem toCap_val (K : M.CapPath) : toCap (M := M) (fun h => (K h : ℝ)) = K :=
   funext fun h => projIcc_val _ (K h)
 
 /-- **The bracket closes** under concavity at the top. -/
-theorem lfp_eq_gfp (hA : M.EqMapAntitone) (hC : M.SqConcaveAtTop hA) (z : Z)
+theorem lfp_eq_gfp (hA : ∀ z μ, Antitone (Φ z μ)) (hC : M.SqConcaveAtTop hA) (z : Z)
     (μ : ProbabilityMeasure M.AState) :
     OrderHom.lfp (AntitoneBracket.sq (hA z μ)) = OrderHom.gfp (AntitoneBracket.sq (hA z μ)) := by
   set lo := OrderHom.lfp (AntitoneBracket.sq (hA z μ))
@@ -221,25 +221,33 @@ theorem lfp_eq_gfp (hA : M.EqMapAntitone) (hC : M.SqConcaveAtTop hA) (z : Z)
   funext h
   exact Subtype.ext (congrFun heq h)
 
-/-- **Uniqueness of sequential equilibrium from an order-reversing equilibrium map whose square is
-concave at the top of the bracket.** -/
-theorem uniqueSequentialEquilibrium_of_antitone (hA : M.EqMapAntitone) (hC : M.SqConcaveAtTop hA) :
-    M.UniqueSequentialEquilibrium := by
+/-- **Uniqueness of sequential equilibrium from any order-reversing map whose fixed points include
+the sequential equilibria and whose square is concave at the top of the bracket.** -/
+theorem uniqueSequentialEquilibrium_of_antitoneMap (hA : ∀ z μ, Antitone (Φ z μ))
+    (hfix : ∀ (z : Z) (μ : ProbabilityMeasure M.AState) {K : List Z → ℝ}
+      (hK : M.IsSequentialEquilibrium z (μ : Measure M.AState) K),
+      Φ z μ (fun h => ⟨K h, M.equilibrium_mem_pi z μ hK h (mem_univ h)⟩)
+        = fun h => ⟨K h, M.equilibrium_mem_pi z μ hK h (mem_univ h)⟩)
+    (hC : M.SqConcaveAtTop hA) : M.UniqueSequentialEquilibrium := by
   intro z μ K K' hK hK'
   have key : ∀ {K : List Z → ℝ} (hK : M.IsSequentialEquilibrium z (μ : Measure M.AState) K),
       (fun h => (⟨K h, M.equilibrium_mem_pi z μ hK h (mem_univ h)⟩ : ↥(Icc (0 : ℝ) M.assetCap)))
-        = OrderHom.lfp (AntitoneBracket.sq (hA z μ)) := by
-    intro K hK
-    refine AntitoneBracket.eq_of_lfp_eq_gfp (hA z μ) (lfp_eq_gfp hA hC z μ) ?_
-    funext h
-    exact Subtype.ext (hK h).symm
+        = OrderHom.lfp (AntitoneBracket.sq (hA z μ)) := fun hK =>
+    AntitoneBracket.eq_of_lfp_eq_gfp (hA z μ) (lfp_eq_gfp hA hC z μ) (hfix z μ hK)
   funext h
   exact congrArg Subtype.val (congrFun ((key hK).trans (key hK').symm) h)
 
+/-- **Uniqueness of sequential equilibrium from an order-reversing equilibrium map whose square is
+concave at the top of the bracket.** -/
+theorem uniqueSequentialEquilibrium_of_antitone (hA : M.EqMapAntitone)
+    (hC : M.SqConcaveAtTop (Φ := M.eqFn) hA) : M.UniqueSequentialEquilibrium :=
+  uniqueSequentialEquilibrium_of_antitoneMap hA
+    (fun _ _ _ hK => funext fun h => Subtype.ext (hK h).symm) hC
+
 /-- **A recursive equilibrium on the minimal state `(z, μ)`** for an order-reversing equilibrium
 map whose square is concave at the top of the bracket. -/
-theorem isRecursive_of_antitone (hA : M.EqMapAntitone) (hC : M.SqConcaveAtTop hA) (z : Z)
-    (μ : ProbabilityMeasure M.AState) (h : List Z) :
+theorem isRecursive_of_antitone (hA : M.EqMapAntitone) (hC : M.SqConcaveAtTop (Φ := M.eqFn) hA)
+    (z : Z) (μ : ProbabilityMeasure M.AState) (h : List Z) :
     M.eqPath z μ h = ∫ x, M.assets x ∂(M.nodeProb z μ h : Measure M.AState) ∧
       (∀ x : M.AState,
         M.policy z (M.pricePath z (M.initMass (μ : Measure M.AState)) (M.eqPath z μ))
