@@ -15,7 +15,20 @@
   equilibrium visits, where few households are near the constraint.
 \item \textbf{Measurable equilibria beyond small shares.} Stationarity directly from the sequential
   equilibrium needs the sequence-state equilibrium to be measurable in the history; outside the
-  small-share class the fixed point gives no such guarantee.
+  small-share class the fixed point gives no such guarantee. The natural fixed-point space ---
+  measurable maps into distributions, with the weak-* topology --- is compact and convex, and
+  capital at each node is continuous on it; but the household's policy is nonlinear in the whole
+  price path, which converges only weakly in the history, so the update is not continuous. Running
+  the economy from the far past and taking limits fails for the same reason. A contraction (as for
+  small shares) or randomisation (as in \citet{dgmm1994}) removes the obstruction; a pure measurable
+  equilibrium without either needs a quantitative modulus of the equilibrium price path in the
+  history.
+\item \textbf{The minimal state without uniqueness, for Cobb--Douglas.} The greatest-equilibrium
+  route needs saving to rise with the capital path. With Cobb--Douglas prices higher capital raises
+  the cash of the asset-poor and lowers that of the asset-rich (the sign of $Ke-La$), so an order
+  ranking households by that sign, or by cash on hand, would be needed; whether Tarski's argument
+  survives with such an order is the first open step. This is the question \citet{cao2020} leaves
+  open.
 \item \textbf{Uniqueness at realistic capital shares.} Theorem~\ref{thm:smallshare} is qualitative;
   sharper bounds on the consumption floor and on curvature would be needed for a quantitative
   threshold.

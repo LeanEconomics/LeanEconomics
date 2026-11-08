@@ -3,11 +3,15 @@
 Aggregate shocks $z$ take finitely many values and follow a Markov chain $\pi(z,z')$. Each household
 has an idiosyncratic state $e$ in a finite set, moving with probabilities $p(z,z',e,e')$ that may
 depend on today's and tomorrow's aggregate shock, and labour efficiency $\epsilon(e)$. Households
-hold assets $a\in[0,\abar]$, discount at $\beta<1$, and receive the gross return $R(z,K,L)$ on
-assets and the wage $w(z,K,L)$ per efficiency unit, where $K$ is aggregate capital and $L$ aggregate
-labour. Cash on hand is $Ra+w\epsilon(e)$; saving $a'$ is feasible when
-$0\le a'\le\min(\abar,\ Ra+w\epsilon(e)-\underline c)$, with $\underline c\ge 0$ a consumption floor
-that labour income always affords. Period utility is continuous, increasing and strictly concave on
+hold positions $a-b$ with $a\in[0,\abar]$, where $b\ge0$ is a borrowing limit, discount at
+$\beta<1$, and receive the gross return $R(z,K,L)$ on their position and the wage $w(z,K,L)$ per
+efficiency unit, where $K$ is mean (shifted) assets and $L$ aggregate labour. Cash on hand is
+$R(a-b)+w\epsilon(e)$; saving $a'$ is feasible when
+$0\le a'\le\min(\abar,\ R(a-b)+w\epsilon(e)-\underline c)$, with $\underline c\ge 0$ a consumption
+floor that labour income net of debt service at the limit always affords. Krusell and Smith's
+economy has $b=0$; results that need it say so (the monotone route of
+Section~\ref{sec:recursive} and the capital lower bound below, since a higher return hurts
+debtors). Period utility is continuous, increasing and strictly concave on
 $[\underline c,\infty)$.
 
 Prices are abstract bounded continuous functions; the Cobb--Douglas instance is

@@ -64,3 +64,17 @@ Outside the small-share class the cap remains an assumption: $\theta<1$ needs th
 $\bar R/\underline R$ to be below $(\beta\bar R)^{-1/\gamma}$. The consumption floor of the CRRA
 model depends on the cap through a value bound, so the comparison is between the economy and its
 own smaller-cap versions; the floor is slack in both.
+
+\paragraph{Borrowing.} With a borrowing limit $b>0$ every existence result above goes through, with
+the income floor replaced by labour income net of debt service at the limit. For CRRA utility and
+Cobb--Douglas prices of actual capital (mean position $K-b$), a sequential equilibrium exists from
+every initial state whenever $b<\underline w\,\underline\epsilon/\bar R$, the analogue of a natural
+borrowing limit: labour income always covers the interest on the maximal debt.
+
+\begin{theorem}\label{thm:borrow}
+For CRRA utility, clamped Cobb--Douglas prices of actual capital, and $0\le b<\underline
+w\,\underline\epsilon/\bar R$, from every aggregate shock and distribution of positions there is a
+sequential equilibrium in which households borrow up to $b$, with consumption bounded away from
+zero.
+\end{theorem}
+\formal{crraBorrow\_exists\_sequentialEquilibrium, crraBorrowEconomy, KSModel.borrowLimit}
