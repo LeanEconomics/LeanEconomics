@@ -53,8 +53,9 @@ theorem policy_le_of_slope {θ : ℝ} (hθ : M.SavingSlope θ) (z₀ : Z) (K : L
       ≤ M.cash z₀ K (⟨0, le_rfl, M.assetCap_pos.le⟩, l) - M.consFloor :=
     (M.policy_mem z₀ K _).2.trans (min_le_right _ _)
   have h3 : M.cash z₀ K (⟨0, le_rfl, M.assetCap_pos.le⟩, l)
-      = M.wageAt z₀ K l.node * M.efficiency l.idio := by
+      = M.wageAt z₀ K l.node * M.efficiency l.idio - M.returnAt z₀ K l.node * M.borrowLimit := by
     simp [cash]
+  have h3' := mul_nonneg (M.returnAt_nonneg z₀ K l.node) M.borrowLimit_nonneg
   have h4 : M.wageAt z₀ K l.node * M.efficiency l.idio ≤ M.wageBound * M.efficiency l.idio :=
     mul_le_mul_of_nonneg_right (M.wage_le _ _ _) (M.efficiency_nonneg _)
   have ha : (0 : ℝ) ≤ a := a.2.1

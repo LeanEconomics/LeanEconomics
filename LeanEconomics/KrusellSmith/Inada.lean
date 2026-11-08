@@ -74,10 +74,14 @@ structure KSInada (Z E : Type*) [Fintype Z] [Fintype E] where
   wage_nonneg : ∀ z K L, 0 ≤ wage z K L
   wageBound : ℝ
   wage_le : ∀ z K L, wage z K L ≤ wageBound
-  /-- A positive lower bound on labour income. -/
+  /-- The borrowing limit (see `KSModel.borrowLimit`). -/
+  borrowLimit : ℝ
+  borrowLimit_nonneg : 0 ≤ borrowLimit
+  /-- A positive lower bound on labour income net of debt service at the borrowing limit. -/
   incomeFloor : ℝ
   incomeFloor_pos : 0 < incomeFloor
-  incomeFloor_le : ∀ z K L e, incomeFloor ≤ wage z K L * efficiency e
+  incomeFloor_le : ∀ z K L e,
+    incomeFloor ≤ wage z K L * efficiency e - grossReturn z K L * borrowLimit
   /-- Period utility, defined on positive consumption. -/
   utility : ℝ → ℝ
   continuousOn_utility : ContinuousOn utility (Ioi 0)
@@ -117,6 +121,8 @@ noncomputable def toModel (c : ℝ) (hc : 0 < c) (hcy : c ≤ P.incomeFloor) : K
   wage_nonneg := P.wage_nonneg
   wageBound := P.wageBound
   wage_le := P.wage_le
+  borrowLimit := P.borrowLimit
+  borrowLimit_nonneg := P.borrowLimit_nonneg
   consFloor := c
   consFloor_nonneg := hc.le
   consFloor_le_income z K L e := hcy.trans (P.incomeFloor_le z K L e)
@@ -140,9 +146,14 @@ theorem valueBound_nonneg : 0 ≤ P.valueBound := (abs_nonneg _).trans (le_max_l
 variable {c : ℝ} (hc : 0 < c) (hcy : c ≤ P.incomeFloor) (z₀ : Z) (K : List Z → ℝ × ℝ)
 
 theorem incomeFloor_le_cash (s : (P.toModel c hc hcy).State) :
-    P.incomeFloor ≤ (P.toModel c hc hcy).cash z₀ K s :=
-  (P.incomeFloor_le _ _ _ _).trans
-    (le_add_of_nonneg_left (mul_nonneg (P.grossReturn_nonneg _ _ _) s.1.2.1))
+    P.incomeFloor ≤ (P.toModel c hc hcy).cash z₀ K s := by
+  have h1 := P.incomeFloor_le (shockAt z₀ s.2.node) (K s.2.node).1 (K s.2.node).2 s.2.idio
+  have h2 := mul_nonneg (P.grossReturn_nonneg (shockAt z₀ s.2.node) (K s.2.node).1
+    (K s.2.node).2) s.1.2.1
+  change P.incomeFloor ≤ P.grossReturn (shockAt z₀ s.2.node) (K s.2.node).1 (K s.2.node).2 * s.1
+    + P.wage (shockAt z₀ s.2.node) (K s.2.node).1 (K s.2.node).2 * P.efficiency s.2.idio
+    - P.grossReturn (shockAt z₀ s.2.node) (K s.2.node).1 (K s.2.node).2 * P.borrowLimit
+  linarith
 
 theorem cash_le_topCons (s : (P.toModel c hc hcy).State) :
     (P.toModel c hc hcy).cash z₀ K s ≤ P.topCons :=

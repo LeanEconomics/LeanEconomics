@@ -57,7 +57,8 @@ theorem recursiveEquilibrium_valueState :
       ∃ ξ : M.ExtState, ξ.shock = z ∧ ξ.dist = μ) ∧
     ∀ ξ : M.ExtState,
       (∀ x, ξ.cash x = M.grossReturn ξ.shock ξ.capital ξ.labour * x.1
-        + M.wage ξ.shock ξ.capital ξ.labour * M.efficiency x.2.idio) ∧
+        + M.wage ξ.shock ξ.capital ξ.labour * M.efficiency x.2.idio
+        - M.grossReturn ξ.shock ξ.capital ξ.labour * M.borrowLimit) ∧
       (∀ x, ξ.policy x ∈ Icc 0 (ξ.maxSaving x) ∧ ξ.value x = ξ.objective x (ξ.policy x) ∧
         ∀ a ∈ Icc 0 (ξ.maxSaving x), ξ.objective x a ≤ ξ.value x) ∧
       (∀ z', ((ξ.next z').dist : Measure M.AState)

@@ -295,8 +295,11 @@ noncomputable def logEconomy (V : KSEnvironment Z E) (T : CobbDouglas Z) : KSIna
   wage_le := T.wage_le
   incomeFloor := T.wageLo * V.effLo
   incomeFloor_pos := mul_pos T.wageLo_pos V.effLo_pos
-  incomeFloor_le z K L e :=
-    mul_le_mul (T.wageLo_le_wage z K L) (V.effLo_le e) V.effLo_pos.le (T.wage_nonneg z K L)
+  borrowLimit := 0
+  borrowLimit_nonneg := le_rfl
+  incomeFloor_le z K L e := by
+    rw [mul_zero, sub_zero]
+    exact mul_le_mul (T.wageLo_le_wage z K L) (V.effLo_le e) V.effLo_pos.le (T.wage_nonneg z K L)
   utility := crraUtility 1
   continuousOn_utility := continuousOn_crraUtility 1
   strictConcaveOn_utility := strictConcaveOn_crraUtility one_pos

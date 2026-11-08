@@ -75,6 +75,8 @@ noncomputable def econ : KSInada Bool Bool where
   wage_le z _ _ := by cases z <;> norm_num [wageOf]
   incomeFloor := 1 / 4
   incomeFloor_pos := by norm_num
+  borrowLimit := 0
+  borrowLimit_nonneg := le_rfl
   incomeFloor_le z _ _ e := by cases z <;> cases e <;> norm_num [wageOf, effOf]
   utility := crraUtility 1
   continuousOn_utility := continuousOn_crraUtility 1
@@ -100,7 +102,8 @@ theorem orderedCash : model.OrderedCash := by
     cases y <;> cases y' <;> decide
   have ha : (a : ℝ) ≤ 25 / 72 := a.2.2
   have hb : (0 : ℝ) ≤ b := b.2.1
-  change 6 / 5 * (a : ℝ) + wageOf false * effOf e ≤ 6 / 5 * (b : ℝ) + wageOf true * effOf f
+  change 6 / 5 * (a : ℝ) + wageOf false * effOf e - 6 / 5 * 0
+    ≤ 6 / 5 * (b : ℝ) + wageOf true * effOf f - 6 / 5 * 0
   cases e <;> cases f <;> norm_num [wageOf, effOf] <;> linarith
 
 theorem log_eq (c : ℝ) (_ : model.consFloor ≤ c) : model.utility c = Real.log c := by
@@ -129,7 +132,7 @@ theorem cont_sub (P : List Bool → ℝ × ℝ) (s : model.State) (hs : s.2.node
 
 theorem cash_low (P : List Bool → ℝ × ℝ) (a : ↥(Icc (0 : ℝ) model.assetCap)) :
     model.cash true P (a, ⟨false, []⟩) = 6 / 5 * a + 3 / 4 := by
-  change 6 / 5 * (a : ℝ) + wageOf true * effOf false = _
+  change 6 / 5 * (a : ℝ) + wageOf true * effOf false - 6 / 5 * 0 = _
   norm_num [wageOf, effOf]
 
 theorem discount_eq : model.discount = 1 / 2 := rfl
@@ -211,11 +214,11 @@ theorem policy_lt_cap (P : List Bool → ℝ × ℝ) (a : ↥(Icc (0 : ℝ) mode
   have key : ∀ z' e' : Bool,
       (model.household true P).valueFunction (model.stateAt model.assetCap ⟨e', [z']⟩)
         - (model.household true P).valueFunction (model.stateAt (model.assetCap - δ) ⟨e', [z']⟩)
-      ≤ 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf z' * effOf e' - 25 / 72 - 6 / 5 * δ) := by
+      ≤ 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf z' * effOf e' - 6 / 5 * 0 - 25 / 72 - 6 / 5 * δ) := by
     intro z' e'
     exact KSModel.value_sub_le true P log_eq floor_pos (b := model.assetCap) (δ := δ) δ_pos.le
       (by change δ ≤ 25 / 72; rw [hd]; norm_num) le_rfl ⟨e', [z']⟩ (by
-        change (1 / 100 : ℝ) ≤ 6 / 5 * (25 / 72) + wageOf z' * effOf e' - 25 / 72 - 6 / 5 * δ
+        change (1 / 100 : ℝ) ≤ 6 / 5 * (25 / 72) + wageOf z' * effOf e' - 6 / 5 * 0 - 25 / 72 - 6 / 5 * δ
         cases z' <;> cases e' <;> norm_num [wageOf, effOf, hd])
   have hc := cont_sub P s rfl (model.assetCap - δ) model.assetCap
   rw [Fintype.sum_prod_type, Fintype.sum_bool, Fintype.sum_bool, Fintype.sum_bool] at hc
@@ -224,13 +227,13 @@ theorem policy_lt_cap (P : List Bool → ℝ × ℝ) (a : ↥(Icc (0 : ℝ) mode
   have k2 := key true false
   have k3 := key false true
   have k4 := key false false
-  have n1 : 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf true * effOf true - 25 / 72 - 6 / 5 * δ)
+  have n1 : 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf true * effOf true - 6 / 5 * 0 - 25 / 72 - 6 / 5 * δ)
       = 18 / 48107 := by norm_num [wageOf, effOf, hd]
-  have n2 : 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf true * effOf false - 25 / 72 - 6 / 5 * δ)
+  have n2 : 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf true * effOf false - 6 / 5 * 0 - 25 / 72 - 6 / 5 * δ)
       = 18 / 36857 := by norm_num [wageOf, effOf, hd]
-  have n3 : 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf false * effOf true - 25 / 72 - 6 / 5 * δ)
+  have n3 : 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf false * effOf true - 6 / 5 * 0 - 25 / 72 - 6 / 5 * δ)
       = 18 / 18107 := by norm_num [wageOf, effOf, hd]
-  have n4 : 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf false * effOf false - 25 / 72 - 6 / 5 * δ)
+  have n4 : 6 / 5 * δ / (6 / 5 * (25 / 72) + wageOf false * effOf false - 6 / 5 * 0 - 25 / 72 - 6 / 5 * δ)
       = 18 / 14357 := by norm_num [wageOf, effOf, hd]
   rw [n1] at k1
   rw [n2] at k2

@@ -267,7 +267,7 @@ theorem crra_capital_mem {π : ℝ} (hπ0 : 0 < π) (hπ : ∀ z, π ≤ V.aggPr
     intro h
     rw [hlab.1, hlab.2]
     exact (crraModel V T hγ).labour_mem z₀ μ₀ V.effLo_le V.le_effHi h
-  have hlow := KSModel.capital_ge (crraSmoothUtility V T hγ) z₀ μ₀ hγ (fun _ _ => rfl) hK hsl
+  have hlow := KSModel.capital_ge (crraSmoothUtility V T hγ) z₀ μ₀ hγ (fun _ _ => rfl) hK rfl hsl
     hπ0 hπ (T.grossReturn_pos) V.le_effHi hē0 hlab'
     (fun z Kh Kc' L L' _ _ hKc hL hL' =>
       T.priceCondition V.discount_pos hπ0 hγ V.assetCap_pos hok z Kh Kc' L L' hKc hL hL')

@@ -83,12 +83,18 @@ structure KSModel (Z E : Type*) [Fintype Z] [Fintype E] where
   /-- An upper bound on the wage. -/
   wageBound : ℝ
   wage_le : ∀ z K L, wage z K L ≤ wageBound
+  /-- **The borrowing limit** `b ≥ 0`: households hold at least `-b`. The asset coordinate is the
+  position shifted by `b`, in `[0, assetCap]`; debt service `R b` is deducted from cash, and the
+  price functions read the shifted capital. `b = 0` is the no-borrowing economy. -/
+  borrowLimit : ℝ
+  borrowLimit_nonneg : 0 ≤ borrowLimit
   /-- A floor on consumption: `0` for utility finite at zero consumption; positive, and slack at
   the optimum, for utility that falls to `-∞` there (`LeanEconomics.KrusellSmith.KSInada`). -/
   consFloor : ℝ
   consFloor_nonneg : 0 ≤ consFloor
-  /-- Labour income alone affords the floor. -/
-  consFloor_le_income : ∀ z K L e, consFloor ≤ wage z K L * efficiency e
+  /-- Labour income net of debt service at the borrowing limit affords the floor. -/
+  consFloor_le_income : ∀ z K L e,
+    consFloor ≤ wage z K L * efficiency e - grossReturn z K L * borrowLimit
   /-- Period utility of consumption. -/
   utility : ℝ → ℝ
   continuousOn_utility : ContinuousOn utility (Ici consFloor)

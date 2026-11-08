@@ -129,13 +129,18 @@ labour. -/
 theorem integral_cashAt (h : List Z) :
     ∫ x, M.cashAt z₀ K h x ∂(M.nodeDist z₀ μ₀ K h)
       = M.returnAt z₀ K h * ∫ x, M.assets x ∂(M.nodeDist z₀ μ₀ K h)
-        + M.wageAt z₀ K h * M.labour z₀ (M.initMass μ₀) h := by
+        + M.wageAt z₀ K h * M.labour z₀ (M.initMass μ₀) h - M.returnAt z₀ K h * M.borrowLimit := by
   have := M.isProbabilityMeasure_nodeDist z₀ μ₀ K h
   rw [M.labour_eq_integral z₀ μ₀ K h]
   have e : (fun x => M.cashAt z₀ K h x)
-      = fun x => M.returnAt z₀ K h * M.assets x + M.wageAt z₀ K h * M.effFn x := rfl
-  rw [e, integral_add ((M.assets.integrable _).const_mul _) ((M.effFn.integrable _).const_mul _),
-    integral_const_mul, integral_const_mul]
+      = fun x => M.returnAt z₀ K h * M.assets x + M.wageAt z₀ K h * M.effFn x
+        - M.returnAt z₀ K h * M.borrowLimit := rfl
+  have hA : Integrable (fun x => M.returnAt z₀ K h * M.assets x + M.wageAt z₀ K h * M.effFn x)
+      (M.nodeDist z₀ μ₀ K h) :=
+    ((M.assets.integrable _).const_mul _).add ((M.effFn.integrable _).const_mul _)
+  rw [e, integral_sub hA (integrable_const _), integral_add ((M.assets.integrable _).const_mul _)
+    ((M.effFn.integrable _).const_mul _), integral_const_mul, integral_const_mul, integral_const,
+    probReal_univ, one_smul]
   rfl
 
 /-- Aggregate consumption is aggregate cash on hand less aggregate saving. -/
@@ -147,14 +152,15 @@ theorem integral_consumptionAt (h : List Z) :
   rw [← integral_sub ((M.cashAt z₀ K h).integrable _) ((M.savingAt z₀ K h).integrable _)]
   rfl
 
-/-- **Aggregate consumption along a sequential equilibrium**: `R_h K_h + w_h L_h − K_{z' :: h}`,
-for every next aggregate shock `z'`. -/
+/-- **Aggregate consumption along a sequential equilibrium**: `R_h K_h + w_h L_h − R_h b −
+K_{z' :: h}`, for every next aggregate shock `z'` (`b` the borrowing limit). -/
 theorem integral_consumptionAt_eq {Kc : List Z → ℝ}
     (hK : M.IsSequentialEquilibrium z₀ μ₀ Kc) (h : List Z) (z' : Z) :
     ∫ x, M.consumptionAt z₀ (M.pricePath z₀ (M.initMass μ₀) Kc) h x
         ∂(M.nodeDist z₀ μ₀ (M.pricePath z₀ (M.initMass μ₀) Kc) h)
       = M.returnAt z₀ (M.pricePath z₀ (M.initMass μ₀) Kc) h * Kc h
         + M.wageAt z₀ (M.pricePath z₀ (M.initMass μ₀) Kc) h * M.labour z₀ (M.initMass μ₀) h
+        - M.returnAt z₀ (M.pricePath z₀ (M.initMass μ₀) Kc) h * M.borrowLimit
         - Kc (z' :: h) := by
   rw [integral_consumptionAt, integral_cashAt, ← meanCapital_cons _ _ _ _ z' h]
   have h1 : Kc h = ∫ x, M.assets x ∂(M.nodeDist z₀ μ₀ (M.pricePath z₀ (M.initMass μ₀) Kc) h) :=

@@ -80,7 +80,8 @@ theorem concaveOn_consumptionOf_zero (l : Label Z E) :
   have hm : a • x + b • y ∈ Icc 0 M.assetCap := convex_Icc 0 M.assetCap hx hy ha hb hab
   simp only [consumptionOf, policyOf_zero, sub_zero, smul_eq_mul] at hm ⊢
   rw [M.cash_stateAt z₀ K hx, M.cash_stateAt z₀ K hy, M.cash_stateAt z₀ K hm]
-  linear_combination (M.wageAt z₀ K l.node * M.efficiency l.idio) * hab
+  linear_combination (M.wageAt z₀ K l.node * M.efficiency l.idio
+    - M.returnAt z₀ K l.node * M.borrowLimit) * hab
 
 /-- **Carroll and Kimball on the tree, along every Bellman iterate**, for CRRA marginal utility:
 the consumption function against `Tⁿ 0` is concave in assets at every label, provided returns

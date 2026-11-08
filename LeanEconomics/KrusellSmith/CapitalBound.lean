@@ -47,7 +47,7 @@ variable {M : KSModel Z E} (U : M.SmoothUtility) (z₀ : Z) (μ₀ : Measure M.A
 
 /-- **The aggregate inequality at a node.** -/
 theorem aggregate_le (hγ : 0 < γ) (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ))
-    {Kc : List Z → ℝ} (hK : M.IsSequentialEquilibrium z₀ μ₀ Kc)
+    {Kc : List Z → ℝ} (hK : M.IsSequentialEquilibrium z₀ μ₀ Kc) (hb : M.borrowLimit = 0)
     (hsl : M.Slack z₀ (M.pricePath z₀ (M.initMass μ₀) Kc)) {π : ℝ} (hπ : 0 < π)
     (hπle : ∀ z, π ≤ M.aggProb z z) (hRpos : ∀ z k L, 0 < M.grossReturn z k L) {ē : ℝ}
     (hē : ∀ e, M.efficiency e ≤ ē) (h : List Z) :
@@ -96,7 +96,8 @@ theorem aggregate_le (hγ : 0 < γ) (hdu : ∀ c, M.consFloor < c → U.du c = c
   have hsave : ∫ x, M.savingAt z₀ P h x ∂μh = Kc (zs :: h) := by
     rw [hK (zs :: h), M.meanCapital_cons z₀ P μ₀ zs h]
   rw [hchild, hsave, M.integral_consumptionAt_eq z₀ μ₀ hK h zs,
-    M.integral_consumptionAt_eq z₀ μ₀ hK (zs :: h) zs] at hI
+    M.integral_consumptionAt_eq z₀ μ₀ hK (zs :: h) zs, hb, mul_zero, mul_zero, sub_zero,
+    sub_zero] at hI
   -- drop next period's saving at the child
   have hgc : 0 ≤ Kc (zs :: zs :: h) := by
     rw [hK (zs :: zs :: h)]
@@ -116,7 +117,7 @@ theorem aggregate_le (hγ : 0 < γ) (hdu : ∀ c, M.consFloor < c → U.du c = c
 /-- **Capital never falls below `k`** along a sequential equilibrium, if it starts at least `k`
 and the prices satisfy the condition `hB`. -/
 theorem capital_ge (hγ : 0 < γ) (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ))
-    {Kc : List Z → ℝ} (hK : M.IsSequentialEquilibrium z₀ μ₀ Kc)
+    {Kc : List Z → ℝ} (hK : M.IsSequentialEquilibrium z₀ μ₀ Kc) (hb : M.borrowLimit = 0)
     (hsl : M.Slack z₀ (M.pricePath z₀ (M.initMass μ₀) Kc)) {π : ℝ} (hπ : 0 < π)
     (hπle : ∀ z, π ≤ M.aggProb z z) (hRpos : ∀ z k L, 0 < M.grossReturn z k L) {ē : ℝ}
     (hē : ∀ e, M.efficiency e ≤ ē) (hē0 : 0 ≤ ē) {Llo Lhi : ℝ}
@@ -139,7 +140,7 @@ theorem capital_ge (hγ : 0 < γ) (hdu : ∀ c, M.consFloor < c → U.du c = c ^
     rw [hsame]
     by_contra hlt
     rw [not_le] at hlt
-    have hA := aggregate_le U z₀ μ₀ hγ hdu hK hsl hπ hπle hRpos hē h
+    have hA := aggregate_le U z₀ μ₀ hγ hdu hK hb hsl hπ hπle hRpos hē h
     have hc0 : 0 ≤ Kc (zs :: h) := by
       rw [hK (zs :: h)]
       exact (M.meanCapital_mem z₀ μ₀ P _).1

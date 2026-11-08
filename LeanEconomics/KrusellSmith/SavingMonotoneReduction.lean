@@ -132,14 +132,15 @@ def ValueIncreasingDifferences : Prop :=
 variable {M}
 
 /-- **Reduction of `SavingMonotone`**: a wage independent of capital, a return nondecreasing in
-capital, and value functions with increasing differences across higher capital paths give
+capital, no borrowing (a higher return hurts debtors), and value functions with increasing
+differences across higher capital paths give
 "savings rise with capital", hence (`SavingMonotone.isRecursive`) a recursive equilibrium on the
 minimal state without uniqueness. -/
 theorem savingMonotone_of (hw : M.WageIndependent) (hR : M.ReturnMonotone)
-    (hV : M.ValueIncreasingDifferences) : M.SavingMonotone := by
+    (hb : M.borrowLimit = 0) (hV : M.ValueIncreasingDifferences) : M.SavingMonotone := by
   intro z m₀ K K' hKK' s
   refine M.policy_le_policy z s ?_ (M.cont_increasingDifferences z s (hV z m₀ K K' hKK'))
-  simp only [cash, returnAt, wageAt, pricePath]
+  simp only [cash, returnAt, wageAt, pricePath, hb, mul_zero, sub_zero]
   rw [hw (shockAt z s.2.node) (K s.2.node) (K' s.2.node)]
   have := hR (shockAt z s.2.node) _ _ (M.labour z m₀ s.2.node) (hKK' s.2.node)
   have ha : (0 : ℝ) ≤ s.1 := s.1.2.1

@@ -187,6 +187,7 @@ omit hρ
 noncomputable def nodeCash (e : E) (h : List Z) (x : ↥(Icc (0 : ℝ) M.assetCap) × (ℝ × ℝ)) : ℝ :=
   M.grossReturn (shockAt z₀ h) x.2.1 x.2.2 * x.1
     + M.wage (shockAt z₀ h) x.2.1 x.2.2 * M.efficiency e
+    - M.grossReturn (shockAt z₀ h) x.2.1 x.2.2 * M.borrowLimit
 
 /-- The feasible savings at node `h`, as a function of assets and of capital at that node. -/
 def nodeFeasible (e : E) (h : List Z) (x : ↥(Icc (0 : ℝ) M.assetCap) × (ℝ × ℝ)) : Set ℝ :=
@@ -213,12 +214,15 @@ theorem continuous_nodeCash (e : E) (h : List Z) : Continuous (M.nodeCash z₀ e
   have hw : Continuous fun x : ↥(Icc (0 : ℝ) M.assetCap) × (ℝ × ℝ) =>
       M.wage (shockAt z₀ h) x.2.1 x.2.2 :=
     (M.continuous_wage _).comp continuous_snd
-  exact (hR.mul (continuous_subtype_val.comp continuous_fst)).add (hw.mul continuous_const)
+  exact ((hR.mul (continuous_subtype_val.comp continuous_fst)).add (hw.mul continuous_const)).sub
+    (hR.mul continuous_const)
 
 theorem consFloor_le_nodeCash (e : E) (h : List Z) (x : ↥(Icc (0 : ℝ) M.assetCap) × (ℝ × ℝ)) :
-    M.consFloor ≤ M.nodeCash z₀ e h x :=
-  (M.consFloor_le_income _ _ _ _).trans
-    (le_add_of_nonneg_left (mul_nonneg (M.grossReturn_nonneg _ _ _) x.1.2.1))
+    M.consFloor ≤ M.nodeCash z₀ e h x := by
+  have h1 := M.consFloor_le_income (shockAt z₀ h) x.2.1 x.2.2 e
+  have h2 := mul_nonneg (M.grossReturn_nonneg (shockAt z₀ h) x.2.1 x.2.2) x.1.2.1
+  simp only [nodeCash]
+  linarith
 
 theorem continuous_nodeObjective (v : M.State →ᵇ ℝ) (e : E) (h : List Z) :
     Continuous ↿(M.nodeObjective z₀ v e h) := by

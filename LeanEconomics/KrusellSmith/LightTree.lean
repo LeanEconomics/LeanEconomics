@@ -58,14 +58,14 @@ theorem hasDerivAt_bellman_tree {w : M.State →ᵇ ℝ} (hw : M.ConcaveSlices w
     HasDerivAt (fun x => (M.household z₀ K).bellman w (M.stateAt x l))
       (M.returnAt z₀ K l.node * U.du (M.consumptionOf z₀ K w (M.stateAt a l))) a := by
   set R := M.returnAt z₀ K l.node
-  set W := M.wageAt z₀ K l.node * M.efficiency l.idio
+  set W := M.wageAt z₀ K l.node * M.efficiency l.idio - M.returnAt z₀ K l.node * M.borrowLimit
   set p := M.policyOf z₀ K w (M.stateAt a l) with hp
   set c := M.consumptionOf z₀ K w (M.stateAt a l) with hc
   have hpm := M.policyOf_mem z₀ K w (M.stateAt a l)
   have hpI : p ∈ Icc 0 M.assetCap := M.mem_Icc_of_mem_feasible z₀ K hpm
   have haI : a ∈ Icc 0 M.assetCap := ⟨ha.le, hacap.le⟩
   have hcash : ∀ x ∈ Icc 0 M.assetCap, M.cash z₀ K (M.stateAt x l) = R * x + W :=
-    fun x hx => M.cash_stateAt z₀ K hx l
+    fun x hx => by rw [M.cash_stateAt z₀ K hx l]; ring
   have hca : c = R * a + W - p := by rw [hc, consumptionOf, hcash a haI]
   -- the lazy lower bound: freeze the saving `p`
   set L : ℝ → ℝ := fun x => M.utility (R * x + W - p) + M.discount * M.contOf z₀ w (M.stateAt a l) p
@@ -196,7 +196,7 @@ same cash the steeper continuation lowers consumption, and `mul_marginal_le_of_s
 theorem incDiff_bellman {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ)) {K K' : List Z → ℝ × ℝ}
     (hR : ∀ h, 0 < M.returnAt z₀ K h) (hRle : ∀ h, M.returnAt z₀ K h ≤ M.returnAt z₀ K' h)
-    (hW : ∀ h, M.wageAt z₀ K h = M.wageAt z₀ K' h) {v v' : M.State →ᵇ ℝ}
+    (hW : ∀ h, M.wageAt z₀ K h = M.wageAt z₀ K' h) (hb : M.borrowLimit = 0) {v v' : M.State →ᵇ ℝ}
     (hv : M.ConcaveSlices v) (hv' : M.ConcaveSlices v') (hsl : M.SlackOf z₀ K v)
     (hsl' : M.SlackOf z₀ K' v')
     (hcc' : ∀ l : Label Z E,
@@ -238,7 +238,8 @@ theorem incDiff_bellman {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
       rw [ht]
       field_simp
     have hcash : M.cash z₀ K (M.stateAt a l) = M.cash z₀ K' (M.stateAt (t * a) l) := by
-      rw [M.cash_stateAt z₀ K haI, M.cash_stateAt z₀ K' htaI, hW l.node]
+      rw [M.cash_stateAt z₀ K haI, M.cash_stateAt z₀ K' htaI, hW l.node, hb, mul_zero, mul_zero,
+        sub_zero, sub_zero]
       change R * a + _ = R' * (t * a) + _
       rw [hRta]
     have hp := M.policyOf_le_policyOf z₀ hv (s := M.stateAt a l) (s' := M.stateAt (t * a) l) rfl
@@ -272,7 +273,7 @@ theorem incDiff_iterate {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ)) {K K' : List Z → ℝ × ℝ}
     (hR : ∀ h, 0 < M.returnAt z₀ K h) (hR' : ∀ h, 0 < M.returnAt z₀ K' h)
     (hRle : ∀ h, M.returnAt z₀ K h ≤ M.returnAt z₀ K' h)
-    (hW : ∀ h, M.wageAt z₀ K h = M.wageAt z₀ K' h)
+    (hW : ∀ h, M.wageAt z₀ K h = M.wageAt z₀ K' h) (hb : M.borrowLimit = 0)
     (hsl : ∀ n : ℕ, M.SlackOf z₀ K (((M.household z₀ K).bellman)^[n] 0))
     (hsl' : ∀ n : ℕ, M.SlackOf z₀ K' (((M.household z₀ K').bellman)^[n] 0))
     (hcap' : ∀ (n : ℕ) (s : M.State),
@@ -282,17 +283,17 @@ theorem incDiff_iterate {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
   | 0 => fun l x y _ _ _ => by simp
   | n + 1 => by
     rw [Function.iterate_succ_apply', Function.iterate_succ_apply']
-    exact M.incDiff_bellman U z₀ hγ0 hγ1 hdu hR hRle hW (M.concaveSlices_iterate z₀ K n)
+    exact M.incDiff_bellman U z₀ hγ0 hγ1 hdu hR hRle hW hb (M.concaveSlices_iterate z₀ K n)
       (M.concaveSlices_iterate z₀ K' n) (hsl n) (hsl' n)
       (M.concaveOn_consumptionOf_iterate U z₀ K' hγ0 hdu hR' hsl' hcap' n)
-      (incDiff_iterate hγ0 hγ1 hdu hR hR' hRle hW hsl hsl' hcap' n)
+      (incDiff_iterate hγ0 hγ1 hdu hR hR' hRle hW hb hsl hsl' hcap' n)
 
 /-- **Increasing differences of the value functions**, the limit of the iterates. -/
 theorem incDiff_valueFunction {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ)) {K K' : List Z → ℝ × ℝ}
     (hR : ∀ h, 0 < M.returnAt z₀ K h) (hR' : ∀ h, 0 < M.returnAt z₀ K' h)
     (hRle : ∀ h, M.returnAt z₀ K h ≤ M.returnAt z₀ K' h)
-    (hW : ∀ h, M.wageAt z₀ K h = M.wageAt z₀ K' h)
+    (hW : ∀ h, M.wageAt z₀ K h = M.wageAt z₀ K' h) (hb : M.borrowLimit = 0)
     (hsl : ∀ n : ℕ, M.SlackOf z₀ K (((M.household z₀ K).bellman)^[n] 0))
     (hsl' : ∀ n : ℕ, M.SlackOf z₀ K' (((M.household z₀ K').bellman)^[n] 0))
     (hcap' : ∀ (n : ℕ) (s : M.State),
@@ -307,7 +308,7 @@ theorem incDiff_valueFunction {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     (((continuous_eval_const _).tendsto V₀).comp hV).sub
       (((continuous_eval_const _).tendsto V₀).comp hV)
   exact le_of_tendsto_of_tendsto' (hev _ _ h1) (hev _ _ h2) fun n =>
-    M.incDiff_iterate U z₀ hγ0 hγ1 hdu hR hR' hRle hW hsl hsl' hcap' n l x y hx hy hxy
+    M.incDiff_iterate U z₀ hγ0 hγ1 hdu hR hR' hRle hW hb hsl hsl' hcap' n l x y hx hy hxy
 
 /-- **`ValueIncreasingDifferences` for complementarity economies**: a wage independent of capital,
 a return nondecreasing in capital, CRRA with relative risk aversion at most one, positive
@@ -315,7 +316,7 @@ returns, and the consumption floor and asset cap slack along the Bellman iterate
 path. -/
 theorem valueIncreasingDifferences_of {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ)) (hw : M.WageIndependent)
-    (hRm : M.ReturnMonotone)
+    (hRm : M.ReturnMonotone) (hb : M.borrowLimit = 0)
     (hRpos : ∀ (z : Z) (m₀ : E → ℝ) (K : List Z → ℝ) (h : List Z),
       0 < M.returnAt z (M.pricePath z m₀ K) h)
     (hsl : ∀ (z : Z) (m₀ : E → ℝ) (K : List Z → ℝ) (n : ℕ),
@@ -326,7 +327,7 @@ theorem valueIncreasingDifferences_of {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 
     M.ValueIncreasingDifferences := by
   intro z m₀ K K' hKK' l x y hx hy hxy
   refine M.incDiff_valueFunction U z hγ0 hγ1 hdu (hRpos z m₀ K) (hRpos z m₀ K') (fun h => ?_)
-    (fun h => ?_) (hsl z m₀ K) (hsl z m₀ K') (hcap z m₀ K') l x y hx hy hxy
+    (fun h => ?_) hb (hsl z m₀ K) (hsl z m₀ K') (hcap z m₀ K') l x y hx hy hxy
   · exact hRm _ _ _ _ (hKK' h)
   · exact hw _ _ _ _
 
@@ -338,7 +339,7 @@ sequential equilibrium is a consistent selection: a recursive equilibrium on `(z
 with no uniqueness assumption (`ConsistentSelection.isRecursive`). -/
 theorem exists_consistentSelection_of_complementarity {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ)) (hw : M.WageIndependent)
-    (hRm : M.ReturnMonotone)
+    (hRm : M.ReturnMonotone) (hb : M.borrowLimit = 0)
     (hRpos : ∀ (z : Z) (m₀ : E → ℝ) (K : List Z → ℝ) (h : List Z),
       0 < M.returnAt z (M.pricePath z m₀ K) h)
     (hsl : ∀ (z : Z) (m₀ : E → ℝ) (K : List Z → ℝ) (n : ℕ),
@@ -347,8 +348,8 @@ theorem exists_consistentSelection_of_complementarity {γ : ℝ} (hγ0 : 0 < γ)
       M.policyOf z (M.pricePath z m₀ K)
         (((M.household z (M.pricePath z m₀ K)).bellman)^[n] 0) s < M.assetCap) :
     Nonempty M.ConsistentSelection :=
-  ⟨SavingMonotone.consistentSelection (savingMonotone_of hw hRm
-    (valueIncreasingDifferences_of U hγ0 hγ1 hdu hw hRm hRpos hsl hcap))⟩
+  ⟨SavingMonotone.consistentSelection (savingMonotone_of hw hRm hb
+    (valueIncreasingDifferences_of U hγ0 hγ1 hdu hw hRm hb hRpos hsl hcap))⟩
 
 end KSModel
 

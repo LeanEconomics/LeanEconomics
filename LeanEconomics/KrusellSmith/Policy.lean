@@ -48,7 +48,8 @@ theorem clampAssets_of_mem {a : ℝ} (ha : a ∈ Icc 0 M.assetCap) :
 /-- Cash on hand is affine in assets at a fixed label. -/
 theorem cash_clampAssets (K : List Z → ℝ × ℝ) {a : ℝ} (ha : a ∈ Icc 0 M.assetCap) (l : Label Z E) :
     M.cash z₀ K (M.clampAssets a, l)
-      = M.returnAt z₀ K l.node * a + M.wageAt z₀ K l.node * M.efficiency l.idio := by
+      = M.returnAt z₀ K l.node * a + M.wageAt z₀ K l.node * M.efficiency l.idio
+        - M.returnAt z₀ K l.node * M.borrowLimit := by
   simp only [cash, M.clampAssets_of_mem ha]
 
 theorem mem_Icc_of_mem_feasible (K : List Z → ℝ × ℝ) {s : M.State} {a : ℝ}
@@ -85,7 +86,8 @@ theorem concaveOn_bellman (K : List Z → ℝ × ℝ) (v : M.State →ᵇ ℝ)
   have hcmix : M.cash z₀ K (M.clampAssets (θ * x + φ * y), l)
       = θ * M.cash z₀ K (M.clampAssets x, l) + φ * M.cash z₀ K (M.clampAssets y, l) := by
     rw [hcm, hcx, hcy]
-    linear_combination (M.wageAt z₀ K l.node * M.efficiency l.idio) * hθφ.symm
+    linear_combination (M.wageAt z₀ K l.node * M.efficiency l.idio
+      - M.returnAt z₀ K l.node * M.borrowLimit) * hθφ.symm
   -- the mixed saving is feasible at the mixed state
   have hfeas : θ * ax + φ * ay ∈ D.feasible (M.clampAssets (θ * x + φ * y), l) := by
     refine ⟨add_nonneg (mul_nonneg hθ hax.1) (mul_nonneg hφ hay.1), le_min ?_ ?_⟩
@@ -270,7 +272,8 @@ theorem continuous_cash_joint :
     M.wage (shockAt z₀ l.node) k.1 k.2 * M.efficiency l.idio)
     fun l => (M.continuous_wage _).mul
       continuous_const
-  exact (hR.mul (continuous_subtype_val.comp (continuous_fst.comp continuous_snd))).add hw
+  exact ((hR.mul (continuous_subtype_val.comp (continuous_fst.comp continuous_snd))).add hw).sub
+    (hR.mul continuous_const)
 
 /-- **The value function is jointly continuous** in the path and the state. -/
 theorem continuous_valueFunction_joint :

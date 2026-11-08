@@ -196,17 +196,21 @@ theorem du_consumption_sub_le {K K' : List Z → ℝ × ℝ} (hsl : M.Slack z₀
 theorem cash_sub_le (K K' : List Z → ℝ × ℝ) {a : ℝ} (ha : a ∈ Icc 0 M.assetCap)
     (l : Label Z E) :
     |M.cash z₀ K (M.stateAt a l) - M.cash z₀ K' (M.stateAt a l)|
-      ≤ |M.returnAt z₀ K l.node - M.returnAt z₀ K' l.node| * M.assetCap
+      ≤ |M.returnAt z₀ K l.node - M.returnAt z₀ K' l.node| * (M.assetCap + M.borrowLimit)
         + |M.wageAt z₀ K l.node - M.wageAt z₀ K' l.node| * M.efficiency l.idio := by
   rw [M.cash_stateAt z₀ K ha, M.cash_stateAt z₀ K' ha]
   have e : M.returnAt z₀ K l.node * a + M.wageAt z₀ K l.node * M.efficiency l.idio
-      - (M.returnAt z₀ K' l.node * a + M.wageAt z₀ K' l.node * M.efficiency l.idio)
-      = (M.returnAt z₀ K l.node - M.returnAt z₀ K' l.node) * a
+      - M.returnAt z₀ K l.node * M.borrowLimit
+      - (M.returnAt z₀ K' l.node * a + M.wageAt z₀ K' l.node * M.efficiency l.idio
+        - M.returnAt z₀ K' l.node * M.borrowLimit)
+      = (M.returnAt z₀ K l.node - M.returnAt z₀ K' l.node) * (a - M.borrowLimit)
         + (M.wageAt z₀ K l.node - M.wageAt z₀ K' l.node) * M.efficiency l.idio := by ring
   rw [e]
   refine (abs_add_le _ _).trans (add_le_add ?_ ?_)
-  · rw [abs_mul, abs_of_nonneg ha.1]
-    exact mul_le_mul_of_nonneg_left ha.2 (abs_nonneg _)
+  · rw [abs_mul]
+    refine mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
+    rw [abs_le]
+    constructor <;> linarith [ha.1, ha.2, M.borrowLimit_nonneg, M.assetCap_pos]
   · rw [abs_mul, abs_of_nonneg (M.efficiency_nonneg _)]
 
 end KSModel

@@ -213,7 +213,8 @@ theorem concaveOn_consumptionOf_bellman {γ : ℝ} (hγ : 0 < γ)
     have := hCm hx hy hxy.le
     simp only
     linarith
-  refine concaveOn_of_egm_affine (α := M.wageAt z₀ K l.node * M.efficiency l.idio)
+  refine concaveOn_of_egm_affine (α := M.wageAt z₀ K l.node * M.efficiency l.idio
+      - M.returnAt z₀ K l.node * M.borrowLimit)
     (β := M.returnAt z₀ K l.node) (g := fun a => M.policyOf z₀ K v (M.stateAt a l)) hCc hM
     (fun a _ => M.mem_Icc_of_mem_feasible z₀ K (M.policyOf_mem z₀ K v _)) (fun a ha => ?_)
     (fun a ha => ?_) fun a ha hg => ?_

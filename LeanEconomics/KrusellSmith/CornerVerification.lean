@@ -47,7 +47,8 @@ variable (M) in
 /-- **(Feas)**: labour income clears the floor plus the corner saving, strictly. -/
 def CornerFeas : Prop :=
   ∀ (h : List Z) (e : E),
-    M.consFloor + (cornerSave M saver e : ℝ) < M.wageAt z₀ P h * M.efficiency e
+    M.consFloor + (cornerSave M saver e : ℝ)
+      < M.wageAt z₀ P h * M.efficiency e - M.returnAt z₀ P h * M.borrowLimit
 
 /-- The state reached from `s` after the shock `ze`, under the corner policy. -/
 noncomputable def cornerNext (s : M.State) (ze : Z × E) : M.State :=
@@ -73,8 +74,11 @@ variable {saver U z₀ P}
 
 omit [DecidablePred saver] in
 theorem wage_le_cash (s : M.State) :
-    M.wageAt z₀ P s.2.node * M.efficiency s.2.idio ≤ M.cash z₀ P s :=
-  le_add_of_nonneg_left (mul_nonneg (M.returnAt_nonneg z₀ P _) s.1.2.1)
+    M.wageAt z₀ P s.2.node * M.efficiency s.2.idio - M.returnAt z₀ P s.2.node * M.borrowLimit
+      ≤ M.cash z₀ P s := by
+  have := mul_nonneg (M.returnAt_nonneg z₀ P s.2.node) s.1.2.1
+  simp only [cash]
+  linarith
 
 /-- Under (Feas), corner consumption is strictly above the floor. -/
 theorem floor_lt_cornerCons (hF : CornerFeas M saver z₀ P) (s : M.State) :

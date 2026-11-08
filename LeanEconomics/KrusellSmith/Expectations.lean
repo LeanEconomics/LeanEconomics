@@ -121,6 +121,7 @@ noncomputable def labour (ξ : M.KSState) : ℝ :=
 /-- Cash on hand at a state. -/
 noncomputable def cash (ξ : M.KSState) (x : M.AState) : ℝ :=
   M.grossReturn ξ.shock ξ.capital ξ.labour * x.1 + M.wage ξ.shock ξ.capital ξ.labour * M.efficiency x.2.idio
+    - M.grossReturn ξ.shock ξ.capital ξ.labour * M.borrowLimit
 
 /-- The largest feasible saving at a state. -/
 noncomputable def maxSaving (ξ : M.KSState) (x : M.AState) : ℝ :=
@@ -218,7 +219,7 @@ theorem continuous_cash (x : M.AState) : Continuous fun ξ : M.KSState => ξ.cas
     (fun z => M.continuous_grossReturn z) continuous_shock hk
   have hW := continuous_shockDep (f := fun z (k : ℝ × ℝ) => M.wage z k.1 k.2)
     (fun z => M.continuous_wage z) continuous_shock hk
-  exact (hR.mul continuous_const).add (hW.mul continuous_const)
+  exact ((hR.mul continuous_const).add (hW.mul continuous_const)).sub (hR.mul continuous_const)
 
 theorem continuous_maxSaving (x : M.AState) : Continuous fun ξ : M.KSState => ξ.maxSaving x :=
   continuous_const.min ((continuous_cash x).sub continuous_const)

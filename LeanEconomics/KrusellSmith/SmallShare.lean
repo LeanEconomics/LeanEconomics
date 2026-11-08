@@ -85,19 +85,19 @@ noncomputable def smallFl (α : ℝ) : ℝ :=
 
 /-- `κ` at share `α`. -/
 noncomputable def smallκ (α : ℝ) : ℝ :=
-  1 * (smallLip T α * (V.assetCap + ∑ e, V.efficiency e)
+  1 * (smallLip T α * (V.assetCap + 0 + ∑ e, V.efficiency e)
       + (V.discount * smallLip T α * smallFl V T γ α ^ (-γ) / 1
           + γ * (smallFl V T γ α / 2) ^ (-γ - 1) * smallLip T α
-            * (V.assetCap + ∑ e, V.efficiency e)) / (1 - V.discount * smallR T α / 1)
+            * (V.assetCap + 0 + ∑ e, V.efficiency e)) / (1 - V.discount * smallR T α / 1)
         / (γ * smallTop V T α ^ (-γ - 1)))
     / (1 - 1 * smallR T α)
 
 /-- The policy gain `G` at share `α`. -/
 noncomputable def smallGain (α : ℝ) : ℝ :=
-  smallLip T α * (V.assetCap + ∑ e, V.efficiency e)
+  smallLip T α * (V.assetCap + 0 + ∑ e, V.efficiency e)
     + (V.discount * smallLip T α * smallFl V T γ α ^ (-γ) / 1
         + γ * (smallFl V T γ α / 2) ^ (-γ - 1) * smallLip T α
-          * (V.assetCap + ∑ e, V.efficiency e)) / (1 - V.discount * smallR T α / 1)
+          * (V.assetCap + 0 + ∑ e, V.efficiency e)) / (1 - V.discount * smallR T α / 1)
       / (γ * smallTop V T α ^ (-γ - 1))
 
 /-- The contraction rate `r` of the law of motion at share `α`. -/
@@ -218,7 +218,7 @@ theorem smallGain_limits :
     continuousAt_const.sub ((continuousAt_const.mul cR).div_const _)
   have cAm : ContinuousAt (fun α => (V.discount * smallLip T α * smallFl V T γ α ^ (-γ) / 1
         + γ * (smallFl V T γ α / 2) ^ (-γ - 1) * smallLip T α
-          * (V.assetCap + ∑ e, V.efficiency e)) / (1 - V.discount * smallR T α / 1)
+          * (V.assetCap + 0 + ∑ e, V.efficiency e)) / (1 - V.discount * smallR T α / 1)
       / (γ * smallTop V T α ^ (-γ - 1))) 0 := by
     refine ContinuousAt.div ?_ cm hm0.ne'
     refine ContinuousAt.div ?_ cq (by linarith)

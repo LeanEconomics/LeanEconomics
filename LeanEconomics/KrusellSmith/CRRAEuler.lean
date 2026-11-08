@@ -184,8 +184,11 @@ theorem consumption_le (hγ : 0 < γ)
         simp only [consumption]
         linarith [hpI.1]
       refine h1.trans ?_
+      have h2 := mul_le_mul_of_nonneg_left ha.2 hRh
+      have h3 := mul_le_mul_of_nonneg_left (hē s.2.idio) hwh
+      have h4 := mul_nonneg hRh M.borrowLimit_nonneg
       simp only [cash]
-      exact add_le_add (mul_le_mul_of_nonneg_left ha.2 hRh) (mul_le_mul_of_nonneg_left (hē _) hwh)
+      linarith
     have hone : M.policy z₀ K s / M.assetCap
         * (M.returnAt z₀ K s.2.node * M.assetCap + M.wageAt z₀ K s.2.node * ē)
         = M.returnAt z₀ K s.2.node * M.assetCap + M.wageAt z₀ K s.2.node * ē := by

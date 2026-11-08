@@ -56,8 +56,9 @@ def IIDShocks : Prop :=
 household after a better one. -/
 def OrderedCash [LinearOrder Z] : Prop :=
   ∀ y y' : Z, y < y' → ∀ (K L K' L' : ℝ) (a b : ↥(Icc (0 : ℝ) M.assetCap)) (e f : E),
-    M.grossReturn y K L * a + M.wage y K L * M.efficiency e
+    M.grossReturn y K L * a + M.wage y K L * M.efficiency e - M.grossReturn y K L * M.borrowLimit
       ≤ M.grossReturn y' K' L' * b + M.wage y' K' L' * M.efficiency f
+        - M.grossReturn y' K' L' * M.borrowLimit
 
 variable {M}
 

@@ -232,7 +232,8 @@ theorem wageAt_nil (ξ : M.ExtState) :
 /-- **Cash on hand depends on `(z, μ)` alone.** -/
 theorem cash_eq (ξ : M.ExtState) (x : M.AState) :
     ξ.cash x = M.grossReturn ξ.shock ξ.capital ξ.labour * x.1
-      + M.wage ξ.shock ξ.capital ξ.labour * M.efficiency x.2.idio := by
+      + M.wage ξ.shock ξ.capital ξ.labour * M.efficiency x.2.idio
+      - M.grossReturn ξ.shock ξ.capital ξ.labour * M.borrowLimit := by
   rw [← ξ.returnAt_nil, ← ξ.wageAt_nil]
   rfl
 

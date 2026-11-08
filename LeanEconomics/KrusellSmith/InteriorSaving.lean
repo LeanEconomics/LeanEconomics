@@ -100,8 +100,10 @@ theorem value_sub_ge {a δ : ℝ} (ha : 0 ≤ a) (hδ : 0 ≤ δ) (haδ : a + δ
   have hRδ : 0 ≤ R * δ := mul_nonneg hR hδ
   have hamem : a ∈ Icc 0 M.assetCap := ⟨ha, by linarith⟩
   have hbmem : a + δ ∈ Icc 0 M.assetCap := ⟨by linarith, haδ⟩
-  have hca : M.cash z₀ K (M.stateAt a l) = R * a + y := M.cash_stateAt z₀ K hamem l
-  have hcb : M.cash z₀ K (M.stateAt (a + δ) l) = R * a + y + R * δ := by
+  have hRb : 0 ≤ R * M.borrowLimit := mul_nonneg hR M.borrowLimit_nonneg
+  have hca : M.cash z₀ K (M.stateAt a l) = R * a + y - R * M.borrowLimit :=
+    M.cash_stateAt z₀ K hamem l
+  have hcb : M.cash z₀ K (M.stateAt (a + δ) l) = R * a + y - R * M.borrowLimit + R * δ := by
     rw [M.cash_stateAt z₀ K hbmem l]
     ring
   set p := M.policy z₀ K (M.stateAt a l) with hpdef
@@ -119,11 +121,12 @@ theorem value_sub_ge {a δ : ℝ} (ha : 0 ≤ a) (hδ : 0 ≤ δ) (haδ : a + δ
   rw [hcont, hcb] at h1
   change _ = M.utility (M.cash z₀ K (M.stateAt a l) - p) + _ at v1
   rw [hca] at v1
-  have hc : M.consFloor ≤ R * a + y - p := by linarith
+  have hc : M.consFloor ≤ R * a + y - R * M.borrowLimit - p := by linarith
   rw [hlog _ hc] at v1
-  rw [show R * a + y + R * δ - p = (R * a + y - p) + R * δ by ring, hlog _ (by linarith)] at h1
+  rw [show R * a + y - R * M.borrowLimit + R * δ - p = (R * a + y - R * M.borrowLimit - p) + R * δ
+    by ring, hlog _ (by linarith)] at h1
   have hl := le_log_sub (hfl.trans_le hc) hRδ
-  have hmono : R * δ / (R * a + y + R * δ) ≤ R * δ / ((R * a + y - p) + R * δ) :=
+  have hmono : R * δ / (R * a + y + R * δ) ≤ R * δ / ((R * a + y - R * M.borrowLimit - p) + R * δ) :=
     div_le_div_of_nonneg_left hRδ (by linarith) (by linarith [hp.1])
   linarith
 
@@ -131,21 +134,28 @@ theorem value_sub_ge {a δ : ℝ} (ha : 0 ≤ a) (hδ : 0 ≤ δ) (haδ : a + δ
 poorer state can copy the richer one's saving. -/
 theorem value_sub_le {b δ : ℝ} (hδ : 0 ≤ δ) (hbδ : δ ≤ b) (hb : b ≤ M.assetCap) (l : Label Z E)
     (hfeas : M.consFloor ≤ M.returnAt z₀ K l.node * b + M.wageAt z₀ K l.node * M.efficiency l.idio
-      - M.assetCap - M.returnAt z₀ K l.node * δ) :
+      - M.returnAt z₀ K l.node * M.borrowLimit - M.assetCap - M.returnAt z₀ K l.node * δ) :
     (M.household z₀ K).valueFunction (M.stateAt b l)
         - (M.household z₀ K).valueFunction (M.stateAt (b - δ) l)
       ≤ M.returnAt z₀ K l.node * δ / (M.returnAt z₀ K l.node * b
-        + M.wageAt z₀ K l.node * M.efficiency l.idio - M.assetCap - M.returnAt z₀ K l.node * δ) := by
+        + M.wageAt z₀ K l.node * M.efficiency l.idio - M.returnAt z₀ K l.node * M.borrowLimit
+        - M.assetCap - M.returnAt z₀ K l.node * δ) := by
   set R := M.returnAt z₀ K l.node with hRdef
   set y := M.wageAt z₀ K l.node * M.efficiency l.idio with hydef
   have hR : 0 ≤ R := M.returnAt_nonneg z₀ K _
   have hRδ : 0 ≤ R * δ := mul_nonneg hR hδ
   have hbmem : b ∈ Icc 0 M.assetCap := ⟨by linarith, hb⟩
   have hamem : b - δ ∈ Icc 0 M.assetCap := ⟨by linarith, by linarith⟩
-  have hcb : M.cash z₀ K (M.stateAt b l) = R * b + y := M.cash_stateAt z₀ K hbmem l
-  have hca : M.cash z₀ K (M.stateAt (b - δ) l) = R * b + y - R * δ := by
+  set y' := y - R * M.borrowLimit with hy'
+  have hcb : M.cash z₀ K (M.stateAt b l) = R * b + y' := by
+    rw [M.cash_stateAt z₀ K hbmem l]
+    ring
+  have hca : M.cash z₀ K (M.stateAt (b - δ) l) = R * b + y' - R * δ := by
     rw [M.cash_stateAt z₀ K hamem l]
     ring
+  have hfeas' : M.consFloor ≤ R * b + y' - M.assetCap - R * δ := by
+    rw [hy']
+    linarith
   set p := M.policy z₀ K (M.stateAt b l) with hpdef
   have hp := M.policy_mem z₀ K (M.stateAt b l)
   have hpa : p ≤ M.assetCap := (M.mem_Icc_of_mem_feasible z₀ K hp).2
@@ -160,12 +170,17 @@ theorem value_sub_le {b δ : ℝ} (hδ : 0 ≤ δ) (hbδ : δ ≤ b) (hb : b ≤
   rw [hcont, hca] at h1
   change _ = M.utility (M.cash z₀ K (M.stateAt b l) - p) + _ at v1
   rw [hcb] at v1
-  have hc : M.consFloor ≤ R * b + y - p - R * δ := by linarith
+  have hc : M.consFloor ≤ R * b + y' - p - R * δ := by linarith
   rw [hlog _ (by linarith)] at v1
-  rw [show R * b + y - R * δ - p = (R * b + y - p) - R * δ by ring, hlog _ (by linarith)] at h1
-  have hl := log_sub_le hRδ (show R * δ < R * b + y - p by linarith)
-  have hmono : R * δ / ((R * b + y - p) - R * δ) ≤ R * δ / (R * b + y - M.assetCap - R * δ) :=
+  rw [show R * b + y' - R * δ - p = (R * b + y' - p) - R * δ by ring, hlog _ (by linarith)] at h1
+  have hl := log_sub_le hRδ (show R * δ < R * b + y' - p by linarith)
+  have hmono : R * δ / ((R * b + y' - p) - R * δ) ≤ R * δ / (R * b + y' - M.assetCap - R * δ) :=
     div_le_div_of_nonneg_left hRδ (by linarith) (by linarith)
+  have hden : R * b + y' - M.assetCap - R * δ
+      = R * b + y - R * M.borrowLimit - M.assetCap - R * δ := by
+    rw [hy']
+    ring
+  rw [hden] at hmono
   linarith
 
 end KSModel

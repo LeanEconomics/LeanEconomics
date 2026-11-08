@@ -43,10 +43,12 @@ namespace KSModel
 variable {M : KSModel Z E}
 
 /-- Assets plus total efficiency: the multiplier of price gaps in cash gaps. -/
-noncomputable def cashScale (M : KSModel Z E) : ℝ := M.assetCap + ∑ e, M.efficiency e
+noncomputable def cashScale (M : KSModel Z E) : ℝ :=
+  M.assetCap + M.borrowLimit + ∑ e, M.efficiency e
 
 theorem cashScale_nonneg (M : KSModel Z E) : 0 ≤ M.cashScale :=
-  add_nonneg M.assetCap_pos.le (Finset.sum_nonneg fun e _ => M.efficiency_nonneg e)
+  add_nonneg (add_nonneg M.assetCap_pos.le M.borrowLimit_nonneg)
+    (Finset.sum_nonneg fun e _ => M.efficiency_nonneg e)
 
 theorem returnBound_nonneg [Nonempty Z] (M : KSModel Z E) : 0 ≤ M.returnBound :=
   (M.grossReturn_nonneg (Classical.arbitrary Z) 0 0).trans
@@ -155,23 +157,27 @@ theorem cash_gap (s : M.State) :
   have he0 := M.efficiency_nonneg s.2.idio
   have e : M.cash z₀ (M.pricePath z₀ m₀ K) s - M.cash z₀ (M.pricePath z₀ m₀ K') s
       = (M.returnAt z₀ (M.pricePath z₀ m₀ K) s.2.node
-          - M.returnAt z₀ (M.pricePath z₀ m₀ K') s.2.node) * s.1
+          - M.returnAt z₀ (M.pricePath z₀ m₀ K') s.2.node) * (s.1 - M.borrowLimit)
         + (M.wageAt z₀ (M.pricePath z₀ m₀ K) s.2.node
           - M.wageAt z₀ (M.pricePath z₀ m₀ K') s.2.node) * M.efficiency s.2.idio := by
     simp only [cash]
     ring
   rw [e]
   have hδ := abs_nonneg (K s.2.node - K' s.2.node)
+  have hb := M.borrowLimit_nonneg
+  have hab : |(s.1 : ℝ) - M.borrowLimit| ≤ M.assetCap + M.borrowLimit := by
+    rw [abs_le]
+    constructor <;> linarith [ha.1, ha.2]
   calc _ ≤ |M.returnAt z₀ (M.pricePath z₀ m₀ K) s.2.node
-          - M.returnAt z₀ (M.pricePath z₀ m₀ K') s.2.node| * s.1
+          - M.returnAt z₀ (M.pricePath z₀ m₀ K') s.2.node| * |(s.1 : ℝ) - M.borrowLimit|
         + |M.wageAt z₀ (M.pricePath z₀ m₀ K) s.2.node
           - M.wageAt z₀ (M.pricePath z₀ m₀ K') s.2.node| * M.efficiency s.2.idio := by
         refine (abs_add_le _ _).trans (add_le_add ?_ ?_)
-        · rw [abs_mul, abs_of_nonneg ha.1]
+        · rw [abs_mul]
         · rw [abs_mul, abs_of_nonneg he0]
-    _ ≤ H.ℓ * |K s.2.node - K' s.2.node| * M.assetCap
+    _ ≤ H.ℓ * |K s.2.node - K' s.2.node| * (M.assetCap + M.borrowLimit)
         + H.ℓ * |K s.2.node - K' s.2.node| * ∑ e, M.efficiency e :=
-        add_le_add (mul_le_mul hR ha.2 ha.1 (mul_nonneg H.ℓ_nonneg hδ))
+        add_le_add (mul_le_mul hR hab (abs_nonneg _) (mul_nonneg H.ℓ_nonneg hδ))
           (mul_le_mul hw he he0 (mul_nonneg H.ℓ_nonneg hδ))
     _ = H.ℓ * |K s.2.node - K' s.2.node| * M.cashScale := by rw [cashScale]; ring
 

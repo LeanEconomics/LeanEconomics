@@ -266,7 +266,11 @@ noncomputable def compEconomy (V : KSEnvironment Z E) {w Rlo Rhi : ℝ} (hw : 0 
   wage_le _ _ _ := le_rfl
   incomeFloor := w * V.effLo
   incomeFloor_pos := mul_pos hw V.effLo_pos
-  incomeFloor_le _ _ _ e := mul_le_mul_of_nonneg_left (V.effLo_le e) hw.le
+  borrowLimit := 0
+  borrowLimit_nonneg := le_rfl
+  incomeFloor_le _ _ _ e := by
+    rw [mul_zero, sub_zero]
+    exact mul_le_mul_of_nonneg_left (V.effLo_le e) hw.le
   utility := crraUtility 1
   continuousOn_utility := continuousOn_crraUtility 1
   strictConcaveOn_utility := strictConcaveOn_crraUtility one_pos
@@ -293,7 +297,7 @@ theorem compEconomy_exists_consistentSelection
   set P := compEconomy V hw hlo hle
   refine KSModel.exists_consistentSelection_of_complementarity (compSmoothUtility V hw hlo hle)
     one_pos le_rfl (fun _ _ => by simp [compSmoothUtility]) (fun _ _ _ _ => rfl)
-    (fun _ _ _ _ hK => compReturn_mono hle V.assetCap_pos hK) (fun z m₀ K h => ?_)
+    (fun _ _ _ _ hK => compReturn_mono hle V.assetCap_pos hK) rfl (fun z m₀ K h => ?_)
     (fun z m₀ K n => P.slackOf_iterate P.floor_pos P.floor_le_incomeFloor z _
       P.floor_lt_floorLevel n) (fun z m₀ K n s => KSModel.policyOf_lt_assetCap z _ ?_ _ s)
   · exact hlo.trans_le (compReturn_mem hle _).1

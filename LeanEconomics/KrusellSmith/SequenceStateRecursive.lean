@@ -68,7 +68,8 @@ noncomputable def seqCash (ω : History Z) (a : ↥(Icc (0 : ℝ) M.assetCap)) (
 theorem seqCash_eq (ω : History Z) (a : ↥(Icc (0 : ℝ) M.assetCap)) (e : E) :
     M.seqCash μ ω a e
       = M.grossReturn (ω 0) (M.seqPrices μ ω []).1 (M.seqPrices μ ω []).2 * a
-        + M.wage (ω 0) (M.seqPrices μ ω []).1 (M.seqPrices μ ω []).2 * M.efficiency e := rfl
+        + M.wage (ω 0) (M.seqPrices μ ω []).1 (M.seqPrices μ ω []).2 * M.efficiency e
+        - M.grossReturn (ω 0) (M.seqPrices μ ω []).1 (M.seqPrices μ ω []).2 * M.borrowLimit := rfl
 
 /-- The prices on the subtree below `g` are those seen at `prepend g ω`. -/
 theorem seqPrices_prepend_eq_shiftPath (ω : History Z) (g : List Z) :
@@ -179,17 +180,21 @@ structure HistoryRecursiveEquilibrium where
   labour_eq : ∀ ω, labour ω = ∫ x, M.efficiency x.2.idio ∂(dist ω : Measure M.AState)
   feasible : ∀ ω (a : ↥(Icc (0 : ℝ) M.assetCap)) (e : E), (saving ω a e : ℝ)
     ≤ M.grossReturn (ω 0) (capital ω) (labour ω) * a
-      + M.wage (ω 0) (capital ω) (labour ω) * M.efficiency e - M.consFloor
+      + M.wage (ω 0) (capital ω) (labour ω) * M.efficiency e
+        - M.grossReturn (ω 0) (capital ω) (labour ω) * M.borrowLimit - M.consFloor
   bellman : ∀ ω (a : ↥(Icc (0 : ℝ) M.assetCap)) (e : E), value ω a e
     = M.utility (M.grossReturn (ω 0) (capital ω) (labour ω) * a
-        + M.wage (ω 0) (capital ω) (labour ω) * M.efficiency e - saving ω a e)
+        + M.wage (ω 0) (capital ω) (labour ω) * M.efficiency e
+        - M.grossReturn (ω 0) (capital ω) (labour ω) * M.borrowLimit - saving ω a e)
       + M.discount * ∑ ze : Z × E, M.aggProb (ω 0) ze.1 * M.idioProb (ω 0) ze.1 e ze.2
           * value (History.cons ze.1 ω) (saving ω a e) ze.2
   optimal : ∀ ω (a : ↥(Icc (0 : ℝ) M.assetCap)) (e : E) (a' : ↥(Icc (0 : ℝ) M.assetCap)),
     (a' : ℝ) ≤ M.grossReturn (ω 0) (capital ω) (labour ω) * a
-      + M.wage (ω 0) (capital ω) (labour ω) * M.efficiency e - M.consFloor →
+      + M.wage (ω 0) (capital ω) (labour ω) * M.efficiency e
+        - M.grossReturn (ω 0) (capital ω) (labour ω) * M.borrowLimit - M.consFloor →
     M.utility (M.grossReturn (ω 0) (capital ω) (labour ω) * a
-        + M.wage (ω 0) (capital ω) (labour ω) * M.efficiency e - a')
+        + M.wage (ω 0) (capital ω) (labour ω) * M.efficiency e
+        - M.grossReturn (ω 0) (capital ω) (labour ω) * M.borrowLimit - a')
       + M.discount * ∑ ze : Z × E, M.aggProb (ω 0) ze.1 * M.idioProb (ω 0) ze.1 e ze.2
           * value (History.cons ze.1 ω) a' ze.2
       ≤ value ω a e

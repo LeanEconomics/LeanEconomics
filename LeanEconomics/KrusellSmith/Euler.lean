@@ -94,7 +94,8 @@ noncomputable def stateAt (a : ℝ) (l : Label Z E) : M.State := (M.clampAssets 
 
 theorem cash_stateAt {a : ℝ} (ha : a ∈ Icc 0 M.assetCap) (l : Label Z E) :
     M.cash z₀ K (M.stateAt a l)
-      = M.returnAt z₀ K l.node * a + M.wageAt z₀ K l.node * M.efficiency l.idio :=
+      = M.returnAt z₀ K l.node * a + M.wageAt z₀ K l.node * M.efficiency l.idio
+        - M.returnAt z₀ K l.node * M.borrowLimit :=
   M.cash_clampAssets z₀ K ha l
 
 theorem returnAt_nonneg (h : List Z) : 0 ≤ M.returnAt z₀ K h := M.grossReturn_nonneg _ _ _

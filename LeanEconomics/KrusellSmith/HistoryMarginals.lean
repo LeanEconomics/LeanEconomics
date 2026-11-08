@@ -91,19 +91,23 @@ theorem cash_gap_price {g : ℝ} (s : M.State)
     Finset.single_le_sum (fun e _ => M.efficiency_nonneg e) (Finset.mem_univ _)
   have he0 := M.efficiency_nonneg s.2.idio
   have e : M.cash z₀ Q s - M.cash z₀ Q' s
-      = (M.returnAt z₀ Q s.2.node - M.returnAt z₀ Q' s.2.node) * s.1
+      = (M.returnAt z₀ Q s.2.node - M.returnAt z₀ Q' s.2.node) * (s.1 - M.borrowLimit)
         + (M.wageAt z₀ Q s.2.node - M.wageAt z₀ Q' s.2.node) * M.efficiency s.2.idio := by
     simp only [cash]
     ring
   rw [e]
   have hg : 0 ≤ g := (abs_nonneg _).trans hR
-  calc _ ≤ |M.returnAt z₀ Q s.2.node - M.returnAt z₀ Q' s.2.node| * s.1
+  have hb := M.borrowLimit_nonneg
+  have hab : |(s.1 : ℝ) - M.borrowLimit| ≤ M.assetCap + M.borrowLimit := by
+    rw [abs_le]
+    constructor <;> linarith [ha.1, ha.2]
+  calc _ ≤ |M.returnAt z₀ Q s.2.node - M.returnAt z₀ Q' s.2.node| * |(s.1 : ℝ) - M.borrowLimit|
         + |M.wageAt z₀ Q s.2.node - M.wageAt z₀ Q' s.2.node| * M.efficiency s.2.idio := by
         refine (abs_add_le _ _).trans (add_le_add ?_ ?_)
-        · rw [abs_mul, abs_of_nonneg ha.1]
+        · rw [abs_mul]
         · rw [abs_mul, abs_of_nonneg he0]
-    _ ≤ g * M.assetCap + g * ∑ e, M.efficiency e :=
-        add_le_add (mul_le_mul hR ha.2 ha.1 hg) (mul_le_mul hw he he0 hg)
+    _ ≤ g * (M.assetCap + M.borrowLimit) + g * ∑ e, M.efficiency e :=
+        add_le_add (mul_le_mul hR hab (abs_nonneg _) hg) (mul_le_mul hw he he0 hg)
     _ = g * M.cashScale := by rw [cashScale]; ring
 
 variable {η : ℝ}

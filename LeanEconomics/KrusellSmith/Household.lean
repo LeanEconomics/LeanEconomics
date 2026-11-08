@@ -82,14 +82,22 @@ noncomputable def wageAt (h : List Z) : ℝ :=
 /-- Cash on hand: the return on assets plus labour income. -/
 noncomputable def cash (s : M.State) : ℝ :=
   M.returnAt z₀ K s.2.node * s.1 + M.wageAt z₀ K s.2.node * M.efficiency s.2.idio
+    - M.returnAt z₀ K s.2.node * M.borrowLimit
 
 /-- The largest feasible saving: cash on hand less the consumption floor, capped at
 `assetCap`. -/
 noncomputable def maxSaving (s : M.State) : ℝ := min M.assetCap (M.cash z₀ K s - M.consFloor)
 
+/-- **Cash covers the floor**: debt service at the borrowing limit is afforded by labour income. -/
+theorem consFloor_le_cash (s : M.State) : M.consFloor ≤ M.cash z₀ K s := by
+  have h := M.consFloor_le_income (shockAt z₀ s.2.node) (K s.2.node).1 (K s.2.node).2 s.2.idio
+  have ha := mul_nonneg (M.grossReturn_nonneg (shockAt z₀ s.2.node) (K s.2.node).1
+    (K s.2.node).2) s.1.2.1
+  simp only [cash, returnAt, wageAt]
+  linarith
+
 theorem cash_nonneg (s : M.State) : 0 ≤ M.cash z₀ K s :=
-  add_nonneg (mul_nonneg (M.grossReturn_nonneg _ _ _) s.1.2.1)
-    (mul_nonneg (M.wage_nonneg _ _ _) (M.efficiency_nonneg _))
+  M.consFloor_nonneg.trans (M.consFloor_le_cash z₀ K s)
 
 theorem cash_le_maxCash (s : M.State) : M.cash z₀ K s ≤ M.maxCash := by
   have heff : M.efficiency s.2.idio ≤ ∑ e, M.efficiency e :=
@@ -100,6 +108,7 @@ theorem cash_le_maxCash (s : M.State) : M.cash z₀ K s ≤ M.maxCash := by
   have hw0 := M.wage_nonneg (shockAt z₀ s.2.node) (K s.2.node).1 (K s.2.node).2
   have ha := s.1.2
   have he := M.efficiency_nonneg s.2.idio
+  have hb := mul_nonneg hR0 M.borrowLimit_nonneg
   simp only [cash, returnAt, wageAt, maxCash]
   have h1 : M.grossReturn (shockAt z₀ s.2.node) (K s.2.node).1 (K s.2.node).2 * s.1
       ≤ M.returnBound * M.assetCap :=
@@ -108,10 +117,6 @@ theorem cash_le_maxCash (s : M.State) : M.cash z₀ K s ≤ M.maxCash := by
       * M.efficiency s.2.idio ≤ M.wageBound * ∑ e, M.efficiency e :=
     mul_le_mul hw heff he (hw0.trans hw)
   linarith
-
-theorem consFloor_le_cash (s : M.State) : M.consFloor ≤ M.cash z₀ K s :=
-  (M.consFloor_le_income _ _ _ _).trans
-    (le_add_of_nonneg_left (mul_nonneg (M.grossReturn_nonneg _ _ _) s.1.2.1))
 
 theorem maxSaving_nonneg (s : M.State) : 0 ≤ M.maxSaving z₀ K s :=
   le_min M.assetCap_pos.le (sub_nonneg.2 (M.consFloor_le_cash z₀ K s))
@@ -124,7 +129,8 @@ theorem continuous_cash : Continuous (M.cash z₀ K) := by
     (continuous_of_discreteTopology
       (f := fun l : Label Z E => M.wageAt z₀ K l.node * M.efficiency l.idio)).comp
       continuous_snd
-  exact (hR.mul (continuous_subtype_val.comp continuous_fst)).add hw
+  exact ((hR.mul (continuous_subtype_val.comp continuous_fst)).add hw).sub
+    (hR.mul continuous_const)
 
 theorem continuous_maxSaving : Continuous (M.maxSaving z₀ K) :=
   continuous_const.min ((M.continuous_cash z₀ K).sub continuous_const)

@@ -219,20 +219,23 @@ theorem cap_eq : model.assetCap = 1 / 16 := rfl
 
 /-- (Feas) for the witness. -/
 theorem feas_w (e : Bool) :
-    model.consFloor + (KSModel.cornerSave model saver e : ℝ) < wlo * model.efficiency e := by
+    model.consFloor + (KSModel.cornerSave model saver e : ℝ)
+      < wlo * model.efficiency e - Rhi * model.borrowLimit := by
+  simp only [show model.borrowLimit = 0 from rfl, mul_zero, sub_zero]
   have := floor_le
   rw [cornerSave_eq, eff_eq]
   cases e <;> norm_num [wlo] at this ⊢ <;> linarith
 
 /-- (Emp) for the witness. -/
 theorem emp_w (z e : Bool) (he : saver e) :
-    (crraSmoothUtility env tech one_pos).du (wlo * model.efficiency e
+    (crraSmoothUtility env tech one_pos).du (wlo * model.efficiency e - Rhi * model.borrowLimit
         - KSModel.cornerSave model saver e)
       ≤ model.discount * ∑ ze : Bool × Bool, model.aggProb z ze.1 * model.idioProb z ze.1 e ze.2
         * Rlo * (crraSmoothUtility env tech one_pos).du (Rhi * model.assetCap
           + whi * model.efficiency ze.2 - KSModel.cornerSave model saver ze.2) := by
   change e = true at he
   subst he
+  simp only [show model.borrowLimit = 0 from rfl, mul_zero, sub_zero]
   simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
     Fintype.sum_prod_type, Fintype.sum_bool]
   cases z <;> norm_num [piAgg, pIdio, peu, Rlo, Rhi, wlo, whi]
@@ -241,13 +244,14 @@ theorem emp_w (z e : Bool) (he : saver e) :
 theorem unemp_w (z e : Bool) (he : ¬ saver e) :
     model.discount * ∑ ze : Bool × Bool, model.aggProb z ze.1 * model.idioProb z ze.1 e ze.2
         * Rhi * (crraSmoothUtility env tech one_pos).du (wlo * model.efficiency ze.2
-          - KSModel.cornerSave model saver ze.2)
+          - Rhi * model.borrowLimit - KSModel.cornerSave model saver ze.2)
       ≤ (crraSmoothUtility env tech one_pos).du (Rhi * model.assetCap
         + whi * model.efficiency e) := by
   have he' : e = false := by
     change ¬ e = true at he
     simpa using he
   subst he'
+  simp only [show model.borrowLimit = 0 from rfl, mul_zero, sub_zero]
   simp only [du_eq, cornerSave_eq, eff_eq, disc_eq, agg_eq, idio_eq, cap_eq,
     Fintype.sum_prod_type, Fintype.sum_bool]
   cases z <;> norm_num [piAgg, pIdio, peu, Rlo, Rhi, wlo, whi]
@@ -262,7 +266,7 @@ theorem cornerConditions :
 /-- **The household saves by the corner policy along every price path.** -/
 theorem policy_witness (z₀ : Bool) (P : List Bool → ℝ × ℝ) (s : model.State) :
     model.policy z₀ P s = KSModel.cornerPolicy model saver s :=
-  KSModel.policy_eq_cornerPolicy (KSModel.cornerFeas_of_bounds wage_bounds feas_w z₀ P)
+  KSModel.policy_eq_cornerPolicy (KSModel.cornerFeas_of_bounds return_bounds wage_bounds feas_w z₀ P)
     (KSModel.cornerEmp_of_bounds Rlo_nonneg return_bounds wage_bounds feas_w emp_w z₀ P)
     (KSModel.cornerUnemp_of_bounds Rlo_nonneg return_bounds wage_bounds feas_w unemp_w z₀ P) s
 

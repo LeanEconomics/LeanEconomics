@@ -64,19 +64,23 @@ structure AggStateRecursiveEquilibrium where
   feasible : ∀ z k, k ∈ Kset z → ∀ (a : ↥(Icc (0 : ℝ) M.assetCap)) (e : E),
     (saving z k a e : ℝ)
       ≤ M.grossReturn z k (labourK z k) * a + M.wage z k (labourK z k) * M.efficiency e
+        - M.grossReturn z k (labourK z k) * M.borrowLimit
         - M.consFloor
   bellman : ∀ z k, k ∈ Kset z → ∀ (a : ↥(Icc (0 : ℝ) M.assetCap)) (e : E),
     value z k a e
       = M.utility (M.grossReturn z k (labourK z k) * a
-          + M.wage z k (labourK z k) * M.efficiency e - saving z k a e)
+          + M.wage z k (labourK z k) * M.efficiency e
+        - M.grossReturn z k (labourK z k) * M.borrowLimit - saving z k a e)
         + M.discount * ∑ ze : Z × E, M.aggProb z ze.1 * M.idioProb z ze.1 e ze.2
             * value ze.1 (lawK z k ze.1) (saving z k a e) ze.2
   optimal : ∀ z k, k ∈ Kset z → ∀ (a : ↥(Icc (0 : ℝ) M.assetCap)) (e : E)
     (a' : ↥(Icc (0 : ℝ) M.assetCap)),
     (a' : ℝ) ≤ M.grossReturn z k (labourK z k) * a + M.wage z k (labourK z k) * M.efficiency e
+        - M.grossReturn z k (labourK z k) * M.borrowLimit
       - M.consFloor →
     M.utility (M.grossReturn z k (labourK z k) * a
-        + M.wage z k (labourK z k) * M.efficiency e - a')
+        + M.wage z k (labourK z k) * M.efficiency e
+        - M.grossReturn z k (labourK z k) * M.borrowLimit - a')
       + M.discount * ∑ ze : Z × E, M.aggProb z ze.1 * M.idioProb z ze.1 e ze.2
           * value ze.1 (lawK z k ze.1) a' ze.2
       ≤ value z k a e
@@ -137,7 +141,8 @@ theorem seqCash_eq_cashK (hS : KSufficient μ) (ω : History Z)
     (a : ↥(Icc (0 : ℝ) M.assetCap)) (e : E) :
     M.seqCash μ ω a e
       = M.grossReturn (ω 0) (capAt μ ω) (labourK μ (ω 0) (capAt μ ω)) * a
-        + M.wage (ω 0) (capAt μ ω) (labourK μ (ω 0) (capAt μ ω)) * M.efficiency e := by
+        + M.wage (ω 0) (capAt μ ω) (labourK μ (ω 0) (capAt μ ω)) * M.efficiency e
+        - M.grossReturn (ω 0) (capAt μ ω) (labourK μ (ω 0) (capAt μ ω)) * M.borrowLimit := by
   rw [M.seqCash_eq, labourK_eq hS ω]
   rfl
 
