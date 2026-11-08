@@ -33,8 +33,14 @@
   capital raises some households' saving and lowers others'; and when saving is affine in cash the
   redistribution washes out, leaving future-price effects that both lower saving --- the
   equilibrium map reverses order. An order-reversing map brackets the equilibria between the least
-  and greatest fixed points of its square, but gives no consistent selection. This is the question
-  \citet{cao2020} leaves open.
+  and greatest fixed points of its square; if the square is concave at the top of the bracket in
+  Krasnosel'skii's sense and the bottom is a positive fraction of the top, the bracket closes, the
+  equilibrium is unique and a minimal-state recursive equilibrium exists. That implication is
+  formalised;\footnote{\lean{isRecursive\_of\_antitone}, \lean{eq\_of\_concave}.} whether
+  the Krusell--Smith map reverses order and has a concave square is open. A first obstacle: the
+  zero-sum redistribution holds only where capital equals mean assets, that is at equilibrium, not
+  along the off-equilibrium paths the map acts on. This is the question \citet{cao2020} leaves
+  open.
 \item \textbf{Uniqueness at realistic capital shares.} Theorem~\ref{thm:smallshare} is qualitative;
   sharper bounds on the consumption floor and on curvature would be needed for a quantitative
   threshold.

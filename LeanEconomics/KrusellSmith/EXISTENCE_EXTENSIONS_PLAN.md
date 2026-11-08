@@ -96,3 +96,28 @@ fail. Nothing coded.
   uniqueness iff they coincide. No consistent selection in general.
 * Remaining idea: an order-reversing map with a *contracting* `f²` on the bracket, or selection by
   continuation (R2). Item 6 stays open.
+
+### The bracket route (started 2026-11-08)
+
+Idea: if the equilibrium map `f` reverses order, `g = f ∘ f` preserves it; Tarski gives the least
+and greatest fixed points `lo ≤ hi` of `g`, `f` swaps them, every equilibrium lies between; if `g`
+is concave at the top (Krasnosel'skii: `φ hi ≤ g (t hi)` with `φ > t`) and `lo ≥ t₀ hi`, then
+`lo = hi`: unique sequential equilibrium, hence the minimal-state RE.
+
+* **B1 DONE** (`AntitoneEquilibrium.lean`): `AntitoneBracket.sq`, `map_lfp_sq`, `map_gfp_sq`,
+  `lfp_sq_le`, `le_gfp_sq`, `eq_of_lfp_eq_gfp`; **`eq_of_concave`** (Krasnosel'skii on paths
+  `ι → ℝ`); `eqFn`, `EqMapAntitone`, `SqConcaveAtTop`, `lfp_eq_gfp`,
+  **`uniqueSequentialEquilibrium_of_antitone`**, **`isRecursive_of_antitone`**. Standard axioms.
+* **B2 (open): `EqMapAntitone`.** Must be aggregate (R1: individual saving is monotone in no order).
+  Subtlety found: the zero-sum redistribution (`integral_redistribution_eq_zero`) needs mean assets
+  equal to the capital path's value — true at fixed points, not off them. Off equilibrium, a rise in
+  `K(h)` changes aggregate cash at `h` by `∝ L (K(h) − Ā(h))`, where `Ā` is actual mean assets, with
+  sign depending on whether the path over- or under-shoots. So antitonicity of `eqFn` needs either
+  a restriction to a sub-lattice where `K ≥ Ā` (or `≤`), or a different map (e.g. one using
+  actual mean assets in prices). First task: identify a lattice of paths invariant under `f` on
+  which the redistribution term has a sign.
+* **B3 (open): `SqConcaveAtTop`.** Scaling the capital path by `t < 1` raises returns and lowers
+  wages along the whole tree; need two rounds of optimal saving to respond at least
+  proportionally-plus. Plausible for log utility (saving rates nearly constant in wealth); the
+  lower-bound condition `lo ≥ t₀ hi` should follow from the capital lower bound `capital_ge`
+  (Cobb–Douglas, `b = 0`).
