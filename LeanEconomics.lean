@@ -252,6 +252,7 @@ import LeanEconomics.KrusellSmith.ExogenousPrices
 import LeanEconomics.KrusellSmith.InteriorSaving
 import LeanEconomics.KrusellSmith.InteriorWitness
 import LeanEconomics.KrusellSmith.ApproxAggregation
+import LeanEconomics.KrusellSmith.AssetCap
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

@@ -37,3 +37,30 @@ The lower bound adapts \citet[Lemma 9]{cao2020}: a per-household Euler inequalit
 Jensen's inequality for the convex function $c\mapsto c^{-\gamma}$, bounds consumption today by
 expected consumption at the child nodes, and an induction on the tree pushes capital above
 $\underline K$.
+
+\paragraph{The asset cap.} The compact asset set $[0,\abar]$ is what Schauder--Tychonoff needs, but
+the cap can be shown irrelevant. When saving rises with assets at most at slope $\theta$ --- with
+CRRA utility, the minimal-MPC slope $\theta=\bar R(\beta\bar R)^{1/\gamma}/\underline R$ of
+Section~\ref{sec:uniqueness}, which holds whether or not the cap binds --- the poorest household
+saves at most its labour income, so every household saves at most $\bar w e+\theta a$. If
+$\theta<1$, saving never reaches a cap above $\bar w e/(1-\theta)$, a threshold that does not
+involve the cap. Moreover, shrinking the cap to any $\abar_0$ with $\bar w e+\theta\abar_0\le\abar_0$
+changes nothing: the smaller economy's value function and policy are the restrictions of the larger
+one's (the maximum over the larger feasible set is attained in the smaller), distributions on
+$[0,\abar_0]$ move the same way, and the sequential equilibria from them coincide.
+
+\begin{theorem}\label{thm:cap}
+For CRRA utility and Cobb--Douglas prices with $0\le\delta<1$ and
+$(\beta(1-\delta))^{1/\gamma}<1-\delta$, below some capital share: $\theta<1$; saving is strictly
+below any cap exceeding $\bar w e/(1-\theta)$, at every state and along every price path; and every
+cap $\abar_0\ge\bar w e/(1-\theta)$ gives the same sequential equilibria from distributions on
+$[0,\abar_0]$.
+\end{theorem}
+\formal{minMPC\_smallShare\_capIrrelevant, policy\_lt\_assetCap\_of\_slope,
+isSequentialEquilibrium\_capEmb\_iff, policy\_capEmb, valueFunction\_capEmb}
+
+\noindent
+Outside the small-share class the cap remains an assumption: $\theta<1$ needs the spread of returns
+$\bar R/\underline R$ to be below $(\beta\bar R)^{-1/\gamma}$. The consumption floor of the CRRA
+model depends on the cap through a value bound, so the comparison is between the economy and its
+own smaller-cap versions; the floor is slack in both.
