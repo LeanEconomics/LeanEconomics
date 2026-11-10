@@ -92,3 +92,16 @@ Needs: consumption above the KS floor along the path (`m ≥ floor`), the identi
 
 Then **CO4d**: the household policy at the aggregate state is the Coleman saving, so the point-mass
 distribution follows `capPath` and mean capital is `capPath`: a sequential equilibrium.
+
+* **CO4c DONE** 2026-11-11 (`ColemanSufficiency.lean`): plan bookkeeping (`labelOf`, `plan_label`,
+  `histProb_eq`, `plan_assets_succ`, `planCons`, `planCons_sub` with no borrowing); `PlanEuler`
+  (slack above the floor plus the Euler/KKT conditions at every history, with `nextMU`);
+  **`value_le_of_euler`**: `value q ≤ value p + gap₀` for every feasible plan `q`, given
+  bounded marginal utility along `p` (telescoping `telescope_le`, carried term
+  `abs_carried_le`, concavity gaps `concGap_nonpos`); `utility_lt_tangent`;
+  `policy_eq_policyAction`; **`policy_eq_of_euler`**: the household policy at the root is the
+  plan's first saving. Standard axioms. Applies at any root, so at every node of the tree.
+  Next **CO4d**: instantiate with the Coleman `capPath` — the rep-agent KS model whose
+  prices are `P h = (capPath h, L)`, `returnAt`/`cash` = `D.R`/`D.y`, `nextMU` = `D.cont / β`,
+  `planCons` = `gfp` (`gfp_cons`), `du ≤ u'(m)` as `D̄`, floor `≤ m` — then the point mass follows
+  `capPath`: a sequential equilibrium.
