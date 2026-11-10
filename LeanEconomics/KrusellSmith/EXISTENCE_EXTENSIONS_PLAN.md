@@ -191,3 +191,20 @@ next target.
 * Not yet: heterogeneous households (propagation needs an order on cross-sections that survives
   redistribution); B3 (concavity of the square at the top of the bracket); and a bracket theorem
   restricted to point-mass initial states (the current one quantifies over all `μ`).
+
+### B3, representative agent (2026-11-11): reduced to one inequality
+
+* `RepAgentBracket.lean`: **`unique_of_antitone_at`** (the bracket at one initial state);
+  `concave_of_elasticity` (concavity at the top ⇐ `g (t hi) ≥ (1 − c (1 − t)) hi`, `c < 1`);
+  **`crra_rep_unique_of_concave`**: from every point mass, order reversal (proved) + positive
+  bracket bottom + the elasticity bound ⇒ unique sequential equilibrium. Standard axioms.
+* **The open inequality**: `c < 1`. Analysis: (i) a Lipschitz bound `κ` on the expectations map
+  gives `c ≈ κ² · max hi / min lo` — a contraction condition, so it only reproves small-share
+  uniqueness; (ii) no closed form helps: off equilibrium the household's saving depends on expected
+  wages through human wealth, so the map is not constant even for log utility with full
+  depreciation. (iii) The classical representative-agent uniqueness proofs (Coleman 1991,
+  Greenwood–Huffman 1995, Datta–Mirman–Reffett 2002) use the order + concavity argument on a
+  different operator — Euler-equation time iteration on consumption policy functions, which is
+  monotone and concave — not on paths of expected capital. Conclusion: B3 on capital paths is not
+  the natural place for concavity; for the representative agent switch operators, and the
+  heterogeneous case would need an analogue of the Coleman operator on cross-sections.
