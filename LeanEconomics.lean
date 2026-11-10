@@ -268,6 +268,7 @@ import LeanEconomics.KrusellSmith.ColemanSufficiency
 import LeanEconomics.KrusellSmith.ColemanEquilibrium
 import LeanEconomics.KrusellSmith.ColemanRecursive
 import LeanEconomics.KrusellSmith.ColemanUnique
+import LeanEconomics.KrusellSmith.CrossSectionEuler
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
