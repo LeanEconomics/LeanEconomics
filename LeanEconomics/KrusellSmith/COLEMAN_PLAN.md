@@ -56,3 +56,13 @@ the heterogeneous case would need (an analogue of `𝒞` on cross-sections).
   (consumption rises with cash and when the continuation falls), **`eulerRoot_saving_le`** (saving
   rises with cash), `eulerRoot_unique`, **`exists_eulerRoot`** (corners or IVT; Inada at full
   saving when the cap is slack). Standard axioms. Next CO2 (the lattice `𝒞` and `T`).
+* **CO2 + CO3 DONE** 2026-11-11 (`ColemanOperator.lean`): `Data` (π, β, u' strictly decreasing
+  continuous positive Inada, `R` continuous nonnegative **nonincreasing in capital** with bound
+  `R̄`, **`β R̄ ≤ 1`**, cash `y` continuous nondecreasing with `y ≥ m > 0`); the lattice `Pol`
+  (`m ≤ c ≤ y`, consumption and saving nondecreasing) with pointwise infima, **complete**
+  (`completeLatticeOfInf`); members continuous (`continuous_pol`); the continuation `cont`
+  continuous, antitone in saving, `≤ u'(m)`; the operator **`T`** (Euler root of `CO1`) maps `Pol`
+  to `Pol` (`inC_T`; `m ≤ T c` uses `β R̄ ≤ 1`) and is monotone; **`exists_fixed`** (Tarski,
+  greatest fixed point): a policy solving the Euler equation with the corners at every state.
+  Standard axioms. Limitation: `β R̄ ≤ 1` keeps the floor `m` invariant; the corner economy
+  (`β R > 1`) is outside. Next CO4 (verification in the KS model).

@@ -262,6 +262,7 @@ import LeanEconomics.KrusellSmith.RepAgentCash
 import LeanEconomics.KrusellSmith.RepAgentExpMap
 import LeanEconomics.KrusellSmith.RepAgentBracket
 import LeanEconomics.KrusellSmith.ColemanEuler
+import LeanEconomics.KrusellSmith.ColemanOperator
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
