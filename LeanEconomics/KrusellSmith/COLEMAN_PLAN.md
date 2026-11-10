@@ -66,3 +66,29 @@ the heterogeneous case would need (an analogue of `𝒞` on cross-sections).
   greatest fixed point): a policy solving the Euler equation with the corners at every state.
   Standard axioms. Limitation: `β R̄ ≤ 1` keeps the floor `m` invariant; the corner economy
   (`β R > 1`) is outside. Next CO4 (verification in the KS model).
+* **CO4a + CO4b DONE** 2026-11-11 (`ColemanBridge.lean`): **`crraData`** — the
+  representative-agent CRRA, Cobb–Douglas economy as Coleman data (`u' = c^{-γ}`, return and cash
+  at labour = the efficiency, inside the labour box; `m = w̲ L`; hypothesis `β R̄ ≤ 1`);
+  `savingBox`, **`capPath`** (capital on the tree from `(z₀, k₀)` under a policy),
+  **`capPath_euler`** (at the Coleman fixed point the Euler root holds at every node against
+  tomorrow's consumption at tomorrow's capital), `gfp_cons`.
+
+### CO4c plan: Euler sufficiency on the tree
+
+Statement: in the KS household problem along the price path `P(h) = (capPath h, L)`, the plan
+"hold `capPath h` at node `h`" (state `(capPath h, ⟨default, h⟩)`, action `capPath (z' :: h)`) has
+value equal to `valueFunction` at the root; hence (principle of optimality + uniqueness of the
+optimal saving) the household's policy at `(capPath h, h)` is `capPath (z' :: h)` at every node.
+
+Proof: for any feasible plan `p'` (`DynamicProgramming.Plan`), concavity gives
+`u(c') − u(c) ≤ u'(c)(c' − c)`; with `c = R a − s + w L` (no borrowing) and `Δa_{n+1} = Δs_n`, the
+sum to date `N` telescopes to `Σ_{n<N} βⁿ E[(β E_n[R' u'(c')] − u'(c)) Δs_n] + βᴺ E[u'(c_N) R_N Δa_N]`;
+each summand is `≤ 0` by the KKT conditions (`= 0` interior; `Δs ≥ 0` at zero saving; `Δs ≤ 0` at
+the cap); the remainder is `≤ βᴺ u'(m) R̄ ā → 0`. So `value p' ≤ value p`, and
+`isGreatest_planValue` / `valueFunction_eq_seqValue` identify `value p` with the value function.
+Needs: consumption above the KS floor along the path (`m ≥ floor`), the identification of
+`Data.cont` with the household's expected marginal value, and the plan-expectation algebra of
+`StochasticOptimality.lean`.
+
+Then **CO4d**: the household policy at the aggregate state is the Coleman saving, so the point-mass
+distribution follows `capPath` and mean capital is `capPath`: a sequential equilibrium.
