@@ -40,10 +40,32 @@ namespace KSModel
 
 variable {M : KSModel Z E} (U : M.SmoothUtility) (z₀ : Z)
 
+/-- Increasing differences of one continuation over another at every label **below the root**:
+all that the household at the root uses, through its children. -/
+def IncDiffBelow (v v' : M.State →ᵇ ℝ) : Prop :=
+  ∀ l : Label Z E, l.node ≠ [] → ∀ (x y : ℝ), x ∈ Icc 0 M.assetCap → y ∈ Icc 0 M.assetCap →
+    x ≤ y → v (M.stateAt y l) - v (M.stateAt x l) ≤ v' (M.stateAt y l) - v' (M.stateAt x l)
+
+/-- Increasing differences of the values below the root give increasing differences of the
+continuation, at every state. -/
+theorem cont_incDiffBelow {P P' : List Z → ℝ × ℝ} (s : M.State)
+    (hV : M.IncDiffBelow (M.household z₀ P).valueFunction (M.household z₀ P').valueFunction)
+    (x y : ℝ) (hx : x ∈ Icc 0 M.assetCap) (hy : y ∈ Icc 0 M.assetCap) (hxy : x ≤ y) :
+    M.cont z₀ P s y - M.cont z₀ P s x ≤ M.cont z₀ P' s y - M.cont z₀ P' s x := by
+  simp only [cont]
+  rw [← Finset.sum_sub_distrib, ← Finset.sum_sub_distrib]
+  refine Finset.sum_le_sum fun ze _ => ?_
+  have hp := M.shockProb_nonneg' z₀ ze (s, x)
+  change M.shockProb z₀ ze (s, x) * _ - M.shockProb z₀ ze (s, x) * _
+    ≤ M.shockProb z₀ ze (s, x) * _ - M.shockProb z₀ ze (s, x) * _
+  rw [← mul_sub, ← mul_sub]
+  exact mul_le_mul_of_nonneg_left
+    (hV ⟨ze.2, ze.1 :: s.2.node⟩ (List.cons_ne_nil _ _) x y hx hy hxy) hp
+
 /-- **More cash and a flatter continuation give more consumption.** -/
 theorem consumptionOf_le_consumptionOf {K K' : List Z → ℝ × ℝ} {v v' : M.State →ᵇ ℝ}
     (hv : M.ConcaveSlices v) {s s' : M.State} (hl : s.2 = s'.2)
-    (hcash : M.cash z₀ K s ≤ M.cash z₀ K' s') (hid : M.IncDiff v' v) :
+    (hcash : M.cash z₀ K s ≤ M.cash z₀ K' s') (hid : M.IncDiffBelow v' v) :
     M.consumptionOf z₀ K v s ≤ M.consumptionOf z₀ K' v' s' := by
   set p := M.policyOf z₀ K v s
   set p' := M.policyOf z₀ K' v' s'
@@ -101,7 +123,8 @@ theorem consumptionOf_le_consumptionOf {K K' : List Z → ℝ × ℝ} {v v' : M.
     have hsp' : M.shockProb z₀ ze (s', p' - δ) = M.shockProb z₀ ze (s', p') :=
       M.shockProb_eq z₀ ze s' (p' - δ) p'
     rw [hsp p', hsp (p' - δ), hsp', ← mul_sub, ← mul_sub]
-    exact mul_le_mul_of_nonneg_left (hid _ (p' - δ) p' hfI' hpI' (by linarith)) hpr
+    exact mul_le_mul_of_nonneg_left (hid ⟨ze.2, ze.1 :: s'.2.node⟩ (List.cons_ne_nil _ _)
+      (p' - δ) p' hfI' hpI' (by linarith)) hpr
   have hβ1 := mul_le_mul_of_nonneg_left hflat M.discount_pos.le
   have hβ2 := mul_le_mul_of_nonneg_left hconc M.discount_pos.le
   rw [mul_sub, mul_sub] at hβ1 hβ2
@@ -118,12 +141,12 @@ include U in
 /-- **The wage step**: with the same returns and higher wages along the path, one Bellman step
 carries a flatter continuation to a flatter value. -/
 theorem incDiff_bellman_wage {K K' : List Z → ℝ × ℝ}
-    (hR : ∀ h, M.returnAt z₀ K h = M.returnAt z₀ K' h)
-    (hW : ∀ h, M.wageAt z₀ K h ≤ M.wageAt z₀ K' h) {v v' : M.State →ᵇ ℝ}
+    (hR : ∀ h, h ≠ [] → M.returnAt z₀ K h = M.returnAt z₀ K' h)
+    (hW : ∀ h, h ≠ [] → M.wageAt z₀ K h ≤ M.wageAt z₀ K' h) {v v' : M.State →ᵇ ℝ}
     (hv : M.ConcaveSlices v) (hv' : M.ConcaveSlices v') (hsl : M.SlackOf z₀ K v)
-    (hsl' : M.SlackOf z₀ K' v') (hid : M.IncDiff v' v) :
-    M.IncDiff ((M.household z₀ K').bellman v') ((M.household z₀ K).bellman v) := by
-  intro l x y hx hy hxy
+    (hsl' : M.SlackOf z₀ K' v') (hid : M.IncDiffBelow v' v) :
+    M.IncDiffBelow ((M.household z₀ K').bellman v') ((M.household z₀ K).bellman v) := by
+  intro l hl x y hx hy hxy
   set D : ℝ → ℝ := fun a => (M.household z₀ K).bellman v (M.stateAt a l)
     - (M.household z₀ K').bellman v' (M.stateAt a l) with hD
   suffices hmono : MonotoneOn D (Icc 0 M.assetCap) by
@@ -142,11 +165,11 @@ theorem incDiff_bellman_wage {K K' : List Z → ℝ × ℝ}
     exact fun a ha => (hderiv a ha).differentiableAt.differentiableWithinAt
   · rw [interior_Icc]
     intro a ha
-    rw [(hderiv a ha).deriv, sub_nonneg, ← hR l.node]
+    rw [(hderiv a ha).deriv, sub_nonneg, ← hR l.node hl]
     have haI : a ∈ Icc 0 M.assetCap := ⟨ha.1.le, ha.2.le⟩
     have hcash : M.cash z₀ K (M.stateAt a l) ≤ M.cash z₀ K' (M.stateAt a l) := by
-      rw [M.cash_stateAt z₀ K haI, M.cash_stateAt z₀ K' haI, hR l.node]
-      have := mul_le_mul_of_nonneg_right (hW l.node) (M.efficiency_nonneg l.idio)
+      rw [M.cash_stateAt z₀ K haI, M.cash_stateAt z₀ K' haI, hR l.node hl]
+      have := mul_le_mul_of_nonneg_right (hW l.node hl) (M.efficiency_nonneg l.idio)
       linarith
     have hc := M.consumptionOf_le_consumptionOf z₀ hv (s := M.stateAt a l)
       (s' := M.stateAt a l) rfl hcash hid
@@ -155,13 +178,13 @@ theorem incDiff_bellman_wage {K K' : List Z → ℝ × ℝ}
 include U in
 /-- **A flatter value along every pair of iterates.** -/
 theorem incDiff_iterate_wage {K K' : List Z → ℝ × ℝ}
-    (hR : ∀ h, M.returnAt z₀ K h = M.returnAt z₀ K' h)
-    (hW : ∀ h, M.wageAt z₀ K h ≤ M.wageAt z₀ K' h)
+    (hR : ∀ h, h ≠ [] → M.returnAt z₀ K h = M.returnAt z₀ K' h)
+    (hW : ∀ h, h ≠ [] → M.wageAt z₀ K h ≤ M.wageAt z₀ K' h)
     (hsl : ∀ n : ℕ, M.SlackOf z₀ K (((M.household z₀ K).bellman)^[n] 0))
     (hsl' : ∀ n : ℕ, M.SlackOf z₀ K' (((M.household z₀ K').bellman)^[n] 0)) :
-    ∀ n : ℕ, M.IncDiff (((M.household z₀ K').bellman)^[n] 0)
+    ∀ n : ℕ, M.IncDiffBelow (((M.household z₀ K').bellman)^[n] 0)
       (((M.household z₀ K).bellman)^[n] 0)
-  | 0 => fun l x y _ _ _ => by simp
+  | 0 => fun l _ x y _ _ _ => by simp
   | n + 1 => by
     rw [Function.iterate_succ_apply', Function.iterate_succ_apply']
     exact M.incDiff_bellman_wage U z₀ hR hW (M.concaveSlices_iterate z₀ K n)
@@ -171,12 +194,12 @@ theorem incDiff_iterate_wage {K K' : List Z → ℝ × ℝ}
 include U in
 /-- **A flatter value function under higher wages**, the limit of the iterates. -/
 theorem incDiff_valueFunction_wage {K K' : List Z → ℝ × ℝ}
-    (hR : ∀ h, M.returnAt z₀ K h = M.returnAt z₀ K' h)
-    (hW : ∀ h, M.wageAt z₀ K h ≤ M.wageAt z₀ K' h)
+    (hR : ∀ h, h ≠ [] → M.returnAt z₀ K h = M.returnAt z₀ K' h)
+    (hW : ∀ h, h ≠ [] → M.wageAt z₀ K h ≤ M.wageAt z₀ K' h)
     (hsl : ∀ n : ℕ, M.SlackOf z₀ K (((M.household z₀ K).bellman)^[n] 0))
     (hsl' : ∀ n : ℕ, M.SlackOf z₀ K' (((M.household z₀ K').bellman)^[n] 0)) :
-    M.IncDiff (M.household z₀ K').valueFunction (M.household z₀ K).valueFunction := by
-  intro l x y hx hy hxy
+    M.IncDiffBelow (M.household z₀ K').valueFunction (M.household z₀ K).valueFunction := by
+  intro l hl x y hx hy hxy
   have h1 := (M.household z₀ K').tendsto_iterate_valueFunction 0
   have h2 := (M.household z₀ K).tendsto_iterate_valueFunction 0
   have hev : ∀ (V : ℕ → M.State →ᵇ ℝ) (V₀ : M.State →ᵇ ℝ), Tendsto V atTop (𝓝 V₀) →
@@ -185,19 +208,19 @@ theorem incDiff_valueFunction_wage {K K' : List Z → ℝ × ℝ}
     (((continuous_eval_const _).tendsto V₀).comp hV).sub
       (((continuous_eval_const _).tendsto V₀).comp hV)
   exact le_of_tendsto_of_tendsto' (hev _ _ h1) (hev _ _ h2) fun n =>
-    M.incDiff_iterate_wage U z₀ hR hW hsl hsl' n l x y hx hy hxy
+    M.incDiff_iterate_wage U z₀ hR hW hsl hsl' n l hl x y hx hy hxy
 
 include U in
 /-- **Higher future wages lower saving**: with the same returns along the path, higher wages, and
 no more cash today, every household saves weakly less. -/
 theorem policy_le_of_wages {K K' : List Z → ℝ × ℝ}
-    (hR : ∀ h, M.returnAt z₀ K h = M.returnAt z₀ K' h)
-    (hW : ∀ h, M.wageAt z₀ K h ≤ M.wageAt z₀ K' h)
+    (hR : ∀ h, h ≠ [] → M.returnAt z₀ K h = M.returnAt z₀ K' h)
+    (hW : ∀ h, h ≠ [] → M.wageAt z₀ K h ≤ M.wageAt z₀ K' h)
     (hsl : ∀ n : ℕ, M.SlackOf z₀ K (((M.household z₀ K).bellman)^[n] 0))
     (hsl' : ∀ n : ℕ, M.SlackOf z₀ K' (((M.household z₀ K').bellman)^[n] 0))
     (s : M.State) (hcash : M.cash z₀ K' s ≤ M.cash z₀ K s) :
     M.policy z₀ K' s ≤ M.policy z₀ K s :=
-  M.policy_le_policy z₀ s hcash (M.cont_increasingDifferences z₀ s
+  M.policy_le_policy z₀ s hcash (M.cont_incDiffBelow z₀ s
     (M.incDiff_valueFunction_wage U z₀ hR hW hsl hsl'))
 
 /-! ### Lower returns and higher wages together (Cobb–Douglas) -/
@@ -210,15 +233,15 @@ household has no more cash than the low-return one at `a`, and a steeper continu
 consumes less; the rescaling is `mul_marginal_le_of_scale` (concave consumption, γ ≤ 1). -/
 theorem incDiff_bellman_cd {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ)) {K K' : List Z → ℝ × ℝ}
-    (hR' : ∀ h, 0 < M.returnAt z₀ K' h) (hRle : ∀ h, M.returnAt z₀ K' h ≤ M.returnAt z₀ K h)
-    (hW : ∀ h, M.wageAt z₀ K h ≤ M.wageAt z₀ K' h) (hb : M.borrowLimit = 0)
+    (hR' : ∀ h, 0 < M.returnAt z₀ K' h) (hRle : ∀ h, h ≠ [] → M.returnAt z₀ K' h ≤ M.returnAt z₀ K h)
+    (hW : ∀ h, h ≠ [] → M.wageAt z₀ K h ≤ M.wageAt z₀ K' h) (hb : M.borrowLimit = 0)
     {v v' : M.State →ᵇ ℝ} (hv : M.ConcaveSlices v) (hv' : M.ConcaveSlices v')
     (hsl : M.SlackOf z₀ K v) (hsl' : M.SlackOf z₀ K' v')
     (hcc : ∀ l : Label Z E,
       ConcaveOn ℝ (Icc 0 M.assetCap) fun A => M.consumptionOf z₀ K v (M.stateAt A l))
-    (hid : M.IncDiff v' v) :
-    M.IncDiff ((M.household z₀ K').bellman v') ((M.household z₀ K).bellman v) := by
-  intro l x y hx hy hxy
+    (hid : M.IncDiffBelow v' v) :
+    M.IncDiffBelow ((M.household z₀ K').bellman v') ((M.household z₀ K).bellman v) := by
+  intro l hl x y hx hy hxy
   set D : ℝ → ℝ := fun a => (M.household z₀ K).bellman v (M.stateAt a l)
     - (M.household z₀ K').bellman v' (M.stateAt a l) with hD
   suffices hmono : MonotoneOn D (Icc 0 M.assetCap) by
@@ -241,10 +264,10 @@ theorem incDiff_bellman_cd {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     set R := M.returnAt z₀ K l.node
     set R' := M.returnAt z₀ K' l.node
     have hR'pos := hR' l.node
-    have hRpos : 0 < R := hR'pos.trans_le (hRle l.node)
+    have hRpos : 0 < R := hR'pos.trans_le (hRle l.node hl)
     set t := R' / R with ht
     have ht0 : 0 < t := div_pos hR'pos hRpos
-    have ht1 : t ≤ 1 := (div_le_one hRpos).2 (hRle l.node)
+    have ht1 : t ≤ 1 := (div_le_one hRpos).2 (hRle l.node hl)
     have haI : a ∈ Icc 0 M.assetCap := ⟨ha.1.le, ha.2.le⟩
     have htaI : t * a ∈ Icc 0 M.assetCap :=
       ⟨mul_nonneg ht0.le ha.1.le, by nlinarith [ha.1, ha.2]⟩
@@ -255,7 +278,7 @@ theorem incDiff_bellman_cd {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
       rw [M.cash_stateAt z₀ K htaI, M.cash_stateAt z₀ K' haI, hb, mul_zero, mul_zero]
       change R * (t * a) + _ - 0 ≤ R' * a + _ - 0
       rw [hRta]
-      have := mul_le_mul_of_nonneg_right (hW l.node) (M.efficiency_nonneg l.idio)
+      have := mul_le_mul_of_nonneg_right (hW l.node hl) (M.efficiency_nonneg l.idio)
       linarith
     have hct := M.consumptionOf_le_consumptionOf z₀ hv (s := M.stateAt (t * a) l)
       (s' := M.stateAt a l) rfl hcash hid
@@ -283,49 +306,118 @@ include U in
 /-- **A flatter value along every pair of iterates**, lower returns and higher wages. -/
 theorem incDiff_iterate_cd {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ)) {K K' : List Z → ℝ × ℝ}
-    (hR' : ∀ h, 0 < M.returnAt z₀ K' h) (hRle : ∀ h, M.returnAt z₀ K' h ≤ M.returnAt z₀ K h)
-    (hW : ∀ h, M.wageAt z₀ K h ≤ M.wageAt z₀ K' h) (hb : M.borrowLimit = 0)
+    (hR : ∀ h, 0 < M.returnAt z₀ K h)
+    (hR' : ∀ h, 0 < M.returnAt z₀ K' h) (hRle : ∀ h, h ≠ [] → M.returnAt z₀ K' h ≤ M.returnAt z₀ K h)
+    (hW : ∀ h, h ≠ [] → M.wageAt z₀ K h ≤ M.wageAt z₀ K' h) (hb : M.borrowLimit = 0)
     (hsl : ∀ n : ℕ, M.SlackOf z₀ K (((M.household z₀ K).bellman)^[n] 0))
     (hsl' : ∀ n : ℕ, M.SlackOf z₀ K' (((M.household z₀ K').bellman)^[n] 0))
     (hcap : ∀ (n : ℕ) (s : M.State),
       M.policyOf z₀ K (((M.household z₀ K).bellman)^[n] 0) s < M.assetCap) :
-    ∀ n : ℕ, M.IncDiff (((M.household z₀ K').bellman)^[n] 0)
+    ∀ n : ℕ, M.IncDiffBelow (((M.household z₀ K').bellman)^[n] 0)
       (((M.household z₀ K).bellman)^[n] 0)
-  | 0 => fun l x y _ _ _ => by simp
+  | 0 => fun l _ x y _ _ _ => by simp
   | n + 1 => by
-    have hR : ∀ h, 0 < M.returnAt z₀ K h := fun h => (hR' h).trans_le (hRle h)
     rw [Function.iterate_succ_apply', Function.iterate_succ_apply']
     exact M.incDiff_bellman_cd U z₀ hγ0 hγ1 hdu hR' hRle hW hb (M.concaveSlices_iterate z₀ K n)
       (M.concaveSlices_iterate z₀ K' n) (hsl n) (hsl' n)
       (M.concaveOn_consumptionOf_iterate U z₀ K hγ0 hdu hR hsl hcap n)
-      (incDiff_iterate_cd hγ0 hγ1 hdu hR' hRle hW hb hsl hsl' hcap n)
+      (incDiff_iterate_cd hγ0 hγ1 hdu hR hR' hRle hW hb hsl hsl' hcap n)
+
+include U in
+/-- **Topkis against continuations below the root**, at two states with the same label: at least
+as much cash and a continuation steeper below the root give at least as much saving. -/
+theorem policyOf_le_policyOf_below {K K' : List Z → ℝ × ℝ} {v v' : M.State →ᵇ ℝ}
+    (hv : M.ConcaveSlices v) {s s' : M.State} (hl : s.2 = s'.2)
+    (hcash : M.cash z₀ K s ≤ M.cash z₀ K' s') (hid : M.IncDiffBelow v v') :
+    M.policyOf z₀ K v s ≤ M.policyOf z₀ K' v' s' := by
+  set p := M.policyOf z₀ K v s
+  set p' := M.policyOf z₀ K' v' s'
+  set x := M.cash z₀ K s
+  set x' := M.cash z₀ K' s'
+  by_contra hlt
+  rw [not_le] at hlt
+  have hp := M.policyOf_mem z₀ K v s
+  have hp' := M.policyOf_mem z₀ K' v' s'
+  have hpx : p ≤ x - M.consFloor := hp.2.trans (min_le_right _ _)
+  have hf' : p' ∈ (M.household z₀ K).feasible s := ⟨hp'.1, hlt.le.trans hp.2⟩
+  have hf : p ∈ (M.household z₀ K').feasible s' :=
+    ⟨hp.1, le_min (hp.2.trans (min_le_left _ _)) (by
+      change p ≤ x' - M.consFloor
+      linarith)⟩
+  have h2 := M.le_bellman_contOf z₀ K' v' hf
+  have v1 := M.bellman_eq_contOf z₀ K v s
+  have v2 := M.bellman_eq_contOf z₀ K' v' s'
+  have hcid : M.contOf z₀ v s p - M.contOf z₀ v s p'
+      ≤ M.contOf z₀ v' s' p - M.contOf z₀ v' s' p' := by
+    simp only [contOf, hl]
+    rw [← Finset.sum_sub_distrib, ← Finset.sum_sub_distrib]
+    refine Finset.sum_le_sum fun ze _ => ?_
+    have hpr := M.shockProb_nonneg' z₀ ze (s', p)
+    have hsp : ∀ a : ℝ, M.shockProb z₀ ze (s, a) = M.shockProb z₀ ze (s', p) := by
+      intro a
+      simp only [shockProb, ContinuousMap.coe_mk, hl]
+    rw [hsp p, hsp p', M.shockProb_eq z₀ ze s' p' p, ← mul_sub, ← mul_sub]
+    exact mul_le_mul_of_nonneg_left (hid ⟨ze.2, ze.1 :: s'.2.node⟩ (List.cons_ne_nil _ _) p' p
+      (M.mem_Icc_of_mem_feasible z₀ K' hp') (M.mem_Icc_of_mem_feasible z₀ K hp) hlt.le) hpr
+  have hβ := mul_le_mul_of_nonneg_left hcid M.discount_pos.le
+  rw [mul_sub, mul_sub] at hβ
+  have hcf : M.consFloor ≤ x - p := by linarith
+  have hu := concave_increment_le M.strictConcaveOn_utility.concaveOn
+    (x := x - p) (y := x' - p) (d := p - p') (by linarith) (by linarith) (mem_Ici.2 hcf)
+    (mem_Ici.2 (by linarith))
+  have e1 : x' - p + (p - p') = x' - p' := by ring
+  have e2 : x - p + (p - p') = x - p' := by ring
+  rw [e1, e2] at hu
+  have hcx : M.consumptionOf z₀ K v s = x - p := rfl
+  have hcx' : M.consumptionOf z₀ K' v' s' = x' - p' := rfl
+  rw [hcx] at v1
+  rw [hcx'] at v2
+  have htie : M.utility (x - p') + M.discount * M.contOf z₀ v s p'
+      = (M.household z₀ K).bellman v s := by
+    have h1 := M.le_bellman_contOf z₀ K v hf'
+    linarith
+  exact absurd (M.eq_policyOf_of_objective z₀ K hv hf' htie) hlt.ne
+
+include U in
+/-- **The value is flatter below the root** along a path with lower returns and higher wages. -/
+theorem incDiffBelow_valueFunction_cd {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
+    (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ)) {K K' : List Z → ℝ × ℝ}
+    (hR : ∀ h, 0 < M.returnAt z₀ K h)
+    (hR' : ∀ h, 0 < M.returnAt z₀ K' h) (hRle : ∀ h, h ≠ [] → M.returnAt z₀ K' h ≤ M.returnAt z₀ K h)
+    (hW : ∀ h, h ≠ [] → M.wageAt z₀ K h ≤ M.wageAt z₀ K' h) (hb : M.borrowLimit = 0)
+    (hsl : ∀ n : ℕ, M.SlackOf z₀ K (((M.household z₀ K).bellman)^[n] 0))
+    (hsl' : ∀ n : ℕ, M.SlackOf z₀ K' (((M.household z₀ K').bellman)^[n] 0))
+    (hcap : ∀ (n : ℕ) (s : M.State),
+      M.policyOf z₀ K (((M.household z₀ K).bellman)^[n] 0) s < M.assetCap) :
+    M.IncDiffBelow (M.household z₀ K').valueFunction (M.household z₀ K).valueFunction := by
+  intro l hl x y hx hy hxy
+  have h1 := (M.household z₀ K').tendsto_iterate_valueFunction 0
+  have h2 := (M.household z₀ K).tendsto_iterate_valueFunction 0
+  have hev : ∀ (V : ℕ → M.State →ᵇ ℝ) (V₀ : M.State →ᵇ ℝ), Tendsto V atTop (𝓝 V₀) →
+      Tendsto (fun n => V n (M.stateAt y l) - V n (M.stateAt x l)) atTop
+        (𝓝 (V₀ (M.stateAt y l) - V₀ (M.stateAt x l))) := fun V V₀ hV =>
+    (((continuous_eval_const _).tendsto V₀).comp hV).sub
+      (((continuous_eval_const _).tendsto V₀).comp hV)
+  exact le_of_tendsto_of_tendsto' (hev _ _ h1) (hev _ _ h2) fun n =>
+    M.incDiff_iterate_cd U z₀ hγ0 hγ1 hdu hR hR' hRle hW hb hsl hsl' hcap n l hl x y hx hy hxy
 
 include U in
 /-- **Higher expected capital lowers saving (household level, Cobb–Douglas directions)**: along a
-path with lower returns and higher wages, for CRRA with γ ≤ 1 and no borrowing, a household with
-no more cash today saves weakly less. -/
+path with lower returns and higher wages below the root, for CRRA with γ ≤ 1 and no borrowing,
+a household with no more cash today, at the same label, saves weakly less. -/
 theorem policy_le_of_cd {γ : ℝ} (hγ0 : 0 < γ) (hγ1 : γ ≤ 1)
     (hdu : ∀ c, M.consFloor < c → U.du c = c ^ (-γ)) {K K' : List Z → ℝ × ℝ}
-    (hR' : ∀ h, 0 < M.returnAt z₀ K' h) (hRle : ∀ h, M.returnAt z₀ K' h ≤ M.returnAt z₀ K h)
-    (hW : ∀ h, M.wageAt z₀ K h ≤ M.wageAt z₀ K' h) (hb : M.borrowLimit = 0)
+    (hR : ∀ h, 0 < M.returnAt z₀ K h)
+    (hR' : ∀ h, 0 < M.returnAt z₀ K' h) (hRle : ∀ h, h ≠ [] → M.returnAt z₀ K' h ≤ M.returnAt z₀ K h)
+    (hW : ∀ h, h ≠ [] → M.wageAt z₀ K h ≤ M.wageAt z₀ K' h) (hb : M.borrowLimit = 0)
     (hsl : ∀ n : ℕ, M.SlackOf z₀ K (((M.household z₀ K).bellman)^[n] 0))
     (hsl' : ∀ n : ℕ, M.SlackOf z₀ K' (((M.household z₀ K').bellman)^[n] 0))
     (hcap : ∀ (n : ℕ) (s : M.State),
       M.policyOf z₀ K (((M.household z₀ K).bellman)^[n] 0) s < M.assetCap)
-    (s : M.State) (hcash : M.cash z₀ K' s ≤ M.cash z₀ K s) :
-    M.policy z₀ K' s ≤ M.policy z₀ K s := by
-  have hV : M.IncDiff (M.household z₀ K').valueFunction (M.household z₀ K).valueFunction := by
-    intro l x y hx hy hxy
-    have h1 := (M.household z₀ K').tendsto_iterate_valueFunction 0
-    have h2 := (M.household z₀ K).tendsto_iterate_valueFunction 0
-    have hev : ∀ (V : ℕ → M.State →ᵇ ℝ) (V₀ : M.State →ᵇ ℝ), Tendsto V atTop (𝓝 V₀) →
-        Tendsto (fun n => V n (M.stateAt y l) - V n (M.stateAt x l)) atTop
-          (𝓝 (V₀ (M.stateAt y l) - V₀ (M.stateAt x l))) := fun V V₀ hV =>
-      (((continuous_eval_const _).tendsto V₀).comp hV).sub
-        (((continuous_eval_const _).tendsto V₀).comp hV)
-    exact le_of_tendsto_of_tendsto' (hev _ _ h1) (hev _ _ h2) fun n =>
-      M.incDiff_iterate_cd U z₀ hγ0 hγ1 hdu hR' hRle hW hb hsl hsl' hcap n l x y hx hy hxy
-  exact M.policy_le_policy z₀ s hcash (M.cont_increasingDifferences z₀ s hV)
+    {s s' : M.State} (hl : s'.2 = s.2) (hcash : M.cash z₀ K' s' ≤ M.cash z₀ K s) :
+    M.policy z₀ K' s' ≤ M.policy z₀ K s :=
+  M.policyOf_le_policyOf_below U z₀ (fun l => M.concaveOn_valueFunction z₀ K' l) hl hcash
+    (M.incDiffBelow_valueFunction_cd U z₀ hγ0 hγ1 hdu hR hR' hRle hW hb hsl hsl' hcap)
 
 end KSModel
 
@@ -371,7 +463,7 @@ every node (labour unchanged), every household with no more cash today saves wea
 lower future returns and higher future wages both lower saving. Floor and cap slackness along the
 Bellman iterates are explicit hypotheses. -/
 theorem crra_policy_le_of_capital (hγ1 : γ ≤ 1) (z₀ : Z) {K K' : List Z → ℝ × ℝ}
-    (hK : ∀ h, (K h).1 ≤ (K' h).1) (hL : ∀ h, (K h).2 = (K' h).2)
+    (hK : ∀ h, h ≠ [] → (K h).1 ≤ (K' h).1) (hL : ∀ h, h ≠ [] → (K h).2 = (K' h).2)
     (hsl : ∀ n : ℕ, (crraModel V T hγ).SlackOf z₀ K
       ((((crraModel V T hγ).household z₀ K).bellman)^[n] 0))
     (hsl' : ∀ n : ℕ, (crraModel V T hγ).SlackOf z₀ K'
@@ -379,18 +471,19 @@ theorem crra_policy_le_of_capital (hγ1 : γ ≤ 1) (z₀ : Z) {K K' : List Z �
     (hcap : ∀ (n : ℕ) (s : (crraModel V T hγ).State),
       (crraModel V T hγ).policyOf z₀ K ((((crraModel V T hγ).household z₀ K).bellman)^[n] 0) s
         < (crraModel V T hγ).assetCap)
-    (s : (crraModel V T hγ).State)
-    (hcash : (crraModel V T hγ).cash z₀ K' s ≤ (crraModel V T hγ).cash z₀ K s) :
-    (crraModel V T hγ).policy z₀ K' s ≤ (crraModel V T hγ).policy z₀ K s := by
+    {s s' : (crraModel V T hγ).State} (hl : s'.2 = s.2)
+    (hcash : (crraModel V T hγ).cash z₀ K' s' ≤ (crraModel V T hγ).cash z₀ K s) :
+    (crraModel V T hγ).policy z₀ K' s' ≤ (crraModel V T hγ).policy z₀ K s := by
   refine KSModel.policy_le_of_cd (crraSmoothUtility V T hγ) z₀ hγ hγ1 (fun _ _ => rfl)
-    (fun h => T.grossReturn_pos _ _ _) (fun h => ?_) (fun h => ?_) rfl hsl hsl' hcap s hcash
+    (fun h => T.grossReturn_pos _ _ _) (fun h => T.grossReturn_pos _ _ _) (fun h hh => ?_)
+    (fun h hh => ?_) rfl hsl hsl' hcap hl hcash
   · change T.grossReturn (shockAt z₀ h) (K' h).1 (K' h).2
       ≤ T.grossReturn (shockAt z₀ h) (K h).1 (K h).2
-    rw [← hL h]
-    exact T.grossReturn_anti _ (hK h) _
+    rw [← hL h hh]
+    exact T.grossReturn_anti _ (hK h hh) _
   · change T.wage (shockAt z₀ h) (K h).1 (K h).2 ≤ T.wage (shockAt z₀ h) (K' h).1 (K' h).2
-    rw [← hL h]
-    exact T.wage_mono _ (hK h) _
+    rw [← hL h hh]
+    exact T.wage_mono _ (hK h hh) _
 
 end KrusellSmith
 

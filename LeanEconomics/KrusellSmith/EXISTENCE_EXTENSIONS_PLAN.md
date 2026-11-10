@@ -174,3 +174,20 @@ gives only at equal current cash. With prices at the lower `Ā'`, current cash i
 (rich lose return, poor gain wage), so state-by-state ordering of cash fails again; the
 representative-agent case (one efficiency level, distribution = its mean) avoids this and is the
 next target.
+
+### B2 step (b), representative agent: DONE 2026-11-11
+
+* Step (a) now needs the price order only **below the root** (`IncDiffBelow`,
+  `cont_incDiffBelow`, `policyOf_le_policyOf_below`, `incDiffBelow_valueFunction_cd`), and compares
+  two states with the same label (`policy_le_of_cd`, `crra_policy_le_of_capital` take `s, s'`).
+* `RepAgentCash.lean`: `rpow_le_tangent`; **`CobbDouglas.repCash_mono`** — with labour in its box,
+  representative cash `R(A) A + w(A) L` rises with `A`, through the clamps.
+* `RepAgentExpMap.lean` (`[Unique E]`): `stateMass_unique`, `labour_unique`, `pushNode_dirac`,
+  `repPath`, `expDist_dirac` (point masses stay point masses under the expectations map);
+  `repPath_anti_of` (generic induction: shift the tree to the node, compare at the root);
+  `repPath_anti`; **`expMap_antitone_dirac`**: for CRRA `0 < γ ≤ 1`, Cobb–Douglas, one efficiency
+  level inside the labour box, and floor/cap slack along the Bellman iterates of every price path,
+  **the expectations map from every point mass reverses order**.
+* Not yet: heterogeneous households (propagation needs an order on cross-sections that survives
+  redistribution); B3 (concavity of the square at the top of the bracket); and a bracket theorem
+  restricted to point-mass initial states (the current one quantifies over all `μ`).
