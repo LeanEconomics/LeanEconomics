@@ -105,3 +105,14 @@ distribution follows `capPath` and mean capital is `capPath`: a sequential equil
   prices are `P h = (capPath h, L)`, `returnAt`/`cash` = `D.R`/`D.y`, `nextMU` = `D.cont / β`,
   `planCons` = `gfp` (`gfp_cons`), `du ≤ u'(m)` as `D̄`, floor `≤ m` — then the point mass follows
   `capPath`: a sequential equilibrium.
+* **CO4d DONE** 2026-11-11 (`ColemanEquilibrium.lean`): `Data.capPath_append` (the path from a
+  node is the path started there); `colemanPrices`, **`colemanPlan`** (hold the Coleman capital of
+  the node) in the CRRA household; `consFloor_lt_m` (CRRA floor `< m = w̲ L`); `cash_eq`
+  (household cash = Coleman `y`); `colemanPlan_cons` (consumption = `gfp`); `nextMU_eq`
+  (`β · nextMU = cont`); **`colemanPlan_euler`**; **`policy_eq_saving`** (household policy at
+  the root = Coleman saving, via `policy_eq_of_euler` with `D̄ = m^{-γ}`); `repNode`,
+  `nodeDist_dirac`; **`isSequentialEquilibrium_capPath`**: from every point mass the Coleman capital
+  path is a sequential equilibrium of the representative-agent CRRA, Cobb–Douglas economy (one
+  idiosyncratic state, labour in its box, `β R̄ ≤ 1`), **every capital share**. Standard axioms.
+  Next **CO5**: the path is a function of `(z, K)` (`capPath (z'::h) = saving c* (z_h, K_h)`), so a
+  recursive equilibrium on `(z, K)`.

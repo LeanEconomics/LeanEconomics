@@ -265,6 +265,7 @@ import LeanEconomics.KrusellSmith.ColemanEuler
 import LeanEconomics.KrusellSmith.ColemanOperator
 import LeanEconomics.KrusellSmith.ColemanBridge
 import LeanEconomics.KrusellSmith.ColemanSufficiency
+import LeanEconomics.KrusellSmith.ColemanEquilibrium
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
