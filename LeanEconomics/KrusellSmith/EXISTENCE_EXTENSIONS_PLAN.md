@@ -149,3 +149,28 @@ is concave at the top (Krasnosel'skii: `φ hi ≤ g (t hi)` with `φ > t`) and `
 * Next concrete target: (a) for log utility as a household-level theorem (saving antitone in the
   future capital path at fixed current cash), then (b) in the representative-agent case, where the
   distribution is its mean.
+
+### B2 step (a) DONE 2026-11-11 (`WageComparativeStatics.lean`)
+
+* `consumptionOf_le_consumptionOf`: same label, at least as much cash, flatter continuation ⇒ at
+  least as much consumption (any smooth utility).
+* Wage channel (any smooth utility, borrowing allowed): `incDiff_bellman_wage`,
+  `incDiff_iterate_wage`, `incDiff_valueFunction_wage`, **`policy_le_of_wages`** — same returns,
+  higher wages along the path, no more cash today ⇒ weakly less saving.
+* Combined Cobb–Douglas channel (CRRA `0 < γ ≤ 1`, `b = 0`): `incDiff_bellman_cd` (Light's
+  rescaling at `t a`, `t = R'/R`, plus the consumption comparison), `incDiff_iterate_cd`,
+  **`policy_le_of_cd`** — lower returns and higher wages along the path ⇒ weakly less saving.
+* `CobbDouglas.grossReturn_anti`, `CobbDouglas.wage_mono`; **`crra_policy_le_of_capital`**: in the
+  CRRA/CD economy, a higher expected capital path (same labour) lowers every household's saving at
+  given cash. Floor and cap slackness along the iterates are hypotheses, as in Light's step.
+
+What (a) gives in the expectations map: at the root, both paths face today's price at the same
+actual `Ā`, so `expMap K' ≤ expMap K` at the first children. **Remaining (b)**: below the root the
+two distributions differ (`ν' ≤` `ν` in mean, not yet in dominance), and today's prices clear at
+different `Ā`. Needed: the realised distributions are ordered by dominance (`ν' ≼ ν`) and saving at
+a dominated distribution with lower `Ā` is lower. Dominance propagates through saving that is
+monotone in assets (`nodeDist_dominates`) once policies are ordered state by state — which (a)
+gives only at equal current cash. With prices at the lower `Ā'`, current cash is redistributed
+(rich lose return, poor gain wage), so state-by-state ordering of cash fails again; the
+representative-agent case (one efficiency level, distribution = its mean) avoids this and is the
+next target.

@@ -39,8 +39,14 @@
   formalised;\footnote{\lean{isRecursive\_of\_antitone}, \lean{eq\_of\_concave}.} whether
   the Krusell--Smith map reverses order and has a concave square is open. A first obstacle: the
   zero-sum redistribution holds only where capital equals mean assets, that is at equilibrium, not
-  along the off-equilibrium paths the map acts on. This is the question \citet{cao2020} leaves
-  open.
+  along the off-equilibrium paths the map acts on. Pricing today at actual capital removes it
+  (an expectations map with the same fixed points), and at the household level the needed sign
+  holds: for CRRA with $\gamma\le1$, a higher expected capital path --- lower future returns,
+  higher future wages --- lowers every household's saving at given cash.\footnote{\lean{expMap\_eq\_iff},
+  \lean{crra\_policy\_le\_of\_capital}.} What remains is propagation: below the first period the
+  two cross-sections differ, today's prices redistribute cash between them, and an order on the
+  cross-sections that survives this is again what is missing. This is the question
+  \citet{cao2020} leaves open.
 \item \textbf{Uniqueness at realistic capital shares.} Theorem~\ref{thm:smallshare} is qualitative;
   sharper bounds on the consumption floor and on curvature would be needed for a quantitative
   threshold.
