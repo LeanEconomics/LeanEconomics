@@ -271,6 +271,7 @@ import LeanEconomics.KrusellSmith.ColemanUnique
 import LeanEconomics.KrusellSmith.CrossSectionEuler
 import LeanEconomics.KrusellSmith.CrossSectionAggregateOrder
 import LeanEconomics.KrusellSmith.ProportionalEquilibrium
+import LeanEconomics.KrusellSmith.ProportionalRecursive
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary

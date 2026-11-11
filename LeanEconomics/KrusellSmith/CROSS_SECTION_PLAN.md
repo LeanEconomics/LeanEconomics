@@ -107,3 +107,12 @@ The equality case of the dispersion bound: **permanent** efficiency types
 
 Remaining: route 3 (selection). Idiosyncratic risk or non-proportional wealth is back to the
 dispersion problem.
+
+## Route 2 packaged 2026-11-11 (`ProportionalRecursive.lean`)
+
+**`propRecursive`**: an `AggStateRecursiveEquilibrium` on `(z, K)`, `K ∈ [0, cap]`, for the
+proportional heterogeneous economy: `lawK z K z' = s*(z, K)` (aggregate Coleman saving), labour
+`L`, value and saving the household's at every `(a, e)` at the Coleman prices from `(z, K)`
+(`pricesP`, `valueFunction_nextP`), `dist z K` the proportional cross-section `propDist`, moved
+to `propDist` at `lawK` (`nodeDist_propDist` at depth one). `propRecursive_saving`: each type
+saves its share of `lawK`. Standard axioms. Route 2 complete; route 3 (selection) remains.
