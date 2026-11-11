@@ -196,43 +196,22 @@ rate is common to all households but depends on the aggregate state. It solves t
 * Any `γ > 0`: a solution with rates in `(0, s̄]`, `s̄ < 1`, gives optimal plans (overtaking;
   transversality decays like `s̄^N`, `IsRateTree.ratePlan_isOptimal`) and a sequential equilibrium
   recursive on `(z, K)` (`IsRateFunction.isSequentialEquilibriumCRRA_ratePath`).
-* `0 < γ < 1`: a solution exists on an interval `[lo, hi]` (`RateData.exists_rate`,
-  `HomotheticEconomy.exists_recursiveEquilibriumCRRA`). Coleman-type operator on rates: the
-  lattice is rates in `[s̲, s̄]`, nonincreasing in capital with saving nondecreasing; with `γ < 1`
-  the right-hand side is nonincreasing in `K'`, so the root is unique and monotone; Tarski.
+* **Every `γ > 0`**: a solution exists on an interval `[lo, hi]` (`RateData.exists_rate`,
+  `HomotheticEconomy.exists_recursiveEquilibriumCRRA`). The operator is on consumption levels,
+  not rates: with `y = g K`, `c = (1 − s) y`, the rate equation is the Euler equation
+  `c^{−γ} = Σ μ g(z', K') c(z', K')^{−γ}`, `K' = y − c`, whose right-hand side is nonincreasing in
+  `K'` for every `γ` once consumption is nondecreasing in capital. Lattice: consumption between
+  the shares `1 − s̄` and `1 − s̲` of resources, consumption and saving nondecreasing; unique root,
+  comparative statics, Tarski. (A first version worked in rates and needed `γ < 1`; superseded.)
   `Coleman.Data` could not be reused (it needs income bounded away from zero and `β R̄ ≤ 1`).
 * Hypotheses: `g` positive, continuous, nonincreasing and `g K` nondecreasing on `[lo, hi]`, and
-  uniform rate bounds that confirm themselves (`low`, `high`) and keep capital in the interval
-  (`inv_lo`, `inv_hi`). They hold with equality at a deterministic steady state (`lo = hi = K*`,
-  `s̲ = s̄ = β m`, `g(K*) = 1/(β m)`), and with slack on a neighbourhood of it when `γ > 1/2`:
-  with `a = g(lo)/g*`, `c = g(hi)/g*`, `r = (1 − γ)/γ`, the two invariance conditions are
-  `c^r a ≥ 1` and `a^r c ≤ 1`, true for `a = 1/c > 1` iff `r ≤ 1`. The bounds are uniform, so
-  wide intervals or large shocks can violate them.
-*Not done*: `γ > 1` (the right-hand side then rises with `K'` through `g^{1−γ}`, so the root
-need not be unique or monotone); uniqueness of the rate function.
-
-**3. Monotonicity weighted by marginal utility** (`ProportionalUnique.lean`,
-`ProportionalUniqueCRRA.lean`). For two equilibria and one household, revealed preference both
-ways gives `0 ≥ E Σ βᵗ [u'(c̃')Δ + u'(c̃)Δ']`, with `Δ`, `Δ'` the cash transfers from the price
-difference. In money the transfers integrate to `(R(K) − R(K'))(K' − K) ≥ 0`, strictly when
-`K ≠ K'` — the Lasry–Lions sign. In utility units the weights differ across households, and the
-error is of the same order as the good term unless (dispersion of exposure `a_i − K e_i / L`) ×
-(sensitivity of consumption to the capital path) is small: the same structure as the contraction
-route, with no gain. **Where exposure is zero the argument closes**, with Negishi weights
-`p_e σ_e^γ`:
-
-* on the proportional path every type gains at foreign prices (`gapA_nonneg`);
-* normalised values are equal across types (`W_eq`);
-* by Jensen the weighted values of any other allocation are at most the value of a type with
-  `σ ≥ 1` holding its share of that allocation's capital (`G_le_H`);
-* so `W ≤ G ≤ H = W` wherever the other allocation is still proportional, and it stays so.
-
-**`PropEq.eq_of_types`**: a proportional equilibrium is the only allocation in which every type
-optimises and capital is mean assets. **`Coleman.eq_capPath_of_prop`**: every sequential
-equilibrium of the CRRA, Cobb–Douglas economy from a proportional cross-section is the Coleman
-capital path — the competing equilibrium is not assumed proportional. Extra hypotheses: every
-type has positive mass, and aggregate resources less the consumption floor never exceed the
-capital bound (`hbound`).
+  rate bounds with `s̲^γ ≤ Σ μ g(z', x)^{1−γ} ≤ s̄^γ` on the interval (`low`, `high`) that keep
+  capital in it (`inv_lo`, `inv_hi`). At a deterministic steady state (`lo = hi = K*`,
+  `s̲ = s̄ = β m`, `g(K*) = 1/(β m)`) they hold with equality. Around it, with `a = g(lo)/g* > 1`
+  and `c = g(hi)/g* < 1`: for `γ > 1` the invariance conditions are `a^{1/γ} ≥ 1`, `c^{1/γ} ≤ 1`,
+  always true; for `γ < 1`, with `r = (1 − γ)/γ`, they are `c^r a ≥ 1`, `a^r c ≤ 1`, true for
+  `a = 1/c` iff `γ ≥ 1/2`. The bounds are uniform, so large shocks can violate them.
+*Not done*: uniqueness of the rate function.
 
 So the proportional economy now has existence, uniqueness and a recursive `(z, K)` equilibrium at
 every capital share. Away from zero exposure the minimal-state question is still open.
