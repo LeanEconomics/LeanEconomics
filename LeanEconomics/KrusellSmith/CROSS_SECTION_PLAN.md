@@ -154,3 +154,68 @@ theorem can supply consistency. Analysis (on paper), then what was formalised.
 Conclusion: all three routes are closed. Minimal-state recursive equilibria are proved where
 there is structure — uniqueness (small shares), monotone saving (complementarities), the
 representative agent and the proportional economy (Coleman) — and on enlarged states otherwise.
+
+## Literature checked 2026-11-11
+
+* **Brumm–Kryczka–Kubler (Econometrica 2017), He–Sun (JET 2017).** The convexification needs a
+  purely transitory atomless component in the shock (a coarser transition kernel). A plain AR(1)
+  does not qualify, and both results are for finitely many agents with finite-dimensional
+  convexity. Cao (JET 2020) calls the minimal-state Krusell–Smith equilibrium "elusive".
+* **Pröhl (working paper, 2018 version read in full).** Claims existence and uniqueness for
+  Krusell–Smith by maximal monotonicity of a stacked Euler operator in `L²`. The proof does not
+  hold up as written: the admissible set is not a Hilbert space; the monotonicity lemma is one
+  sentence and leaves the cross-time term `−h̃(next)·h̃(now)` unsigned; her Assumption 9 is the
+  money-unit inequality `R'(K)(E h̃)² ≤ 0`, while the term to be signed carries heterogeneous
+  marginal-utility weights and the redistribution term; the root is not shown to be interior. The
+  2023 version was not read.
+
+## Three further approaches, 2026-11-11
+
+**1. Uniqueness implies recursive.** Already in the repo (`Recursive.lean`,
+`UniqueSequentialEquilibrium.consistentSelection`). New instance, `RepAgentUnique.lean`: with one
+idiosyncratic state, sequential equilibrium from a point mass is **unique**, for every `γ > 0` and
+every capital share (`KSModel.eq_of_isSequentialEquilibrium_dirac`, `Coleman.eq_capPath`). The
+argument is the decentralised planner's problem: prices support the allocation
+(`CobbDouglas.repCash_le_of_prices`, the tangent line, clamps included), so along one equilibrium
+tree the household affords at the other's prices what it does at its own; the value gap is
+superharmonic on the tree, hence nonnegative, both ways; the unique Bellman maximiser finishes.
+
+**2. A homothetic economy with idiosyncratic risk** (`HomotheticLog.lean`). All income
+proportional to wealth, an idiosyncratic income shock `θ(e)` with conditional mean one (Markov,
+persistence in higher moments allowed), no insurance, log utility. Saving the fraction `β` of cash
+is optimal in the overtaking sense against every positive capital path (`logPlan_isOptimal`;
+transversality in closed form, `β^{N+1}/(1−β)`); the shocks average out at every aggregate node
+(`condMean_logWealth`); and `K' = β g(z, K) K` is a sequential equilibrium from every initial
+shock and every finitely supported wealth distribution (`isSequentialEquilibrium_logPath`),
+recursive on `(z, K)` although the wealth distribution spreads out. This is a separate model, not
+a `KSModel`: labour income is a share of wealth, not an additive endowment.
+*Not done*: CRRA with `γ ≠ 1`. The saving rate then solves a Coleman-type equation in `(z, K)`
+with return `g` (average, not marginal, product) and discount `β E[θ^{1−γ}]`, but `Coleman.Data`
+needs income bounded away from zero and here income is zero at zero capital. It needs its own
+operator on saving rates.
+
+**3. Monotonicity weighted by marginal utility** (`ProportionalUnique.lean`,
+`ProportionalUniqueCRRA.lean`). For two equilibria and one household, revealed preference both
+ways gives `0 ≥ E Σ βᵗ [u'(c̃')Δ + u'(c̃)Δ']`, with `Δ`, `Δ'` the cash transfers from the price
+difference. In money the transfers integrate to `(R(K) − R(K'))(K' − K) ≥ 0`, strictly when
+`K ≠ K'` — the Lasry–Lions sign. In utility units the weights differ across households, and the
+error is of the same order as the good term unless (dispersion of exposure `a_i − K e_i / L`) ×
+(sensitivity of consumption to the capital path) is small: the same structure as the contraction
+route, with no gain. **Where exposure is zero the argument closes**, with Negishi weights
+`p_e σ_e^γ`:
+
+* on the proportional path every type gains at foreign prices (`gapA_nonneg`);
+* normalised values are equal across types (`W_eq`);
+* by Jensen the weighted values of any other allocation are at most the value of a type with
+  `σ ≥ 1` holding its share of that allocation's capital (`G_le_H`);
+* so `W ≤ G ≤ H = W` wherever the other allocation is still proportional, and it stays so.
+
+**`PropEq.eq_of_types`**: a proportional equilibrium is the only allocation in which every type
+optimises and capital is mean assets. **`Coleman.eq_capPath_of_prop`**: every sequential
+equilibrium of the CRRA, Cobb–Douglas economy from a proportional cross-section is the Coleman
+capital path — the competing equilibrium is not assumed proportional. Extra hypotheses: every
+type has positive mass, and aggregate resources less the consumption floor never exceed the
+capital bound (`hbound`).
+
+So the proportional economy now has existence, uniqueness and a recursive `(z, K)` equilibrium at
+every capital share. Away from zero exposure the minimal-state question is still open.
