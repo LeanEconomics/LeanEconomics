@@ -138,12 +138,21 @@ def PlanEuler {s₀ : M.State} (p : (M.household z₀ P).Plan s₀) : Prop :=
     (0 < p.action n h → U.du (planCons z₀ P p n h) ≤ M.discount * nextMU z₀ P U p n h) ∧
     (p.action n h < M.assetCap → M.discount * nextMU z₀ P U p n h ≤ U.du (planCons z₀ P p n h))
 
+/-- **The Euler conditions on the histories of positive probability.** -/
+def PlanEulerOn {s₀ : M.State} (p : (M.household z₀ P).Plan s₀) : Prop :=
+  ∀ (n : ℕ) (h : Fin n → Z × E), 0 < p.histProb n h → M.consFloor < planCons z₀ P p n h ∧
+    (0 < p.action n h → U.du (planCons z₀ P p n h) ≤ M.discount * nextMU z₀ P U p n h) ∧
+    (p.action n h < M.assetCap → M.discount * nextMU z₀ P U p n h ≤ U.du (planCons z₀ P p n h))
+
+theorem PlanEuler.on {s₀ : M.State} {p : (M.household z₀ P).Plan s₀} (hE : PlanEuler z₀ P U p) :
+    PlanEulerOn z₀ P U p := fun n h _ => hE n h
+
 /-- **The Euler conditions sign each telescoping step.** -/
-theorem euler_step {s₀ : M.State} {p q : (M.household z₀ P).Plan s₀} (hE : PlanEuler z₀ P U p)
-    (n : ℕ) (h : Fin n → Z × E) :
+theorem euler_step {s₀ : M.State} {p q : (M.household z₀ P).Plan s₀} (hE : PlanEulerOn z₀ P U p)
+    (n : ℕ) (h : Fin n → Z × E) (hpos : 0 < p.histProb n h) :
     (M.discount * nextMU z₀ P U p n h - U.du (planCons z₀ P p n h))
       * (q.action n h - p.action n h) ≤ 0 := by
-  obtain ⟨-, h1, h2⟩ := hE n h
+  obtain ⟨-, h1, h2⟩ := hE n h hpos
   have hp := M.mem_Icc_of_mem_feasible z₀ P (p.action_mem n h)
   have hq := M.mem_Icc_of_mem_feasible z₀ P (q.action_mem n h)
   rcases le_total (p.action n h) (q.action n h) with hle | hle
@@ -188,7 +197,7 @@ theorem firstOrder_eq (hb : M.borrowLimit = 0) {s₀ : M.State} (p q : (M.househ
 
 /-- **The telescoping sum is nonpositive.** -/
 theorem telescope_le (hb : M.borrowLimit = 0) {s₀ : M.State} {p : (M.household z₀ P).Plan s₀}
-    (hE : PlanEuler z₀ P U p) (q : (M.household z₀ P).Plan s₀) :
+    (hE : PlanEulerOn z₀ P U p) (q : (M.household z₀ P).Plan s₀) :
     ∀ N : ℕ, ∑ n ∈ Finset.range N, M.discount ^ n * firstOrder z₀ P U p q n
       + M.discount ^ N * carried z₀ P U p q N ≤ 0
   | 0 => by
@@ -201,8 +210,10 @@ theorem telescope_le (hb : M.borrowLimit = 0) {s₀ : M.State} {p : (M.household
     have hstep : ∑ h : Fin N → Z × E, p.histProb N h
         * ((M.discount * nextMU z₀ P U p N h - U.du (planCons z₀ P p N h))
           * (q.action N h - p.action N h)) ≤ 0 :=
-      Finset.sum_nonpos fun h _ =>
-        mul_nonpos_of_nonneg_of_nonpos (p.histProb_nonneg N h) (euler_step z₀ P U hE N h)
+      Finset.sum_nonpos fun h _ => by
+        rcases (p.histProb_nonneg N h).eq_or_lt with h0 | hpos
+        · rw [← h0, zero_mul]
+        · exact mul_nonpos_of_nonneg_of_nonpos hpos.le (euler_step z₀ P U hE N h hpos)
     have e : M.discount ^ (N + 1) * ∑ h : Fin N → Z × E, p.histProb N h
           * (nextMU z₀ P U p N h * (q.action N h - p.action N h))
         - M.discount ^ N * ∑ h : Fin N → Z × E, p.histProb N h
@@ -220,7 +231,7 @@ theorem telescope_le (hb : M.borrowLimit = 0) {s₀ : M.State} {p : (M.household
 
 /-- The carried term is bounded. -/
 theorem abs_carried_le {s₀ : M.State} {p : (M.household z₀ P).Plan s₀} {Dbar : ℝ}
-    (hE : PlanEuler z₀ P U p) (hD : ∀ n h, U.du (planCons z₀ P p n h) ≤ Dbar)
+    (hE : PlanEulerOn z₀ P U p) (hD : ∀ n h, 0 < p.histProb n h → U.du (planCons z₀ P p n h) ≤ Dbar)
     (q : (M.household z₀ P).Plan s₀) (N : ℕ) :
     |carried z₀ P U p q N| ≤ Dbar * (M.returnBound * M.assetCap) := by
   rw [carried]
@@ -229,9 +240,11 @@ theorem abs_carried_le {s₀ : M.State} {p : (M.household z₀ P).Plan s₀} {Db
         * (M.returnAt z₀ P (labelOf s₀.2 N h).node * ((q.state N h).1 - (p.state N h).1)))|
       ≤ ∑ h : Fin N → Z × E, p.histProb N h * (Dbar * (M.returnBound * M.assetCap)) := by
         refine Finset.sum_le_sum fun h _ => ?_
+        rcases (p.histProb_nonneg N h).eq_or_lt with h0 | hpos
+        · rw [← h0]; simp
         rw [abs_mul, abs_of_nonneg (p.histProb_nonneg N h)]
         refine mul_le_mul_of_nonneg_left ?_ (p.histProb_nonneg N h)
-        have hu0 := U.du_nonneg (hE N h).1
+        have hu0 := U.du_nonneg (hE N h hpos).1
         have hR0 := M.returnAt_nonneg z₀ P (labelOf s₀.2 N h).node
         have hR1 := M.returnAt_le_returnBound z₀ P (labelOf s₀.2 N h).node
         have hqa := (q.state N h).1.2
@@ -239,8 +252,8 @@ theorem abs_carried_le {s₀ : M.State} {p : (M.household z₀ P).Plan s₀} {Db
         have hΔ : |((q.state N h).1 : ℝ) - (p.state N h).1| ≤ M.assetCap := by
           rw [abs_le]; constructor <;> linarith [hqa.1, hqa.2, hpa.1, hpa.2]
         rw [abs_mul, abs_mul, abs_of_nonneg hu0, abs_of_nonneg hR0]
-        exact mul_le_mul (hD N h) (mul_le_mul hR1 hΔ (abs_nonneg _) (hR0.trans hR1))
-          (mul_nonneg hR0 (abs_nonneg _)) (hu0.trans (hD N h))
+        exact mul_le_mul (hD N h hpos) (mul_le_mul hR1 hΔ (abs_nonneg _) (hR0.trans hR1))
+          (mul_nonneg hR0 (abs_nonneg _)) (hu0.trans (hD N h hpos))
     _ = Dbar * (M.returnBound * M.assetCap) := by rw [← Finset.sum_mul, p.sum_histProb, one_mul]
 
 /-- The date-`n` concavity gaps (nonpositive). -/
@@ -249,11 +262,13 @@ noncomputable def concGap {s₀ : M.State} (p q : (M.household z₀ P).Plan s₀
     - M.utility (planCons z₀ P p n h)
     - U.du (planCons z₀ P p n h) * (planCons z₀ P q n h - planCons z₀ P p n h))
 
-theorem concGap_nonpos {s₀ : M.State} {p : (M.household z₀ P).Plan s₀} (hE : PlanEuler z₀ P U p)
+theorem concGap_nonpos {s₀ : M.State} {p : (M.household z₀ P).Plan s₀} (hE : PlanEulerOn z₀ P U p)
     (q : (M.household z₀ P).Plan s₀) (n : ℕ) : concGap z₀ P U p q n ≤ 0 :=
-  Finset.sum_nonpos fun h _ => mul_nonpos_of_nonneg_of_nonpos (p.histProb_nonneg n h) (by
-    have := utility_le_tangent (U := U) (planCons_floor z₀ P q n h) (hE n h).1
-    linarith)
+  Finset.sum_nonpos fun h _ => by
+    rcases (p.histProb_nonneg n h).eq_or_lt with h0 | hpos
+    · rw [← h0, zero_mul]
+    · have := utility_le_tangent (U := U) (planCons_floor z₀ P q n h) (hE n h hpos).1
+      exact mul_nonpos_of_nonneg_of_nonpos hpos.le (by linarith)
 
 theorem payoff_sub {s₀ : M.State} (p q : (M.household z₀ P).Plan s₀) (n : ℕ) :
     q.payoff n - p.payoff n
@@ -268,9 +283,9 @@ theorem payoff_sub {s₀ : M.State} (p q : (M.household z₀ P).Plan s₀) (n : 
 
 /-- **Euler sufficiency**: every feasible plan's value is at most the candidate's plus the date-0
 concavity gap. -/
-theorem value_le_of_euler (hb : M.borrowLimit = 0) {s₀ : M.State}
-    {p : (M.household z₀ P).Plan s₀} (hE : PlanEuler z₀ P U p) {Dbar : ℝ}
-    (hD : ∀ n h, U.du (planCons z₀ P p n h) ≤ Dbar) (q : (M.household z₀ P).Plan s₀) :
+theorem value_le_of_eulerOn (hb : M.borrowLimit = 0) {s₀ : M.State}
+    {p : (M.household z₀ P).Plan s₀} (hE : PlanEulerOn z₀ P U p) {Dbar : ℝ}
+    (hD : ∀ n h, 0 < p.histProb n h → U.du (planCons z₀ P p n h) ≤ Dbar) (q : (M.household z₀ P).Plan s₀) :
     q.value ≤ p.value + concGap z₀ P U p q 0 := by
   have hβ0 := M.discount_pos
   have hβ1 := M.discount_lt_one
@@ -321,12 +336,12 @@ theorem policy_eq_policyAction (s : M.State) :
 /-- **Euler sufficiency, the policy**: at the root of a plan satisfying the Euler conditions
 (with the corners) and with bounded marginal utility, the household's optimal saving is the plan's
 first action. -/
-theorem policy_eq_of_euler (hb : M.borrowLimit = 0) {s₀ : M.State}
-    {p : (M.household z₀ P).Plan s₀} (hE : PlanEuler z₀ P U p) {Dbar : ℝ}
-    (hD : ∀ n h, U.du (planCons z₀ P p n h) ≤ Dbar) (h : Fin 0 → Z × E) :
+theorem policy_eq_of_eulerOn (hb : M.borrowLimit = 0) {s₀ : M.State}
+    {p : (M.household z₀ P).Plan s₀} (hE : PlanEulerOn z₀ P U p) {Dbar : ℝ}
+    (hD : ∀ n h, 0 < p.histProb n h → U.du (planCons z₀ P p n h) ≤ Dbar) (h : Fin 0 → Z × E) :
     M.policy z₀ P s₀ = p.action 0 h := by
   let q := (M.household z₀ P).policyPlan s₀
-  have hle := value_le_of_euler z₀ P U hb hE hD q
+  have hle := value_le_of_eulerOn z₀ P U hb hE hD q
   have hq : q.value = (M.household z₀ P).valueFunction s₀ :=
     (M.household z₀ P).policyPlan_value s₀
   have hp := p.value_le
@@ -338,13 +353,28 @@ theorem policy_eq_of_euler (hb : M.borrowLimit = 0) {s₀ : M.State}
       Plan.histProb_zero, one_mul]
   have hcons : planCons z₀ P q 0 h = planCons z₀ P p 0 h := by
     by_contra hne
-    have := utility_lt_tangent (U := U) (planCons_floor z₀ P q 0 h) (hE 0 h).1 hne
+    have := utility_lt_tangent (U := U) (planCons_floor z₀ P q 0 h)
+      (hE 0 h (by rw [Plan.histProb_zero]; exact one_pos)).1 hne
     linarith
   have hact : q.action 0 h = p.action 0 h := by
     simp only [planCons, p.state_zero, q.state_zero] at hcons
     linarith
   rw [policy_eq_policyAction, ← hact]
   rfl
+
+/-- **Euler sufficiency** with the conditions at every history. -/
+theorem value_le_of_euler (hb : M.borrowLimit = 0) {s₀ : M.State}
+    {p : (M.household z₀ P).Plan s₀} (hE : PlanEuler z₀ P U p) {Dbar : ℝ}
+    (hD : ∀ n h, U.du (planCons z₀ P p n h) ≤ Dbar) (q : (M.household z₀ P).Plan s₀) :
+    q.value ≤ p.value + concGap z₀ P U p q 0 :=
+  value_le_of_eulerOn z₀ P U hb hE.on (fun n h _ => hD n h) q
+
+/-- **Euler sufficiency, the policy**, with the conditions at every history. -/
+theorem policy_eq_of_euler (hb : M.borrowLimit = 0) {s₀ : M.State}
+    {p : (M.household z₀ P).Plan s₀} (hE : PlanEuler z₀ P U p) {Dbar : ℝ}
+    (hD : ∀ n h, U.du (planCons z₀ P p n h) ≤ Dbar) (h : Fin 0 → Z × E) :
+    M.policy z₀ P s₀ = p.action 0 h :=
+  policy_eq_of_eulerOn z₀ P U hb hE.on (fun n h _ => hD n h) h
 
 end KSModel
 

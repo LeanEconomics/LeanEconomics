@@ -79,3 +79,31 @@ capital lower at every node) for heterogeneous households, as from point masses?
 
 Conclusion: the aggregate order does not rescue the order argument. Remaining: route 2
 (no-redistribution economies — the equality case of the dispersion bound) and route 3 (selection).
+
+## Route 2 done 2026-11-11 — the proportional economy (`ProportionalEquilibrium.lean`)
+
+The equality case of the dispersion bound: **permanent** efficiency types
+(`idioProb z z' e e' = [e = e']`) holding assets **proportional to efficiency**, type `e` the share
+`θ_e = efficiency e / L` of aggregate capital (`L` = mean efficiency).
+
+* `ColemanSufficiency.lean` generalised: `PlanEulerOn`, `value_le_of_eulerOn`,
+  **`policy_eq_of_eulerOn`** — Euler sufficiency needs the conditions only on histories of positive
+  probability (the old statements are corollaries).
+* `aggData` (aggregate economy as Coleman data, labour `L`, capital cap `cap` with
+  `θ_e cap ≤ ā`); `propRule` (share of the Coleman saving on the path, zero off it),
+  `onPath_of_pos`; `ruleRhs_onPath` (expected marginal value = `θ_e^{-γ} ×` Coleman continuation,
+  CRRA homogeneity); `propPlan_euler`; **`policy_eq_prop`**: type `e` at assets `θ_e k` saves
+  `θ_e s*(z, k)`.
+* `propDist` (masses `p e` at `(θ_e K, e)`), `nodeDist_propDist` (stays proportional),
+  **`isSequentialEquilibrium_prop`**: from every proportional cross-section the aggregate Coleman
+  path is a sequential equilibrium, capital following `K' = s*(z, K)`; every capital share.
+  Standard axioms.
+* Hypotheses: `β R̄ ≤ 1`, `L` in the labour box, and the capital cap slack at the fixed point
+  (`hslack`; `Data.saving_lt_cap_of`: enough that `y(z, k) − m < cap`). The cap must be slack
+  because types reach their own asset cap at different aggregate capitals.
+* Scope: wealth shares are constant, so heterogeneity is in levels only (Gorman aggregation); the
+  cross-section is a function of `K`. Not done: the `AggStateRecursiveEquilibrium` packaging
+  (as `colemanRecursive`), with `dist z K` the proportional cross-section.
+
+Remaining: route 3 (selection). Idiosyncratic risk or non-proportional wealth is back to the
+dispersion problem.
