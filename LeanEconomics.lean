@@ -274,6 +274,7 @@ import LeanEconomics.KrusellSmith.ProportionalEquilibrium
 import LeanEconomics.KrusellSmith.ProportionalRecursive
 import LeanEconomics.KrusellSmith.SelectionObstruction
 import LeanEconomics.KrusellSmith.RepAgentUnique
+import LeanEconomics.KrusellSmith.HomotheticLog
 import LeanEconomics.MarkovEquilibrium.Measures
 import LeanEconomics.MarkovEquilibrium.MeanFixedPoint
 import LeanEconomics.MarkovEquilibrium.Stationary
