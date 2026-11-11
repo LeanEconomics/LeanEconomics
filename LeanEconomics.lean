@@ -275,6 +275,8 @@ import LeanEconomics.KrusellSmith.ProportionalRecursive
 import LeanEconomics.KrusellSmith.SelectionObstruction
 import LeanEconomics.KrusellSmith.RepAgentUnique
 import LeanEconomics.KrusellSmith.HomotheticLog
+import LeanEconomics.KrusellSmith.HomotheticCRRA
+import LeanEconomics.KrusellSmith.HomotheticRate
 import LeanEconomics.KrusellSmith.ProportionalUnique
 import LeanEconomics.KrusellSmith.ProportionalUniqueCRRA
 import LeanEconomics.MarkovEquilibrium.Measures

@@ -189,10 +189,27 @@ transversality in closed form, `β^{N+1}/(1−β)`); the shocks average out at e
 shock and every finitely supported wealth distribution (`isSequentialEquilibrium_logPath`),
 recursive on `(z, K)` although the wealth distribution spreads out. This is a separate model, not
 a `KSModel`: labour income is a share of wealth, not an additive endowment.
-*Not done*: CRRA with `γ ≠ 1`. The saving rate then solves a Coleman-type equation in `(z, K)`
-with return `g` (average, not marginal, product) and discount `β E[θ^{1−γ}]`, but `Coleman.Data`
-needs income bounded away from zero and here income is zero at zero capital. It needs its own
-operator on saving rates.
+**CRRA** (`HomotheticCRRA.lean`, `HomotheticRate.lean`, 2026-11-11). With `γ > 0` the saving
+rate is common to all households but depends on the aggregate state. It solves the rate equation
+`(1 − s)^{−γ} s^γ = β Σ π m g(z', K')^{1−γ} (1 − s')^{−γ}`, `K' = s g(z, K) K`, where
+`m(z, z') = E[θ^{1−γ}]` must be the same from every idiosyncratic state.
+* Any `γ > 0`: a solution with rates in `(0, s̄]`, `s̄ < 1`, gives optimal plans (overtaking;
+  transversality decays like `s̄^N`, `IsRateTree.ratePlan_isOptimal`) and a sequential equilibrium
+  recursive on `(z, K)` (`IsRateFunction.isSequentialEquilibriumCRRA_ratePath`).
+* `0 < γ < 1`: a solution exists on an interval `[lo, hi]` (`RateData.exists_rate`,
+  `HomotheticEconomy.exists_recursiveEquilibriumCRRA`). Coleman-type operator on rates: the
+  lattice is rates in `[s̲, s̄]`, nonincreasing in capital with saving nondecreasing; with `γ < 1`
+  the right-hand side is nonincreasing in `K'`, so the root is unique and monotone; Tarski.
+  `Coleman.Data` could not be reused (it needs income bounded away from zero and `β R̄ ≤ 1`).
+* Hypotheses: `g` positive, continuous, nonincreasing and `g K` nondecreasing on `[lo, hi]`, and
+  uniform rate bounds that confirm themselves (`low`, `high`) and keep capital in the interval
+  (`inv_lo`, `inv_hi`). They hold with equality at a deterministic steady state (`lo = hi = K*`,
+  `s̲ = s̄ = β m`, `g(K*) = 1/(β m)`), and with slack on a neighbourhood of it when `γ > 1/2`:
+  with `a = g(lo)/g*`, `c = g(hi)/g*`, `r = (1 − γ)/γ`, the two invariance conditions are
+  `c^r a ≥ 1` and `a^r c ≤ 1`, true for `a = 1/c > 1` iff `r ≤ 1`. The bounds are uniform, so
+  wide intervals or large shocks can violate them.
+*Not done*: `γ > 1` (the right-hand side then rises with `K'` through `g^{1−γ}`, so the root
+need not be unique or monotone); uniqueness of the rate function.
 
 **3. Monotonicity weighted by marginal utility** (`ProportionalUnique.lean`,
 `ProportionalUniqueCRRA.lean`). For two equilibria and one household, revealed preference both
