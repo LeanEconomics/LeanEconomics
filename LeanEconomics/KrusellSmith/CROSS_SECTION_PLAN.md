@@ -215,3 +215,20 @@ rate is common to all households but depends on the aggregate state. It solves t
 
 So the proportional economy now has existence, uniqueness and a recursive `(z, K)` equilibrium at
 every capital share. Away from zero exposure the minimal-state question is still open.
+
+## Lee re-read, and log-linearity (2026-11-11)
+
+* **Lee, *Dancing on the Saddles* (August 2026 version on disk), re-read for the step from
+  spell-wise to global `(z, K)` sufficiency.** There is none, by the paper's own account. Exact
+  sufficiency is within a frozen-regime spell (Theorem 1, Proposition 8, under Assumptions 1–2 and
+  a no-plateau condition; Appendix E gives a route from primitives for log utility and
+  Cobb–Douglas, with two conditions maintained). Across spells the paper gives a bound under an
+  assumed uniform contraction (Theorem 2, Proposition 9) and calls the result near-global: the
+  regime history selects which conditional saddle the economy is on. So `KSufficient` cannot be
+  discharged from Lee's argument; the repo already has Theorems 1 and 2
+  (`Synchronization.lean`).
+* **Log-linearity fails** (`HomotheticLogLinear.lean`). In the homothetic log economy the exact
+  `(z, K)` law is `K' = β((1 − δ)K + A(z)K^α)` with Cobb–Douglas, and `log K'` is affine in
+  `log K` iff `δ = 1` (`cdLaw_powerLaw_iff`, `cdLaw_logLinear_iff`,
+  `HomotheticEconomy.lawK_logLinear_iff`). Proof: a power law has `f(2)² = f(1)f(4)`; here the
+  two sides differ by `(1 − δ)A(2^α − 2)²`.
