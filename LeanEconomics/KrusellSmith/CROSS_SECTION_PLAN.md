@@ -55,3 +55,27 @@ An order argument, and with it a recursive equilibrium on `(z, μ)`.
    through.
 3. **Recursive selection** from the set of cross-section Euler equilibria (measurable selection,
    item 5 of `EXISTENCE_EXTENSIONS_PLAN.md`) rather than an order argument.
+
+## Route 1 tried 2026-11-11 — stops at depth one (`CrossSectionAggregateOrder.lean`)
+
+Question: does the expectations map reverse the aggregate order (`K ≤ K'` expected ⇒ realised
+capital lower at every node) for heterogeneous households, as from point masses?
+
+* **Depth one: yes** (`expMap_child_le`, any initial cross-section; CRRA `γ ≤ 1`, slack
+  hypotheses of step (a)). At the root both expectations face the same cross-section and prices.
+* **Deeper: only under a dispersion bound** (`CobbDouglas.cash_le_of_ratio`,
+  `grossReturn_mul_ratio_le`). With realised capital `A' ≤ A`, household cash is ordered if
+  `a' ≤ (A'/A)^{1−α} a`: each household's assets must fall, in logs, by at least `(1 − α)` times the
+  aggregate fall. Exact for the representative agent and for proportionally scaled
+  cross-sections; in general it is an elasticity condition on household saving, not a consequence
+  of the primitives (the same kind of condition as B3).
+* **Mechanism for failure.** A household that does not cut its assets (at the cap, or
+  insensitive to expectations) gains cash from the higher return and saves more next period; if
+  the rest of the cross-section is at the zero-saving corner, aggregate saving rises when capital
+  falls. Not formalised as a counterexample economy (it needs an explicit household solution, as
+  for the corner witness).
+* Dominance instead of coupling (`AssetDominates`) is more demanding still: it compares saving at
+  the *same* assets, losing the slack `a' < a`.
+
+Conclusion: the aggregate order does not rescue the order argument. Remaining: route 2
+(no-redistribution economies — the equality case of the dispersion bound) and route 3 (selection).
