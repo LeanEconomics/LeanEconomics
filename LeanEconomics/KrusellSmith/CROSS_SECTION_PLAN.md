@@ -232,3 +232,12 @@ every capital share. Away from zero exposure the minimal-state question is still
   `log K` iff `δ = 1` (`cdLaw_powerLaw_iff`, `cdLaw_logLinear_iff`,
   `HomotheticEconomy.lawK_logLinear_iff`). Proof: a power law has `f(2)² = f(1)f(4)`; here the
   two sides differ by `(1 − δ)A(2^α − 2)²`.
+* **Walsh and Young (2025 WP), *Equilibrium Multiplicity in Aiyagari and Krusell–Smith*.**
+  Numerical: Aiyagari calibrations with three stationary equilibria (found only with risk
+  aversion above about 1.49, depreciation above about 0.19, persistent income and a disaster
+  income state), rational transitions between them with unchanged fundamentals, and two
+  Krusell–Smith examples with several recursive competitive equilibria. So sequential
+  equilibrium is not unique in general (the transitions are distinct sequential equilibria from
+  one initial distribution), and `UniqueSequentialEquilibrium` can only hold on a restricted
+  class. This is multiplicity of recursive equilibria, not non-existence: it does not by itself
+  give the conflict of `SelectionObstruction.lean`.
