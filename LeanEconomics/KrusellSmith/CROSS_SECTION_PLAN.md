@@ -116,3 +116,41 @@ proportional heterogeneous economy: `lawK z K z' = s*(z, K)` (aggregate Coleman 
 (`pricesP`, `valueFunction_nextP`), `dist z K` the proportional cross-section `propDist`, moved
 to `propDist` at `lawK` (`nodeDist_propDist` at depth one). `propRecursive_saving`: each type
 saves its share of `lawK`. Standard axioms. Route 2 complete; route 3 (selection) remains.
+
+## Route 3 tried 2026-11-11 — selection does not give the minimal state (`SelectionObstruction.lean`)
+
+A recursive equilibrium on `(z, μ)` is a **consistent** selection of sequential equilibria
+(`ConsistentSelection.isRecursive`, already in the repo). The question is whether a selection
+theorem can supply consistency. Analysis (on paper), then what was formalised.
+
+* **Measurable selection (Kuratowski–Ryll-Nardzewski type).** The equilibrium correspondence
+  `(z, μ) ↦ Eq(z, μ)` is nonempty, compact-valued with closed graph, so a Borel selection exists in
+  principle. It is not consistent: consistency is a functional equation on the selection,
+  `shift (σ x) [z'] = σ (child of x)`, which a selection theorem does not see.
+* **Markov / semiflow selection (Krylov; Stroock–Varadhan ch. 12).** These do produce consistent
+  selections, by lexicographic optimisation, but need *concatenation*: a solution followed by a
+  solution from the point reached is a solution. Here it fails. Households are forward-looking, so
+  replacing the continuation below a node changes saving at its ancestors and hence the
+  cross-section at the node. Concatenation holds on a state that carries the continuation (the
+  value-function state, `ValueState*.lean`), which is why those results exist and the minimal-state
+  one does not.
+* **Sequence-state version** (item 5 of `EXISTENCE_EXTENSIONS_PLAN.md`). A measurable
+  sequence-state equilibrium is an equivariant measurable selection from the pullback sets
+  `S(ω) = ⋂_T Φ_{ω₀} ∘ ⋯ ∘ Φ_{ω_{T−1}}(𝒢)`. Equivariant selections correspond to a choice per
+  tail-equivalence class of histories, and tail equivalence has no measurable transversal; the
+  measurable object that does exist is an invariant random measure (the randomised equilibrium
+  already proved). Tail functionals (`limsup`) are equivariant but not continuous, so their
+  maximisers need not exist.
+* **Formalised**: `ConsistentSelection.shiftPath_eq_of_merge` (selected equilibria that reach the
+  same shock and cross-section continue identically), `shiftPath_eq_of_node_eq` (a selected
+  equilibrium is Markov on its own tree), and **`isEmpty_consistentSelection_of_conflict`**: two
+  states with unique sequential equilibria reaching the same state with different continuations
+  rule out every consistent selection. This is the shape of a Kubler–Schmedders-type
+  counterexample; not constructed here (it needs an explicit economy with multiple equilibria).
+* **Known cure, not available here**: Brumm–Kryczka–Kubler / He–Sun obtain the minimal state with
+  an atomless component in the exogenous shock, which convexifies expected continuations. With
+  finitely many aggregate shocks there is nothing to convexify. (Literature cited from memory.)
+
+Conclusion: all three routes are closed. Minimal-state recursive equilibria are proved where
+there is structure — uniqueness (small shares), monotone saving (complementarities), the
+representative agent and the proportional economy (Coleman) — and on enlarged states otherwise.
