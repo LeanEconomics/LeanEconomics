@@ -241,3 +241,18 @@ every capital share. Away from zero exposure the minimal-state question is still
   one initial distribution), and `UniqueSequentialEquilibrium` can only hold on a restricted
   class. This is multiplicity of recursive equilibria, not non-existence: it does not by itself
   give the conflict of `SelectionObstruction.lean`.
+* **The rental rate `δ α`** (`ZeroConsumptionLimit.lean`, 2026-11-11). Walsh and Young's
+  "closed form" is accounting, not an equilibrium derivation. Exact statements: net output is
+  `K (r/α − δ)`, so aggregate consumption is nonnegative iff `r ≥ δα` and zero iff `r = δα`
+  (`netOutput_nonneg_iff`, `netOutput_eq_zero_iff`): `δα` is the lowest rental rate any stationary
+  allocation can have. A stationary capital stock is `(wL − C)/(δ − r)` (`stationary_capital_eq`);
+  the zero-consumption supply `wL/(δ − r)` meets demand on `(0, δ)` exactly at `δα`
+  (`zeroSupply_eq_demand_iff`) and is smallest there (`zeroSupply_min`, weighted AM–GM).
+  *This does not prove multiplicity.* Equilibrium at `r` means household consumption `C(r)`
+  equals net output `N(r) = K(r)(r/α − δ)`. Near `δα`, `N → 0` while `C > 0`, so `C > N`; as `r`
+  approaches the rate where saving explodes, `C < N`. One equilibrium is the single crossing.
+  Three equilibria need `C − N` to change sign three times, i.e. an **upper** bound
+  `C(r₁) < N(r₁)` at some `r₁` just above `δα` (households hold `K(r₁)` and consume less than
+  net output: extreme caution) and a **lower** bound `C(r₂) > N(r₂)` at some `r₂ > r₁`. Both are
+  bounds on aggregate consumption under the stationary distribution of an income-fluctuation
+  problem with a disaster state; neither follows from accounting. Not attempted.
